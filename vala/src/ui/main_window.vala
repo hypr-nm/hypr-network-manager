@@ -274,6 +274,23 @@ public class MainWindow : Gtk.ApplicationWindow {
                 row.append(connect_btn);
             }
 
+            if (net.connected) {
+                var disconnect_btn = new Gtk.Button.with_label("Disconnect");
+                disconnect_btn.clicked.connect(() => {
+                    string disconnect_error;
+                    bool ok = nm.disconnect_wifi(net, out disconnect_error);
+                    if (wifi_action_status != null) {
+                        if (ok) {
+                            wifi_action_status.set_text("Disconnect requested for " + net.ssid);
+                        } else {
+                            wifi_action_status.set_text("Disconnect failed: " + disconnect_error);
+                        }
+                    }
+                    refresh_wifi_rows();
+                });
+                row.append(disconnect_btn);
+            }
+
             if (net.is_secured && !net.saved && !net.connected) {
                 var prompt_btn = new Gtk.Button.with_label("Password...");
                 row.append(prompt_btn);
