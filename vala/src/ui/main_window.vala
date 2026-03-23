@@ -185,6 +185,14 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         root.append(devices_box);
 
+        var wifi_title = new Gtk.Label("Wi-Fi networks");
+        wifi_title.set_xalign(0.0f);
+        root.append(wifi_title);
+
+        var wifi_placeholder = new Gtk.Label("Wi-Fi list scaffold ready");
+        wifi_placeholder.set_xalign(0.0f);
+        root.append(wifi_placeholder);
+
         set_child(root);
     }
 }
