@@ -9,10 +9,16 @@ public class MainWindow : Gtk.ApplicationWindow {
     private NetworkManagerClientVala nm;
     private Gtk.Box? wifi_box = null;
     private Gtk.Label? wifi_action_status = null;
+    private Gtk.Stack? wifi_stack = null;
+    private Gtk.Label? wifi_empty_label = null;
     private Gtk.Box? ethernet_box = null;
     private Gtk.Label? ethernet_action_status = null;
+    private Gtk.Stack? ethernet_stack = null;
+    private Gtk.Label? ethernet_empty_label = null;
     private Gtk.Box? vpn_box = null;
     private Gtk.Label? vpn_action_status = null;
+    private Gtk.Stack? vpn_stack = null;
+    private Gtk.Label? vpn_empty_label = null;
     private Gtk.Label? nm_probe_label = null;
     private Gtk.Label? wifi_state_label = null;
     private Gtk.Label? net_state_label = null;
@@ -272,8 +278,13 @@ public class MainWindow : Gtk.ApplicationWindow {
         root.append(refresh_button);
 
         wifi_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        wifi_stack = new Gtk.Stack();
+        wifi_empty_label = new Gtk.Label("No Wi-Fi access points discovered");
+        wifi_empty_label.set_xalign(0.0f);
+        wifi_stack.add_named(wifi_box, "list");
+        wifi_stack.add_named(wifi_empty_label, "empty");
         refresh_wifi_rows();
-        root.append(wifi_box);
+        root.append(wifi_stack);
 
         wifi_action_status = new Gtk.Label("");
         wifi_action_status.set_xalign(0.0f);
@@ -285,8 +296,13 @@ public class MainWindow : Gtk.ApplicationWindow {
         root.append(ethernet_title);
 
         ethernet_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        ethernet_stack = new Gtk.Stack();
+        ethernet_empty_label = new Gtk.Label("No ethernet devices discovered");
+        ethernet_empty_label.set_xalign(0.0f);
+        ethernet_stack.add_named(ethernet_box, "list");
+        ethernet_stack.add_named(ethernet_empty_label, "empty");
         refresh_ethernet_rows();
-        root.append(ethernet_box);
+        root.append(ethernet_stack);
 
         ethernet_action_status = new Gtk.Label("");
         ethernet_action_status.set_xalign(0.0f);
@@ -298,8 +314,13 @@ public class MainWindow : Gtk.ApplicationWindow {
         root.append(vpn_title);
 
         vpn_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        vpn_stack = new Gtk.Stack();
+        vpn_empty_label = new Gtk.Label("No VPN profiles discovered");
+        vpn_empty_label.set_xalign(0.0f);
+        vpn_stack.add_named(vpn_box, "list");
+        vpn_stack.add_named(vpn_empty_label, "empty");
         refresh_vpn_rows();
-        root.append(vpn_box);
+        root.append(vpn_stack);
 
         vpn_action_status = new Gtk.Label("");
         vpn_action_status.set_xalign(0.0f);
@@ -443,11 +464,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_box.append(row_container);
         }
 
-        if (wifi_box.get_first_child() == null) {
-            var empty = new Gtk.Label("No Wi-Fi access points discovered");
-            empty.set_xalign(0.0f);
-            wifi_box.append(empty);
-        }
+        update_stack_visibility(wifi_stack, wifi_box.get_first_child() != null);
     }
 
     private void refresh_all_sections() {
@@ -636,11 +653,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             ethernet_box.append(row);
         }
 
-        if (ethernet_box.get_first_child() == null) {
-            var empty = new Gtk.Label("No ethernet devices discovered");
-            empty.set_xalign(0.0f);
-            ethernet_box.append(empty);
-        }
+        update_stack_visibility(ethernet_stack, ethernet_box.get_first_child() != null);
     }
 
     private void refresh_vpn_rows() {
@@ -693,10 +706,18 @@ public class MainWindow : Gtk.ApplicationWindow {
             vpn_box.append(row);
         }
 
-        if (vpn_box.get_first_child() == null) {
-            var empty = new Gtk.Label("No VPN profiles discovered");
-            empty.set_xalign(0.0f);
-            vpn_box.append(empty);
+        update_stack_visibility(vpn_stack, vpn_box.get_first_child() != null);
+    }
+
+    private void update_stack_visibility(Gtk.Stack? stack, bool has_items) {
+        if (stack == null) {
+            return;
+        }
+
+        if (has_items) {
+            stack.set_visible_child_name("list");
+        } else {
+            stack.set_visible_child_name("empty");
         }
     }
 }
