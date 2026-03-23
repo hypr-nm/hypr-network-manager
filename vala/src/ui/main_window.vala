@@ -136,6 +136,31 @@ public class MainWindow : Gtk.ApplicationWindow {
         nm_label.set_wrap(true);
         root.append(nm_label);
 
+        var device_title = new Gtk.Label("Discovered devices");
+        device_title.set_xalign(0.0f);
+        root.append(device_title);
+
+        var devices_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        foreach (var dev in nm.get_devices()) {
+            string kind = "other";
+            if (dev.is_wifi) {
+                kind = "wifi";
+            } else if (dev.is_ethernet) {
+                kind = "ethernet";
+            }
+
+            string text = "%s (%s): %s".printf(dev.name, kind, dev.state_label);
+            if (dev.connection != "") {
+                text += " [" + dev.connection + "]";
+            }
+
+            var row = new Gtk.Label(text);
+            row.set_xalign(0.0f);
+            devices_box.append(row);
+        }
+
+        root.append(devices_box);
+
         set_child(root);
     }
 }
