@@ -133,12 +133,20 @@ public class AppConfig : Object {
         } else if (FileUtils.test(system_config_path, FileTest.EXISTS)) {
             effective_config_path = system_config_path;
             has_config = true;
-        } else if (FileUtils.test("config.json", FileTest.EXISTS)) {
-            effective_config_path = "config.json";
-            has_config = true;
         }
 
         if (!has_config) {
+            if (debug_enabled) {
+                if (explicit_path != null) {
+                    stderr.printf("[rebuild] config file not found: %s\n", effective_config_path);
+                } else {
+                    stderr.printf(
+                        "[rebuild] config file not found in local/system paths: %s, %s\n",
+                        local_config_path,
+                        system_config_path
+                    );
+                }
+            }
             return cfg;
         }
 
@@ -238,7 +246,9 @@ public class AppConfig : Object {
                 stderr.printf("[rebuild] loaded config: %s\n", effective_config_path);
             }
         } catch (Error e) {
-            stderr.printf("[rebuild] failed to read config: %s\n", e.message);
+            if (debug_enabled) {
+                stderr.printf("[rebuild] could not read config %s: %s\n", effective_config_path, e.message);
+            }
         }
 
         return cfg;

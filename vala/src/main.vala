@@ -24,6 +24,8 @@ int main(string[] args) {
         return 1;
     }
 
+    var config = AppConfig.load(config_path, debug_enabled);
+
     if (status) {
         var nm = new NetworkManagerClientVala(debug_enabled);
         stdout.printf("%s\n", nm.get_status_json());
@@ -38,11 +40,10 @@ int main(string[] args) {
             stderr.printf("toggle-wifi failed: %s\n", err);
             return 1;
         }
-        stdout.printf("wifi-enabled=%s\n", enabled_after_toggle.to_string());
+        stdout.printf("Wi-Fi %s\n", enabled_after_toggle ? "enabled" : "disabled");
         return 0;
     }
 
-    var config = AppConfig.load(config_path, debug_enabled);
     var app = new NetworkManagerValaApp(config, fullscreen, debug_enabled);
     return app.run(args);
 }
