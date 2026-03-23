@@ -94,6 +94,32 @@ public class NetworkManagerClientVala : Object {
         return devices_out;
     }
 
+    public bool get_wifi_enabled(out bool enabled, out string error_message) {
+        enabled = false;
+        error_message = "";
+
+        try {
+            enabled = get_prop(NM_PATH, NM_IFACE, "WirelessEnabled").get_boolean();
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    public bool get_networking_enabled(out bool enabled, out string error_message) {
+        enabled = false;
+        error_message = "";
+
+        try {
+            enabled = get_prop(NM_PATH, NM_IFACE, "NetworkingEnabled").get_boolean();
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
     public List<string> get_device_paths() {
         var paths = new List<string>();
 
