@@ -6,6 +6,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private bool fullscreen_mode;
     private bool debug_enabled;
     private NetworkManagerClientVala nm;
+    private Gtk.Box? wifi_box = null;
 
     public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application: app, title: "Network Manager");
@@ -189,7 +190,40 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_title.set_xalign(0.0f);
         root.append(wifi_title);
 
-        var wifi_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        var refresh_button = new Gtk.Button.with_label("Refresh Wi-Fi");
+        refresh_button.clicked.connect(() => {
+            string scan_error;
+            nm.scan_wifi(out scan_error);
+            if (scan_error != "") {
+                debug_log("wifi scan error: " + scan_error);
+            }
+            refresh_wifi_rows();
+        });
+        root.append(refresh_button);
+
+        wifi_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        refresh_wifi_rows();
+        root.append(wifi_box);
+
+        set_child(root);
+    }
+
+    private void clear_box(Gtk.Box box) {
+        Gtk.Widget? child = box.get_first_child();
+        while (child != null) {
+            Gtk.Widget? next = child.get_next_sibling();
+            box.remove(child);
+            child = next;
+        }
+    }
+
+    private void refresh_wifi_rows() {
+        if (wifi_box == null) {
+            return;
+        }
+
+        clear_box(wifi_box);
+
         foreach (var net in nm.get_wifi_networks()) {
             string lock = net.is_secured ? " [locked]" : "";
             string active = net.connected ? " [connected]" : "";
@@ -205,13 +239,11 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_row.set_xalign(0.0f);
             wifi_box.append(wifi_row);
         }
+
         if (wifi_box.get_first_child() == null) {
             var empty = new Gtk.Label("No Wi-Fi access points discovered");
             empty.set_xalign(0.0f);
             wifi_box.append(empty);
         }
-        root.append(wifi_box);
-
-        set_child(root);
     }
 }
