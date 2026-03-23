@@ -532,6 +532,67 @@ public class NetworkManagerClientVala : Object {
         return vpns;
     }
 
+    private bool activate_connection(string name, out string error_message) {
+        error_message = "";
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            string? conn_path = find_connection_by_name(name);
+            if (conn_path == null) {
+                error_message = "Connection not found.";
+                return false;
+            }
+            nm.call_sync(
+                "ActivateConnection",
+                new Variant("(ooo)", conn_path, "/", "/"),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    private bool deactivate_connection(string name, out string error_message) {
+        error_message = "";
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            var active_conns = get_prop(NM_PATH, NM_IFACE, "ActiveConnections");
+            for (int i = 0; i < active_conns.n_children(); i++) {
+                string ac_path = active_conns.get_child_value(i).get_string();
+                string id = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Id").get_string();
+                if (id != name) {
+                    continue;
+                }
+
+                nm.call_sync(
+                    "DeactivateConnection",
+                    new Variant("(o)", ac_path),
+                    DBusCallFlags.NONE,
+                    -1,
+                    null
+                );
+                return true;
+            }
+
+            error_message = "Active connection not found.";
+            return false;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    public bool connect_vpn(string name, out string error_message) {
+        return activate_connection(name, out error_message);
+    }
+
+    public bool disconnect_vpn(string name, out string error_message) {
+        return deactivate_connection(name, out error_message);
+    }
+
     public bool scan_wifi(out string error_message) {
         error_message = "";
 
