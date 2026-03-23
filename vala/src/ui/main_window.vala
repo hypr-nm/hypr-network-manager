@@ -136,6 +136,30 @@ public class MainWindow : Gtk.ApplicationWindow {
         nm_label.set_wrap(true);
         root.append(nm_label);
 
+        bool wifi_enabled = false;
+        string wifi_error = "";
+        bool wifi_ok = nm.get_wifi_enabled(out wifi_enabled, out wifi_error);
+        var wifi_state = new Gtk.Label(
+            wifi_ok
+                ? "Wi-Fi radio enabled: %s".printf(wifi_enabled.to_string())
+                : "Wi-Fi radio read failed: " + wifi_error
+        );
+        wifi_state.set_xalign(0.0f);
+        wifi_state.set_wrap(true);
+        root.append(wifi_state);
+
+        bool networking_enabled2 = false;
+        string net_error = "";
+        bool net_ok = nm.get_networking_enabled(out networking_enabled2, out net_error);
+        var net_state = new Gtk.Label(
+            net_ok
+                ? "Networking enabled: %s".printf(networking_enabled2.to_string())
+                : "Networking read failed: " + net_error
+        );
+        net_state.set_xalign(0.0f);
+        net_state.set_wrap(true);
+        root.append(net_state);
+
         var device_title = new Gtk.Label("Discovered devices");
         device_title.set_xalign(0.0f);
         root.append(device_title);
