@@ -10,6 +10,7 @@ executable(
     'src/models/wifi_network.vala',
     'src/models/network_device.vala',
     'src/models/vpn_connection.vala',
+    'src/backend/nm_client.vala',
     'src/ui/main_window.vala',
     'src/app.vala',
     'src/main.vala',
