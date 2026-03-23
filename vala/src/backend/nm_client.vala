@@ -375,6 +375,19 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
+    public bool disconnect_wifi(WifiNetwork network, out string error_message) {
+        error_message = "";
+
+        try {
+            var dev = make_proxy(network.device_path, NM_DEVICE_IFACE);
+            dev.call_sync("Disconnect", null, DBusCallFlags.NONE, -1, null);
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
     public bool scan_wifi(out string error_message) {
         error_message = "";
 
