@@ -7,6 +7,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private bool debug_enabled;
     private NetworkManagerClientVala nm;
     private Gtk.Box? wifi_box = null;
+    private Gtk.Label? wifi_action_status = null;
 
     public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application: app, title: "Network Manager");
@@ -205,6 +206,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_wifi_rows();
         root.append(wifi_box);
 
+        wifi_action_status = new Gtk.Label("");
+        wifi_action_status.set_xalign(0.0f);
+        wifi_action_status.set_wrap(true);
+        root.append(wifi_action_status);
+
         set_child(root);
     }
 
@@ -227,7 +233,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         foreach (var net in nm.get_wifi_networks()) {
             string lock = net.is_secured ? " [locked]" : "";
             string active = net.connected ? " [connected]" : "";
-            var wifi_row = new Gtk.Label(
+            string saved = net.saved ? " [saved]" : "";
+
+            var wifi_text = new Gtk.Label(
                 "%s - %u%% (%s)%s%s".printf(
                     net.ssid,
                     net.signal,
@@ -236,8 +244,34 @@ public class MainWindow : Gtk.ApplicationWindow {
                     active
                 )
             );
-            wifi_row.set_xalign(0.0f);
-            wifi_box.append(wifi_row);
+            wifi_text.set_xalign(0.0f);
+
+            if (saved != "") {
+                wifi_text.set_text(wifi_text.get_text() + saved);
+            }
+
+            var row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+            wifi_text.set_hexpand(true);
+            row.append(wifi_text);
+
+            if (net.saved && !net.connected) {
+                var connect_btn = new Gtk.Button.with_label("Connect");
+                connect_btn.clicked.connect(() => {
+                    string connect_error;
+                    bool ok = nm.connect_saved_wifi(net, out connect_error);
+                    if (wifi_action_status != null) {
+                        if (ok) {
+                            wifi_action_status.set_text("Connect requested for " + net.ssid);
+                        } else {
+                            wifi_action_status.set_text("Connect failed: " + connect_error);
+                        }
+                    }
+                    refresh_wifi_rows();
+                });
+                row.append(connect_btn);
+            }
+
+            wifi_box.append(row);
         }
 
         if (wifi_box.get_first_child() == null) {
