@@ -27,6 +27,10 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         configure_layer_shell();
         build_ui();
+        Timeout.add_seconds(20, () => {
+            refresh_all_sections();
+            return true;
+        });
     }
 
     private void debug_log(string message) {
@@ -381,6 +385,12 @@ public class MainWindow : Gtk.ApplicationWindow {
             empty.set_xalign(0.0f);
             wifi_box.append(empty);
         }
+    }
+
+    private void refresh_all_sections() {
+        refresh_wifi_rows();
+        refresh_ethernet_rows();
+        refresh_vpn_rows();
     }
 
     private void refresh_ethernet_rows() {
