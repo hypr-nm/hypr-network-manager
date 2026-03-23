@@ -10,15 +10,13 @@ private extern void gtk_style_provider_add_for_display(
 
 public class NetworkManagerValaApp : Gtk.Application {
     private AppConfig config;
-    private bool fullscreen;
     private bool debug_enabled;
     private MainWindow? window;
     private BlankWindow? dismiss_overlay;
 
-    public NetworkManagerValaApp(AppConfig config, bool fullscreen, bool debug_enabled) {
+    public NetworkManagerValaApp(AppConfig config, bool debug_enabled) {
         Object(application_id: "io.github.hypr-network-manager.vala");
         this.config = config;
-        this.fullscreen = fullscreen;
         this.debug_enabled = debug_enabled;
     }
 
@@ -106,7 +104,7 @@ public class NetworkManagerValaApp : Gtk.Application {
     }
 
     private void show_dismiss_overlay_for_monitor(Gdk.Monitor? monitor) {
-        if (window == null || fullscreen || dismiss_overlay != null || monitor == null) {
+        if (window == null || dismiss_overlay != null || monitor == null) {
             return;
         }
 
@@ -121,7 +119,7 @@ public class NetworkManagerValaApp : Gtk.Application {
     }
 
     private void on_main_window_mapped() {
-        if (window == null || fullscreen) {
+        if (window == null) {
             return;
         }
 
@@ -148,7 +146,6 @@ public class NetworkManagerValaApp : Gtk.Application {
 
         window = new MainWindow(
             this,
-            fullscreen,
             debug_enabled,
             config.window_width,
             config.window_height,

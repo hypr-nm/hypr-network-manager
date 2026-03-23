@@ -12,7 +12,6 @@ using GtkLayerShell;
 
 public class MainWindow : Gtk.ApplicationWindow {
     private bool debug_enabled;
-    private bool fullscreen_mode;
     private int window_width;
     private int window_height;
     private bool anchor_top;
@@ -47,7 +46,6 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     public MainWindow(
         Gtk.Application app,
-        bool fullscreen,
         bool debug_enabled,
         int window_width,
         int window_height,
@@ -68,7 +66,6 @@ public class MainWindow : Gtk.ApplicationWindow {
     ) {
         Object(application: app, title: "Network Manager");
         this.debug_enabled = debug_enabled;
-        this.fullscreen_mode = fullscreen;
         this.window_width = window_width;
         this.window_height = window_height;
         this.anchor_top = anchor_top;
@@ -135,25 +132,14 @@ public class MainWindow : Gtk.ApplicationWindow {
         GtkLayerShell.set_namespace(this, "hypr-network-manager");
         GtkLayerShell.set_layer(this, layer_mode);
 
-        if (fullscreen_mode) {
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, true);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.RIGHT, true);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.BOTTOM, true);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.LEFT, true);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.TOP, 0);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.RIGHT, 0);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, 0);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, 0);
-        } else {
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, anchor_top);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.RIGHT, anchor_right);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.BOTTOM, anchor_bottom);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.LEFT, anchor_left);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.TOP, shell_margin_top);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.RIGHT, shell_margin_right);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, shell_margin_bottom);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, shell_margin_left);
-        }
+        GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, anchor_top);
+        GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.RIGHT, anchor_right);
+        GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.BOTTOM, anchor_bottom);
+        GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.LEFT, anchor_left);
+        GtkLayerShell.set_margin(this, GtkLayerShell.Edge.TOP, shell_margin_top);
+        GtkLayerShell.set_margin(this, GtkLayerShell.Edge.RIGHT, shell_margin_right);
+        GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, shell_margin_bottom);
+        GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, shell_margin_left);
 
         GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
         GtkLayerShell.auto_exclusive_zone_enable(this);
@@ -202,10 +188,6 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     public void set_popup_text_input_mode(bool enabled) {
-        if (fullscreen_mode) {
-            return;
-        }
-
         if (enabled) {
             GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
             return;

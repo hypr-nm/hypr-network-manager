@@ -1,6 +1,5 @@
 int main(string[] args) {
     string? config_path = null;
-    bool fullscreen = false;
     bool debug_enabled = false;
     bool status = false;
     bool toggle_wifi = false;
@@ -9,7 +8,6 @@ int main(string[] args) {
         {"config", 'c', 0, OptionArg.STRING, ref config_path, "Config JSON path", "PATH"},
         {"status", 0, 0, OptionArg.NONE, ref status, "Print JSON status for waybar/eww", null},
         {"toggle-wifi", 0, 0, OptionArg.NONE, ref toggle_wifi, "Toggle Wi-Fi and exit", null},
-        {"fullscreen", 'f', 0, OptionArg.NONE, ref fullscreen, "Launch fullscreen", null},
         {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, "Enable debug logs", null},
         {null}
     };
@@ -44,6 +42,6 @@ int main(string[] args) {
         return 0;
     }
 
-    var app = new NetworkManagerValaApp(config, fullscreen, debug_enabled);
+    var app = new NetworkManagerValaApp(config, debug_enabled);
     return app.run(args);
 }
