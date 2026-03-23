@@ -129,3 +129,43 @@ scrollbar slider:hover { background-color: #434c5e; }
 
 dialog .suggested-action { background-color: #88c0d0; color: #2e3440; border-radius: 6px; font-weight: 600; }
 dialog .suggested-action:hover { background-color: #9bcdd9; }
+
+/* Style overrides moved from config.json */
+window.nm-window,
+.nm-window {
+   opacity: 1.0;
+   border-radius: 12px;
+}
+
+.nm-root,
+.nm-window,
+.nm-root label,
+.nm-window label,
+.nm-root button,
+.nm-window button,
+.nm-root entry,
+.nm-window entry {
+   font-family: sans-serif;
+   font-size: 13px;
+}
+
+/* Wi-Fi details/edit layout */
+.nm-page-wifi-details,
+.nm-page-wifi-edit { padding: 2px; }
+.nm-details-nav-row { padding-bottom: 2px; }
+.nm-nav-back { color: #eceff4; background: rgba(76, 86, 106, 0.28); border: 1px solid rgba(76, 86, 106, 0.65); border-radius: 8px; padding: 2px 10px; min-height: 26px; min-width: 68px; font-size: 12px; }
+.nm-nav-back:hover { color: #eceff4; background: rgba(76, 86, 106, 0.44); }
+.nm-details-network-title { font-size: 24px; font-weight: 700; }
+.nm-details-header { padding: 2px 0 4px; }
+.nm-details-network-icon { color: #eceff4; }
+.nm-details-action-row { padding-top: 2px; }
+.nm-details-group-title { font-size: 11px; letter-spacing: 1px; font-weight: 700; color: #4c566a; }
+.nm-details-section { padding: 2px 0 8px; }
+.nm-details-rows { padding: 4px 0; }
+.nm-details-row, .nm-details-item { padding: 4px 0; }
+.nm-details-key, .nm-details-item-key { color: #88c0d0; font-size: 12px; font-weight: 600; text-decoration: underline; }
+.nm-details-value, .nm-details-item-value { color: #eceff4; font-size: 16px; font-weight: 500; }
+.nm-edit-form { padding-top: 6px; }
+.nm-menu-button { min-width: 30px; min-height: 28px; padding: 2px 8px; }
+.nm-details-open-button { font-weight: 700; }
+.nm-details-action-button { min-height: 30px; }
