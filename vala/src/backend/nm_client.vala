@@ -272,6 +272,44 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
+    private bool set_nm_bool_property(string prop_name, bool value, out string error_message) {
+        error_message = "";
+        try {
+            var proxy = make_proxy(NM_PATH, DBUS_PROPS_IFACE);
+            proxy.call_sync(
+                "Set",
+                new Variant("(ssv)", NM_IFACE, prop_name, new Variant.boolean(value)),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    public bool set_wifi_enabled(bool enabled, out string error_message) {
+        return set_nm_bool_property("WirelessEnabled", enabled, out error_message);
+    }
+
+    public bool toggle_wifi(out bool enabled_after_toggle, out string error_message) {
+        enabled_after_toggle = false;
+        error_message = "";
+
+        bool current;
+        if (!get_wifi_enabled(out current, out error_message)) {
+            return false;
+        }
+
+        enabled_after_toggle = !current;
+        if (!set_wifi_enabled(enabled_after_toggle, out error_message)) {
+            return false;
+        }
+        return true;
+    }
+
     public List<WifiNetwork> get_wifi_networks() {
         var networks = new List<WifiNetwork>();
         var seen = new HashTable<string, bool>(str_hash, str_equal);
