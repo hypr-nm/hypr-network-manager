@@ -15,6 +15,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         set_default_size(config.window_width, config.window_height);
         set_resizable(false);
+        add_css_class("nm-window");
 
         configure_layer_shell();
         build_ui();
@@ -87,12 +88,14 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void build_ui() {
         var root = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
+        root.add_css_class("nm-root");
         root.set_margin_top(16);
         root.set_margin_bottom(16);
         root.set_margin_start(16);
         root.set_margin_end(16);
 
         var title = new Gtk.Label("hypr-network-manager phase 2");
+        title.add_css_class("nm-title");
         title.set_xalign(0.0f);
         root.append(title);
 

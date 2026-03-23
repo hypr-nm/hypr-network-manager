@@ -1,0 +1,14 @@
+window.nm-window {
+  background: rgba(22, 25, 31, 0.96);
+  color: #e8ecf1;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nm-root {
+  color: #e8ecf1;
+}
+
+.nm-title {
+  font-weight: 700;
+}
