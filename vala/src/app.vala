@@ -160,7 +160,12 @@ public class NetworkManagerValaApp : Gtk.Application {
             config.margin_right,
             config.margin_bottom,
             config.margin_left,
-            config.layer
+            config.layer,
+            config.scan_interval,
+            config.close_on_connect,
+            config.show_bssid,
+            config.show_frequency,
+            config.show_band
         );
         window.close_request.connect(() => {
             hide_dismiss_overlay();

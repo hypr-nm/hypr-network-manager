@@ -12,6 +12,11 @@ public class AppConfig : Object {
     public int margin_bottom = 8;
     public int margin_left = 8;
     public string layer = "overlay";
+    public int scan_interval = 30;
+    public bool close_on_connect = true;
+    public bool show_bssid = false;
+    public bool show_frequency = true;
+    public bool show_band = false;
 
     private static string? extract_json_string(string content, string key) {
         try {
@@ -33,6 +38,18 @@ public class AppConfig : Object {
                 return int.parse(info.fetch(1));
             }
         } catch (Error e) {
+        }
+        return null;
+    }
+
+    private static bool? extract_json_bool(string content, string key) {
+        try {
+            var regex = new Regex("\"" + key + "\"\\s*:\\s*(true|false)");
+            MatchInfo info;
+            if (regex.match(content, 0, out info)) {
+                return info.fetch(1) == "true";
+            }
+        } catch (RegexError e) {
         }
         return null;
     }
@@ -187,6 +204,31 @@ public class AppConfig : Object {
             int? cfg_margin_left = extract_json_int(content, "layer_shell_margin_left");
             if (cfg_margin_left != null) {
                 cfg.margin_left = cfg_margin_left;
+            }
+
+            int? cfg_scan_interval = extract_json_int(content, "scan_interval");
+            if (cfg_scan_interval != null && cfg_scan_interval > 0) {
+                cfg.scan_interval = cfg_scan_interval;
+            }
+
+            bool? cfg_close_on_connect = extract_json_bool(content, "close_on_connect");
+            if (cfg_close_on_connect != null) {
+                cfg.close_on_connect = cfg_close_on_connect;
+            }
+
+            bool? cfg_show_bssid = extract_json_bool(content, "show_bssid");
+            if (cfg_show_bssid != null) {
+                cfg.show_bssid = cfg_show_bssid;
+            }
+
+            bool? cfg_show_frequency = extract_json_bool(content, "show_frequency");
+            if (cfg_show_frequency != null) {
+                cfg.show_frequency = cfg_show_frequency;
+            }
+
+            bool? cfg_show_band = extract_json_bool(content, "show_band");
+            if (cfg_show_band != null) {
+                cfg.show_band = cfg_show_band;
             }
 
             if (debug_enabled) {

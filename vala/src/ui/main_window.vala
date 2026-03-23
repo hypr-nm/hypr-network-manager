@@ -24,6 +24,11 @@ public class MainWindow : Gtk.ApplicationWindow {
     private int shell_margin_bottom;
     private int shell_margin_left;
     private string shell_layer;
+    private uint refresh_interval_seconds;
+    private bool close_on_connect;
+    private bool show_bssid;
+    private bool show_frequency;
+    private bool show_band;
     private NetworkManagerClientVala nm;
     private Gtk.Label status_label;
     private Gtk.Image status_icon;
@@ -54,7 +59,12 @@ public class MainWindow : Gtk.ApplicationWindow {
         int margin_right,
         int margin_bottom,
         int margin_left,
-        string shell_layer
+        string shell_layer,
+        int scan_interval,
+        bool close_on_connect,
+        bool show_bssid,
+        bool show_frequency,
+        bool show_band
     ) {
         Object(application: app, title: "Network Manager");
         this.debug_enabled = debug_enabled;
@@ -70,6 +80,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         this.shell_margin_bottom = margin_bottom;
         this.shell_margin_left = margin_left;
         this.shell_layer = shell_layer;
+        this.refresh_interval_seconds = (uint) (scan_interval > 0 ? scan_interval : 30);
+        this.close_on_connect = close_on_connect;
+        this.show_bssid = show_bssid;
+        this.show_frequency = show_frequency;
+        this.show_band = show_band;
 
         set_default_size(window_width, window_height);
         set_resizable(false);
@@ -81,7 +96,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         build_ui();
         configure_key_handling();
         refresh_all();
-        Timeout.add_seconds(20, () => {
+        Timeout.add_seconds(refresh_interval_seconds, () => {
+            string error_message;
+            if (!nm.scan_wifi(out error_message)) {
+                debug_log("Could not request periodic Wi-Fi scan: " + error_message);
+            }
             refresh_all();
             return true;
         });
@@ -184,6 +203,11 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     public void set_popup_text_input_mode(bool enabled) {
         if (fullscreen_mode) {
+            return;
+        }
+
+        if (enabled) {
+            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
             return;
         }
 
@@ -312,6 +336,16 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
     }
 
+    private string get_band_label(uint32 frequency_mhz) {
+        if (frequency_mhz >= 2400 && frequency_mhz < 2500) {
+            return "2.4 GHz";
+        }
+        if (frequency_mhz >= 5000 && frequency_mhz < 6000) {
+            return "5 GHz";
+        }
+        return "";
+    }
+
     private Gtk.ListBoxRow build_wifi_row(WifiNetwork net) {
         var row = new Gtk.ListBoxRow();
         row.add_css_class("nm-wifi-row");
@@ -339,7 +373,21 @@ public class MainWindow : Gtk.ApplicationWindow {
         ssid_lbl.add_css_class("nm-ssid-label");
         info.append(ssid_lbl);
 
-        var sub = new Gtk.Label("%s (%u%%)".printf(net.signal_label, net.signal));
+        string subtitle = "%s (%u%%)".printf(net.signal_label, net.signal);
+        if (show_frequency && net.frequency_mhz > 0) {
+            subtitle += " • %u MHz".printf(net.frequency_mhz);
+        }
+        if (show_band && net.frequency_mhz > 0) {
+            string band = get_band_label(net.frequency_mhz);
+            if (band != "") {
+                subtitle += " • %s".printf(band);
+            }
+        }
+        if (show_bssid && net.bssid != "") {
+            subtitle += " • %s".printf(net.bssid);
+        }
+
+        var sub = new Gtk.Label(subtitle);
         sub.set_xalign(0.0f);
         sub.add_css_class("nm-sub-label");
         info.append(sub);
@@ -487,7 +535,14 @@ public class MainWindow : Gtk.ApplicationWindow {
         string error_message;
         if (!nm.connect_wifi(net, password, out error_message)) {
             show_error("Connect failed: " + error_message);
+            return;
         }
+
+        if (close_on_connect) {
+            this.close();
+            return;
+        }
+
         refresh_all();
     }
 

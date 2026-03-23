@@ -6,6 +6,8 @@ public class WifiNetwork : Object {
     public bool saved { get; construct set; }
     public string device_path { get; construct set; }
     public string ap_path { get; construct set; }
+    public string bssid { get; construct set; }
+    public uint32 frequency_mhz { get; construct set; }
 
     public string signal_label {
         owned get {

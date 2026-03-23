@@ -11,16 +11,12 @@
   "layer_shell_margin_right": 8,
   "layer_shell_margin_bottom": 8,
   "layer_shell_margin_left": 8,
-  "opacity": 1.0,
-  "border_radius": 12,
-  "font_family": "sans-serif",
-  "font_size": 13,
 
   "scan_interval": 30,
   "close_on_connect": true,
   "show_bssid": false,
-  "show_frequency": false,
-  "show_signal_bars": true,
+  "show_frequency": true,
+  "show_band": false,
 
   "waybar_icon_font": "NotoSansMono Nerd Font"
 }
