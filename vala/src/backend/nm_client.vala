@@ -144,6 +144,35 @@ public class NetworkManagerClientVala : Object {
         return null;
     }
 
+    private string? find_connection_by_name(string name) {
+        try {
+            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var conns = list_res.get_child_value(0);
+
+            for (int i = 0; i < conns.n_children(); i++) {
+                string conn_path = conns.get_child_value(i).get_string();
+                var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var all_settings = settings_res.get_child_value(0);
+
+                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+                if (conn_group == null) {
+                    continue;
+                }
+
+                Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+                if (id_v != null && id_v.get_string() == name) {
+                    return conn_path;
+                }
+            }
+        } catch (Error e) {
+            debug_log("could not resolve connection by name: " + e.message);
+        }
+
+        return null;
+    }
+
     private static Variant make_ssid_variant(string ssid) {
         var ssid_bytes = new VariantBuilder(new VariantType("ay"));
         for (int i = 0; i < ssid.length; i++) {
@@ -381,6 +410,29 @@ public class NetworkManagerClientVala : Object {
         try {
             var dev = make_proxy(network.device_path, NM_DEVICE_IFACE);
             dev.call_sync("Disconnect", null, DBusCallFlags.NONE, -1, null);
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    public bool forget_network(string ssid_or_name, out string error_message) {
+        error_message = "";
+
+        try {
+            string? conn_path = find_connection_by_ssid(ssid_or_name);
+            if (conn_path == null) {
+                conn_path = find_connection_by_name(ssid_or_name);
+            }
+
+            if (conn_path == null) {
+                error_message = "No saved connection found.";
+                return false;
+            }
+
+            var conn = make_proxy(conn_path, NM_CONN_IFACE);
+            conn.call_sync("Delete", null, DBusCallFlags.NONE, -1, null);
             return true;
         } catch (Error e) {
             error_message = e.message;
