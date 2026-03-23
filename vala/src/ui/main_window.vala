@@ -16,6 +16,8 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Label? nm_probe_label = null;
     private Gtk.Label? wifi_state_label = null;
     private Gtk.Label? net_state_label = null;
+    private Gtk.Image? status_icon = null;
+    private Gtk.Label? status_label = null;
     private Gtk.Switch? networking_switch = null;
     private Gtk.Switch? wifi_switch = null;
     private bool updating_switches = false;
@@ -162,6 +164,16 @@ public class MainWindow : Gtk.ApplicationWindow {
         title.add_css_class("nm-title");
         title.set_xalign(0.0f);
         root.append(title);
+
+        var status_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        status_icon = new Gtk.Image.from_icon_name("network-wireless-offline-symbolic");
+        status_icon.set_pixel_size(16);
+        status_row.append(status_icon);
+        status_label = new Gtk.Label("Loading status...");
+        status_label.set_xalign(0.0f);
+        status_label.set_hexpand(true);
+        status_row.append(status_label);
+        root.append(status_row);
 
         var subtitle = new Gtk.Label("Layer-shell + config loading is active.");
         subtitle.set_xalign(0.0f);
@@ -439,10 +451,73 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_all_sections() {
+        refresh_status_bar();
         refresh_probe_labels();
         refresh_wifi_rows();
         refresh_ethernet_rows();
         refresh_vpn_rows();
+    }
+
+    private void refresh_status_bar() {
+        if (status_icon == null || status_label == null) {
+            return;
+        }
+
+        bool networking_on;
+        bool wifi_on;
+        string error_message;
+        if (!nm.get_networking_enabled(out networking_on, out error_message)) {
+            networking_on = false;
+        }
+        if (!nm.get_wifi_enabled(out wifi_on, out error_message)) {
+            wifi_on = false;
+        }
+
+        NetworkDevice? active_wifi = null;
+        NetworkDevice? active_eth = null;
+        foreach (var dev in nm.get_devices()) {
+            if (dev.is_wifi && dev.is_connected) {
+                active_wifi = dev;
+            } else if (dev.is_ethernet && dev.is_connected) {
+                active_eth = dev;
+            }
+        }
+
+        if (!networking_on) {
+            status_icon.set_from_icon_name("network-offline-symbolic");
+            status_label.set_text("Networking disabled");
+            return;
+        }
+
+        if (active_eth != null) {
+            status_icon.set_from_icon_name("network-wired-symbolic");
+            string name = active_eth.connection != "" ? active_eth.connection : active_eth.name;
+            status_label.set_text("Ethernet: " + name);
+            return;
+        }
+
+        if (active_wifi != null) {
+            uint signal = 0;
+            foreach (var net in nm.get_wifi_networks()) {
+                if (net.connected) {
+                    signal = net.signal;
+                    break;
+                }
+            }
+            status_icon.set_from_icon_name("network-wireless-signal-excellent-symbolic");
+            string name = active_wifi.connection != "" ? active_wifi.connection : active_wifi.name;
+            status_label.set_text("Wi-Fi: %s (%u%%)".printf(name, signal));
+            return;
+        }
+
+        if (!wifi_on) {
+            status_icon.set_from_icon_name("network-wireless-disabled-symbolic");
+            status_label.set_text("Wi-Fi disabled");
+            return;
+        }
+
+        status_icon.set_from_icon_name("network-wireless-offline-symbolic");
+        status_label.set_text("Disconnected");
     }
 
     private void refresh_probe_labels() {
