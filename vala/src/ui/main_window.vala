@@ -272,6 +272,21 @@ public class MainWindow : Gtk.ApplicationWindow {
                     refresh_wifi_rows();
                 });
                 row.append(connect_btn);
+
+                var forget_btn = new Gtk.Button.with_label("Forget");
+                forget_btn.clicked.connect(() => {
+                    string forget_error;
+                    bool ok = nm.forget_network(net.ssid, out forget_error);
+                    if (wifi_action_status != null) {
+                        if (ok) {
+                            wifi_action_status.set_text("Forgot network " + net.ssid);
+                        } else {
+                            wifi_action_status.set_text("Forget failed: " + forget_error);
+                        }
+                    }
+                    refresh_wifi_rows();
+                });
+                row.append(forget_btn);
             }
 
             if (net.connected) {
