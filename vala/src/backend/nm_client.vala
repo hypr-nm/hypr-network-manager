@@ -181,6 +181,15 @@ public class NetworkManagerClientVala : Object {
         return ssid_bytes.end();
     }
 
+    private static string json_escape(string value) {
+        string out = value.replace("\\", "\\\\");
+        out = out.replace("\"", "\\\"");
+        out = out.replace("\n", "\\n");
+        out = out.replace("\r", "\\r");
+        out = out.replace("\t", "\\t");
+        return out;
+    }
+
     public bool is_networking_enabled(out string error_message) {
         error_message = "";
 
@@ -647,5 +656,76 @@ public class NetworkManagerClientVala : Object {
         }
 
         return paths;
+    }
+
+    public string get_status_json() {
+        bool networking_on;
+        bool wifi_on;
+        string error_message;
+        if (!get_networking_enabled(out networking_on, out error_message)) {
+            networking_on = false;
+        }
+        if (!get_wifi_enabled(out wifi_on, out error_message)) {
+            wifi_on = false;
+        }
+
+        var devices = get_devices();
+        NetworkDevice? active_wifi = null;
+        NetworkDevice? active_eth = null;
+        foreach (var dev in devices) {
+            if (dev.is_wifi && dev.is_connected) {
+                active_wifi = dev;
+            } else if (dev.is_ethernet && dev.is_connected) {
+                active_eth = dev;
+            }
+        }
+
+        string text;
+        string alt;
+        string tooltip;
+        string klass;
+
+        if (!networking_on) {
+            text = "NET-OFF";
+            alt = "Offline";
+            tooltip = "Networking is disabled";
+            klass = "offline";
+        } else if (active_eth != null) {
+            text = "ETH";
+            alt = active_eth.connection != "" ? active_eth.connection : "Ethernet";
+            tooltip = "Ethernet: " + active_eth.name;
+            klass = "ethernet";
+        } else if (active_wifi != null) {
+            uint signal = 100;
+            var wifi_nets = get_wifi_networks();
+            foreach (var net in wifi_nets) {
+                if (net.connected) {
+                    signal = net.signal;
+                    break;
+                }
+            }
+
+            text = "WIFI";
+            alt = active_wifi.connection != "" ? active_wifi.connection : "WiFi";
+            tooltip = "WiFi: " + alt + " (" + signal.to_string() + "%)\\nDevice: " + active_wifi.name;
+            klass = "wifi";
+        } else if (!wifi_on) {
+            text = "WIFI-OFF";
+            alt = "WiFi Off";
+            tooltip = "WiFi is disabled";
+            klass = "wifi-off";
+        } else {
+            text = "DISCONNECTED";
+            alt = "Disconnected";
+            tooltip = "Not connected to any network";
+            klass = "disconnected";
+        }
+
+        return "{\"text\":\"%s\",\"alt\":\"%s\",\"tooltip\":\"%s\",\"class\":\"%s\"}".printf(
+            json_escape(text),
+            json_escape(alt),
+            json_escape(tooltip),
+            json_escape(klass)
+        );
     }
 }
