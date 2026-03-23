@@ -1,26 +1,30 @@
 using Gtk;
 
 public class NetworkManagerValaApp : Gtk.Application {
-    public NetworkManagerValaApp() {
+    private AppConfig config;
+    private bool fullscreen;
+    private bool debug_enabled;
+    private MainWindow? window;
+
+    public NetworkManagerValaApp(AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application_id: "io.github.hypr-network-manager.rebuild");
+        this.config = config;
+        this.fullscreen = fullscreen;
+        this.debug_enabled = debug_enabled;
     }
 
     protected override void activate() {
-        var window = new Gtk.ApplicationWindow(this);
-        window.set_title("hypr-network-manager");
-        window.set_default_size(360, 460);
+        if (window != null) {
+            window.present();
+            return;
+        }
 
-        var root = new Gtk.Box(Gtk.Orientation.VERTICAL, 12);
-        root.set_margin_top(16);
-        root.set_margin_bottom(16);
-        root.set_margin_start(16);
-        root.set_margin_end(16);
-
-        var title = new Gtk.Label("hypr-network-manager rebuild baseline");
-        title.set_wrap(true);
-        root.append(title);
-
-        window.set_child(root);
+        window = new MainWindow(this, config, fullscreen, debug_enabled);
+        window.close_request.connect(() => {
+            window = null;
+            quit();
+            return false;
+        });
         window.present();
     }
 }
