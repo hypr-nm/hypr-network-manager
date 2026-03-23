@@ -254,6 +254,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_text.set_hexpand(true);
             row.append(wifi_text);
 
+            var row_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 4);
+            row_container.append(row);
+
             if (net.saved && !net.connected) {
                 var connect_btn = new Gtk.Button.with_label("Connect");
                 connect_btn.clicked.connect(() => {
@@ -271,7 +274,44 @@ public class MainWindow : Gtk.ApplicationWindow {
                 row.append(connect_btn);
             }
 
-            wifi_box.append(row);
+            if (net.is_secured && !net.saved && !net.connected) {
+                var prompt_btn = new Gtk.Button.with_label("Password...");
+                row.append(prompt_btn);
+
+                var revealer = new Gtk.Revealer();
+                revealer.set_reveal_child(false);
+
+                var prompt_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+                var pass_entry = new Gtk.Entry();
+                pass_entry.set_placeholder_text("Wi-Fi password");
+                pass_entry.set_visibility(false);
+                pass_entry.set_hexpand(true);
+
+                var submit_btn = new Gtk.Button.with_label("Connect");
+                submit_btn.clicked.connect(() => {
+                    string connect_error;
+                    bool ok = nm.connect_wifi_with_password(net, pass_entry.get_text(), out connect_error);
+                    if (wifi_action_status != null) {
+                        if (ok) {
+                            wifi_action_status.set_text("Connect requested for " + net.ssid);
+                        } else {
+                            wifi_action_status.set_text("Connect failed: " + connect_error);
+                        }
+                    }
+                    refresh_wifi_rows();
+                });
+
+                prompt_box.append(pass_entry);
+                prompt_box.append(submit_btn);
+                revealer.set_child(prompt_box);
+                row_container.append(revealer);
+
+                prompt_btn.clicked.connect(() => {
+                    revealer.set_reveal_child(!revealer.get_reveal_child());
+                });
+            }
+
+            wifi_box.append(row_container);
         }
 
         if (wifi_box.get_first_child() == null) {
