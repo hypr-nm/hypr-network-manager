@@ -16,7 +16,7 @@ public class NetworkManagerValaApp : Gtk.Application {
     private BlankWindow? dismiss_overlay;
 
     public NetworkManagerValaApp(AppConfig config, bool fullscreen, bool debug_enabled) {
-        Object(application_id: "io.github.hypr-network-manager.rebuild");
+        Object(application_id: "io.github.hypr-network-manager.vala");
         this.config = config;
         this.fullscreen = fullscreen;
         this.debug_enabled = debug_enabled;
@@ -146,7 +146,21 @@ public class NetworkManagerValaApp : Gtk.Application {
 
         load_theme_css();
 
-        window = new MainWindow(this, config, fullscreen, debug_enabled);
+        window = new MainWindow(
+            this,
+            fullscreen,
+            debug_enabled,
+            config.window_width,
+            config.window_height,
+            config.anchor_top,
+            config.anchor_right,
+            config.anchor_bottom,
+            config.anchor_left,
+            config.margin_top,
+            config.margin_right,
+            config.margin_bottom,
+            config.margin_left
+        );
         window.close_request.connect(() => {
             hide_dismiss_overlay();
             window = null;
