@@ -8,6 +8,8 @@ public class MainWindow : Gtk.ApplicationWindow {
     private NetworkManagerClientVala nm;
     private Gtk.Box? wifi_box = null;
     private Gtk.Label? wifi_action_status = null;
+    private Gtk.Box? ethernet_box = null;
+    private Gtk.Label? ethernet_action_status = null;
 
     public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application: app, title: "Network Manager");
@@ -211,6 +213,19 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_action_status.set_wrap(true);
         root.append(wifi_action_status);
 
+        var ethernet_title = new Gtk.Label("Ethernet");
+        ethernet_title.set_xalign(0.0f);
+        root.append(ethernet_title);
+
+        ethernet_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        refresh_ethernet_rows();
+        root.append(ethernet_box);
+
+        ethernet_action_status = new Gtk.Label("");
+        ethernet_action_status.set_xalign(0.0f);
+        ethernet_action_status.set_wrap(true);
+        root.append(ethernet_action_status);
+
         set_child(root);
     }
 
@@ -350,6 +365,55 @@ public class MainWindow : Gtk.ApplicationWindow {
             var empty = new Gtk.Label("No Wi-Fi access points discovered");
             empty.set_xalign(0.0f);
             wifi_box.append(empty);
+        }
+    }
+
+    private void refresh_ethernet_rows() {
+        if (ethernet_box == null) {
+            return;
+        }
+
+        clear_box(ethernet_box);
+
+        foreach (var dev in nm.get_devices()) {
+            if (!dev.is_ethernet) {
+                continue;
+            }
+
+            var row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+            var label = new Gtk.Label("%s: %s".printf(dev.name, dev.state_label));
+            label.set_xalign(0.0f);
+            label.set_hexpand(true);
+            row.append(label);
+
+            if (dev.connection != "") {
+                label.set_text(label.get_text() + " [" + dev.connection + "]");
+            }
+
+            if (dev.is_connected) {
+                var disconnect_btn = new Gtk.Button.with_label("Disconnect");
+                disconnect_btn.clicked.connect(() => {
+                    string err;
+                    bool ok = nm.disconnect_device(dev.name, out err);
+                    if (ethernet_action_status != null) {
+                        if (ok) {
+                            ethernet_action_status.set_text("Disconnect requested for " + dev.name);
+                        } else {
+                            ethernet_action_status.set_text("Disconnect failed: " + err);
+                        }
+                    }
+                    refresh_ethernet_rows();
+                });
+                row.append(disconnect_btn);
+            }
+
+            ethernet_box.append(row);
+        }
+
+        if (ethernet_box.get_first_child() == null) {
+            var empty = new Gtk.Label("No ethernet devices discovered");
+            empty.set_xalign(0.0f);
+            ethernet_box.append(empty);
         }
     }
 }
