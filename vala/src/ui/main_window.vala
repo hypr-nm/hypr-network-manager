@@ -172,10 +172,13 @@ public class MainWindow : Gtk.ApplicationWindow {
         root.append(title);
 
         var status_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        status_row.add_css_class("nm-status-bar");
         status_icon = new Gtk.Image.from_icon_name("network-wireless-offline-symbolic");
+        status_icon.add_css_class("nm-status-icon");
         status_icon.set_pixel_size(16);
         status_row.append(status_icon);
         status_label = new Gtk.Label("Loading status...");
+        status_label.add_css_class("nm-status-label");
         status_label.set_xalign(0.0f);
         status_label.set_hexpand(true);
         status_row.append(status_label);
@@ -201,25 +204,30 @@ public class MainWindow : Gtk.ApplicationWindow {
         root.append(anchors);
 
         nm_probe_label = new Gtk.Label("");
+        nm_probe_label.add_css_class("nm-sub-label");
         nm_probe_label.set_xalign(0.0f);
         nm_probe_label.set_wrap(true);
         root.append(nm_probe_label);
 
         wifi_state_label = new Gtk.Label("");
+        wifi_state_label.add_css_class("nm-sub-label");
         wifi_state_label.set_xalign(0.0f);
         wifi_state_label.set_wrap(true);
         root.append(wifi_state_label);
 
         net_state_label = new Gtk.Label("");
+        net_state_label.add_css_class("nm-sub-label");
         net_state_label.set_xalign(0.0f);
         net_state_label.set_wrap(true);
         root.append(net_state_label);
 
         var toggle_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
         var networking_label = new Gtk.Label("Networking");
+        networking_label.add_css_class("nm-toggle-label");
         networking_label.set_xalign(0.0f);
         networking_label.set_hexpand(true);
         networking_switch = new Gtk.Switch();
+        networking_switch.add_css_class("nm-switch");
         networking_switch.notify["active"].connect(() => {
             on_networking_switch_changed();
         });
@@ -227,9 +235,12 @@ public class MainWindow : Gtk.ApplicationWindow {
         toggle_row.append(networking_switch);
 
         var wifi_toggle_label = new Gtk.Label("Wi-Fi");
+        wifi_toggle_label.add_css_class("nm-toggle-label");
         wifi_toggle_label.set_xalign(0.0f);
         wifi_toggle_label.set_hexpand(true);
         wifi_switch = new Gtk.Switch();
+        wifi_switch.add_css_class("nm-switch");
+        wifi_switch.add_css_class("nm-wifi-switch");
         wifi_switch.notify["active"].connect(() => {
             on_wifi_switch_changed();
         });
@@ -267,6 +278,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         root.append(wifi_title);
 
         var refresh_button = new Gtk.Button.with_label("Refresh Wi-Fi");
+        refresh_button.add_css_class("nm-button");
         refresh_button.clicked.connect(() => {
             string scan_error;
             nm.scan_wifi(out scan_error);
@@ -377,6 +389,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
             if (net.saved && !net.connected) {
                 var connect_btn = new Gtk.Button.with_label("Connect");
+                connect_btn.add_css_class("nm-connect-button");
                 connect_btn.clicked.connect(() => {
                     string connect_error;
                     bool ok = nm.connect_saved_wifi(net, out connect_error);
@@ -392,6 +405,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 row.append(connect_btn);
 
                 var forget_btn = new Gtk.Button.with_label("Forget");
+                forget_btn.add_css_class("nm-action-button");
                 forget_btn.clicked.connect(() => {
                     string forget_error;
                     bool ok = nm.forget_network(net.ssid, out forget_error);
@@ -409,6 +423,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
             if (net.connected) {
                 var disconnect_btn = new Gtk.Button.with_label("Disconnect");
+                disconnect_btn.add_css_class("nm-disconnect-button");
                 disconnect_btn.clicked.connect(() => {
                     string disconnect_error;
                     bool ok = nm.disconnect_wifi(net, out disconnect_error);
@@ -426,6 +441,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
             if (net.is_secured && !net.saved && !net.connected) {
                 var prompt_btn = new Gtk.Button.with_label("Password...");
+                prompt_btn.add_css_class("nm-action-button");
                 row.append(prompt_btn);
 
                 var revealer = new Gtk.Revealer();
@@ -433,11 +449,13 @@ public class MainWindow : Gtk.ApplicationWindow {
 
                 var prompt_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
                 var pass_entry = new Gtk.Entry();
+                pass_entry.add_css_class("nm-password-entry");
                 pass_entry.set_placeholder_text("Wi-Fi password");
                 pass_entry.set_visibility(false);
                 pass_entry.set_hexpand(true);
 
                 var submit_btn = new Gtk.Button.with_label("Connect");
+                submit_btn.add_css_class("nm-connect-button");
                 submit_btn.clicked.connect(() => {
                     string connect_error;
                     bool ok = nm.connect_wifi_with_password(net, pass_entry.get_text(), out connect_error);
@@ -635,6 +653,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
             if (dev.is_connected) {
                 var disconnect_btn = new Gtk.Button.with_label("Disconnect");
+                disconnect_btn.add_css_class("nm-disconnect-button");
                 disconnect_btn.clicked.connect(() => {
                     string err;
                     bool ok = nm.disconnect_device(dev.name, out err);
@@ -673,6 +692,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
             if (vpn.is_connected) {
                 var btn = new Gtk.Button.with_label("Disconnect");
+                btn.add_css_class("nm-disconnect-button");
                 btn.clicked.connect(() => {
                     string err;
                     bool ok = nm.disconnect_vpn(vpn.name, out err);
@@ -688,6 +708,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 row.append(btn);
             } else {
                 var btn = new Gtk.Button.with_label("Connect");
+                btn.add_css_class("nm-connect-button");
                 btn.clicked.connect(() => {
                     string err;
                     bool ok = nm.connect_vpn(vpn.name, out err);
