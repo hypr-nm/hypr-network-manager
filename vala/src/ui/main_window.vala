@@ -24,7 +24,6 @@ public class MainWindow : Gtk.ApplicationWindow {
     private int shell_margin_bottom;
     private int shell_margin_left;
     private string shell_layer;
-    private string shell_keyboard_mode;
     private NetworkManagerClientVala nm;
     private Gtk.Label status_label;
     private Gtk.Image status_icon;
@@ -55,8 +54,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         int margin_right,
         int margin_bottom,
         int margin_left,
-        string shell_layer,
-        string shell_keyboard_mode
+        string shell_layer
     ) {
         Object(application: app, title: "Network Manager");
         this.debug_enabled = debug_enabled;
@@ -72,7 +70,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         this.shell_margin_bottom = margin_bottom;
         this.shell_margin_left = margin_left;
         this.shell_layer = shell_layer;
-        this.shell_keyboard_mode = shell_keyboard_mode;
 
         set_default_size(window_width, window_height);
         set_resizable(false);
@@ -100,7 +97,6 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void configure_layer_shell() {
         GtkLayerShell.Layer layer_mode = parse_layer_mode(shell_layer);
-        GtkLayerShell.KeyboardMode keyboard_mode = parse_keyboard_mode(shell_keyboard_mode);
 
         if (!GtkLayerShell.is_supported()) {
             stderr.printf(
@@ -140,7 +136,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, shell_margin_left);
         }
 
-        GtkLayerShell.set_keyboard_mode(this, keyboard_mode);
+        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
         GtkLayerShell.auto_exclusive_zone_enable(this);
     }
 
@@ -158,60 +154,32 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
     }
 
-    private GtkLayerShell.KeyboardMode parse_keyboard_mode(string value) {
-        switch (value.strip().down()) {
-        case "none":
-            return GtkLayerShell.KeyboardMode.NONE;
-        case "exclusive":
-            return GtkLayerShell.KeyboardMode.EXCLUSIVE;
-        case "on_demand":
-        case "on-demand":
-        default:
-            return GtkLayerShell.KeyboardMode.ON_DEMAND;
-        }
-    }
-
     private void configure_key_handling() {
         key_controller = new Gtk.EventControllerKey();
         key_controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
         ((Gtk.Widget) this).add_controller(key_controller);
-        key_controller.key_released.connect(key_released_event_cb);
         key_controller.key_pressed.connect(key_press_event_cb);
     }
 
-    private void key_released_event_cb(uint keyval, uint keycode, Gdk.ModifierType state) {
-        if (this.get_focus() is Gtk.Entry) {
-            if (Gdk.keyval_name(keyval) == "Escape") {
-                this.set_focus(null);
-            }
-            return;
-        }
-
-        switch (Gdk.keyval_name(keyval)) {
-        case "Escape":
-        case "Caps_Lock":
-            this.close();
-            return;
-        default:
-            return;
-        }
-    }
-
     private bool key_press_event_cb(uint keyval, uint keycode, Gdk.ModifierType state) {
+        // Keep text entry usable (for Wi-Fi password prompts), but still allow Esc to close.
         if (get_focus() is Gtk.Editable) {
+            if (Gdk.keyval_name(keyval) == "Escape") {
+                this.close();
+                return true;
+            }
             return false;
         }
 
         switch (Gdk.keyval_name(keyval)) {
         case "Escape":
-        case "Caps_Lock":
             this.close();
             return true;
         default:
             break;
         }
 
-        return true;
+        return false;
     }
 
     public void set_popup_text_input_mode(bool enabled) {
@@ -219,12 +187,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             return;
         }
 
-        if (enabled) {
-            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
-            return;
-        }
-
-        GtkLayerShell.set_keyboard_mode(this, parse_keyboard_mode(shell_keyboard_mode));
+        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
     }
 
     private Gtk.Widget build_status_bar() {

@@ -102,8 +102,7 @@ Configuration is handled via JSON files.
   "layer_shell_margin_top": 8,
   "layer_shell_margin_right": 8,
   "layer_shell_margin_bottom": 8,
-  "layer_shell_margin_left": 8,
-  "layer_shell_keyboard_mode": "on-demand"
+  "layer_shell_margin_left": 8
 }
 ```
 
@@ -120,7 +119,6 @@ The app reads `config.json` from this precedence order:
 | window_width | int (> 0) | 360 | Popup window width in pixels. |
 | window_height | int (> 0) | 460 | Popup window height in pixels. |
 | layer_shell_layer | string | overlay | Layer-shell layer. Supported values: `overlay`, `top`, `bottom`, `background`. |
-| layer_shell_keyboard_mode | string | on-demand | Layer-shell keyboard mode. Supported values: `on-demand` (`on_demand`), `none`, `exclusive`. |
 | position | string | top-right | Position preset used for placement anchors. Supported values: `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top`, `right`, `bottom`, `left`. Invalid values fallback to top-right. |
 | layer_shell_margin_top | int | 8 | Top margin in pixels. |
 | layer_shell_margin_right | int | 8 | Right margin in pixels. |

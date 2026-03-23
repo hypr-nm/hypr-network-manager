@@ -160,22 +160,13 @@ public class NetworkManagerValaApp : Gtk.Application {
             config.margin_right,
             config.margin_bottom,
             config.margin_left,
-            config.layer,
-            config.keyboard_mode
+            config.layer
         );
         window.close_request.connect(() => {
             hide_dismiss_overlay();
             window = null;
             quit();
             return false;
-        });
-        window.notify["is-active"].connect(() => {
-            if (window == null || fullscreen) {
-                return;
-            }
-            if (window.get_visible() && !window.is_active) {
-                request_close();
-            }
         });
         window.map.connect(() => {
             on_main_window_mapped();

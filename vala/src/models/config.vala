@@ -12,7 +12,6 @@ public class AppConfig : Object {
     public int margin_bottom = 8;
     public int margin_left = 8;
     public string layer = "overlay";
-    public string keyboard_mode = "on-demand";
 
     private static string? extract_json_string(string content, string key) {
         try {
@@ -155,11 +154,6 @@ public class AppConfig : Object {
             string? cfg_layer = extract_json_string(content, "layer_shell_layer");
             if (cfg_layer != null) {
                 cfg.layer = cfg_layer;
-            }
-
-            string? cfg_keyboard_mode = extract_json_string(content, "layer_shell_keyboard_mode");
-            if (cfg_keyboard_mode != null) {
-                cfg.keyboard_mode = cfg_keyboard_mode;
             }
 
             string position = "top-right";
