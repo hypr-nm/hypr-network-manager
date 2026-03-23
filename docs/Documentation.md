@@ -95,8 +95,8 @@ Configuration is handled via JSON files.
 
 ```json
 {
-  "window_width": 360,
-  "window_height": 460,
+  "window_width": 480,
+  "window_height": 560,
   "layer_shell_layer": "overlay",
   "position": "top-right",
   "layer_shell_margin_top": 8,
@@ -121,8 +121,8 @@ The app reads `config.json` from this precedence order:
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
-| window_width | int (> 0) | 360 | Popup window width in pixels. |
-| window_height | int (> 0) | 460 | Popup window height in pixels. |
+| window_width | int (> 0) | 480 | Popup window width in pixels. |
+| window_height | int (> 0) | 560 | Popup window height in pixels. |
 | layer_shell_layer | string | overlay | Layer-shell layer. Supported values: `overlay`, `top`, `bottom`, `background`. |
 | position | string | top-right | Position preset used for placement anchors. Supported values: `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top`, `right`, `bottom`, `left`. Invalid values fallback to top-right. |
 | layer_shell_margin_top | int | 8 | Top margin in pixels. |
@@ -138,6 +138,8 @@ The app reads `config.json` from this precedence order:
 ### Placement behavior
 
 Placement is controlled by `position`, and spacing is controlled by `layer_shell_margin_*`.
+
+The shell enforces a minimum size of `480x560` to keep details/edit views readable.
 
 ### Notes on extra keys
 
@@ -163,16 +165,16 @@ Themes are CSS-based and hot-swappable.
 
 You can create themes in `~/.config/hypr-network-manager/themes/` and import them in `base.css`.
 
-### Base CSS Style Overrides
+### Theme Style Overrides
 
-The following appearance settings are CSS-driven and should be edited in `base.css`:
+The following appearance settings are CSS-driven and should be edited in your active theme file (for example `themes/default.css`, `themes/nord.css`, etc.):
 
 * Opacity
 * Border radius
 * Font family
 * Font size
 
-Example (already present in bundled `themes/base.css`):
+Example (already present in bundled theme files):
 
 ```css
 window.nm-window,
@@ -211,6 +213,8 @@ The application currently assigns these CSS classes in the UI runtime.
 | nm-tab-label | Tab label widgets |
 | nm-page | Shared page container class |
 | nm-page-wifi | Wi-Fi page container |
+| nm-page-wifi-details | Wi-Fi details page container |
+| nm-page-wifi-edit | Wi-Fi edit page container |
 | nm-page-ethernet | Ethernet page container |
 | nm-page-vpn | VPN page container |
 | nm-toolbar | Page toolbar row |
@@ -234,6 +238,9 @@ The application currently assigns these CSS classes in the UI runtime.
 | nm-connect-button | Connect action button |
 | nm-disconnect-button | Disconnect action button |
 | nm-form-label | Generic form labels |
+| nm-nav-back | Lightweight back navigation button |
+| nm-details-network-title | Network title on details/edit pages |
+| nm-details-group-title | Group label for sections like BASIC/ADVANCED |
 | nm-password-entry | Password entry base styling |
 | nm-inline-password | Inline Wi-Fi password prompt container |
 | nm-inline-password-label | Inline password prompt label |
@@ -242,8 +249,16 @@ The application currently assigns these CSS classes in the UI runtime.
 | nm-inline-password-cancel | Inline cancel button |
 | nm-inline-password-connect | Inline connect button |
 | nm-inline-password-revealer | Inline prompt revealer widget |
+| nm-details-section | Details section wrapper (basic/advanced) |
+| nm-details-rows | Details rows container |
+| nm-details-row | Single details key/value row |
+| nm-details-item | Vertical details item wrapper |
+| nm-details-item-key | Details item key label |
+| nm-details-item-value | Details item value label |
+| nm-edit-form | Wi-Fi edit form wrapper |
+| nm-menu-button | Compact navigation button (e.g. `>` details nav) |
 | nm-wifi-switch | Wi-Fi-specific switch |
-| blank-window | Fullscreen dismiss overlay window |
+| blank-window | Dismiss overlay window |
 | blank-window-surface | Click-capture surface inside dismiss overlay |
 
 The app also uses GTK's standard `suggested-action` class on the inline connect button.
@@ -294,6 +309,8 @@ Copy CSS snippets from `waybar/style.css` to your bar's style sheet.
 * Connect to saved or new networks
 * Forget saved profiles
 * Password prompt integrated
+* Per-network details page with structured Basic and Advanced sections
+* Per-network edit page for credential updates and profile actions
 
 ### Ethernet Tab
 

@@ -3,8 +3,8 @@
   "_comment_edit": "Copy this file to ~/.config/hypr-network-manager/config.json to customise",
   "_comment_theme": "Theme selection is done in themes/base.css via @import",
 
-  "window_width": 360,
-  "window_height": 460,
+  "window_width": 480,
+  "window_height": 560,
   "layer_shell_layer": "overlay",
   "position": "top-right",
   "layer_shell_margin_top": 8,
