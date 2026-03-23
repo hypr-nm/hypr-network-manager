@@ -13,6 +13,7 @@ public class NetworkManagerValaApp : Gtk.Application {
     private bool fullscreen;
     private bool debug_enabled;
     private MainWindow? window;
+    private BlankWindow? dismiss_overlay;
 
     public NetworkManagerValaApp(AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application_id: "io.github.hypr-network-manager.rebuild");
@@ -96,6 +97,47 @@ public class NetworkManagerValaApp : Gtk.Application {
         }
     }
 
+    private void hide_dismiss_overlay() {
+        if (dismiss_overlay == null) {
+            return;
+        }
+        dismiss_overlay.close();
+        dismiss_overlay = null;
+    }
+
+    private void show_dismiss_overlay_for_monitor(Gdk.Monitor? monitor) {
+        if (window == null || fullscreen || dismiss_overlay != null || monitor == null) {
+            return;
+        }
+
+        dismiss_overlay = new BlankWindow(this, monitor);
+        dismiss_overlay.present();
+    }
+
+    public void request_close() {
+        if (window != null) {
+            window.close();
+        }
+    }
+
+    private void on_main_window_mapped() {
+        if (window == null || fullscreen) {
+            return;
+        }
+
+        unowned Gdk.Surface surface = window.get_surface();
+        var display = Gdk.Display.get_default();
+        if (display != null) {
+            show_dismiss_overlay_for_monitor(display.get_monitor_at_surface(surface));
+        }
+
+        ulong id = 0;
+        id = surface.enter_monitor.connect((monitor) => {
+            surface.disconnect(id);
+            show_dismiss_overlay_for_monitor(monitor);
+        });
+    }
+
     protected override void activate() {
         if (window != null) {
             window.present();
@@ -106,9 +148,24 @@ public class NetworkManagerValaApp : Gtk.Application {
 
         window = new MainWindow(this, config, fullscreen, debug_enabled);
         window.close_request.connect(() => {
+            hide_dismiss_overlay();
             window = null;
             quit();
             return false;
+        });
+        window.notify["is-active"].connect(() => {
+            if (window == null || fullscreen) {
+                return;
+            }
+            if (window.get_visible() && !window.is_active) {
+                request_close();
+            }
+        });
+        window.map.connect(() => {
+            on_main_window_mapped();
+        });
+        window.unmap.connect(() => {
+            hide_dismiss_overlay();
         });
         window.present();
     }

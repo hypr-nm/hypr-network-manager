@@ -11,6 +11,7 @@ executable(
     'src/models/network_device.vala',
     'src/models/vpn_connection.vala',
     'src/backend/nm_client.vala',
+    'src/ui/blank_window.vala',
     'src/ui/main_window.vala',
     'src/app.vala',
     'src/main.vala',
