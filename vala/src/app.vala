@@ -24,7 +24,7 @@ public class NetworkManagerValaApp : Gtk.Application {
 
     private void debug_log(string message) {
         if (debug_enabled) {
-            stderr.printf("[rebuild] %s\n", message);
+            stderr.printf("[hypr-nm] %s\n", message);
         }
     }
 

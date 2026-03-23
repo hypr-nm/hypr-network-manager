@@ -138,10 +138,10 @@ public class AppConfig : Object {
         if (!has_config) {
             if (debug_enabled) {
                 if (explicit_path != null) {
-                    stderr.printf("[rebuild] config file not found: %s\n", effective_config_path);
+                    stderr.printf("[hypr-nm] config file not found: %s\n", effective_config_path);
                 } else {
                     stderr.printf(
-                        "[rebuild] config file not found in local/system paths: %s, %s\n",
+                        "[hypr-nm] config file not found in local/system paths: %s, %s\n",
                         local_config_path,
                         system_config_path
                     );
@@ -243,11 +243,11 @@ public class AppConfig : Object {
             }
 
             if (debug_enabled) {
-                stderr.printf("[rebuild] loaded config: %s\n", effective_config_path);
+                stderr.printf("[hypr-nm] loaded config: %s\n", effective_config_path);
             }
         } catch (Error e) {
             if (debug_enabled) {
-                stderr.printf("[rebuild] could not read config %s: %s\n", effective_config_path, e.message);
+                stderr.printf("[hypr-nm] could not read config %s: %s\n", effective_config_path, e.message);
             }
         }
 

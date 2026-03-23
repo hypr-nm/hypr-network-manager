@@ -9,7 +9,7 @@ public class NetworkManagerClientVala : Object {
 
     private void debug_log(string message) {
         if (debug_enabled) {
-            stderr.printf("[rebuild-nm] %s\n", message);
+            stderr.printf("[hypr-nm] %s\n", message);
         }
     }
 
