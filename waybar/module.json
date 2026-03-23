@@ -1,0 +1,12 @@
+{
+  "custom/network": {
+    "exec": "~/.local/bin/hypr-network-manager --status",
+    "on-click": "~/.local/bin/hypr-network-manager",
+    "on-click-right": "~/.local/bin/hypr-network-manager --toggle-wifi",
+    "interval": 10,
+    "return-type": "json",
+    "tooltip": true,
+    "format": "{}",
+    "signal": 8
+  }
+}
