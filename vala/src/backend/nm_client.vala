@@ -38,6 +38,31 @@ public class NetworkManagerClientVala : Object {
         return boxed.get_variant();
     }
 
+    private static string decode_ssid(Variant v) {
+        var bytes = v.get_data_as_bytes();
+        if (bytes == null) {
+            return "";
+        }
+
+        unowned uint8[] raw = bytes.get_data();
+        if (raw.length == 0) {
+            return "";
+        }
+
+        var out = new StringBuilder();
+        foreach (uint8 b in raw) {
+            if (b == 0) {
+                continue;
+            }
+            if (b >= 32 && b <= 126) {
+                out.append_c((char) b);
+            } else {
+                out.append_printf("\\x%02X", b);
+            }
+        }
+        return out.str;
+    }
+
     public bool is_networking_enabled(out string error_message) {
         error_message = "";
 
@@ -118,6 +143,72 @@ public class NetworkManagerClientVala : Object {
             error_message = e.message;
             return false;
         }
+    }
+
+    public List<WifiNetwork> get_wifi_networks() {
+        var networks = new List<WifiNetwork>();
+        var seen = new HashTable<string, bool>(str_hash, str_equal);
+
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices = devices_res.get_child_value(0);
+
+            for (int i = 0; i < devices.n_children(); i++) {
+                string dev_path = devices.get_child_value(i).get_string();
+                uint32 dev_type = get_prop(dev_path, NM_DEVICE_IFACE, "DeviceType").get_uint32();
+                if (dev_type != NM_DEVICE_TYPE_WIFI) {
+                    continue;
+                }
+
+                string active_ap_path = get_prop(dev_path, NM_WIRELESS_IFACE, "ActiveAccessPoint").get_string();
+
+                var wifi = make_proxy(dev_path, NM_WIRELESS_IFACE);
+                var aps_res = wifi.call_sync("GetAccessPoints", null, DBusCallFlags.NONE, -1, null);
+                var aps = aps_res.get_child_value(0);
+
+                for (int j = 0; j < aps.n_children(); j++) {
+                    string ap_path = aps.get_child_value(j).get_string();
+
+                    string ssid = decode_ssid(get_prop(ap_path, NM_AP_IFACE, "Ssid"));
+                    if (ssid == "") {
+                        ssid = get_prop(ap_path, NM_AP_IFACE, "HwAddress").get_string();
+                    }
+                    if (seen.contains(ssid)) {
+                        continue;
+                    }
+
+                    uint8 signal = get_prop(ap_path, NM_AP_IFACE, "Strength").get_byte();
+                    uint32 flags = get_prop(ap_path, NM_AP_IFACE, "Flags").get_uint32();
+                    uint32 wpa_flags = get_prop(ap_path, NM_AP_IFACE, "WpaFlags").get_uint32();
+                    uint32 rsn_flags = get_prop(ap_path, NM_AP_IFACE, "RsnFlags").get_uint32();
+                    bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
+
+                    seen.insert(ssid, true);
+                    networks.append(new WifiNetwork() {
+                        ssid = ssid,
+                        signal = signal,
+                        connected = (ap_path == active_ap_path),
+                        is_secured = is_secured,
+                        saved = false,
+                        device_path = dev_path,
+                        ap_path = ap_path
+                    });
+                }
+            }
+        } catch (Error e) {
+            debug_log("get_wifi_networks failed: " + e.message);
+        }
+
+        networks.sort((a, b) => {
+            if (a.connected != b.connected) {
+                return a.connected ? -1 : 1;
+            }
+            return (int) b.signal - (int) a.signal;
+        });
+
+        debug_log("discovered %u wifi networks".printf(networks.length()));
+        return networks;
     }
 
     public List<string> get_device_paths() {
