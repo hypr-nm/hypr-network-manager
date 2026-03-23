@@ -46,6 +46,23 @@ meson setup builddir
 meson compile -C builddir
 ```
 
+### Build Scripts (Dev/Prod)
+
+Use one compile script for both build modes:
+
+```bash
+./scripts/compile.sh [dev|prod] [build_dir]
+```
+
+Examples:
+
+```bash
+./scripts/compile.sh            # dev build -> builddir-dev
+./scripts/compile.sh dev        # dev build -> builddir-dev
+./scripts/compile.sh prod       # prod build -> builddir-prod
+./scripts/compile.sh prod out   # prod build -> out
+```
+
 ### Dependencies
 
 * Vala toolchain
@@ -80,20 +97,43 @@ Configuration is handled via JSON files.
 {
   "window_width": 360,
   "window_height": 460,
+  "layer_shell_layer": "overlay",
   "position": "top-right",
-  "scan_interval": 30,
-  "close_on_connect": true,
-  "show_signal_bars": true
+  "layer_shell_margin_top": 8,
+  "layer_shell_margin_right": 8,
+  "layer_shell_margin_bottom": 8,
+  "layer_shell_margin_left": 8,
+  "layer_shell_keyboard_mode": "on-demand"
 }
 ```
 
-| Key                          | Default   | Description                                            |
-| ---------------------------- | --------- | ------------------------------------------------------ |
-| window_width / window_height | 360 / 460 | Window dimensions in pixels                            |
-| position                     | unset     | Popup position: top-left, top-right, bottom-left, etc. |
-| scan_interval                | 30        | Seconds between background Wi-Fi scans                 |
-| close_on_connect             | true      | Close window after connecting                          |
-| show_signal_bars             | true      | Show signal-strength bars                              |
+The app reads `config.json` from this precedence order:
+
+1. Explicit path passed via `--config`
+2. `~/.config/hypr-network-manager/config.json`
+3. `/etc/xdg/hypr-network-manager/config.json`
+
+### Supported config keys
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| window_width | int (> 0) | 360 | Popup window width in pixels. |
+| window_height | int (> 0) | 460 | Popup window height in pixels. |
+| layer_shell_layer | string | overlay | Layer-shell layer. Supported values: `overlay`, `top`, `bottom`, `background`. |
+| layer_shell_keyboard_mode | string | on-demand | Layer-shell keyboard mode. Supported values: `on-demand` (`on_demand`), `none`, `exclusive`. |
+| position | string | top-right | Position preset used for placement anchors. Supported values: `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top`, `right`, `bottom`, `left`. Invalid values fallback to top-right. |
+| layer_shell_margin_top | int | 8 | Top margin in pixels. |
+| layer_shell_margin_right | int | 8 | Right margin in pixels. |
+| layer_shell_margin_bottom | int | 8 | Bottom margin in pixels. |
+| layer_shell_margin_left | int | 8 | Left margin in pixels. |
+
+### Placement behavior
+
+Placement is controlled by `position`, and spacing is controlled by `layer_shell_margin_*`.
+
+### Notes on extra keys
+
+Keys not listed above are ignored by the current app runtime.
 
 ---
 
@@ -114,6 +154,60 @@ Themes are CSS-based and hot-swappable.
 ```
 
 You can create themes in `~/.config/hypr-network-manager/themes/` and import them in `base.css`.
+
+### Supported theming classes
+
+The application currently assigns these CSS classes in the UI runtime.
+
+| Class | Where it applies |
+| --- | --- |
+| nm-window | Main app window |
+| nm-root | Root container for the popup content |
+| nm-status-bar | Top status/header row |
+| nm-status-icon | Header icon |
+| nm-status-label | Header status text |
+| nm-toggle-label | "Networking" label near the global switch |
+| nm-switch | Global/network switches |
+| nm-notebook | Main tab notebook |
+| nm-tab-label | Tab label widgets |
+| nm-page | Shared page container class |
+| nm-page-wifi | Wi-Fi page container |
+| nm-page-ethernet | Ethernet page container |
+| nm-page-vpn | VPN page container |
+| nm-toolbar | Page toolbar row |
+| nm-section-title | Section title labels |
+| nm-button | Shared button base class |
+| nm-icon-button | Icon-only refresh buttons |
+| nm-separator | Horizontal separators |
+| nm-scroll | Scrolled container |
+| nm-list | ListBox containers for Wi-Fi/Ethernet/VPN lists |
+| nm-empty-state | Empty-state placeholder containers |
+| nm-placeholder-icon | Empty-state icons |
+| nm-placeholder-label | Empty-state labels |
+| nm-content-stack | Stacks that switch list vs empty-state views |
+| nm-wifi-row | Wi-Fi list rows |
+| nm-device-row | Ethernet and VPN rows |
+| connected | State class for active/connected rows |
+| nm-signal-icon | Per-row signal/device icon |
+| nm-ssid-label | Primary row title text |
+| nm-sub-label | Secondary row subtitle text |
+| nm-action-button | "Forget" action button |
+| nm-connect-button | Connect action button |
+| nm-disconnect-button | Disconnect action button |
+| nm-form-label | Generic form labels |
+| nm-password-entry | Password entry base styling |
+| nm-inline-password | Inline Wi-Fi password prompt container |
+| nm-inline-password-label | Inline password prompt label |
+| nm-inline-password-entry | Inline password input |
+| nm-inline-password-actions | Inline password action row |
+| nm-inline-password-cancel | Inline cancel button |
+| nm-inline-password-connect | Inline connect button |
+| nm-inline-password-revealer | Inline prompt revealer widget |
+| nm-wifi-switch | Wi-Fi-specific switch |
+| blank-window | Fullscreen dismiss overlay window |
+| blank-window-surface | Click-capture surface inside dismiss overlay |
+
+The app also uses GTK's standard `suggested-action` class on the inline connect button.
 
 ---
 
