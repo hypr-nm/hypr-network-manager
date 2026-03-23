@@ -1,0 +1,211 @@
+/* ============================================================
+   hypr-network-manager – Transparent Theme
+
+   Requires a composited display (Wayland or X11 + compositor).
+   Set  visual_transparency: true  in config.json (it is set
+   automatically when this theme is selected).
+
+   For Hyprland blur behind the window add to hyprland.conf:
+     decoration {
+       blur {
+         enabled  = true
+         size     = 8
+         passes   = 2
+         new_optimizations = true
+       }
+     }
+     windowrule = opacity 0.92 override 0.92 override, ^(hypr-network-manager)$
+   ============================================================ */
+
+/* ── Window ─────────────────────────────────────────────── */
+.nm-window {
+  background-color: transparent;
+  color: #e8eaf6;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.nm-root,
+.nm-notebook,
+.nm-notebook > stack,
+.nm-page,
+.nm-content-stack,
+.nm-scroll,
+.nm-scroll > viewport,
+.nm-scroll > viewport > widget,
+.nm-empty-state {
+  background-color: transparent;
+}
+
+/* ── Status bar ──────────────────────────────────────────── */
+.nm-status-bar {
+  background-color: transparent;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nm-status-icon { color: #82aaff; }
+.nm-status-label { font-weight: 500; color: #e8eaf6; }
+.nm-toggle-label { color: rgba(232, 234, 246, 0.6); font-size: 0.85em; margin-right: 6px; }
+
+/* ── Notebook tabs ───────────────────────────────────────── */
+.nm-notebook tab,
+.nm-notebook > header > tabs > tab,
+notebook.nm-notebook > header > tabs > tab {
+  padding: 6px 16px;
+  color: rgba(232, 234, 246, 0.55);
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  background-image: none;
+}
+.nm-notebook tab:checked,
+.nm-notebook > header > tabs > tab:checked,
+notebook.nm-notebook > header > tabs > tab:checked {
+  color: #82aaff;
+  border-bottom: 2px solid #82aaff;
+  background-color: transparent;
+}
+.nm-notebook > header,
+.nm-notebook > header > tabs,
+notebook.nm-notebook > header,
+notebook.nm-notebook > header > tabs {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  background-image: none;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────── */
+.nm-toolbar {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.nm-separator { color: rgba(255, 255, 255, 0.1); }
+.nm-section-title { font-weight: 600; color: #e8eaf6; }
+.nm-icon-button { color: rgba(232, 234, 246, 0.6); border-radius: 6px; padding: 4px; }
+.nm-icon-button:hover { background-color: rgba(255, 255, 255, 0.1); color: #e8eaf6; }
+
+button.nm-button,
+.nm-button {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #e8eaf6;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 4px 10px;
+  box-shadow: none;
+  background-image: none;
+}
+button.nm-button:hover,
+.nm-button:hover { background-color: rgba(255, 255, 255, 0.12); }
+
+button.nm-button:active,
+button.nm-button:checked {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+/* ── List ────────────────────────────────────────────────── */
+.nm-list { background-color: transparent; }
+.nm-list row.nm-wifi-row,
+.nm-list row.nm-device-row { background-color: transparent; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+.nm-list row.nm-wifi-row:hover,
+.nm-list row.nm-device-row:hover { background-color: rgba(255, 255, 255, 0.07); }
+.nm-list row.nm-wifi-row:last-child,
+.nm-list row.nm-device-row:last-child { border-bottom: none; }
+
+/* ── WiFi / device rows ──────────────────────────────────── */
+.nm-wifi-row,
+.nm-device-row { background-color: transparent; }
+
+.nm-wifi-row.connected,
+.nm-device-row.connected { background-color: rgba(130, 170, 255, 0.1); }
+
+.nm-ssid-label { font-weight: 500; color: #e8eaf6; }
+.nm-sub-label { font-size: 0.82em; color: rgba(232, 234, 246, 0.55); }
+.nm-signal-icon { color: #82aaff; min-width: 22px; }
+.nm-bars-label { font-family: monospace; font-size: 0.75em; color: #82aaff; letter-spacing: 1px; }
+.nm-lock-icon { color: #ffcc80; opacity: 0.9; }
+.nm-saved-icon { color: #80cbc4; opacity: 0.8; }
+
+.nm-menu-button { color: rgba(232, 234, 246, 0.45); padding: 2px 4px; border-radius: 4px; }
+.nm-menu-button:hover { color: #e8eaf6; background-color: rgba(255, 255, 255, 0.1); }
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.nm-connect-button { color: #80cbc4; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-connect-button:hover { background-color: rgba(128, 203, 196, 0.15); }
+.nm-disconnect-button { color: #ef9a9a; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-disconnect-button:hover { background-color: rgba(239, 154, 154, 0.15); }
+.nm-action-button { color: #82aaff; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-action-button:hover { background-color: rgba(130, 170, 255, 0.15); }
+
+/* ── Placeholder ─────────────────────────────────────────── */
+.nm-placeholder-icon { color: rgba(255, 255, 255, 0.2); margin-bottom: 8px; }
+.nm-placeholder-label { color: rgba(232, 234, 246, 0.4); font-size: 0.9em; }
+
+/* ── Dialogs ─────────────────────────────────────────────── */
+.nm-dialog-content { background-color: rgba(15, 15, 30, 0.88); color: #e8eaf6; }
+.nm-dialog-icon { color: #82aaff; }
+.nm-form-label { color: rgba(232, 234, 246, 0.7); font-size: 0.9em; margin-bottom: 2px; }
+.nm-password-entry {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #e8eaf6;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.nm-password-entry:focus { border-color: #82aaff; }
+.nm-inline-password-revealer { margin: 0 8px 8px 40px; }
+.nm-inline-password {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.nm-inline-password-label { margin-bottom: 2px; }
+.nm-inline-password-actions { margin-top: 2px; }
+.nm-details-key { color: rgba(232, 234, 246, 0.6); font-size: 0.85em; }
+.nm-details-value { color: #e8eaf6; font-size: 0.85em; }
+
+/* ── Switch ──────────────────────────────────────────────── */
+switch.nm-switch,
+.nm-switch {
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  min-width: 36px;
+  min-height: 20px;
+  padding: 1px;
+  box-shadow: none;
+  background-image: none;
+}
+switch.nm-switch:checked,
+.nm-switch:checked { background-color: #82aaff; }
+switch.nm-switch slider,
+.nm-switch slider {
+  background-color: #e8eaf6;
+  border: none;
+  border-radius: 999px;
+  min-width: 14px;
+  min-height: 14px;
+  box-shadow: none;
+  background-image: none;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+scrollbar { background-color: transparent; }
+scrollbar slider {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  min-width: 4px;
+  min-height: 4px;
+}
+scrollbar slider:hover { background-color: rgba(255, 255, 255, 0.35); }
+
+/* ── Dialog action buttons ───────────────────────────────── */
+dialog .suggested-action {
+  background-color: rgba(130, 170, 255, 0.8);
+  color: #0d0d1a;
+  border-radius: 6px;
+  font-weight: 600;
+}
+dialog .suggested-action:hover { background-color: rgba(130, 170, 255, 0.95); }
