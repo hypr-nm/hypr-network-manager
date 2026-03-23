@@ -63,6 +63,87 @@ public class NetworkManagerClientVala : Object {
         return out.str;
     }
 
+    private HashTable<string, bool> get_saved_ssids() {
+        var saved = new HashTable<string, bool>(str_hash, str_equal);
+
+        try {
+            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var conns = list_res.get_child_value(0);
+
+            for (int i = 0; i < conns.n_children(); i++) {
+                string conn_path = conns.get_child_value(i).get_string();
+                var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var all_settings = settings_res.get_child_value(0);
+
+                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+                Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+                if (conn_group == null || wifi_group == null) {
+                    continue;
+                }
+
+                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+                if (type_v == null || type_v.get_string() != "802-11-wireless") {
+                    continue;
+                }
+
+                Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+                if (ssid_v == null) {
+                    continue;
+                }
+
+                string ssid = decode_ssid(ssid_v);
+                if (ssid != "") {
+                    saved.insert(ssid, true);
+                }
+            }
+        } catch (Error e) {
+            debug_log("could not load saved ssids: " + e.message);
+        }
+
+        return saved;
+    }
+
+    private string? find_connection_by_ssid(string ssid) {
+        try {
+            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var conns = list_res.get_child_value(0);
+
+            for (int i = 0; i < conns.n_children(); i++) {
+                string conn_path = conns.get_child_value(i).get_string();
+                var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var all_settings = settings_res.get_child_value(0);
+
+                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+                Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+                if (conn_group == null || wifi_group == null) {
+                    continue;
+                }
+
+                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+                if (type_v == null || type_v.get_string() != "802-11-wireless") {
+                    continue;
+                }
+
+                Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+                if (ssid_v == null) {
+                    continue;
+                }
+
+                if (decode_ssid(ssid_v) == ssid) {
+                    return conn_path;
+                }
+            }
+        } catch (Error e) {
+            debug_log("could not resolve saved connection: " + e.message);
+        }
+
+        return null;
+    }
+
     public bool is_networking_enabled(out string error_message) {
         error_message = "";
 
@@ -148,6 +229,7 @@ public class NetworkManagerClientVala : Object {
     public List<WifiNetwork> get_wifi_networks() {
         var networks = new List<WifiNetwork>();
         var seen = new HashTable<string, bool>(str_hash, str_equal);
+        var saved_ssids = get_saved_ssids();
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
@@ -190,7 +272,7 @@ public class NetworkManagerClientVala : Object {
                         signal = signal,
                         connected = (ap_path == active_ap_path),
                         is_secured = is_secured,
-                        saved = false,
+                        saved = saved_ssids.contains(ssid),
                         device_path = dev_path,
                         ap_path = ap_path
                     });
@@ -209,6 +291,31 @@ public class NetworkManagerClientVala : Object {
 
         debug_log("discovered %u wifi networks".printf(networks.length()));
         return networks;
+    }
+
+    public bool connect_saved_wifi(WifiNetwork network, out string error_message) {
+        error_message = "";
+
+        try {
+            string? conn_path = find_connection_by_ssid(network.ssid);
+            if (conn_path == null) {
+                error_message = "No saved profile found for SSID.";
+                return false;
+            }
+
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            nm.call_sync(
+                "ActivateConnection",
+                new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
     }
 
     public bool scan_wifi(out string error_message) {
