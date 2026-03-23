@@ -1,0 +1,132 @@
+/* ============================================================
+   hypr-network-manager – Dracula Theme
+   https://draculatheme.com/
+   ============================================================ */
+
+/* Palette
+   Background  #282a36   Current   #44475a   Selection #44475a
+   Foreground  #f8f8f2   Comment   #6272a4
+   Cyan        #8be9fd   Green     #50fa7b   Orange    #ffb86c
+   Pink        #ff79c6   Purple    #bd93f9   Red       #ff5555
+   Yellow      #f1fa8c
+*/
+
+.nm-window { background-color: #282a36; color: #f8f8f2; border-radius: 12px; }
+
+.nm-root,
+.nm-notebook,
+.nm-notebook > stack,
+.nm-page,
+.nm-content-stack,
+.nm-scroll,
+.nm-scroll > viewport,
+.nm-scroll > viewport > widget,
+.nm-empty-state {
+   background-color: #282a36;
+}
+
+.nm-status-bar { background-color: #21222c; padding: 6px 8px; }
+.nm-status-icon { color: #bd93f9; }
+.nm-status-label { font-weight: 500; color: #f8f8f2; }
+.nm-toggle-label { color: #6272a4; font-size: 0.85em; margin-right: 6px; }
+
+.nm-notebook tab,
+.nm-notebook > header > tabs > tab { padding: 6px 16px; color: #6272a4; background-color: transparent; }
+.nm-notebook tab:checked,
+.nm-notebook > header > tabs > tab:checked { color: #bd93f9; border-bottom: 2px solid #bd93f9; background-color: transparent; }
+.nm-notebook > header,
+.nm-notebook > header > tabs { background-color: #21222c; border-bottom: 1px solid #44475a; }
+
+.nm-toolbar { background-color: #21222c; }
+.nm-separator { color: #44475a; }
+.nm-section-title { font-weight: 600; color: #f8f8f2; }
+.nm-icon-button { color: #6272a4; border-radius: 6px; padding: 4px; }
+.nm-icon-button:hover { background-color: #44475a; color: #f8f8f2; }
+
+.nm-button {
+   background-color: transparent;
+   color: #f8f8f2;
+   border: 1px solid #44475a;
+   border-radius: 8px;
+   padding: 4px 10px;
+}
+.nm-button:hover { background-color: #44475a; }
+
+.nm-list { background-color: transparent; }
+.nm-list row.nm-wifi-row,
+.nm-list row.nm-device-row { background-color: transparent; border-bottom: 1px solid #44475a; }
+.nm-list row.nm-wifi-row:hover,
+.nm-list row.nm-device-row:hover { background-color: #44475a; }
+.nm-list row.nm-wifi-row:last-child,
+.nm-list row.nm-device-row:last-child { border-bottom: none; }
+
+.nm-wifi-row.connected,
+.nm-device-row.connected { background-color: rgba(189, 147, 249, 0.1); }
+
+.nm-ssid-label { font-weight: 500; color: #f8f8f2; }
+.nm-sub-label { font-size: 0.82em; color: #6272a4; }
+.nm-signal-icon { color: #8be9fd; min-width: 22px; }
+.nm-bars-label { font-family: monospace; font-size: 0.75em; color: #8be9fd; letter-spacing: 1px; }
+.nm-lock-icon { color: #f1fa8c; opacity: 0.9; }
+.nm-saved-icon { color: #50fa7b; opacity: 0.8; }
+
+.nm-menu-button { color: #6272a4; padding: 2px 4px; border-radius: 4px; }
+.nm-menu-button:hover { color: #f8f8f2; background-color: #44475a; }
+
+.nm-connect-button { color: #50fa7b; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-connect-button:hover { background-color: rgba(80, 250, 123, 0.12); }
+.nm-disconnect-button { color: #ff5555; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-disconnect-button:hover { background-color: rgba(255, 85, 85, 0.12); }
+.nm-action-button { color: #8be9fd; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-action-button:hover { background-color: rgba(139, 233, 253, 0.12); }
+
+.nm-placeholder-icon { color: #44475a; margin-bottom: 8px; }
+.nm-placeholder-label { color: #6272a4; font-size: 0.9em; }
+
+.nm-dialog-content { background-color: #282a36; color: #f8f8f2; }
+.nm-dialog-icon { color: #bd93f9; }
+.nm-form-label { color: #6272a4; font-size: 0.9em; }
+.nm-password-entry {
+  background-color: #44475a;
+  color: #f8f8f2;
+  border: 1px solid #6272a4;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.nm-password-entry:focus { border-color: #bd93f9; }
+.nm-inline-password-revealer { margin: 0 8px 8px 40px; }
+.nm-inline-password {
+   padding: 8px;
+   border-radius: 8px;
+   border: 1px solid #6272a4;
+   background-color: #44475a;
+}
+.nm-inline-password-label { margin-bottom: 2px; }
+.nm-inline-password-actions { margin-top: 2px; }
+.nm-details-key { color: #6272a4; font-size: 0.85em; }
+.nm-details-value { color: #f8f8f2; font-size: 0.85em; }
+
+.nm-switch,
+switch {
+   background-color: #44475a;
+   border: 1px solid #6272a4;
+   min-width: 36px;
+   min-height: 20px;
+   padding: 1px;
+}
+.nm-switch:checked,
+switch:checked { background-color: #bd93f9; }
+.nm-switch slider,
+switch slider {
+   background-color: #f8f8f2;
+   border-radius: 999px;
+   min-width: 14px;
+   min-height: 14px;
+}
+
+scrollbar { background-color: transparent; }
+scrollbar slider { background-color: #44475a; border-radius: 4px; min-width: 4px; min-height: 4px; }
+scrollbar slider:hover { background-color: #6272a4; }
+
+dialog .suggested-action { background-color: #bd93f9; color: #282a36; border-radius: 6px; font-weight: 600; }
+dialog .suggested-action:hover { background-color: #caa9fa; }
