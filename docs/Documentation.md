@@ -261,7 +261,6 @@ hypr-network-manager
 ### CLI Options
 
 ```bash
---fullscreen        # Launch fullscreen
 --debug             # Enable debug logging
 --status            # Output JSON for status bars
 --toggle-wifi       # Toggle Wi-Fi on/off
