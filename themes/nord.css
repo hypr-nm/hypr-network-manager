@@ -1,0 +1,131 @@
+/* ============================================================
+   hypr-network-manager – Nord Theme
+   https://www.nordtheme.com/
+   ============================================================ */
+
+/* Palette
+   Polar Night  #2e3440  #3b4252  #434c5e  #4c566a
+   Snow Storm   #d8dee9  #e5e9f0  #eceff4
+   Frost        #8fbcbb  #88c0d0  #81a1c1  #5e81ac
+   Aurora       #bf616a  #d08770  #ebcb8b  #a3be8c  #b48ead
+*/
+
+.nm-window { background-color: #2e3440; color: #d8dee9; border-radius: 12px; }
+
+.nm-root,
+.nm-notebook,
+.nm-notebook > stack,
+.nm-page,
+.nm-content-stack,
+.nm-scroll,
+.nm-scroll > viewport,
+.nm-scroll > viewport > widget,
+.nm-empty-state {
+   background-color: #2e3440;
+}
+
+.nm-status-bar { background-color: #242933; padding: 6px 8px; }
+.nm-status-icon { color: #88c0d0; }
+.nm-status-label { font-weight: 500; color: #eceff4; }
+.nm-toggle-label { color: #4c566a; font-size: 0.85em; margin-right: 6px; }
+
+.nm-notebook tab,
+.nm-notebook > header > tabs > tab { padding: 6px 16px; color: #4c566a; background-color: transparent; }
+.nm-notebook tab:checked,
+.nm-notebook > header > tabs > tab:checked { color: #88c0d0; border-bottom: 2px solid #88c0d0; background-color: transparent; }
+.nm-notebook > header,
+.nm-notebook > header > tabs { background-color: #242933; border-bottom: 1px solid #3b4252; }
+
+.nm-toolbar { background-color: #242933; }
+.nm-separator { color: #3b4252; }
+.nm-section-title { font-weight: 600; color: #eceff4; }
+.nm-icon-button { color: #4c566a; border-radius: 6px; padding: 4px; }
+.nm-icon-button:hover { background-color: #3b4252; color: #e5e9f0; }
+
+.nm-button {
+   background-color: transparent;
+   color: #eceff4;
+   border: 1px solid #434c5e;
+   border-radius: 8px;
+   padding: 4px 10px;
+}
+.nm-button:hover { background-color: #3b4252; }
+
+.nm-list { background-color: transparent; }
+.nm-list row.nm-wifi-row,
+.nm-list row.nm-device-row { background-color: transparent; border-bottom: 1px solid #3b4252; }
+.nm-list row.nm-wifi-row:hover,
+.nm-list row.nm-device-row:hover { background-color: #3b4252; }
+.nm-list row.nm-wifi-row:last-child,
+.nm-list row.nm-device-row:last-child { border-bottom: none; }
+
+.nm-wifi-row.connected,
+.nm-device-row.connected { background-color: rgba(136, 192, 208, 0.1); }
+
+.nm-ssid-label { font-weight: 500; color: #eceff4; }
+.nm-sub-label { font-size: 0.82em; color: #4c566a; }
+.nm-signal-icon { color: #88c0d0; min-width: 22px; }
+.nm-bars-label { font-family: monospace; font-size: 0.75em; color: #88c0d0; letter-spacing: 1px; }
+.nm-lock-icon { color: #ebcb8b; opacity: 0.9; }
+.nm-saved-icon { color: #a3be8c; opacity: 0.8; }
+
+.nm-menu-button { color: #4c566a; padding: 2px 4px; border-radius: 4px; }
+.nm-menu-button:hover { color: #eceff4; background-color: #434c5e; }
+
+.nm-connect-button { color: #a3be8c; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-connect-button:hover { background-color: rgba(163, 190, 140, 0.12); }
+.nm-disconnect-button { color: #bf616a; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-disconnect-button:hover { background-color: rgba(191, 97, 106, 0.12); }
+.nm-action-button { color: #81a1c1; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; }
+.nm-action-button:hover { background-color: rgba(129, 161, 193, 0.12); }
+
+.nm-placeholder-icon { color: #3b4252; margin-bottom: 8px; }
+.nm-placeholder-label { color: #4c566a; font-size: 0.9em; }
+
+.nm-dialog-content { background-color: #2e3440; color: #d8dee9; }
+.nm-dialog-icon { color: #88c0d0; }
+.nm-form-label { color: #4c566a; font-size: 0.9em; }
+.nm-password-entry {
+  background-color: #3b4252;
+  color: #eceff4;
+  border: 1px solid #434c5e;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.nm-password-entry:focus { border-color: #88c0d0; }
+.nm-inline-password-revealer { margin: 0 8px 8px 40px; }
+.nm-inline-password {
+   padding: 8px;
+   border-radius: 8px;
+   border: 1px solid #434c5e;
+   background-color: #3b4252;
+}
+.nm-inline-password-label { margin-bottom: 2px; }
+.nm-inline-password-actions { margin-top: 2px; }
+.nm-details-key { color: #4c566a; font-size: 0.85em; }
+.nm-details-value { color: #d8dee9; font-size: 0.85em; }
+
+.nm-switch,
+switch {
+   background-color: #3b4252;
+   border: 1px solid #434c5e;
+   min-width: 36px;
+   min-height: 20px;
+   padding: 1px;
+}
+.nm-switch:checked,
+switch:checked { background-color: #88c0d0; }
+.nm-switch slider,
+switch slider {
+   background-color: #eceff4;
+   border-radius: 999px;
+   min-width: 14px;
+   min-height: 14px;
+}
+
+scrollbar { background-color: transparent; }
+scrollbar slider { background-color: #3b4252; border-radius: 4px; min-width: 4px; min-height: 4px; }
+scrollbar slider:hover { background-color: #434c5e; }
+
+dialog .suggested-action { background-color: #88c0d0; color: #2e3440; border-radius: 6px; font-weight: 600; }
+dialog .suggested-action:hover { background-color: #9bcdd9; }
