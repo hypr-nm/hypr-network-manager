@@ -420,6 +420,20 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
+    public bool connect_wifi(WifiNetwork network, string? password, out string error_message) {
+        error_message = "";
+
+        if (network.saved) {
+            return connect_saved_wifi(network, out error_message);
+        }
+
+        if (password == null) {
+            password = "";
+        }
+
+        return connect_wifi_with_password(network, password, out error_message);
+    }
+
     public bool connect_wifi_with_password(
         WifiNetwork network,
         string password,
