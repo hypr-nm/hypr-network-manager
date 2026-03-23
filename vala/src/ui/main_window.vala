@@ -23,6 +23,8 @@ public class MainWindow : Gtk.ApplicationWindow {
     private int shell_margin_right;
     private int shell_margin_bottom;
     private int shell_margin_left;
+    private string shell_layer;
+    private string shell_keyboard_mode;
     private NetworkManagerClientVala nm;
     private Gtk.Label status_label;
     private Gtk.Image status_icon;
@@ -52,7 +54,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         int margin_top,
         int margin_right,
         int margin_bottom,
-        int margin_left
+        int margin_left,
+        string shell_layer,
+        string shell_keyboard_mode
     ) {
         Object(application: app, title: "Network Manager");
         this.debug_enabled = debug_enabled;
@@ -67,6 +71,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         this.shell_margin_right = margin_right;
         this.shell_margin_bottom = margin_bottom;
         this.shell_margin_left = margin_left;
+        this.shell_layer = shell_layer;
+        this.shell_keyboard_mode = shell_keyboard_mode;
 
         set_default_size(window_width, window_height);
         set_resizable(false);
@@ -93,6 +99,9 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void configure_layer_shell() {
+        GtkLayerShell.Layer layer_mode = parse_layer_mode(shell_layer);
+        GtkLayerShell.KeyboardMode keyboard_mode = parse_keyboard_mode(shell_keyboard_mode);
+
         if (!GtkLayerShell.is_supported()) {
             stderr.printf(
                 "Warning: GtkLayerShell.is_supported() returned false; attempting init anyway.\n"
@@ -109,7 +118,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
 
         GtkLayerShell.set_namespace(this, "hypr-network-manager");
-        GtkLayerShell.set_layer(this, GtkLayerShell.Layer.OVERLAY);
+        GtkLayerShell.set_layer(this, layer_mode);
 
         if (fullscreen_mode) {
             GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, true);
@@ -131,12 +140,35 @@ public class MainWindow : Gtk.ApplicationWindow {
             GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, shell_margin_left);
         }
 
-        if (fullscreen_mode) {
-            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
-        } else {
-            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
-        }
+        GtkLayerShell.set_keyboard_mode(this, keyboard_mode);
         GtkLayerShell.auto_exclusive_zone_enable(this);
+    }
+
+    private GtkLayerShell.Layer parse_layer_mode(string value) {
+        switch (value.strip().down()) {
+        case "top":
+            return GtkLayerShell.Layer.TOP;
+        case "bottom":
+            return GtkLayerShell.Layer.BOTTOM;
+        case "background":
+            return GtkLayerShell.Layer.BACKGROUND;
+        case "overlay":
+        default:
+            return GtkLayerShell.Layer.OVERLAY;
+        }
+    }
+
+    private GtkLayerShell.KeyboardMode parse_keyboard_mode(string value) {
+        switch (value.strip().down()) {
+        case "none":
+            return GtkLayerShell.KeyboardMode.NONE;
+        case "exclusive":
+            return GtkLayerShell.KeyboardMode.EXCLUSIVE;
+        case "on_demand":
+        case "on-demand":
+        default:
+            return GtkLayerShell.KeyboardMode.ON_DEMAND;
+        }
     }
 
     private void configure_key_handling() {
@@ -192,7 +224,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             return;
         }
 
-        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+        GtkLayerShell.set_keyboard_mode(this, parse_keyboard_mode(shell_keyboard_mode));
     }
 
     private Gtk.Widget build_status_bar() {

@@ -38,18 +38,6 @@ public class AppConfig : Object {
         return null;
     }
 
-    private static bool? extract_json_bool(string content, string key) {
-        try {
-            var regex = new Regex("\"" + key + "\"\\s*:\\s*(true|false)");
-            MatchInfo info;
-            if (regex.match(content, 0, out info)) {
-                return info.fetch(1) == "true";
-            }
-        } catch (RegexError e) {
-        }
-        return null;
-    }
-
     private static void apply_position(
         string position,
         out bool anchor_top,
@@ -174,56 +162,21 @@ public class AppConfig : Object {
                 cfg.keyboard_mode = cfg_keyboard_mode;
             }
 
-            string? anchors = extract_json_string(content, "layer_shell_anchors");
-            if (anchors != null) {
-                cfg.anchor_top = false;
-                cfg.anchor_right = false;
-                cfg.anchor_bottom = false;
-                cfg.anchor_left = false;
-
-                foreach (string token_raw in anchors.split(",")) {
-                    string token = token_raw.strip().down();
-                    if (token == "top") {
-                        cfg.anchor_top = true;
-                    } else if (token == "right") {
-                        cfg.anchor_right = true;
-                    } else if (token == "bottom") {
-                        cfg.anchor_bottom = true;
-                    } else if (token == "left") {
-                        cfg.anchor_left = true;
-                    }
-                }
+            string position = "top-right";
+            string? cfg_position = extract_json_string(content, "position");
+            if (cfg_position != null) {
+                position = cfg_position;
             }
 
-            string? position = extract_json_string(content, "position");
-            if (position != null) {
-                bool pos_top;
-                bool pos_right;
-                bool pos_bottom;
-                bool pos_left;
-                apply_position(position, out pos_top, out pos_right, out pos_bottom, out pos_left);
-                cfg.anchor_top = pos_top;
-                cfg.anchor_right = pos_right;
-                cfg.anchor_bottom = pos_bottom;
-                cfg.anchor_left = pos_left;
-            }
-
-            bool? cfg_anchor_top = extract_json_bool(content, "anchor_top");
-            if (cfg_anchor_top != null) {
-                cfg.anchor_top = cfg_anchor_top;
-            }
-            bool? cfg_anchor_right = extract_json_bool(content, "anchor_right");
-            if (cfg_anchor_right != null) {
-                cfg.anchor_right = cfg_anchor_right;
-            }
-            bool? cfg_anchor_bottom = extract_json_bool(content, "anchor_bottom");
-            if (cfg_anchor_bottom != null) {
-                cfg.anchor_bottom = cfg_anchor_bottom;
-            }
-            bool? cfg_anchor_left = extract_json_bool(content, "anchor_left");
-            if (cfg_anchor_left != null) {
-                cfg.anchor_left = cfg_anchor_left;
-            }
+            bool pos_top;
+            bool pos_right;
+            bool pos_bottom;
+            bool pos_left;
+            apply_position(position, out pos_top, out pos_right, out pos_bottom, out pos_left);
+            cfg.anchor_top = pos_top;
+            cfg.anchor_right = pos_right;
+            cfg.anchor_bottom = pos_bottom;
+            cfg.anchor_left = pos_left;
 
             int? cfg_margin_top = extract_json_int(content, "layer_shell_margin_top");
             if (cfg_margin_top != null) {

@@ -7,7 +7,6 @@
   "window_height": 460,
   "layer_shell_layer": "overlay",
   "position": "top-right",
-  "layer_shell_anchors": "top,right",
   "layer_shell_margin_top": 8,
   "layer_shell_margin_right": 8,
   "layer_shell_margin_bottom": 8,

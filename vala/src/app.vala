@@ -159,7 +159,9 @@ public class NetworkManagerValaApp : Gtk.Application {
             config.margin_top,
             config.margin_right,
             config.margin_bottom,
-            config.margin_left
+            config.margin_left,
+            config.layer,
+            config.keyboard_mode
         );
         window.close_request.connect(() => {
             hide_dismiss_overlay();
