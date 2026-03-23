@@ -10,6 +10,8 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Label? wifi_action_status = null;
     private Gtk.Box? ethernet_box = null;
     private Gtk.Label? ethernet_action_status = null;
+    private Gtk.Box? vpn_box = null;
+    private Gtk.Label? vpn_action_status = null;
 
     public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application: app, title: "Network Manager");
@@ -226,6 +228,19 @@ public class MainWindow : Gtk.ApplicationWindow {
         ethernet_action_status.set_wrap(true);
         root.append(ethernet_action_status);
 
+        var vpn_title = new Gtk.Label("VPN");
+        vpn_title.set_xalign(0.0f);
+        root.append(vpn_title);
+
+        vpn_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        refresh_vpn_rows();
+        root.append(vpn_box);
+
+        vpn_action_status = new Gtk.Label("");
+        vpn_action_status.set_xalign(0.0f);
+        vpn_action_status.set_wrap(true);
+        root.append(vpn_action_status);
+
         set_child(root);
     }
 
@@ -414,6 +429,27 @@ public class MainWindow : Gtk.ApplicationWindow {
             var empty = new Gtk.Label("No ethernet devices discovered");
             empty.set_xalign(0.0f);
             ethernet_box.append(empty);
+        }
+    }
+
+    private void refresh_vpn_rows() {
+        if (vpn_box == null) {
+            return;
+        }
+
+        clear_box(vpn_box);
+
+        foreach (var vpn in nm.get_vpn_connections()) {
+            string state = vpn.is_connected ? "connected" : "disconnected";
+            var row = new Gtk.Label("%s (%s): %s".printf(vpn.name, vpn.vpn_type, state));
+            row.set_xalign(0.0f);
+            vpn_box.append(row);
+        }
+
+        if (vpn_box.get_first_child() == null) {
+            var empty = new Gtk.Label("No VPN profiles discovered");
+            empty.set_xalign(0.0f);
+            vpn_box.append(empty);
         }
     }
 }
