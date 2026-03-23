@@ -1,53 +1,142 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This file includes behavior adapted from SwayNotificationCenter
+// (control-center keyboard/open-close patterns):
+// https://github.com/ErikReider/SwayNotificationCenter
+// Original license: GPL-3.0
+
+using GLib;
 using Gtk;
 using Gdk;
 using GtkLayerShell;
 
 public class MainWindow : Gtk.ApplicationWindow {
-    private AppConfig config;
-    private bool fullscreen_mode;
     private bool debug_enabled;
+    private bool fullscreen_mode;
+    private int window_width;
+    private int window_height;
+    private bool anchor_top;
+    private bool anchor_right;
+    private bool anchor_bottom;
+    private bool anchor_left;
+    private int shell_margin_top;
+    private int shell_margin_right;
+    private int shell_margin_bottom;
+    private int shell_margin_left;
     private NetworkManagerClientVala nm;
-    private Gtk.Box? wifi_box = null;
-    private Gtk.Label? wifi_action_status = null;
-    private Gtk.Stack? wifi_stack = null;
-    private Gtk.Label? wifi_empty_label = null;
-    private Gtk.Box? ethernet_box = null;
-    private Gtk.Label? ethernet_action_status = null;
-    private Gtk.Stack? ethernet_stack = null;
-    private Gtk.Label? ethernet_empty_label = null;
-    private Gtk.Box? vpn_box = null;
-    private Gtk.Label? vpn_action_status = null;
-    private Gtk.Stack? vpn_stack = null;
-    private Gtk.Label? vpn_empty_label = null;
-    private Gtk.Label? nm_probe_label = null;
-    private Gtk.Label? wifi_state_label = null;
-    private Gtk.Label? net_state_label = null;
-    private Gtk.Image? status_icon = null;
-    private Gtk.Label? status_label = null;
-    private Gtk.Switch? networking_switch = null;
-    private Gtk.Switch? wifi_switch = null;
+    private Gtk.Label status_label;
+    private Gtk.Image status_icon;
+    private Gtk.Switch networking_switch;
+    private Gtk.Switch wifi_switch;
+    private Gtk.ListBox wifi_listbox;
+    private Gtk.Stack wifi_stack;
+    private Gtk.Revealer? active_wifi_password_revealer = null;
+    private Gtk.Entry? active_wifi_password_entry = null;
+    private Gtk.ListBox ethernet_listbox;
+    private Gtk.Stack ethernet_stack;
+    private Gtk.ListBox vpn_listbox;
+    private Gtk.Stack vpn_stack;
     private bool updating_switches = false;
     private Gtk.EventControllerKey key_controller;
 
-    public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
+    public MainWindow(
+        Gtk.Application app,
+        bool fullscreen,
+        bool debug_enabled,
+        int window_width,
+        int window_height,
+        bool anchor_top,
+        bool anchor_right,
+        bool anchor_bottom,
+        bool anchor_left,
+        int margin_top,
+        int margin_right,
+        int margin_bottom,
+        int margin_left
+    ) {
         Object(application: app, title: "Network Manager");
-
-        this.config = config;
-        this.fullscreen_mode = fullscreen;
         this.debug_enabled = debug_enabled;
-        this.nm = new NetworkManagerClientVala(debug_enabled);
+        this.fullscreen_mode = fullscreen;
+        this.window_width = window_width;
+        this.window_height = window_height;
+        this.anchor_top = anchor_top;
+        this.anchor_right = anchor_right;
+        this.anchor_bottom = anchor_bottom;
+        this.anchor_left = anchor_left;
+        this.shell_margin_top = margin_top;
+        this.shell_margin_right = margin_right;
+        this.shell_margin_bottom = margin_bottom;
+        this.shell_margin_left = margin_left;
 
-        set_default_size(config.window_width, config.window_height);
+        set_default_size(window_width, window_height);
         set_resizable(false);
+        set_opacity(1.0);
         add_css_class("nm-window");
+        nm = new NetworkManagerClientVala(debug_enabled);
 
         configure_layer_shell();
         build_ui();
         configure_key_handling();
+        refresh_all();
         Timeout.add_seconds(20, () => {
-            refresh_all_sections();
+            refresh_all();
             return true;
         });
+
+        debug_log("Main window created");
+    }
+
+    private void debug_log(string message) {
+        if (debug_enabled) {
+            stderr.printf("[vala-gui] %s\n", message);
+        }
+    }
+
+    private void configure_layer_shell() {
+        if (!GtkLayerShell.is_supported()) {
+            stderr.printf(
+                "Warning: GtkLayerShell.is_supported() returned false; attempting init anyway.\n"
+            );
+        }
+
+        GtkLayerShell.init_for_window(this);
+        if (!GtkLayerShell.is_layer_window(this)) {
+            stderr.printf(
+                "Error: failed to initialize layer-shell surface.\n"
+                + "Try launching with LD_PRELOAD for libgtk4-layer-shell.\n"
+            );
+            Process.exit(1);
+        }
+
+        GtkLayerShell.set_namespace(this, "hypr-network-manager");
+        GtkLayerShell.set_layer(this, GtkLayerShell.Layer.OVERLAY);
+
+        if (fullscreen_mode) {
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, true);
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.RIGHT, true);
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.BOTTOM, true);
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.LEFT, true);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.TOP, 0);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.RIGHT, 0);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, 0);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, 0);
+        } else {
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, anchor_top);
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.RIGHT, anchor_right);
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.BOTTOM, anchor_bottom);
+            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.LEFT, anchor_left);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.TOP, shell_margin_top);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.RIGHT, shell_margin_right);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, shell_margin_bottom);
+            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, shell_margin_left);
+        }
+
+        if (fullscreen_mode) {
+            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+        } else {
+            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+        }
+        GtkLayerShell.auto_exclusive_zone_enable(this);
     }
 
     private void configure_key_handling() {
@@ -93,652 +182,739 @@ public class MainWindow : Gtk.ApplicationWindow {
         return true;
     }
 
-    private void debug_log(string message) {
-        if (debug_enabled) {
-            stderr.printf("[rebuild] %s\n", message);
-        }
-    }
-
-    private GtkLayerShell.Layer map_layer(string value) {
-        switch (value.down().strip()) {
-        case "background":
-            return GtkLayerShell.Layer.BACKGROUND;
-        case "bottom":
-            return GtkLayerShell.Layer.BOTTOM;
-        case "top":
-            return GtkLayerShell.Layer.TOP;
-        default:
-            return GtkLayerShell.Layer.OVERLAY;
-        }
-    }
-
-    private GtkLayerShell.KeyboardMode map_keyboard_mode(string value) {
-        switch (value.down().strip()) {
-        case "none":
-            return GtkLayerShell.KeyboardMode.NONE;
-        case "exclusive":
-            return GtkLayerShell.KeyboardMode.EXCLUSIVE;
-        default:
-            return GtkLayerShell.KeyboardMode.ON_DEMAND;
-        }
-    }
-
-    private void configure_layer_shell() {
-        if (!GtkLayerShell.is_supported()) {
-            stderr.printf("Warning: layer-shell support not detected; attempting init anyway.\n");
-        }
-
-        GtkLayerShell.init_for_window(this);
-        GtkLayerShell.set_namespace(this, "hypr-network-manager");
-        GtkLayerShell.set_layer(this, map_layer(config.layer));
-
+    public void set_popup_text_input_mode(bool enabled) {
         if (fullscreen_mode) {
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, true);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.RIGHT, true);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.BOTTOM, true);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.LEFT, true);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.TOP, 0);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.RIGHT, 0);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, 0);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, 0);
-        } else {
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.TOP, config.anchor_top);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.RIGHT, config.anchor_right);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.BOTTOM, config.anchor_bottom);
-            GtkLayerShell.set_anchor(this, GtkLayerShell.Edge.LEFT, config.anchor_left);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.TOP, config.margin_top);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.RIGHT, config.margin_right);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, config.margin_bottom);
-            GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, config.margin_left);
+            return;
         }
 
-        GtkLayerShell.set_keyboard_mode(this, map_keyboard_mode(config.keyboard_mode));
-        GtkLayerShell.auto_exclusive_zone_enable(this);
+        if (enabled) {
+            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+            return;
+        }
 
-        debug_log("layer-shell configured");
+        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
     }
 
-    private void build_ui() {
-        var root = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
-        root.add_css_class("nm-root");
-        root.set_margin_top(16);
-        root.set_margin_bottom(16);
-        root.set_margin_start(16);
-        root.set_margin_end(16);
+    private Gtk.Widget build_status_bar() {
+        var bar = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        bar.add_css_class("nm-status-bar");
+        bar.set_margin_start(12);
+        bar.set_margin_end(8);
+        bar.set_margin_top(8);
+        bar.set_margin_bottom(8);
 
-        var title = new Gtk.Label("hypr-network-manager phase 2");
-        title.add_css_class("nm-title");
-        title.set_xalign(0.0f);
-        root.append(title);
-
-        var status_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        status_row.add_css_class("nm-status-bar");
         status_icon = new Gtk.Image.from_icon_name("network-wireless-offline-symbolic");
-        status_icon.add_css_class("nm-status-icon");
         status_icon.set_pixel_size(16);
-        status_row.append(status_icon);
-        status_label = new Gtk.Label("Loading status...");
-        status_label.add_css_class("nm-status-label");
+        status_icon.add_css_class("nm-status-icon");
+        bar.append(status_icon);
+
+        status_label = new Gtk.Label("Loading networks...");
         status_label.set_xalign(0.0f);
         status_label.set_hexpand(true);
-        status_row.append(status_label);
-        root.append(status_row);
+        status_label.add_css_class("nm-status-label");
+        bar.append(status_label);
 
-        var subtitle = new Gtk.Label("Layer-shell + config loading is active.");
-        subtitle.set_xalign(0.0f);
-        root.append(subtitle);
-
-        var geometry = new Gtk.Label("Size: %dx%d".printf(config.window_width, config.window_height));
-        geometry.set_xalign(0.0f);
-        root.append(geometry);
-
-        var anchors = new Gtk.Label(
-            "Anchors T:%s R:%s B:%s L:%s".printf(
-                config.anchor_top.to_string(),
-                config.anchor_right.to_string(),
-                config.anchor_bottom.to_string(),
-                config.anchor_left.to_string()
-            )
-        );
-        anchors.set_xalign(0.0f);
-        root.append(anchors);
-
-        nm_probe_label = new Gtk.Label("");
-        nm_probe_label.add_css_class("nm-sub-label");
-        nm_probe_label.set_xalign(0.0f);
-        nm_probe_label.set_wrap(true);
-        root.append(nm_probe_label);
-
-        wifi_state_label = new Gtk.Label("");
-        wifi_state_label.add_css_class("nm-sub-label");
-        wifi_state_label.set_xalign(0.0f);
-        wifi_state_label.set_wrap(true);
-        root.append(wifi_state_label);
-
-        net_state_label = new Gtk.Label("");
-        net_state_label.add_css_class("nm-sub-label");
-        net_state_label.set_xalign(0.0f);
-        net_state_label.set_wrap(true);
-        root.append(net_state_label);
-
-        var toggle_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        var networking_label = new Gtk.Label("Networking");
-        networking_label.add_css_class("nm-toggle-label");
-        networking_label.set_xalign(0.0f);
-        networking_label.set_hexpand(true);
+        var switch_label = new Gtk.Label("Networking");
+        switch_label.add_css_class("nm-toggle-label");
         networking_switch = new Gtk.Switch();
         networking_switch.add_css_class("nm-switch");
+        networking_switch.set_valign(Gtk.Align.CENTER);
         networking_switch.notify["active"].connect(() => {
             on_networking_switch_changed();
         });
-        toggle_row.append(networking_label);
-        toggle_row.append(networking_switch);
 
-        var wifi_toggle_label = new Gtk.Label("Wi-Fi");
-        wifi_toggle_label.add_css_class("nm-toggle-label");
-        wifi_toggle_label.set_xalign(0.0f);
-        wifi_toggle_label.set_hexpand(true);
+        var switch_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 4);
+        switch_box.append(switch_label);
+        switch_box.append(networking_switch);
+        bar.append(switch_box);
+
+        return bar;
+    }
+
+    private Gtk.Widget build_wifi_page() {
+        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+        page.add_css_class("nm-page");
+        page.add_css_class("nm-page-wifi");
+
+        var toolbar = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+        toolbar.set_margin_start(12);
+        toolbar.set_margin_end(8);
+        toolbar.set_margin_top(8);
+        toolbar.set_margin_bottom(8);
+        toolbar.add_css_class("nm-toolbar");
+
+        var title = new Gtk.Label("Wi-Fi");
+        title.set_xalign(0.0f);
+        title.set_hexpand(true);
+        title.add_css_class("nm-section-title");
+        toolbar.append(title);
+
+        var refresh_btn = new Gtk.Button();
+        refresh_btn.add_css_class("nm-button");
+        refresh_btn.add_css_class("nm-icon-button");
+        var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
+        refresh_icon.set_pixel_size(16);
+        refresh_btn.set_child(refresh_icon);
+        refresh_btn.clicked.connect(() => {
+            refresh_wifi();
+        });
+        toolbar.append(refresh_btn);
+
         wifi_switch = new Gtk.Switch();
         wifi_switch.add_css_class("nm-switch");
         wifi_switch.add_css_class("nm-wifi-switch");
+        wifi_switch.set_valign(Gtk.Align.CENTER);
+        wifi_switch.set_size_request(36, 20);
         wifi_switch.notify["active"].connect(() => {
             on_wifi_switch_changed();
         });
-        toggle_row.append(wifi_toggle_label);
-        toggle_row.append(wifi_switch);
-        root.append(toggle_row);
+        toolbar.append(wifi_switch);
 
-        var device_title = new Gtk.Label("Discovered devices");
-        device_title.set_xalign(0.0f);
-        root.append(device_title);
+        page.append(toolbar);
+        var toolbar_sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        toolbar_sep.add_css_class("nm-separator");
+        page.append(toolbar_sep);
 
-        var devices_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
-        foreach (var dev in nm.get_devices()) {
-            string kind = "other";
-            if (dev.is_wifi) {
-                kind = "wifi";
-            } else if (dev.is_ethernet) {
-                kind = "ethernet";
-            }
+        var scroll = new Gtk.ScrolledWindow();
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class("nm-scroll");
 
-            string text = "%s (%s): %s".printf(dev.name, kind, dev.state_label);
-            if (dev.connection != "") {
-                text += " [" + dev.connection + "]";
-            }
+        wifi_listbox = new Gtk.ListBox();
+        wifi_listbox.set_selection_mode(Gtk.SelectionMode.NONE);
+        wifi_listbox.add_css_class("nm-list");
+        scroll.set_child(wifi_listbox);
 
-            var row = new Gtk.Label(text);
-            row.set_xalign(0.0f);
-            devices_box.append(row);
-        }
+        var wifi_placeholder = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        wifi_placeholder.set_halign(Gtk.Align.CENTER);
+        wifi_placeholder.set_valign(Gtk.Align.CENTER);
+        wifi_placeholder.add_css_class("nm-empty-state");
+        var ph_icon = new Gtk.Image.from_icon_name("network-wireless-offline-symbolic");
+        ph_icon.set_pixel_size(24);
+        ph_icon.add_css_class("nm-placeholder-icon");
+        var ph_lbl = new Gtk.Label("No networks found");
+        ph_lbl.add_css_class("nm-placeholder-label");
+        wifi_placeholder.append(ph_icon);
+        wifi_placeholder.append(ph_lbl);
 
-        root.append(devices_box);
-
-        var wifi_title = new Gtk.Label("Wi-Fi networks");
-        wifi_title.set_xalign(0.0f);
-        root.append(wifi_title);
-
-        var refresh_button = new Gtk.Button.with_label("Refresh Wi-Fi");
-        refresh_button.add_css_class("nm-button");
-        refresh_button.clicked.connect(() => {
-            string scan_error;
-            nm.scan_wifi(out scan_error);
-            if (scan_error != "") {
-                debug_log("wifi scan error: " + scan_error);
-            }
-            refresh_wifi_rows();
-        });
-        root.append(refresh_button);
-
-        wifi_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
         wifi_stack = new Gtk.Stack();
-        wifi_empty_label = new Gtk.Label("No Wi-Fi access points discovered");
-        wifi_empty_label.set_xalign(0.0f);
-        wifi_stack.add_named(wifi_box, "list");
-        wifi_stack.add_named(wifi_empty_label, "empty");
-        refresh_wifi_rows();
-        root.append(wifi_stack);
+        wifi_stack.set_vexpand(true);
+        wifi_stack.add_css_class("nm-content-stack");
+        wifi_stack.add_named(scroll, "list");
+        wifi_stack.add_named(wifi_placeholder, "empty");
+        wifi_stack.set_visible_child_name("empty");
 
-        wifi_action_status = new Gtk.Label("");
-        wifi_action_status.set_xalign(0.0f);
-        wifi_action_status.set_wrap(true);
-        root.append(wifi_action_status);
+        page.append(wifi_stack);
 
-        var ethernet_title = new Gtk.Label("Ethernet");
-        ethernet_title.set_xalign(0.0f);
-        root.append(ethernet_title);
-
-        ethernet_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
-        ethernet_stack = new Gtk.Stack();
-        ethernet_empty_label = new Gtk.Label("No ethernet devices discovered");
-        ethernet_empty_label.set_xalign(0.0f);
-        ethernet_stack.add_named(ethernet_box, "list");
-        ethernet_stack.add_named(ethernet_empty_label, "empty");
-        refresh_ethernet_rows();
-        root.append(ethernet_stack);
-
-        ethernet_action_status = new Gtk.Label("");
-        ethernet_action_status.set_xalign(0.0f);
-        ethernet_action_status.set_wrap(true);
-        root.append(ethernet_action_status);
-
-        var vpn_title = new Gtk.Label("VPN");
-        vpn_title.set_xalign(0.0f);
-        root.append(vpn_title);
-
-        vpn_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
-        vpn_stack = new Gtk.Stack();
-        vpn_empty_label = new Gtk.Label("No VPN profiles discovered");
-        vpn_empty_label.set_xalign(0.0f);
-        vpn_stack.add_named(vpn_box, "list");
-        vpn_stack.add_named(vpn_empty_label, "empty");
-        refresh_vpn_rows();
-        root.append(vpn_stack);
-
-        vpn_action_status = new Gtk.Label("");
-        vpn_action_status.set_xalign(0.0f);
-        vpn_action_status.set_wrap(true);
-        root.append(vpn_action_status);
-
-        refresh_probe_labels();
-
-        set_child(root);
+        return page;
     }
 
-    private void clear_box(Gtk.Box box) {
-        Gtk.Widget? child = box.get_first_child();
+    private static void clear_listbox(Gtk.ListBox listbox) {
+        Gtk.Widget? child = listbox.get_first_child();
         while (child != null) {
             Gtk.Widget? next = child.get_next_sibling();
-            box.remove(child);
+            listbox.remove(child);
             child = next;
         }
     }
 
-    private void refresh_wifi_rows() {
-        if (wifi_box == null) {
-            return;
+    private Gtk.ListBoxRow build_wifi_row(WifiNetwork net) {
+        var row = new Gtk.ListBoxRow();
+        row.add_css_class("nm-wifi-row");
+        if (net.connected) {
+            row.add_css_class("connected");
         }
 
-        clear_box(wifi_box);
+        var row_root = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
 
-        foreach (var net in nm.get_wifi_networks()) {
-            string lock = net.is_secured ? " [locked]" : "";
-            string active = net.connected ? " [connected]" : "";
-            string saved = net.saved ? " [saved]" : "";
+        var content = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 10);
+        content.set_margin_start(12);
+        content.set_margin_end(8);
+        content.set_margin_top(8);
+        content.set_margin_bottom(8);
 
-            var wifi_text = new Gtk.Label(
-                "%s - %u%% (%s)%s%s".printf(
-                    net.ssid,
-                    net.signal,
-                    net.signal_label,
-                    lock,
-                    active
-                )
-            );
-            wifi_text.set_xalign(0.0f);
+        var icon = new Gtk.Image.from_icon_name(net.signal_icon_name);
+        icon.set_pixel_size(16);
+        icon.add_css_class("nm-signal-icon");
+        content.append(icon);
 
-            if (saved != "") {
-                wifi_text.set_text(wifi_text.get_text() + saved);
-            }
+        var info = new Gtk.Box(Gtk.Orientation.VERTICAL, 1);
+        info.set_hexpand(true);
+        var ssid_lbl = new Gtk.Label(net.ssid);
+        ssid_lbl.set_xalign(0.0f);
+        ssid_lbl.add_css_class("nm-ssid-label");
+        info.append(ssid_lbl);
 
-            var row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-            wifi_text.set_hexpand(true);
-            row.append(wifi_text);
+        var sub = new Gtk.Label("%s (%u%%)".printf(net.signal_label, net.signal));
+        sub.set_xalign(0.0f);
+        sub.add_css_class("nm-sub-label");
+        info.append(sub);
+        content.append(info);
 
-            var row_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 4);
-            row_container.append(row);
+        var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
 
-            if (net.saved && !net.connected) {
-                var connect_btn = new Gtk.Button.with_label("Connect");
-                connect_btn.add_css_class("nm-connect-button");
-                connect_btn.clicked.connect(() => {
-                    string connect_error;
-                    bool ok = nm.connect_saved_wifi(net, out connect_error);
-                    if (wifi_action_status != null) {
-                        if (ok) {
-                            wifi_action_status.set_text("Connect requested for " + net.ssid);
-                        } else {
-                            wifi_action_status.set_text("Connect failed: " + connect_error);
-                        }
-                    }
-                    refresh_wifi_rows();
-                });
-                row.append(connect_btn);
+        if (net.saved) {
+            var forget = new Gtk.Button.with_label("Forget");
+            forget.add_css_class("nm-button");
+            forget.add_css_class("nm-action-button");
+            forget.clicked.connect(() => {
+                string error_message;
+                if (!nm.forget_network(net.ssid, out error_message)) {
+                    show_error("Forget failed: " + error_message);
+                }
+                refresh_wifi();
+            });
+            actions.append(forget);
+        }
 
-                var forget_btn = new Gtk.Button.with_label("Forget");
-                forget_btn.add_css_class("nm-action-button");
-                forget_btn.clicked.connect(() => {
-                    string forget_error;
-                    bool ok = nm.forget_network(net.ssid, out forget_error);
-                    if (wifi_action_status != null) {
-                        if (ok) {
-                            wifi_action_status.set_text("Forgot network " + net.ssid);
-                        } else {
-                            wifi_action_status.set_text("Forget failed: " + forget_error);
-                        }
-                    }
-                    refresh_wifi_rows();
-                });
-                row.append(forget_btn);
-            }
+        var action = new Gtk.Button.with_label(net.connected ? "Disconnect" : "Connect");
+        action.add_css_class("nm-button");
+        action.add_css_class(net.connected ? "nm-disconnect-button" : "nm-connect-button");
 
+        var prompt_label = new Gtk.Label("Password for %s".printf(net.ssid));
+        prompt_label.set_xalign(0.0f);
+        prompt_label.set_hexpand(true);
+        prompt_label.add_css_class("nm-form-label");
+        prompt_label.add_css_class("nm-inline-password-label");
+
+        var prompt_entry = new Gtk.Entry();
+        prompt_entry.set_hexpand(true);
+        prompt_entry.set_visibility(false);
+        prompt_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
+        prompt_entry.set_placeholder_text("Wi-Fi password");
+        prompt_entry.add_css_class("nm-password-entry");
+        prompt_entry.add_css_class("nm-inline-password-entry");
+
+        var prompt_cancel = new Gtk.Button.with_label("Cancel");
+        prompt_cancel.add_css_class("nm-button");
+        prompt_cancel.add_css_class("nm-inline-password-cancel");
+
+        var prompt_connect = new Gtk.Button.with_label("Connect");
+        prompt_connect.add_css_class("nm-button");
+        prompt_connect.add_css_class("suggested-action");
+        prompt_connect.add_css_class("nm-inline-password-connect");
+
+        var prompt_actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+        prompt_actions.add_css_class("nm-inline-password-actions");
+        prompt_actions.set_halign(Gtk.Align.END);
+        prompt_actions.append(prompt_cancel);
+        prompt_actions.append(prompt_connect);
+
+        var prompt_inner = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        prompt_inner.add_css_class("nm-inline-password");
+        prompt_inner.append(prompt_label);
+        prompt_inner.append(prompt_entry);
+        prompt_inner.append(prompt_actions);
+
+        var prompt_revealer = new Gtk.Revealer();
+        prompt_revealer.add_css_class("nm-inline-password-revealer");
+        prompt_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN);
+        prompt_revealer.set_transition_duration(220);
+        prompt_revealer.set_reveal_child(false);
+        prompt_revealer.set_child(prompt_inner);
+
+        prompt_cancel.clicked.connect(() => {
+            hide_wifi_password_prompt(prompt_revealer, prompt_entry, null);
+        });
+
+        prompt_connect.clicked.connect(() => {
+            hide_wifi_password_prompt(prompt_revealer, prompt_entry, prompt_entry.get_text());
+            connect_wifi_with_optional_password(net, prompt_entry.get_text());
+        });
+
+        prompt_entry.activate.connect(() => {
+            hide_wifi_password_prompt(prompt_revealer, prompt_entry, prompt_entry.get_text());
+            connect_wifi_with_optional_password(net, prompt_entry.get_text());
+        });
+
+        action.clicked.connect(() => {
             if (net.connected) {
-                var disconnect_btn = new Gtk.Button.with_label("Disconnect");
-                disconnect_btn.add_css_class("nm-disconnect-button");
-                disconnect_btn.clicked.connect(() => {
-                    string disconnect_error;
-                    bool ok = nm.disconnect_wifi(net, out disconnect_error);
-                    if (wifi_action_status != null) {
-                        if (ok) {
-                            wifi_action_status.set_text("Disconnect requested for " + net.ssid);
-                        } else {
-                            wifi_action_status.set_text("Disconnect failed: " + disconnect_error);
-                        }
-                    }
-                    refresh_wifi_rows();
-                });
-                row.append(disconnect_btn);
+                string error_message;
+                if (!nm.disconnect_wifi(net, out error_message)) {
+                    show_error("Disconnect failed: " + error_message);
+                }
+                refresh_wifi();
+                return;
             }
 
-            if (net.is_secured && !net.saved && !net.connected) {
-                var prompt_btn = new Gtk.Button.with_label("Password...");
-                prompt_btn.add_css_class("nm-action-button");
-                row.append(prompt_btn);
-
-                var revealer = new Gtk.Revealer();
-                revealer.set_reveal_child(false);
-
-                var prompt_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
-                var pass_entry = new Gtk.Entry();
-                pass_entry.add_css_class("nm-password-entry");
-                pass_entry.set_placeholder_text("Wi-Fi password");
-                pass_entry.set_visibility(false);
-                pass_entry.set_hexpand(true);
-
-                var submit_btn = new Gtk.Button.with_label("Connect");
-                submit_btn.add_css_class("nm-connect-button");
-                submit_btn.clicked.connect(() => {
-                    string connect_error;
-                    bool ok = nm.connect_wifi_with_password(net, pass_entry.get_text(), out connect_error);
-                    if (wifi_action_status != null) {
-                        if (ok) {
-                            wifi_action_status.set_text("Connect requested for " + net.ssid);
-                        } else {
-                            wifi_action_status.set_text("Connect failed: " + connect_error);
-                        }
-                    }
-                    refresh_wifi_rows();
-                });
-
-                prompt_box.append(pass_entry);
-                prompt_box.append(submit_btn);
-                revealer.set_child(prompt_box);
-                row_container.append(revealer);
-
-                prompt_btn.clicked.connect(() => {
-                    revealer.set_reveal_child(!revealer.get_reveal_child());
-                });
+            if (net.is_secured && !net.saved) {
+                show_wifi_password_prompt(prompt_revealer, prompt_entry);
+            } else {
+                connect_wifi_with_optional_password(net, null);
             }
+        });
+        actions.append(action);
+        content.append(actions);
 
-            wifi_box.append(row_container);
-        }
-
-        update_stack_visibility(wifi_stack, wifi_box.get_first_child() != null);
+        row_root.append(content);
+        row_root.append(prompt_revealer);
+        row.set_child(row_root);
+        return row;
     }
 
-    private void refresh_all_sections() {
-        refresh_status_bar();
-        refresh_probe_labels();
-        refresh_wifi_rows();
-        refresh_ethernet_rows();
-        refresh_vpn_rows();
-    }
+    private void refresh_wifi() {
+        debug_log("Refreshing Wi-Fi list");
+        hide_active_wifi_password_prompt();
+        refresh_switch_states();
+        var networks = nm.get_wifi_networks();
 
-    private void refresh_status_bar() {
-        if (status_icon == null || status_label == null) {
-            return;
+        clear_listbox(wifi_listbox);
+        foreach (var net in networks) {
+            wifi_listbox.append(build_wifi_row(net));
         }
 
-        bool networking_on;
-        bool wifi_on;
-        string error_message;
-        if (!nm.get_networking_enabled(out networking_on, out error_message)) {
-            networking_on = false;
-        }
-        if (!nm.get_wifi_enabled(out wifi_on, out error_message)) {
-            wifi_on = false;
-        }
+        wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
 
-        NetworkDevice? active_wifi = null;
-        NetworkDevice? active_eth = null;
-        foreach (var dev in nm.get_devices()) {
-            if (dev.is_wifi && dev.is_connected) {
-                active_wifi = dev;
-            } else if (dev.is_ethernet && dev.is_connected) {
-                active_eth = dev;
-            }
-        }
-
-        if (!networking_on) {
-            status_icon.set_from_icon_name("network-offline-symbolic");
-            status_label.set_text("Networking disabled");
-            return;
-        }
-
-        if (active_eth != null) {
-            status_icon.set_from_icon_name("network-wired-symbolic");
-            string name = active_eth.connection != "" ? active_eth.connection : active_eth.name;
-            status_label.set_text("Ethernet: " + name);
-            return;
-        }
-
-        if (active_wifi != null) {
-            uint signal = 0;
-            foreach (var net in nm.get_wifi_networks()) {
+        if (networks.length() > 0) {
+            WifiNetwork? connected = null;
+            foreach (var net in networks) {
                 if (net.connected) {
-                    signal = net.signal;
+                    connected = net;
                     break;
                 }
             }
-            status_icon.set_from_icon_name("network-wireless-signal-excellent-symbolic");
-            string name = active_wifi.connection != "" ? active_wifi.connection : active_wifi.name;
-            status_label.set_text("Wi-Fi: %s (%u%%)".printf(name, signal));
-            return;
+
+            if (connected != null) {
+                status_label.set_text("Wi-Fi · %s (%u%%)".printf(connected.ssid, connected.signal));
+                status_icon.set_from_icon_name(connected.signal_icon_name);
+            } else {
+                status_label.set_text("Wi-Fi available (%u networks)".printf(networks.length()));
+                status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
+            }
+        } else {
+            status_label.set_text("No Wi-Fi networks found");
+            status_icon.set_from_icon_name("network-wireless-offline-symbolic");
         }
 
-        if (!wifi_on) {
-            status_icon.set_from_icon_name("network-wireless-disabled-symbolic");
-            status_label.set_text("Wi-Fi disabled");
-            return;
-        }
-
-        status_icon.set_from_icon_name("network-wireless-offline-symbolic");
-        status_label.set_text("Disconnected");
+        debug_log("Rendered %u Wi-Fi rows".printf(networks.length()));
     }
 
-    private void refresh_probe_labels() {
+    private void connect_wifi_with_optional_password(WifiNetwork net, string? password) {
         string error_message;
-        bool networking_enabled = nm.is_networking_enabled(out error_message);
-        uint device_count = nm.get_device_paths().length();
-        string backend_summary = "NM read probe: networking=%s, devices=%u".printf(
-            networking_enabled.to_string(),
-            device_count
-        );
-        if (error_message != "") {
-            backend_summary = "NM read probe failed: " + error_message;
+        if (!nm.connect_wifi(net, password, out error_message)) {
+            show_error("Connect failed: " + error_message);
+        }
+        refresh_all();
+    }
+
+    private Gtk.Widget build_ethernet_page() {
+        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+        page.add_css_class("nm-page");
+        page.add_css_class("nm-page-ethernet");
+
+        var toolbar = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+        toolbar.set_margin_start(12);
+        toolbar.set_margin_end(8);
+        toolbar.set_margin_top(8);
+        toolbar.set_margin_bottom(8);
+        toolbar.add_css_class("nm-toolbar");
+
+        var title = new Gtk.Label("Ethernet");
+        title.set_xalign(0.0f);
+        title.set_hexpand(true);
+        title.add_css_class("nm-section-title");
+        toolbar.append(title);
+
+        var refresh_btn = new Gtk.Button();
+        refresh_btn.add_css_class("nm-button");
+        refresh_btn.add_css_class("nm-icon-button");
+        var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
+        refresh_icon.set_pixel_size(16);
+        refresh_btn.set_child(refresh_icon);
+        refresh_btn.clicked.connect(() => {
+            refresh_ethernet();
+        });
+        toolbar.append(refresh_btn);
+
+        page.append(toolbar);
+        var toolbar_sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        toolbar_sep.add_css_class("nm-separator");
+        page.append(toolbar_sep);
+
+        var scroll = new Gtk.ScrolledWindow();
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class("nm-scroll");
+
+        ethernet_listbox = new Gtk.ListBox();
+        ethernet_listbox.set_selection_mode(Gtk.SelectionMode.NONE);
+        ethernet_listbox.add_css_class("nm-list");
+
+        var ethernet_placeholder = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        ethernet_placeholder.set_halign(Gtk.Align.CENTER);
+        ethernet_placeholder.set_valign(Gtk.Align.CENTER);
+        ethernet_placeholder.add_css_class("nm-empty-state");
+        var eth_icon = new Gtk.Image.from_icon_name("network-wired-symbolic");
+        eth_icon.set_pixel_size(24);
+        eth_icon.add_css_class("nm-placeholder-icon");
+        var eth_lbl = new Gtk.Label("No Ethernet devices found");
+        eth_lbl.add_css_class("nm-placeholder-label");
+        ethernet_placeholder.append(eth_icon);
+        ethernet_placeholder.append(eth_lbl);
+
+        scroll.set_child(ethernet_listbox);
+
+        ethernet_stack = new Gtk.Stack();
+        ethernet_stack.set_vexpand(true);
+        ethernet_stack.add_css_class("nm-content-stack");
+        ethernet_stack.add_named(scroll, "list");
+        ethernet_stack.add_named(ethernet_placeholder, "empty");
+        ethernet_stack.set_visible_child_name("empty");
+
+        page.append(ethernet_stack);
+        return page;
+    }
+
+    private Gtk.ListBoxRow build_ethernet_row(NetworkDevice dev) {
+        var row = new Gtk.ListBoxRow();
+        row.add_css_class("nm-device-row");
+        if (dev.is_connected) {
+            row.add_css_class("connected");
         }
 
-        if (nm_probe_label != null) {
-            nm_probe_label.set_text(backend_summary);
+        var content = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 10);
+        content.set_margin_start(12);
+        content.set_margin_end(8);
+        content.set_margin_top(8);
+        content.set_margin_bottom(8);
+
+        var icon = new Gtk.Image.from_icon_name("network-wired-symbolic");
+        icon.set_pixel_size(16);
+        icon.add_css_class("nm-signal-icon");
+        content.append(icon);
+
+        var info = new Gtk.Box(Gtk.Orientation.VERTICAL, 1);
+        info.set_hexpand(true);
+        var name_lbl = new Gtk.Label(dev.name);
+        name_lbl.set_xalign(0.0f);
+        name_lbl.add_css_class("nm-ssid-label");
+        info.append(name_lbl);
+
+        string subtitle = dev.state_label;
+        if (dev.connection != "") {
+            subtitle = "%s (%s)".printf(dev.state_label, dev.connection);
+        }
+        var sub = new Gtk.Label(subtitle);
+        sub.set_xalign(0.0f);
+        sub.add_css_class("nm-sub-label");
+        info.append(sub);
+        content.append(info);
+
+        var action = new Gtk.Button.with_label("Disconnect");
+        action.add_css_class("nm-button");
+        action.add_css_class("nm-disconnect-button");
+        action.set_sensitive(dev.is_connected);
+        action.clicked.connect(() => {
+            string error_message;
+            if (!nm.disconnect_device(dev.name, out error_message)) {
+                show_error("Ethernet disconnect failed: " + error_message);
+            }
+            refresh_ethernet();
+        });
+        content.append(action);
+
+        row.set_child(content);
+        return row;
+    }
+
+    private void refresh_ethernet() {
+        var devices = nm.get_devices();
+        uint ethernet_count = 0;
+        clear_listbox(ethernet_listbox);
+
+        foreach (var dev in devices) {
+            if (dev.is_ethernet) {
+                ethernet_listbox.append(build_ethernet_row(dev));
+                ethernet_count++;
+            }
         }
 
-        bool wifi_enabled = false;
-        string wifi_error = "";
-        bool wifi_ok = nm.get_wifi_enabled(out wifi_enabled, out wifi_error);
-        if (wifi_state_label != null) {
-            wifi_state_label.set_text(
-                wifi_ok
-                    ? "Wi-Fi radio enabled: %s".printf(wifi_enabled.to_string())
-                    : "Wi-Fi radio read failed: " + wifi_error
-            );
+        ethernet_stack.set_visible_child_name(ethernet_count > 0 ? "list" : "empty");
+    }
+
+    private Gtk.Widget build_vpn_page() {
+        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+        page.add_css_class("nm-page");
+        page.add_css_class("nm-page-vpn");
+
+        var toolbar = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+        toolbar.set_margin_start(12);
+        toolbar.set_margin_end(8);
+        toolbar.set_margin_top(8);
+        toolbar.set_margin_bottom(8);
+        toolbar.add_css_class("nm-toolbar");
+
+        var title = new Gtk.Label("VPN");
+        title.set_xalign(0.0f);
+        title.set_hexpand(true);
+        title.add_css_class("nm-section-title");
+        toolbar.append(title);
+
+        var refresh_btn = new Gtk.Button();
+        refresh_btn.add_css_class("nm-button");
+        refresh_btn.add_css_class("nm-icon-button");
+        var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
+        refresh_icon.set_pixel_size(16);
+        refresh_btn.set_child(refresh_icon);
+        refresh_btn.clicked.connect(() => {
+            refresh_vpn();
+        });
+        toolbar.append(refresh_btn);
+
+        page.append(toolbar);
+        var toolbar_sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        toolbar_sep.add_css_class("nm-separator");
+        page.append(toolbar_sep);
+
+        var scroll = new Gtk.ScrolledWindow();
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class("nm-scroll");
+
+        vpn_listbox = new Gtk.ListBox();
+        vpn_listbox.set_selection_mode(Gtk.SelectionMode.NONE);
+        vpn_listbox.add_css_class("nm-list");
+
+        var vpn_placeholder = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        vpn_placeholder.set_halign(Gtk.Align.CENTER);
+        vpn_placeholder.set_valign(Gtk.Align.CENTER);
+        vpn_placeholder.add_css_class("nm-empty-state");
+        var vpn_icon = new Gtk.Image.from_icon_name("network-vpn-symbolic");
+        vpn_icon.set_pixel_size(24);
+        vpn_icon.add_css_class("nm-placeholder-icon");
+        var vpn_lbl = new Gtk.Label("No VPN profiles found");
+        vpn_lbl.add_css_class("nm-placeholder-label");
+        vpn_placeholder.append(vpn_icon);
+        vpn_placeholder.append(vpn_lbl);
+
+        scroll.set_child(vpn_listbox);
+
+        vpn_stack = new Gtk.Stack();
+        vpn_stack.set_vexpand(true);
+        vpn_stack.add_css_class("nm-content-stack");
+        vpn_stack.add_named(scroll, "list");
+        vpn_stack.add_named(vpn_placeholder, "empty");
+        vpn_stack.set_visible_child_name("empty");
+
+        page.append(vpn_stack);
+        return page;
+    }
+
+    private Gtk.ListBoxRow build_vpn_row(VpnConnection conn) {
+        var row = new Gtk.ListBoxRow();
+        row.add_css_class("nm-device-row");
+        if (conn.is_connected) {
+            row.add_css_class("connected");
         }
 
-        bool networking_enabled2 = false;
-        string net_error = "";
-        bool net_ok = nm.get_networking_enabled(out networking_enabled2, out net_error);
-        if (net_state_label != null) {
-            net_state_label.set_text(
-                net_ok
-                    ? "Networking enabled: %s".printf(networking_enabled2.to_string())
-                    : "Networking read failed: " + net_error
-            );
+        var content = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 10);
+        content.set_margin_start(12);
+        content.set_margin_end(8);
+        content.set_margin_top(8);
+        content.set_margin_bottom(8);
+
+        var icon = new Gtk.Image.from_icon_name("network-vpn-symbolic");
+        icon.set_pixel_size(16);
+        icon.add_css_class("nm-signal-icon");
+        content.append(icon);
+
+        var info = new Gtk.Box(Gtk.Orientation.VERTICAL, 1);
+        info.set_hexpand(true);
+        var name_lbl = new Gtk.Label(conn.name);
+        name_lbl.set_xalign(0.0f);
+        name_lbl.add_css_class("nm-ssid-label");
+        info.append(name_lbl);
+
+        var sub = new Gtk.Label(conn.vpn_type);
+        sub.set_xalign(0.0f);
+        sub.add_css_class("nm-sub-label");
+        info.append(sub);
+        content.append(info);
+
+        var action = new Gtk.Button.with_label(conn.is_connected ? "Disconnect" : "Connect");
+        action.add_css_class("nm-button");
+        action.add_css_class(conn.is_connected ? "nm-disconnect-button" : "nm-connect-button");
+        action.clicked.connect(() => {
+            string error_message;
+            bool ok;
+            if (conn.is_connected) {
+                ok = nm.disconnect_vpn(conn.name, out error_message);
+                if (!ok) {
+                    show_error("VPN disconnect failed: " + error_message);
+                }
+            } else {
+                ok = nm.connect_vpn(conn.name, out error_message);
+                if (!ok) {
+                    show_error("VPN connect failed: " + error_message);
+                }
+            }
+            refresh_vpn();
+        });
+        content.append(action);
+
+        row.set_child(content);
+        return row;
+    }
+
+    private void refresh_vpn() {
+        var connections = nm.get_vpn_connections();
+        clear_listbox(vpn_listbox);
+
+        foreach (var conn in connections) {
+            vpn_listbox.append(build_vpn_row(conn));
         }
+
+        vpn_stack.set_visible_child_name(connections.length() > 0 ? "list" : "empty");
+    }
+
+    private void refresh_all() {
+        refresh_wifi();
+        refresh_ethernet();
+        refresh_vpn();
+    }
+
+    private void refresh_switch_states() {
+        bool wifi_enabled;
+        bool net_enabled;
+        string error_message;
 
         updating_switches = true;
-        if (networking_switch != null && net_ok) {
-            networking_switch.set_active(networking_enabled2);
-        }
-        if (wifi_switch != null && wifi_ok) {
+
+        if (nm.get_wifi_enabled(out wifi_enabled, out error_message)) {
             wifi_switch.set_active(wifi_enabled);
+        } else {
+            debug_log("Could not read WirelessEnabled: " + error_message);
         }
+
+        if (nm.get_networking_enabled(out net_enabled, out error_message)) {
+            networking_switch.set_active(net_enabled);
+        } else {
+            debug_log("Could not read NetworkingEnabled: " + error_message);
+        }
+
         updating_switches = false;
     }
 
-    private void on_networking_switch_changed() {
-        if (updating_switches || networking_switch == null) {
-            return;
+    private void refresh_after_toggle(bool scan_wifi) {
+        string error_message;
+        if (scan_wifi) {
+            if (!nm.scan_wifi(out error_message)) {
+                debug_log("Could not request Wi-Fi scan: " + error_message);
+            }
         }
 
-        string err;
-        bool ok = nm.set_networking_enabled(networking_switch.get_active(), out err);
-        if (!ok) {
-            debug_log("networking toggle failed: " + err);
-        }
-        refresh_all_sections();
+        refresh_all();
+        Timeout.add(1200, () => {
+            refresh_all();
+            return false;
+        });
     }
 
     private void on_wifi_switch_changed() {
-        if (updating_switches || wifi_switch == null) {
+        if (updating_switches) {
             return;
         }
 
-        string err;
-        bool ok = nm.set_wifi_enabled(wifi_switch.get_active(), out err);
-        if (!ok) {
-            debug_log("wifi toggle failed: " + err);
+        string error_message;
+        bool enabled = wifi_switch.get_active();
+        if (!nm.set_wifi_enabled(enabled, out error_message)) {
+            show_error("Could not toggle Wi-Fi: " + error_message);
+            refresh_switch_states();
+            return;
         }
-        refresh_all_sections();
+
+        refresh_after_toggle(enabled);
     }
 
-    private void refresh_ethernet_rows() {
-        if (ethernet_box == null) {
+    private void on_networking_switch_changed() {
+        if (updating_switches) {
             return;
         }
 
-        clear_box(ethernet_box);
-
-        foreach (var dev in nm.get_devices()) {
-            if (!dev.is_ethernet) {
-                continue;
-            }
-
-            var row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-            var label = new Gtk.Label("%s: %s".printf(dev.name, dev.state_label));
-            label.set_xalign(0.0f);
-            label.set_hexpand(true);
-            row.append(label);
-
-            if (dev.connection != "") {
-                label.set_text(label.get_text() + " [" + dev.connection + "]");
-            }
-
-            if (dev.is_connected) {
-                var disconnect_btn = new Gtk.Button.with_label("Disconnect");
-                disconnect_btn.add_css_class("nm-disconnect-button");
-                disconnect_btn.clicked.connect(() => {
-                    string err;
-                    bool ok = nm.disconnect_device(dev.name, out err);
-                    if (ethernet_action_status != null) {
-                        if (ok) {
-                            ethernet_action_status.set_text("Disconnect requested for " + dev.name);
-                        } else {
-                            ethernet_action_status.set_text("Disconnect failed: " + err);
-                        }
-                    }
-                    refresh_ethernet_rows();
-                });
-                row.append(disconnect_btn);
-            }
-
-            ethernet_box.append(row);
+        string error_message;
+        bool enabled = networking_switch.get_active();
+        if (!nm.set_networking_enabled(enabled, out error_message)) {
+            show_error("Could not toggle networking: " + error_message);
+            refresh_switch_states();
+            return;
         }
 
-        update_stack_visibility(ethernet_stack, ethernet_box.get_first_child() != null);
+        refresh_after_toggle(enabled);
     }
 
-    private void refresh_vpn_rows() {
-        if (vpn_box == null) {
-            return;
+    private void show_wifi_password_prompt(Gtk.Revealer revealer, Gtk.Entry entry) {
+        if (active_wifi_password_revealer != null && active_wifi_password_revealer != revealer) {
+            active_wifi_password_revealer.set_reveal_child(false);
         }
 
-        clear_box(vpn_box);
-
-        foreach (var vpn in nm.get_vpn_connections()) {
-            string state = vpn.is_connected ? "connected" : "disconnected";
-            var row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-            var label = new Gtk.Label("%s (%s): %s".printf(vpn.name, vpn.vpn_type, state));
-            label.set_xalign(0.0f);
-            label.set_hexpand(true);
-            row.append(label);
-
-            if (vpn.is_connected) {
-                var btn = new Gtk.Button.with_label("Disconnect");
-                btn.add_css_class("nm-disconnect-button");
-                btn.clicked.connect(() => {
-                    string err;
-                    bool ok = nm.disconnect_vpn(vpn.name, out err);
-                    if (vpn_action_status != null) {
-                        if (ok) {
-                            vpn_action_status.set_text("Disconnect requested for " + vpn.name);
-                        } else {
-                            vpn_action_status.set_text("Disconnect failed: " + err);
-                        }
-                    }
-                    refresh_vpn_rows();
-                });
-                row.append(btn);
-            } else {
-                var btn = new Gtk.Button.with_label("Connect");
-                btn.add_css_class("nm-connect-button");
-                btn.clicked.connect(() => {
-                    string err;
-                    bool ok = nm.connect_vpn(vpn.name, out err);
-                    if (vpn_action_status != null) {
-                        if (ok) {
-                            vpn_action_status.set_text("Connect requested for " + vpn.name);
-                        } else {
-                            vpn_action_status.set_text("Connect failed: " + err);
-                        }
-                    }
-                    refresh_vpn_rows();
-                });
-                row.append(btn);
-            }
-
-            vpn_box.append(row);
+        if (active_wifi_password_entry != null && active_wifi_password_entry != entry) {
+            active_wifi_password_entry.set_text("");
         }
 
-        update_stack_visibility(vpn_stack, vpn_box.get_first_child() != null);
+        active_wifi_password_revealer = revealer;
+        active_wifi_password_entry = entry;
+        entry.set_text("");
+        set_popup_text_input_mode(true);
+        revealer.set_reveal_child(true);
+        entry.grab_focus();
     }
 
-    private void update_stack_visibility(Gtk.Stack? stack, bool has_items) {
-        if (stack == null) {
-            return;
+    private void hide_wifi_password_prompt(Gtk.Revealer revealer, Gtk.Entry entry, string? value) {
+        revealer.set_reveal_child(false);
+        if (value == null) {
+            entry.set_text("");
         }
 
-        if (has_items) {
-            stack.set_visible_child_name("list");
-        } else {
-            stack.set_visible_child_name("empty");
+        if (active_wifi_password_revealer == revealer) {
+            active_wifi_password_revealer = null;
+            active_wifi_password_entry = null;
+            set_popup_text_input_mode(false);
         }
+    }
+
+    private void hide_active_wifi_password_prompt() {
+        if (active_wifi_password_revealer != null) {
+            active_wifi_password_revealer.set_reveal_child(false);
+        }
+        if (active_wifi_password_entry != null) {
+            active_wifi_password_entry.set_text("");
+        }
+        active_wifi_password_revealer = null;
+        active_wifi_password_entry = null;
+        set_popup_text_input_mode(false);
+    }
+
+    private void show_error(string message) {
+        var dialog = new Gtk.AlertDialog("Network Error");
+        dialog.set_message("Network Error");
+        dialog.set_detail(message);
+        dialog.set_modal(true);
+        dialog.show(this);
+    }
+
+    private void build_ui() {
+        var root = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+        root.add_css_class("nm-root");
+        set_child(root);
+
+        root.append(build_status_bar());
+        var status_sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        status_sep.add_css_class("nm-separator");
+        root.append(status_sep);
+
+        var notebook = new Gtk.Notebook();
+        notebook.set_show_border(false);
+        notebook.add_css_class("nm-notebook");
+
+        var wifi_tab = new Gtk.Label("Wi-Fi");
+        wifi_tab.add_css_class("nm-tab-label");
+        notebook.append_page(build_wifi_page(), wifi_tab);
+
+        var eth_tab = new Gtk.Label("Ethernet");
+        eth_tab.add_css_class("nm-tab-label");
+        notebook.append_page(build_ethernet_page(), eth_tab);
+
+        var vpn_tab = new Gtk.Label("VPN");
+        vpn_tab.add_css_class("nm-tab-label");
+        notebook.append_page(build_vpn_page(), vpn_tab);
+
+        root.append(notebook);
     }
 }
