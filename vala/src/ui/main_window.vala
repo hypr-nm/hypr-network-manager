@@ -13,6 +13,12 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Label? ethernet_action_status = null;
     private Gtk.Box? vpn_box = null;
     private Gtk.Label? vpn_action_status = null;
+    private Gtk.Label? nm_probe_label = null;
+    private Gtk.Label? wifi_state_label = null;
+    private Gtk.Label? net_state_label = null;
+    private Gtk.Switch? networking_switch = null;
+    private Gtk.Switch? wifi_switch = null;
+    private bool updating_switches = false;
     private Gtk.EventControllerKey key_controller;
 
     public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
@@ -176,45 +182,42 @@ public class MainWindow : Gtk.ApplicationWindow {
         anchors.set_xalign(0.0f);
         root.append(anchors);
 
-        string error_message;
-        bool networking_enabled = nm.is_networking_enabled(out error_message);
-        uint device_count = nm.get_device_paths().length();
-        string backend_summary = "NM read probe: networking=%s, devices=%u".printf(
-            networking_enabled.to_string(),
-            device_count
-        );
-        if (error_message != "") {
-            backend_summary = "NM read probe failed: " + error_message;
-        }
+        nm_probe_label = new Gtk.Label("");
+        nm_probe_label.set_xalign(0.0f);
+        nm_probe_label.set_wrap(true);
+        root.append(nm_probe_label);
 
-        var nm_label = new Gtk.Label(backend_summary);
-        nm_label.set_xalign(0.0f);
-        nm_label.set_wrap(true);
-        root.append(nm_label);
+        wifi_state_label = new Gtk.Label("");
+        wifi_state_label.set_xalign(0.0f);
+        wifi_state_label.set_wrap(true);
+        root.append(wifi_state_label);
 
-        bool wifi_enabled = false;
-        string wifi_error = "";
-        bool wifi_ok = nm.get_wifi_enabled(out wifi_enabled, out wifi_error);
-        var wifi_state = new Gtk.Label(
-            wifi_ok
-                ? "Wi-Fi radio enabled: %s".printf(wifi_enabled.to_string())
-                : "Wi-Fi radio read failed: " + wifi_error
-        );
-        wifi_state.set_xalign(0.0f);
-        wifi_state.set_wrap(true);
-        root.append(wifi_state);
+        net_state_label = new Gtk.Label("");
+        net_state_label.set_xalign(0.0f);
+        net_state_label.set_wrap(true);
+        root.append(net_state_label);
 
-        bool networking_enabled2 = false;
-        string net_error = "";
-        bool net_ok = nm.get_networking_enabled(out networking_enabled2, out net_error);
-        var net_state = new Gtk.Label(
-            net_ok
-                ? "Networking enabled: %s".printf(networking_enabled2.to_string())
-                : "Networking read failed: " + net_error
-        );
-        net_state.set_xalign(0.0f);
-        net_state.set_wrap(true);
-        root.append(net_state);
+        var toggle_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        var networking_label = new Gtk.Label("Networking");
+        networking_label.set_xalign(0.0f);
+        networking_label.set_hexpand(true);
+        networking_switch = new Gtk.Switch();
+        networking_switch.notify["active"].connect(() => {
+            on_networking_switch_changed();
+        });
+        toggle_row.append(networking_label);
+        toggle_row.append(networking_switch);
+
+        var wifi_toggle_label = new Gtk.Label("Wi-Fi");
+        wifi_toggle_label.set_xalign(0.0f);
+        wifi_toggle_label.set_hexpand(true);
+        wifi_switch = new Gtk.Switch();
+        wifi_switch.notify["active"].connect(() => {
+            on_wifi_switch_changed();
+        });
+        toggle_row.append(wifi_toggle_label);
+        toggle_row.append(wifi_switch);
+        root.append(toggle_row);
 
         var device_title = new Gtk.Label("Discovered devices");
         device_title.set_xalign(0.0f);
@@ -290,6 +293,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         vpn_action_status.set_xalign(0.0f);
         vpn_action_status.set_wrap(true);
         root.append(vpn_action_status);
+
+        refresh_probe_labels();
 
         set_child(root);
     }
@@ -434,9 +439,84 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_all_sections() {
+        refresh_probe_labels();
         refresh_wifi_rows();
         refresh_ethernet_rows();
         refresh_vpn_rows();
+    }
+
+    private void refresh_probe_labels() {
+        string error_message;
+        bool networking_enabled = nm.is_networking_enabled(out error_message);
+        uint device_count = nm.get_device_paths().length();
+        string backend_summary = "NM read probe: networking=%s, devices=%u".printf(
+            networking_enabled.to_string(),
+            device_count
+        );
+        if (error_message != "") {
+            backend_summary = "NM read probe failed: " + error_message;
+        }
+
+        if (nm_probe_label != null) {
+            nm_probe_label.set_text(backend_summary);
+        }
+
+        bool wifi_enabled = false;
+        string wifi_error = "";
+        bool wifi_ok = nm.get_wifi_enabled(out wifi_enabled, out wifi_error);
+        if (wifi_state_label != null) {
+            wifi_state_label.set_text(
+                wifi_ok
+                    ? "Wi-Fi radio enabled: %s".printf(wifi_enabled.to_string())
+                    : "Wi-Fi radio read failed: " + wifi_error
+            );
+        }
+
+        bool networking_enabled2 = false;
+        string net_error = "";
+        bool net_ok = nm.get_networking_enabled(out networking_enabled2, out net_error);
+        if (net_state_label != null) {
+            net_state_label.set_text(
+                net_ok
+                    ? "Networking enabled: %s".printf(networking_enabled2.to_string())
+                    : "Networking read failed: " + net_error
+            );
+        }
+
+        updating_switches = true;
+        if (networking_switch != null && net_ok) {
+            networking_switch.set_active(networking_enabled2);
+        }
+        if (wifi_switch != null && wifi_ok) {
+            wifi_switch.set_active(wifi_enabled);
+        }
+        updating_switches = false;
+    }
+
+    private void on_networking_switch_changed() {
+        if (updating_switches || networking_switch == null) {
+            return;
+        }
+
+        string err;
+        bool ok = nm.set_networking_enabled(networking_switch.get_active(), out err);
+        if (!ok) {
+            debug_log("networking toggle failed: " + err);
+        }
+        refresh_all_sections();
+    }
+
+    private void on_wifi_switch_changed() {
+        if (updating_switches || wifi_switch == null) {
+            return;
+        }
+
+        string err;
+        bool ok = nm.set_wifi_enabled(wifi_switch.get_active(), out err);
+        if (!ok) {
+            debug_log("wifi toggle failed: " + err);
+        }
+        refresh_all_sections();
     }
 
     private void refresh_ethernet_rows() {

@@ -294,6 +294,24 @@ public class NetworkManagerClientVala : Object {
         return set_nm_bool_property("WirelessEnabled", enabled, out error_message);
     }
 
+    public bool set_networking_enabled(bool enabled, out string error_message) {
+        error_message = "";
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            nm.call_sync(
+                "Enable",
+                new Variant("(b)", enabled),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            debug_log("Enable() failed, falling back to NetworkingEnabled property: " + e.message);
+            return set_nm_bool_property("NetworkingEnabled", enabled, out error_message);
+        }
+    }
+
     public bool toggle_wifi(out bool enabled_after_toggle, out string error_message) {
         enabled_after_toggle = false;
         error_message = "";
