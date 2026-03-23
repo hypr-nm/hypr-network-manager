@@ -189,9 +189,28 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_title.set_xalign(0.0f);
         root.append(wifi_title);
 
-        var wifi_placeholder = new Gtk.Label("Wi-Fi list scaffold ready");
-        wifi_placeholder.set_xalign(0.0f);
-        root.append(wifi_placeholder);
+        var wifi_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        foreach (var net in nm.get_wifi_networks()) {
+            string lock = net.is_secured ? " [locked]" : "";
+            string active = net.connected ? " [connected]" : "";
+            var wifi_row = new Gtk.Label(
+                "%s - %u%% (%s)%s%s".printf(
+                    net.ssid,
+                    net.signal,
+                    net.signal_label,
+                    lock,
+                    active
+                )
+            );
+            wifi_row.set_xalign(0.0f);
+            wifi_box.append(wifi_row);
+        }
+        if (wifi_box.get_first_child() == null) {
+            var empty = new Gtk.Label("No Wi-Fi access points discovered");
+            empty.set_xalign(0.0f);
+            wifi_box.append(empty);
+        }
+        root.append(wifi_box);
 
         set_child(root);
     }
