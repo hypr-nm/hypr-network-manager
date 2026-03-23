@@ -1,0 +1,14 @@
+const string NM_SERVICE = "org.freedesktop.NetworkManager";
+const string NM_PATH = "/org/freedesktop/NetworkManager";
+const string NM_IFACE = "org.freedesktop.NetworkManager";
+const string DBUS_PROPS_IFACE = "org.freedesktop.DBus.Properties";
+const string NM_DEVICE_IFACE = "org.freedesktop.NetworkManager.Device";
+const string NM_WIRELESS_IFACE = "org.freedesktop.NetworkManager.Device.Wireless";
+const string NM_AP_IFACE = "org.freedesktop.NetworkManager.AccessPoint";
+const string NM_ACTIVE_CONN_IFACE = "org.freedesktop.NetworkManager.Connection.Active";
+const string NM_SETTINGS_PATH = "/org/freedesktop/NetworkManager/Settings";
+const string NM_SETTINGS_IFACE = "org.freedesktop.NetworkManager.Settings";
+const string NM_CONN_IFACE = "org.freedesktop.NetworkManager.Settings.Connection";
+const uint32 NM_DEVICE_TYPE_ETHERNET = 1;
+const uint32 NM_DEVICE_TYPE_WIFI = 2;
+const uint32 NM_DEVICE_STATE_ACTIVATED = 100;
