@@ -144,6 +144,14 @@ public class NetworkManagerClientVala : Object {
         return null;
     }
 
+    private static Variant make_ssid_variant(string ssid) {
+        var ssid_bytes = new VariantBuilder(new VariantType("ay"));
+        for (int i = 0; i < ssid.length; i++) {
+            ssid_bytes.add("y", (uint8) ssid[i]);
+        }
+        return ssid_bytes.end();
+    }
+
     public bool is_networking_enabled(out string error_message) {
         error_message = "";
 
@@ -307,6 +315,55 @@ public class NetworkManagerClientVala : Object {
             nm.call_sync(
                 "ActivateConnection",
                 new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    public bool connect_wifi_with_password(
+        WifiNetwork network,
+        string password,
+        out string error_message
+    ) {
+        error_message = "";
+
+        try {
+            if (network.is_secured && password.strip() == "") {
+                error_message = "Password is required for secured networks.";
+                return false;
+            }
+
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+
+            var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
+
+            var conn_section = new VariantBuilder(new VariantType("a{sv}"));
+            conn_section.add("{sv}", "id", new Variant.string(network.ssid));
+            conn_section.add("{sv}", "type", new Variant.string("802-11-wireless"));
+            conn_section.add("{sv}", "uuid", new Variant.string(Uuid.string_random()));
+            conn_section.add("{sv}", "autoconnect", new Variant.boolean(true));
+            conn.add("{s@a{sv}}", "connection", conn_section.end());
+
+            var wifi_section = new VariantBuilder(new VariantType("a{sv}"));
+            wifi_section.add("{sv}", "ssid", make_ssid_variant(network.ssid));
+            conn.add("{s@a{sv}}", "802-11-wireless", wifi_section.end());
+
+            if (network.is_secured) {
+                var sec = new VariantBuilder(new VariantType("a{sv}"));
+                sec.add("{sv}", "key-mgmt", new Variant.string("wpa-psk"));
+                sec.add("{sv}", "psk", new Variant.string(password));
+                conn.add("{s@a{sv}}", "802-11-wireless-security", sec.end());
+            }
+
+            nm.call_sync(
+                "AddAndActivateConnection",
+                new Variant("(@a{sa{sv}}oo)", conn.end(), network.device_path, network.ap_path),
                 DBusCallFlags.NONE,
                 -1,
                 null
