@@ -1,1 +1,29 @@
 @import url("default.css");
+
+/*
+ * User style overrides (moved from config.json)
+ * - Opacity
+ * - Border radius
+ * - Font family
+ * - Font size
+ *
+ * Edit these values in your local base.css to customize appearance.
+ */
+
+window.nm-window,
+.nm-window {
+	opacity: 1.0;
+	border-radius: 12px;
+}
+
+.nm-root,
+.nm-window,
+.nm-root label,
+.nm-window label,
+.nm-root button,
+.nm-window button,
+.nm-root entry,
+.nm-window entry {
+	font-family: sans-serif;
+	font-size: 13px;
+}

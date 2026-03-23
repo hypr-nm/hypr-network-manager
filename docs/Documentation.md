@@ -102,7 +102,12 @@ Configuration is handled via JSON files.
   "layer_shell_margin_top": 8,
   "layer_shell_margin_right": 8,
   "layer_shell_margin_bottom": 8,
-  "layer_shell_margin_left": 8
+  "layer_shell_margin_left": 8,
+  "scan_interval": 30,
+  "close_on_connect": true,
+  "show_bssid": false,
+  "show_frequency": true,
+  "show_band": false
 }
 ```
 
@@ -124,6 +129,11 @@ The app reads `config.json` from this precedence order:
 | layer_shell_margin_right | int | 8 | Right margin in pixels. |
 | layer_shell_margin_bottom | int | 8 | Bottom margin in pixels. |
 | layer_shell_margin_left | int | 8 | Left margin in pixels. |
+| scan_interval | int (> 0) | 30 | Seconds between periodic refresh/scan cycles. |
+| close_on_connect | bool | true | Close popup immediately after successful Wi-Fi connect. |
+| show_bssid | bool | false | Show access point BSSID in Wi-Fi row subtitle. |
+| show_frequency | bool | true | Show access point frequency in MHz in Wi-Fi row subtitle. |
+| show_band | bool | false | Show Wi-Fi band label (`2.4 GHz` or `5 GHz`) derived from AP frequency. |
 
 ### Placement behavior
 
@@ -152,6 +162,37 @@ Themes are CSS-based and hot-swappable.
 ```
 
 You can create themes in `~/.config/hypr-network-manager/themes/` and import them in `base.css`.
+
+### Base CSS Style Overrides
+
+The following appearance settings are CSS-driven and should be edited in `base.css`:
+
+* Opacity
+* Border radius
+* Font family
+* Font size
+
+Example (already present in bundled `themes/base.css`):
+
+```css
+window.nm-window,
+.nm-window {
+  opacity: 1.0;
+  border-radius: 12px;
+}
+
+.nm-root,
+.nm-window,
+.nm-root label,
+.nm-window label,
+.nm-root button,
+.nm-window button,
+.nm-root entry,
+.nm-window entry {
+  font-family: sans-serif;
+  font-size: 13px;
+}
+```
 
 ### Supported theming classes
 
@@ -274,7 +315,7 @@ Copy CSS snippets from `waybar/style.css` to your bar's style sheet.
 ### GUI & Layer-Shell
 
 * Layer-shell used for proper Wayland popup placement
-* Window dimensions, anchors, margins, and opacity configurable
+* Window dimensions, anchors, and margins configurable
 * Frosted-glass effects rely on compositor blur
 
 ---
