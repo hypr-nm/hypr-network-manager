@@ -1,4 +1,5 @@
 using Gtk;
+using Gdk;
 using GtkLayerShell;
 
 public class MainWindow : Gtk.ApplicationWindow {
@@ -12,6 +13,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Label? ethernet_action_status = null;
     private Gtk.Box? vpn_box = null;
     private Gtk.Label? vpn_action_status = null;
+    private Gtk.EventControllerKey key_controller;
 
     public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application: app, title: "Network Manager");
@@ -27,10 +29,54 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         configure_layer_shell();
         build_ui();
+        configure_key_handling();
         Timeout.add_seconds(20, () => {
             refresh_all_sections();
             return true;
         });
+    }
+
+    private void configure_key_handling() {
+        key_controller = new Gtk.EventControllerKey();
+        key_controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
+        ((Gtk.Widget) this).add_controller(key_controller);
+        key_controller.key_released.connect(key_released_event_cb);
+        key_controller.key_pressed.connect(key_press_event_cb);
+    }
+
+    private void key_released_event_cb(uint keyval, uint keycode, Gdk.ModifierType state) {
+        if (this.get_focus() is Gtk.Entry) {
+            if (Gdk.keyval_name(keyval) == "Escape") {
+                this.set_focus(null);
+            }
+            return;
+        }
+
+        switch (Gdk.keyval_name(keyval)) {
+        case "Escape":
+        case "Caps_Lock":
+            this.close();
+            return;
+        default:
+            return;
+        }
+    }
+
+    private bool key_press_event_cb(uint keyval, uint keycode, Gdk.ModifierType state) {
+        if (get_focus() is Gtk.Editable) {
+            return false;
+        }
+
+        switch (Gdk.keyval_name(keyval)) {
+        case "Escape":
+        case "Caps_Lock":
+            this.close();
+            return true;
+        default:
+            break;
+        }
+
+        return true;
     }
 
     private void debug_log(string message) {
