@@ -441,8 +441,44 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         foreach (var vpn in nm.get_vpn_connections()) {
             string state = vpn.is_connected ? "connected" : "disconnected";
-            var row = new Gtk.Label("%s (%s): %s".printf(vpn.name, vpn.vpn_type, state));
-            row.set_xalign(0.0f);
+            var row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+            var label = new Gtk.Label("%s (%s): %s".printf(vpn.name, vpn.vpn_type, state));
+            label.set_xalign(0.0f);
+            label.set_hexpand(true);
+            row.append(label);
+
+            if (vpn.is_connected) {
+                var btn = new Gtk.Button.with_label("Disconnect");
+                btn.clicked.connect(() => {
+                    string err;
+                    bool ok = nm.disconnect_vpn(vpn.name, out err);
+                    if (vpn_action_status != null) {
+                        if (ok) {
+                            vpn_action_status.set_text("Disconnect requested for " + vpn.name);
+                        } else {
+                            vpn_action_status.set_text("Disconnect failed: " + err);
+                        }
+                    }
+                    refresh_vpn_rows();
+                });
+                row.append(btn);
+            } else {
+                var btn = new Gtk.Button.with_label("Connect");
+                btn.clicked.connect(() => {
+                    string err;
+                    bool ok = nm.connect_vpn(vpn.name, out err);
+                    if (vpn_action_status != null) {
+                        if (ok) {
+                            vpn_action_status.set_text("Connect requested for " + vpn.name);
+                        } else {
+                            vpn_action_status.set_text("Connect failed: " + err);
+                        }
+                    }
+                    refresh_vpn_rows();
+                });
+                row.append(btn);
+            }
+
             vpn_box.append(row);
         }
 
