@@ -211,6 +211,43 @@ public class NetworkManagerClientVala : Object {
         return networks;
     }
 
+    public bool scan_wifi(out string error_message) {
+        error_message = "";
+
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices = devices_res.get_child_value(0);
+
+            uint scanned = 0;
+            for (int i = 0; i < devices.n_children(); i++) {
+                string dev_path = devices.get_child_value(i).get_string();
+                uint32 dev_type = get_prop(dev_path, NM_DEVICE_IFACE, "DeviceType").get_uint32();
+                if (dev_type != NM_DEVICE_TYPE_WIFI) {
+                    continue;
+                }
+
+                var wifi = make_proxy(dev_path, NM_WIRELESS_IFACE);
+                var options = new VariantBuilder(new VariantType("a{sv}"));
+                wifi.call_sync(
+                    "RequestScan",
+                    new Variant("(@a{sv})", options.end()),
+                    DBusCallFlags.NONE,
+                    -1,
+                    null
+                );
+                scanned++;
+            }
+
+            debug_log("requested scan on %u wifi device(s)".printf(scanned));
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            debug_log("scan_wifi failed: " + e.message);
+            return false;
+        }
+    }
+
     public List<string> get_device_paths() {
         var paths = new List<string>();
 
