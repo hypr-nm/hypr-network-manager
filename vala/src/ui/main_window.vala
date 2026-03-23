@@ -5,6 +5,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private AppConfig config;
     private bool fullscreen_mode;
     private bool debug_enabled;
+    private NetworkManagerClientVala nm;
 
     public MainWindow(Gtk.Application app, AppConfig config, bool fullscreen, bool debug_enabled) {
         Object(application: app, title: "Network Manager");
@@ -12,6 +13,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         this.config = config;
         this.fullscreen_mode = fullscreen;
         this.debug_enabled = debug_enabled;
+        this.nm = new NetworkManagerClientVala(debug_enabled);
 
         set_default_size(config.window_width, config.window_height);
         set_resizable(false);
@@ -117,6 +119,22 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
         anchors.set_xalign(0.0f);
         root.append(anchors);
+
+        string error_message;
+        bool networking_enabled = nm.is_networking_enabled(out error_message);
+        uint device_count = nm.get_device_paths().length();
+        string backend_summary = "NM read probe: networking=%s, devices=%u".printf(
+            networking_enabled.to_string(),
+            device_count
+        );
+        if (error_message != "") {
+            backend_summary = "NM read probe failed: " + error_message;
+        }
+
+        var nm_label = new Gtk.Label(backend_summary);
+        nm_label.set_xalign(0.0f);
+        nm_label.set_wrap(true);
+        root.append(nm_label);
 
         set_child(root);
     }
