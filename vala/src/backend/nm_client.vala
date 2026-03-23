@@ -368,6 +368,8 @@ public class NetworkManagerClientVala : Object {
                     uint32 rsn_flags = get_prop(ap_path, NM_AP_IFACE, "RsnFlags").get_uint32();
                     string bssid = get_prop(ap_path, NM_AP_IFACE, "HwAddress").get_string();
                     uint32 frequency = get_prop(ap_path, NM_AP_IFACE, "Frequency").get_uint32();
+                    uint32 max_bitrate = get_prop(ap_path, NM_AP_IFACE, "MaxBitrate").get_uint32();
+                    uint32 mode = get_prop(ap_path, NM_AP_IFACE, "Mode").get_uint32();
                     bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
 
                     seen.insert(ssid, true);
@@ -380,7 +382,12 @@ public class NetworkManagerClientVala : Object {
                         device_path = dev_path,
                         ap_path = ap_path,
                         bssid = bssid,
-                        frequency_mhz = frequency
+                        frequency_mhz = frequency,
+                        max_bitrate_kbps = max_bitrate,
+                        mode = mode,
+                        flags = flags,
+                        wpa_flags = wpa_flags,
+                        rsn_flags = rsn_flags
                     });
                 }
             }

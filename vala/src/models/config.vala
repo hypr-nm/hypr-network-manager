@@ -1,8 +1,8 @@
 using GLib;
 
 public class AppConfig : Object {
-    public int window_width = 360;
-    public int window_height = 460;
+    public int window_width = 480;
+    public int window_height = 560;
     public bool anchor_top = true;
     public bool anchor_right = true;
     public bool anchor_bottom = false;

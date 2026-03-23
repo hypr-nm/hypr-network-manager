@@ -8,6 +8,11 @@ public class WifiNetwork : Object {
     public string ap_path { get; construct set; }
     public string bssid { get; construct set; }
     public uint32 frequency_mhz { get; construct set; }
+    public uint32 max_bitrate_kbps { get; construct set; }
+    public uint32 mode { get; construct set; }
+    public uint32 flags { get; construct set; }
+    public uint32 wpa_flags { get; construct set; }
+    public uint32 rsn_flags { get; construct set; }
 
     public string signal_label {
         owned get {

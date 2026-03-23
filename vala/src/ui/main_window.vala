@@ -11,6 +11,9 @@ using Gdk;
 using GtkLayerShell;
 
 public class MainWindow : Gtk.ApplicationWindow {
+    private const int MIN_WINDOW_WIDTH = 480;
+    private const int MIN_WINDOW_HEIGHT = 560;
+
     private bool debug_enabled;
     private int window_width;
     private int window_height;
@@ -35,6 +38,15 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Switch wifi_switch;
     private Gtk.ListBox wifi_listbox;
     private Gtk.Stack wifi_stack;
+    private WifiNetwork? selected_wifi_network = null;
+    private Gtk.Label wifi_details_title;
+    private Gtk.Box wifi_details_basic_rows;
+    private Gtk.Box wifi_details_advanced_rows;
+    private Gtk.Button wifi_details_forget_button;
+    private Gtk.Label wifi_edit_title;
+    private Gtk.Entry wifi_edit_password_entry;
+    private Gtk.Label wifi_edit_note;
+    private Gtk.Button wifi_edit_forget_button;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
     private Gtk.ListBox ethernet_listbox;
@@ -83,7 +95,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         this.show_frequency = show_frequency;
         this.show_band = show_band;
 
-        set_default_size(window_width, window_height);
+        int effective_width = window_width < MIN_WINDOW_WIDTH ? MIN_WINDOW_WIDTH : window_width;
+        int effective_height = window_height < MIN_WINDOW_HEIGHT ? MIN_WINDOW_HEIGHT : window_height;
+
+        set_default_size(effective_width, effective_height);
+        set_size_request(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT);
         set_resizable(false);
         set_opacity(1.0);
         add_css_class("nm-window");
@@ -302,6 +318,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_stack.add_css_class("nm-content-stack");
         wifi_stack.add_named(scroll, "list");
         wifi_stack.add_named(wifi_placeholder, "empty");
+        wifi_stack.add_named(build_wifi_details_page(), "details");
+        wifi_stack.add_named(build_wifi_edit_page(), "edit");
         wifi_stack.set_visible_child_name("empty");
 
         page.append(wifi_stack);
@@ -316,6 +334,375 @@ public class MainWindow : Gtk.ApplicationWindow {
             listbox.remove(child);
             child = next;
         }
+    }
+
+    private static void clear_box(Gtk.Box box) {
+        Gtk.Widget? child = box.get_first_child();
+        while (child != null) {
+            Gtk.Widget? next = child.get_next_sibling();
+            box.remove(child);
+            child = next;
+        }
+    }
+
+    private string get_mode_label(uint32 mode) {
+        switch (mode) {
+        case 1:
+            return "Ad-hoc";
+        case 2:
+            return "Infrastructure";
+        case 3:
+            return "Access Point";
+        default:
+            return "Unknown";
+        }
+    }
+
+    private int get_channel_from_frequency(uint32 frequency_mhz) {
+        if (frequency_mhz >= 2412 && frequency_mhz <= 2484) {
+            return (int) ((frequency_mhz - 2407) / 5);
+        }
+        if (frequency_mhz >= 5000) {
+            return (int) ((frequency_mhz - 5000) / 5);
+        }
+        return 0;
+    }
+
+    private string get_signal_bars(uint8 signal) {
+        if (signal >= 80) {
+            return "||||";
+        }
+        if (signal >= 60) {
+            return "|||.";
+        }
+        if (signal >= 40) {
+            return "||..";
+        }
+        if (signal >= 20) {
+            return "|...";
+        }
+        return "....";
+    }
+
+    private Gtk.Widget build_details_row(string key, string value) {
+        var row = new Gtk.Box(Gtk.Orientation.VERTICAL, 2);
+        row.add_css_class("nm-details-row");
+        row.add_css_class("nm-details-item");
+
+        var key_label = new Gtk.Label(key);
+        key_label.set_xalign(0.0f);
+        key_label.set_halign(Gtk.Align.START);
+        key_label.set_hexpand(false);
+        key_label.add_css_class("nm-details-key");
+        key_label.add_css_class("nm-details-item-key");
+
+        var value_label = new Gtk.Label(value);
+        value_label.set_xalign(0.0f);
+        value_label.set_halign(Gtk.Align.START);
+        value_label.set_wrap(true);
+        value_label.add_css_class("nm-details-value");
+        value_label.add_css_class("nm-details-item-value");
+
+        row.append(key_label);
+        row.append(value_label);
+        return row;
+    }
+
+    private Gtk.Widget build_details_section(string title, out Gtk.Box rows_container) {
+        var section = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        section.add_css_class("nm-details-section");
+
+        var heading = new Gtk.Label(title);
+        heading.set_xalign(0.5f);
+        heading.add_css_class("nm-details-group-title");
+        section.append(heading);
+
+        var separator = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        separator.add_css_class("nm-separator");
+        section.append(separator);
+
+        rows_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 4);
+        rows_container.add_css_class("nm-details-rows");
+        section.append(rows_container);
+
+        return section;
+    }
+
+    private void populate_wifi_details(WifiNetwork net) {
+        wifi_details_title.set_text(net.ssid);
+        wifi_details_forget_button.set_sensitive(net.saved);
+
+        clear_box(wifi_details_basic_rows);
+        clear_box(wifi_details_advanced_rows);
+
+        wifi_details_basic_rows.append(build_details_row("Connection Status", net.connected ? "Connected" : "Not connected"));
+        wifi_details_basic_rows.append(build_details_row("Signal Strength", "%u%%".printf(net.signal)));
+        wifi_details_basic_rows.append(build_details_row("Bars", get_signal_bars(net.signal)));
+        wifi_details_basic_rows.append(build_details_row("Security", net.is_secured ? "Secured" : "Open"));
+        wifi_details_basic_rows.append(build_details_row("Saved Profile", net.saved ? "Yes" : "No"));
+
+        string band = get_band_label(net.frequency_mhz);
+        int channel = get_channel_from_frequency(net.frequency_mhz);
+        wifi_details_advanced_rows.append(
+            build_details_row(
+                "Frequency",
+                net.frequency_mhz > 0 ? "%.1f GHz".printf((double) net.frequency_mhz / 1000.0) : "n/a"
+            )
+        );
+        wifi_details_advanced_rows.append(build_details_row("Channel", channel > 0 ? "%d".printf(channel) : "n/a"));
+        wifi_details_advanced_rows.append(build_details_row("Band", band != "" ? band : "n/a"));
+        wifi_details_advanced_rows.append(build_details_row("BSSID", net.bssid != "" ? net.bssid : "n/a"));
+        wifi_details_advanced_rows.append(
+            build_details_row(
+                "Max bitrate",
+                net.max_bitrate_kbps > 0 ? "%.1f Mbps".printf((double) net.max_bitrate_kbps / 1000.0) : "n/a"
+            )
+        );
+        wifi_details_advanced_rows.append(build_details_row("Mode", get_mode_label(net.mode)));
+    }
+
+    private void open_wifi_details(WifiNetwork net) {
+        selected_wifi_network = net;
+        populate_wifi_details(net);
+        wifi_stack.set_visible_child_name("details");
+    }
+
+    private void open_wifi_edit(WifiNetwork net) {
+        selected_wifi_network = net;
+        wifi_edit_title.set_text("Edit: %s".printf(net.ssid));
+        wifi_edit_password_entry.set_text("");
+
+        if (net.is_secured) {
+            wifi_edit_note.set_text(
+                "Enter a new password to update credentials. For saved networks, this recreates the profile."
+            );
+        } else {
+            wifi_edit_note.set_text("Open network. Password is not required.");
+        }
+
+        wifi_edit_forget_button.set_sensitive(net.saved);
+        wifi_stack.set_visible_child_name("edit");
+        wifi_edit_password_entry.grab_focus();
+    }
+
+    private bool apply_wifi_edit() {
+        if (selected_wifi_network == null) {
+            return false;
+        }
+
+        var net = selected_wifi_network;
+        string password = wifi_edit_password_entry.get_text().strip();
+
+        if (net.is_secured && password == "") {
+            show_error("Password is required for secured networks.");
+            return false;
+        }
+
+        if (net.saved) {
+            string forget_error;
+            if (!nm.forget_network(net.ssid, out forget_error)) {
+                show_error("Failed to update saved network: " + forget_error);
+                return false;
+            }
+        }
+
+        string error_message;
+        if (!nm.connect_wifi_with_password(net, password, out error_message)) {
+            show_error("Apply failed: " + error_message);
+            return false;
+        }
+
+        if (close_on_connect) {
+            this.close();
+            return true;
+        }
+
+        refresh_all();
+        wifi_stack.set_visible_child_name("list");
+        return true;
+    }
+
+    private Gtk.Widget build_wifi_details_page() {
+        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
+        page.set_margin_start(12);
+        page.set_margin_end(12);
+        page.set_margin_top(12);
+        page.set_margin_bottom(12);
+        page.add_css_class("nm-page");
+        page.add_css_class("nm-page-wifi-details");
+
+        var nav_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
+        nav_row.add_css_class("nm-details-nav-row");
+
+        var back_btn = new Gtk.Button.with_label("← Back");
+        back_btn.add_css_class("nm-button");
+        back_btn.add_css_class("nm-nav-back");
+        back_btn.set_halign(Gtk.Align.START);
+        back_btn.clicked.connect(() => {
+            wifi_stack.set_visible_child_name("list");
+        });
+        nav_row.append(back_btn);
+        page.append(nav_row);
+
+        var network_header = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        network_header.set_halign(Gtk.Align.CENTER);
+        network_header.add_css_class("nm-details-header");
+
+        var network_icon = new Gtk.Image.from_icon_name("network-wireless-signal-excellent-symbolic");
+        network_icon.set_pixel_size(28);
+        network_icon.add_css_class("nm-signal-icon");
+        network_icon.add_css_class("nm-details-network-icon");
+        network_header.append(network_icon);
+
+        wifi_details_title = new Gtk.Label("Network");
+        wifi_details_title.set_xalign(0.5f);
+        wifi_details_title.set_halign(Gtk.Align.CENTER);
+        wifi_details_title.add_css_class("nm-details-network-title");
+        network_header.append(wifi_details_title);
+
+        var action_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        action_row.set_halign(Gtk.Align.CENTER);
+        action_row.add_css_class("nm-details-action-row");
+
+        wifi_details_forget_button = new Gtk.Button.with_label("Forget");
+        wifi_details_forget_button.add_css_class("nm-button");
+        wifi_details_forget_button.add_css_class("nm-action-button");
+        wifi_details_forget_button.add_css_class("nm-details-action-button");
+        wifi_details_forget_button.clicked.connect(() => {
+            if (selected_wifi_network == null) {
+                return;
+            }
+
+            string error_message;
+            if (!nm.forget_network(selected_wifi_network.ssid, out error_message)) {
+                show_error("Forget failed: " + error_message);
+                return;
+            }
+
+            refresh_all();
+            wifi_stack.set_visible_child_name("list");
+        });
+        action_row.append(wifi_details_forget_button);
+
+        var edit_btn = new Gtk.Button.with_label("Edit");
+        edit_btn.add_css_class("nm-button");
+        edit_btn.add_css_class("nm-action-button");
+        edit_btn.add_css_class("nm-details-action-button");
+        edit_btn.clicked.connect(() => {
+            if (selected_wifi_network != null) {
+                open_wifi_edit(selected_wifi_network);
+            }
+        });
+        action_row.append(edit_btn);
+
+        network_header.append(action_row);
+        page.append(network_header);
+
+        var sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        sep.add_css_class("nm-separator");
+        page.append(sep);
+
+        var scroll = new Gtk.ScrolledWindow();
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class("nm-scroll");
+        scroll.set_vexpand(true);
+
+        var body = new Gtk.Box(Gtk.Orientation.VERTICAL, 12);
+        body.set_margin_top(4);
+        body.set_margin_bottom(4);
+        body.append(build_details_section("Basic", out wifi_details_basic_rows));
+        body.append(build_details_section("Advanced", out wifi_details_advanced_rows));
+
+        scroll.set_child(body);
+        page.append(scroll);
+        return page;
+    }
+
+    private Gtk.Widget build_wifi_edit_page() {
+        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
+        page.set_margin_start(12);
+        page.set_margin_end(12);
+        page.set_margin_top(12);
+        page.set_margin_bottom(12);
+        page.add_css_class("nm-page");
+        page.add_css_class("nm-page-wifi-edit");
+
+        var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        var back_btn = new Gtk.Button.with_label("Back");
+        back_btn.add_css_class("nm-button");
+        back_btn.add_css_class("nm-nav-back");
+        back_btn.clicked.connect(() => {
+            if (selected_wifi_network != null) {
+                open_wifi_details(selected_wifi_network);
+            } else {
+                wifi_stack.set_visible_child_name("list");
+            }
+        });
+        header.append(back_btn);
+
+        wifi_edit_title = new Gtk.Label("Edit Network");
+        wifi_edit_title.set_xalign(0.0f);
+        wifi_edit_title.set_hexpand(true);
+        wifi_edit_title.add_css_class("nm-section-title");
+        header.append(wifi_edit_title);
+        page.append(header);
+
+        var form = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        form.add_css_class("nm-edit-form");
+
+        wifi_edit_note = new Gtk.Label("");
+        wifi_edit_note.set_xalign(0.0f);
+        wifi_edit_note.set_wrap(true);
+        wifi_edit_note.add_css_class("nm-sub-label");
+        form.append(wifi_edit_note);
+
+        var password_label = new Gtk.Label("Password");
+        password_label.set_xalign(0.0f);
+        password_label.add_css_class("nm-form-label");
+        form.append(password_label);
+
+        wifi_edit_password_entry = new Gtk.Entry();
+        wifi_edit_password_entry.set_visibility(false);
+        wifi_edit_password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
+        wifi_edit_password_entry.set_placeholder_text("New password");
+        wifi_edit_password_entry.add_css_class("nm-password-entry");
+        wifi_edit_password_entry.activate.connect(() => {
+            apply_wifi_edit();
+        });
+        form.append(wifi_edit_password_entry);
+
+        var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+
+        wifi_edit_forget_button = new Gtk.Button.with_label("Forget");
+        wifi_edit_forget_button.add_css_class("nm-button");
+        wifi_edit_forget_button.add_css_class("nm-action-button");
+        wifi_edit_forget_button.clicked.connect(() => {
+            if (selected_wifi_network == null) {
+                return;
+            }
+
+            string error_message;
+            if (!nm.forget_network(selected_wifi_network.ssid, out error_message)) {
+                show_error("Forget failed: " + error_message);
+                return;
+            }
+
+            refresh_all();
+            wifi_stack.set_visible_child_name("list");
+        });
+        actions.append(wifi_edit_forget_button);
+
+        var save_btn = new Gtk.Button.with_label("Apply");
+        save_btn.add_css_class("nm-button");
+        save_btn.add_css_class("suggested-action");
+        save_btn.clicked.connect(() => {
+            apply_wifi_edit();
+        });
+        actions.append(save_btn);
+
+        form.append(actions);
+        page.append(form);
+        return page;
     }
 
     private string get_band_label(uint32 frequency_mhz) {
@@ -376,6 +763,18 @@ public class MainWindow : Gtk.ApplicationWindow {
         content.append(info);
 
         var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+
+        var details_btn = new Gtk.Button();
+        details_btn.add_css_class("nm-button");
+        details_btn.add_css_class("nm-menu-button");
+        details_btn.add_css_class("nm-details-open-button");
+        var details_icon = new Gtk.Image.from_icon_name("go-next-symbolic");
+        details_icon.set_pixel_size(14);
+        details_btn.set_child(details_icon);
+        details_btn.clicked.connect(() => {
+            open_wifi_details(net);
+        });
+        actions.append(details_btn);
 
         if (net.saved) {
             var forget = new Gtk.Button.with_label("Forget");
@@ -478,6 +877,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void refresh_wifi() {
         debug_log("Refreshing Wi-Fi list");
+        string current_view = wifi_stack.get_visible_child_name();
         hide_active_wifi_password_prompt();
         refresh_switch_states();
         var networks = nm.get_wifi_networks();
@@ -487,7 +887,32 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_listbox.append(build_wifi_row(net));
         }
 
-        wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
+        if (current_view == "details" || current_view == "edit") {
+            if (selected_wifi_network != null) {
+                WifiNetwork? updated = null;
+                foreach (var net in networks) {
+                    if (net.ssid == selected_wifi_network.ssid) {
+                        updated = net;
+                        break;
+                    }
+                }
+
+                if (updated != null) {
+                    selected_wifi_network = updated;
+                    if (current_view == "details") {
+                        populate_wifi_details(updated);
+                    }
+                    wifi_stack.set_visible_child_name(current_view);
+                } else {
+                    selected_wifi_network = null;
+                    wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
+                }
+            } else {
+                wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
+            }
+        } else {
+            wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
+        }
 
         if (networks.length() > 0) {
             WifiNetwork? connected = null;
