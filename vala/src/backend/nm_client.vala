@@ -440,6 +440,34 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
+    public bool disconnect_device(string interface_name, out string error_message) {
+        error_message = "";
+
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices = devices_res.get_child_value(0);
+
+            for (int i = 0; i < devices.n_children(); i++) {
+                string dev_path = devices.get_child_value(i).get_string();
+                string iface = get_prop(dev_path, NM_DEVICE_IFACE, "Interface").get_string();
+                if (iface != interface_name) {
+                    continue;
+                }
+
+                var dev = make_proxy(dev_path, NM_DEVICE_IFACE);
+                dev.call_sync("Disconnect", null, DBusCallFlags.NONE, -1, null);
+                return true;
+            }
+
+            error_message = "Device not found.";
+            return false;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
     public bool scan_wifi(out string error_message) {
         error_message = "";
 
