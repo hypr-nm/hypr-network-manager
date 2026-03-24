@@ -466,7 +466,14 @@ public class NetworkManagerClientVala : Object {
                 }
 
                 if (ipv4_dns_servers.length > 0) {
-                    var dns_data_builder = new VariantBuilder(new VariantType("aa{sv}"));
+                    Variant? existing_dns_data = existing_ipv4 != null
+                        ? existing_ipv4.lookup_value("dns-data", null)
+                        : null;
+                    bool dns_data_uses_dict_items = existing_dns_data != null
+                        && existing_dns_data.is_of_type(new VariantType("aa{sv}"));
+
+                    var dns_data_strings_builder = new VariantBuilder(new VariantType("as"));
+                    var dns_data_dict_builder = new VariantBuilder(new VariantType("aa{sv}"));
                     var dns_legacy_builder = new VariantBuilder(new VariantType("au"));
                     foreach (string dns in ipv4_dns_servers) {
                         string dns_ip = dns.strip();
@@ -480,13 +487,22 @@ public class NetworkManagerClientVala : Object {
                             return false;
                         }
 
-                        var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
-                        dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
-                        dns_data_builder.add_value(dns_data_item.end());
+                        if (dns_data_uses_dict_items) {
+                            var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
+                            dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
+                            dns_data_dict_builder.add_value(dns_data_item.end());
+                        } else {
+                            dns_data_strings_builder.add("s", dns_ip);
+                        }
+
                         dns_legacy_builder.add("u", dns_legacy);
                     }
 
-                    ipv4_dict.insert_value("dns-data", dns_data_builder.end());
+                    if (dns_data_uses_dict_items) {
+                        ipv4_dict.insert_value("dns-data", dns_data_dict_builder.end());
+                    } else {
+                        ipv4_dict.insert_value("dns-data", dns_data_strings_builder.end());
+                    }
                     ipv4_dict.insert_value("dns", dns_legacy_builder.end());
                 } else {
                     ipv4_dict.remove("dns-data");
