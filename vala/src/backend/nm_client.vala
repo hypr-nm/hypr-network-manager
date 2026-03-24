@@ -273,12 +273,24 @@ public class NetworkManagerClientVala : Object {
         Variant? ipv4_group = all_settings.lookup_value("ipv4", new VariantType("a{sv}"));
         if (ipv4_group == null) {
             out_ip.ipv4_method = "auto";
+            out_ip.gateway_auto = true;
+            out_ip.dns_auto = true;
             return;
         }
 
         Variant? method_v = ipv4_group.lookup_value("method", new VariantType("s"));
         if (method_v != null) {
             out_ip.ipv4_method = normalize_ipv4_method(method_v.get_string());
+        }
+
+        Variant? ignore_routes_v = ipv4_group.lookup_value("ignore-auto-routes", new VariantType("b"));
+        if (ignore_routes_v != null) {
+            out_ip.gateway_auto = !ignore_routes_v.get_boolean();
+        }
+
+        Variant? ignore_dns_v = ipv4_group.lookup_value("ignore-auto-dns", new VariantType("b"));
+        if (ignore_dns_v != null) {
+            out_ip.dns_auto = !ignore_dns_v.get_boolean();
         }
 
         Variant? gateway_v = ipv4_group.lookup_value("gateway", new VariantType("s"));
@@ -391,7 +403,9 @@ public class NetworkManagerClientVala : Object {
         string ipv4_method,
         string ipv4_address,
         uint32 ipv4_prefix,
+        bool gateway_auto,
         string ipv4_gateway,
+        bool dns_auto,
         string[] ipv4_dns_servers,
         out string error_message
     ) {
@@ -407,6 +421,16 @@ public class NetworkManagerClientVala : Object {
             string method = normalize_ipv4_method(ipv4_method);
             string address = ipv4_address.strip();
             string gateway = ipv4_gateway.strip();
+
+            if (!gateway_auto && gateway == "") {
+                error_message = "Manual gateway requires a gateway address.";
+                return false;
+            }
+
+            if (!dns_auto && ipv4_dns_servers.length == 0) {
+                error_message = "Manual DNS requires at least one DNS server.";
+                return false;
+            }
 
             if (method == "manual") {
                 if (address == "") {
@@ -430,6 +454,14 @@ public class NetworkManagerClientVala : Object {
             var ipv4_dict = new VariantDict(base_ipv4);
 
             ipv4_dict.insert_value("method", new Variant.string(method));
+            ipv4_dict.insert_value("ignore-auto-routes", new Variant.boolean(!gateway_auto));
+            ipv4_dict.insert_value("ignore-auto-dns", new Variant.boolean(!dns_auto));
+
+            uint32 gateway_legacy = 0;
+            if (!gateway_auto && !parse_ipv4_to_uint32(gateway, out gateway_legacy)) {
+                error_message = "Invalid IPv4 gateway address.";
+                return false;
+            }
 
             if (method == "manual") {
                 uint32 address_legacy;
@@ -446,11 +478,6 @@ public class NetworkManagerClientVala : Object {
                 ipv4_dict.insert_value("address-data", addresses.end());
 
                 // Keep legacy key for older NetworkManager versions.
-                uint32 gateway_legacy = 0;
-                if (gateway != "" && !parse_ipv4_to_uint32(gateway, out gateway_legacy)) {
-                    error_message = "Invalid IPv4 gateway address.";
-                    return false;
-                }
                 var legacy_addresses = new VariantBuilder(new VariantType("aau"));
                 var legacy_addr_entry = new VariantBuilder(new VariantType("au"));
                 legacy_addr_entry.add("u", address_legacy);
@@ -459,13 +486,13 @@ public class NetworkManagerClientVala : Object {
                 legacy_addresses.add_value(legacy_addr_entry.end());
                 ipv4_dict.insert_value("addresses", legacy_addresses.end());
 
-                if (gateway != "") {
+                if (!gateway_auto) {
                     ipv4_dict.insert_value("gateway", new Variant.string(gateway));
                 } else {
                     ipv4_dict.remove("gateway");
                 }
 
-                if (ipv4_dns_servers.length > 0) {
+                if (!dns_auto) {
                     Variant? existing_dns_data = existing_ipv4 != null
                         ? existing_ipv4.lookup_value("dns-data", null)
                         : null;
@@ -511,9 +538,57 @@ public class NetworkManagerClientVala : Object {
             } else {
                 ipv4_dict.remove("address-data");
                 ipv4_dict.remove("addresses");
-                ipv4_dict.remove("gateway");
-                ipv4_dict.remove("dns-data");
-                ipv4_dict.remove("dns");
+
+                if (!gateway_auto) {
+                    ipv4_dict.insert_value("gateway", new Variant.string(gateway));
+                } else {
+                    ipv4_dict.remove("gateway");
+                }
+
+                if (!dns_auto) {
+                    Variant? existing_dns_data = existing_ipv4 != null
+                        ? existing_ipv4.lookup_value("dns-data", null)
+                        : null;
+                    bool dns_data_uses_dict_items = existing_dns_data != null
+                        && existing_dns_data.is_of_type(new VariantType("aa{sv}"));
+
+                    var dns_data_strings_builder = new VariantBuilder(new VariantType("as"));
+                    var dns_data_dict_builder = new VariantBuilder(new VariantType("aa{sv}"));
+                    var dns_legacy_builder = new VariantBuilder(new VariantType("au"));
+
+                    foreach (string dns in ipv4_dns_servers) {
+                        string dns_ip = dns.strip();
+                        if (dns_ip == "") {
+                            continue;
+                        }
+
+                        uint32 dns_legacy;
+                        if (!parse_ipv4_to_uint32(dns_ip, out dns_legacy)) {
+                            error_message = "Invalid DNS server IPv4 address: " + dns_ip;
+                            return false;
+                        }
+
+                        if (dns_data_uses_dict_items) {
+                            var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
+                            dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
+                            dns_data_dict_builder.add_value(dns_data_item.end());
+                        } else {
+                            dns_data_strings_builder.add("s", dns_ip);
+                        }
+
+                        dns_legacy_builder.add("u", dns_legacy);
+                    }
+
+                    if (dns_data_uses_dict_items) {
+                        ipv4_dict.insert_value("dns-data", dns_data_dict_builder.end());
+                    } else {
+                        ipv4_dict.insert_value("dns-data", dns_data_strings_builder.end());
+                    }
+                    ipv4_dict.insert_value("dns", dns_legacy_builder.end());
+                } else {
+                    ipv4_dict.remove("dns-data");
+                    ipv4_dict.remove("dns");
+                }
             }
 
             Variant updated_ipv4 = ipv4_dict.end();

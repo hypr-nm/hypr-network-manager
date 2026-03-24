@@ -51,7 +51,9 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Label wifi_edit_note;
     private Gtk.DropDown wifi_edit_ipv4_method_dropdown;
     private Gtk.Entry wifi_edit_ipv4_address_entry;
+    private Gtk.Switch wifi_edit_gateway_auto_switch;
     private Gtk.Entry wifi_edit_ipv4_prefix_entry;
+    private Gtk.Switch wifi_edit_dns_auto_switch;
     private Gtk.Entry wifi_edit_ipv4_gateway_entry;
     private Gtk.Entry wifi_edit_ipv4_dns_entry;
     private Gtk.Revealer? active_wifi_password_revealer = null;
@@ -537,6 +539,16 @@ public class MainWindow : Gtk.ApplicationWindow {
         return ip;
     }
 
+    private void sync_wifi_edit_gateway_dns_sensitivity() {
+        if (wifi_edit_ipv4_gateway_entry != null && wifi_edit_gateway_auto_switch != null) {
+            wifi_edit_ipv4_gateway_entry.set_sensitive(!wifi_edit_gateway_auto_switch.get_active());
+        }
+
+        if (wifi_edit_ipv4_dns_entry != null && wifi_edit_dns_auto_switch != null) {
+            wifi_edit_ipv4_dns_entry.set_sensitive(!wifi_edit_dns_auto_switch.get_active());
+        }
+    }
+
     private void populate_wifi_details(WifiNetwork net) {
         wifi_details_title.set_text(net.ssid);
         bool can_manage_saved_profile = net.saved;
@@ -653,16 +665,22 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_edit_ipv4_prefix_entry.set_text(
                 ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
             );
+            wifi_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
             wifi_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
+            wifi_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
             wifi_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
         } else {
             debug_log("Could not load current IP settings for edit: " + ip_error);
             wifi_edit_ipv4_method_dropdown.set_selected(0);
             wifi_edit_ipv4_address_entry.set_text("");
             wifi_edit_ipv4_prefix_entry.set_text("");
+            wifi_edit_gateway_auto_switch.set_active(true);
             wifi_edit_ipv4_gateway_entry.set_text("");
+            wifi_edit_dns_auto_switch.set_active(true);
             wifi_edit_ipv4_dns_entry.set_text("");
         }
+
+        sync_wifi_edit_gateway_dns_sensitivity();
 
         wifi_stack.set_visible_child_name("edit");
         set_popup_text_input_mode(true);
@@ -679,7 +697,9 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         string method = get_selected_ipv4_method();
         string ipv4_address = wifi_edit_ipv4_address_entry.get_text().strip();
+        bool gateway_auto = wifi_edit_gateway_auto_switch.get_active();
         string ipv4_gateway = wifi_edit_ipv4_gateway_entry.get_text().strip();
+        bool dns_auto = wifi_edit_dns_auto_switch.get_active();
         string dns_csv = wifi_edit_ipv4_dns_entry.get_text().strip();
         uint32 ipv4_prefix = 0;
 
@@ -704,12 +724,22 @@ public class MainWindow : Gtk.ApplicationWindow {
             }
         }
 
+        if (!gateway_auto && ipv4_gateway == "") {
+            show_error("Manual gateway is enabled; please provide a gateway address.");
+            return false;
+        }
+
         string[] dns_servers = {};
         foreach (string token in dns_csv.split(",")) {
             string item = token.strip();
             if (item != "") {
                 dns_servers += item;
             }
+        }
+
+        if (!dns_auto && dns_servers.length == 0) {
+            show_error("Manual DNS is enabled; provide at least one DNS server.");
+            return false;
         }
 
         string error_message;
@@ -719,7 +749,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             method,
             ipv4_address,
             ipv4_prefix,
+            gateway_auto,
             ipv4_gateway,
+            dns_auto,
             dns_servers,
             out error_message
         )) {
@@ -921,6 +953,20 @@ public class MainWindow : Gtk.ApplicationWindow {
         ipv4_gateway_label.add_css_class("nm-form-label");
         form.append(ipv4_gateway_label);
 
+        var gateway_mode_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        var gateway_mode_label = new Gtk.Label("Automatic gateway");
+        gateway_mode_label.set_xalign(0.0f);
+        gateway_mode_label.set_hexpand(true);
+        gateway_mode_row.append(gateway_mode_label);
+        wifi_edit_gateway_auto_switch = new Gtk.Switch();
+        wifi_edit_gateway_auto_switch.add_css_class("nm-switch");
+        wifi_edit_gateway_auto_switch.set_active(true);
+        wifi_edit_gateway_auto_switch.notify["active"].connect(() => {
+            sync_wifi_edit_gateway_dns_sensitivity();
+        });
+        gateway_mode_row.append(wifi_edit_gateway_auto_switch);
+        form.append(gateway_mode_row);
+
         wifi_edit_ipv4_gateway_entry = new Gtk.Entry();
         wifi_edit_ipv4_gateway_entry.set_placeholder_text("192.168.1.1");
         form.append(wifi_edit_ipv4_gateway_entry);
@@ -930,9 +976,25 @@ public class MainWindow : Gtk.ApplicationWindow {
         ipv4_dns_label.add_css_class("nm-form-label");
         form.append(ipv4_dns_label);
 
+        var dns_mode_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        var dns_mode_label = new Gtk.Label("Automatic DNS");
+        dns_mode_label.set_xalign(0.0f);
+        dns_mode_label.set_hexpand(true);
+        dns_mode_row.append(dns_mode_label);
+        wifi_edit_dns_auto_switch = new Gtk.Switch();
+        wifi_edit_dns_auto_switch.add_css_class("nm-switch");
+        wifi_edit_dns_auto_switch.set_active(true);
+        wifi_edit_dns_auto_switch.notify["active"].connect(() => {
+            sync_wifi_edit_gateway_dns_sensitivity();
+        });
+        dns_mode_row.append(wifi_edit_dns_auto_switch);
+        form.append(dns_mode_row);
+
         wifi_edit_ipv4_dns_entry = new Gtk.Entry();
         wifi_edit_ipv4_dns_entry.set_placeholder_text("1.1.1.1, 8.8.8.8");
         form.append(wifi_edit_ipv4_dns_entry);
+
+        sync_wifi_edit_gateway_dns_sensitivity();
 
         var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
 
