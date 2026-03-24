@@ -14,7 +14,10 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
 
    * [Launching the GUI](#launching-the-gui)
    * [CLI Options](#cli-options)
-6. [Waybar Integration](#waybar-integration)
+6. [Integration](#integration)
+
+  * [Waybar Integration](#waybar-integration)
+  * [Hyprland Integration](#hyprland-integration)
 7. [Component Details](#component-details)
 
    * [Wi-Fi Tab](#wi-fi-tab)
@@ -283,7 +286,9 @@ hypr-network-manager
 
 ---
 
-## Waybar Integration
+## Integration
+
+### Waybar Integration
 
 Add a custom module in Waybar:
 
@@ -298,6 +303,14 @@ Add a custom module in Waybar:
 ```
 
 Copy CSS snippets from `waybar/style.css` to your bar's style sheet.
+
+### Hyprland Integration
+
+For blur on this app's layer-shell surface namespace, add this rule:
+
+```conf
+layerrule = match:namespace ^(hypr-network-manager)$, blur on
+```
 
 ---
 
