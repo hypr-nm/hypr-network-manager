@@ -1,6 +1,7 @@
 gtk_dep = dependency('gtk4')
 gio_dep = dependency('gio-2.0')
 layer_shell_dep = dependency('gtk4-layer-shell-0')
+json_glib_dep = dependency('json-glib-1.0')
 
 executable(
   'hypr-network-manager',
@@ -16,6 +17,6 @@ executable(
     'src/app.vala',
     'src/main.vala',
   ],
-  dependencies: [gtk_dep, gio_dep, layer_shell_dep],
+  dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep],
   install: true
 )

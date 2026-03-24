@@ -76,6 +76,7 @@ INSTALL_PREFIX=$HOME/.local INSTALL_SCOPE=user ./scripts/install.sh
 * Vala toolchain
 * GTK 4 runtime and development libraries
 * gtk4-layer-shell
+* json-glib
 * NetworkManager
 
 The install script auto-installs dependencies when supported package managers are available.
