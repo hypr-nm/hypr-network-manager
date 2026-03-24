@@ -246,6 +246,20 @@ window.nm-window,
 .nm-details-key, .nm-details-item-key { color: #82aaff; font-size: 12px; font-weight: 600; text-decoration: underline; }
 .nm-details-value, .nm-details-item-value { color: #e8eaf6; font-size: 16px; font-weight: 500; }
 .nm-edit-form { padding-top: 6px; }
+.nm-edit-wifi-form { padding-bottom: 2px; }
+.nm-edit-field-label,
+.nm-edit-mode-label { color: rgba(232, 234, 246, 0.72); font-size: 12px; font-weight: 600; }
+.nm-edit-field-control,
+.nm-edit-dropdown,
+.nm-edit-field-entry { min-height: 30px; }
+.nm-edit-mode-row { padding: 2px 4px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+.nm-edit-mode-switch { min-width: 36px; }
+.nm-edit-field-entry:disabled,
+.nm-edit-dropdown:disabled { opacity: 0.58; }
+.nm-edit-ipv4-method-dropdown { margin-bottom: 2px; }
+.nm-edit-gateway-mode-row,
+.nm-edit-dns-mode-row { border: 1px solid rgba(130, 170, 255, 0.24); }
+.nm-edit-actions { margin-top: 4px; }
 .nm-menu-button { min-width: 30px; min-height: 28px; padding: 2px 8px; }
 .nm-details-open-button { font-weight: 700; }
 .nm-details-action-button { min-height: 30px; }

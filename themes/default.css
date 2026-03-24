@@ -114,6 +114,50 @@ window.nm-window,
   padding-top: 6px;
 }
 
+.nm-edit-wifi-form {
+  padding-bottom: 2px;
+}
+
+.nm-edit-field-label,
+.nm-edit-mode-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nm-edit-field-control,
+.nm-edit-dropdown,
+.nm-edit-field-entry {
+  min-height: 30px;
+}
+
+.nm-edit-mode-row {
+  padding: 2px 0;
+  border-radius: 8px;
+}
+
+.nm-edit-mode-switch {
+  min-width: 36px;
+}
+
+.nm-edit-field-entry:disabled,
+.nm-edit-dropdown:disabled {
+  opacity: 0.6;
+}
+
+.nm-edit-ipv4-method-dropdown {
+  margin-bottom: 2px;
+}
+
+.nm-edit-gateway-mode-row,
+.nm-edit-dns-mode-row {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.nm-edit-actions {
+  margin-top: 4px;
+}
+
 .nm-menu-button {
   min-width: 30px;
   min-height: 28px;
