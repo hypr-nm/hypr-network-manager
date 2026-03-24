@@ -1,29 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$PROJECT_ROOT/scripts/lib/dependencies.sh"
+SCRIPT_DIR="$(nm_script_dir "${BASH_SOURCE[0]}")"
+PROJECT_ROOT="$(nm_project_root_from_script "${BASH_SOURCE[0]}")"
+
 print_usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/compile.sh [dev|prod] [build_dir]
-  ./scripts/compile.sh --mode dev|prod [--build-dir DIR]
+  ./scripts/compile.sh [dev|prod|debug] [build_dir]
+  ./scripts/compile.sh --mode dev|prod|debug [--build-dir DIR] [--install-deps]
 
 Examples:
   ./scripts/compile.sh
   ./scripts/compile.sh dev
   ./scripts/compile.sh prod
+  ./scripts/compile.sh debug
   ./scripts/compile.sh prod builddir-release
   ./scripts/compile.sh --mode dev --build-dir builddir-dev
+  ./scripts/compile.sh --mode dev --install-deps
 EOF
 }
 
 MODE="dev"
 BUILD_DIR=""
+INSTALL_DEPS="${INSTALL_DEPS:-false}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -m|--mode)
       [[ $# -ge 2 ]] || {
-        echo "Error: --mode requires a value (dev|prod)." >&2
+        echo "Error: --mode requires a value (dev|prod|debug)." >&2
         exit 1
       }
       MODE="$2"
@@ -41,7 +50,11 @@ while [[ $# -gt 0 ]]; do
       print_usage
       exit 0
       ;;
-    dev|prod)
+    --install-deps)
+      INSTALL_DEPS="true"
+      shift
+      ;;
+    dev|prod|debug)
       if [[ "$MODE" != "dev" ]]; then
         echo "Error: build mode already set to '$MODE'." >&2
         exit 1
@@ -61,30 +74,26 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-case "$MODE" in
-  dev)
-    BUILD_DIR="${BUILD_DIR:-builddir-dev}"
-    BUILD_TYPE="debugoptimized"
-    STRIP_BIN="false"
-    ;;
-  prod)
-    BUILD_DIR="${BUILD_DIR:-builddir-prod}"
-    BUILD_TYPE="release"
-    STRIP_BIN="true"
-    ;;
-  *)
-    echo "Error: invalid mode '$MODE' (expected dev or prod)." >&2
-    print_usage
-    exit 1
-    ;;
-esac
+PROFILE_SETTINGS="$(nm_resolve_build_profile "$MODE" "$BUILD_DIR" "" "")" || {
+  print_usage
+  exit 1
+}
+IFS=';' read -r BUILD_DIR BUILD_TYPE STRIP_BIN <<<"$PROFILE_SETTINGS"
 
-if [[ -d "$BUILD_DIR" ]]; then
-  meson setup "$BUILD_DIR" --reconfigure --buildtype="$BUILD_TYPE" -Dstrip="$STRIP_BIN"
+BUILD_DIR_PATH="$(nm_resolve_path_against_root "$PROJECT_ROOT" "$BUILD_DIR")"
+
+if [[ "$INSTALL_DEPS" == "true" || "$INSTALL_DEPS" == "1" ]]; then
+  echo "Installing dependencies via shared helper..."
+  nm_install_dependencies
 else
-  meson setup "$BUILD_DIR" --buildtype="$BUILD_TYPE" -Dstrip="$STRIP_BIN"
+  if ! nm_check_build_dependencies; then
+    echo "Error: missing dependencies. Re-run with --install-deps or run ./scripts/install.sh" >&2
+    exit 1
+  fi
 fi
 
-meson compile -C "$BUILD_DIR"
+nm_meson_setup "$PROJECT_ROOT" "$BUILD_DIR_PATH" "$BUILD_TYPE" "$STRIP_BIN"
 
-echo "${MODE^} build complete: $BUILD_DIR/vala/hypr-network-manager"
+nm_meson_compile "$BUILD_DIR_PATH"
+
+echo "${MODE^} build complete: $BUILD_DIR_PATH/vala/hypr-network-manager"
