@@ -666,32 +666,58 @@ public class MainWindow : Gtk.ApplicationWindow {
         var net = selected_wifi_network;
         string password = wifi_edit_password_entry.get_text().strip();
 
-        if (net.is_secured && password == "") {
-            show_error("Password is required for secured networks.");
-            return false;
+        string method = get_selected_ipv4_method();
+        string ipv4_address = wifi_edit_ipv4_address_entry.get_text().strip();
+        string ipv4_gateway = wifi_edit_ipv4_gateway_entry.get_text().strip();
+        string dns_csv = wifi_edit_ipv4_dns_entry.get_text().strip();
+        uint32 ipv4_prefix = 0;
+
+        string prefix_text = wifi_edit_ipv4_prefix_entry.get_text().strip();
+        if (prefix_text != "") {
+            uint parsed_prefix;
+            if (!uint.try_parse(prefix_text, out parsed_prefix) || parsed_prefix > 32) {
+                show_error("IPv4 prefix must be a number between 0 and 32.");
+                return false;
+            }
+            ipv4_prefix = (uint32) parsed_prefix;
         }
 
-        if (net.saved) {
-            string forget_error;
-            if (!nm.forget_network(net.ssid, out forget_error)) {
-                show_error("Failed to update saved network: " + forget_error);
+        if (method == "manual") {
+            if (ipv4_address == "") {
+                show_error("Manual IPv4 requires an address.");
+                return false;
+            }
+            if (ipv4_prefix == 0) {
+                show_error("Manual IPv4 requires a prefix between 1 and 32.");
                 return false;
             }
         }
 
+        string[] dns_servers = {};
+        foreach (string token in dns_csv.split(",")) {
+            string item = token.strip();
+            if (item != "") {
+                dns_servers += item;
+            }
+        }
+
         string error_message;
-        if (!nm.connect_wifi_with_password(net, password, out error_message)) {
+        if (!nm.update_wifi_network_settings(
+            net,
+            password,
+            method,
+            ipv4_address,
+            ipv4_prefix,
+            ipv4_gateway,
+            dns_servers,
+            out error_message
+        )) {
             show_error("Apply failed: " + error_message);
             return false;
         }
 
-        if (close_on_connect) {
-            this.close();
-            return true;
-        }
-
         refresh_all();
-        wifi_stack.set_visible_child_name("list");
+        open_wifi_details(net);
         return true;
     }
 
