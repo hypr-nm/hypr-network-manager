@@ -108,10 +108,34 @@ run_with_privilege() {
   fi
 }
 
+run_as_target_user() {
+  local target_user current_user
+  target_user="$(resolve_target_user)"
+  current_user="$(id -un)"
+
+  if [[ "$target_user" == "$current_user" ]]; then
+    "$@"
+    return
+  fi
+
+  if command -v sudo >/dev/null 2>&1; then
+    sudo -u "$target_user" -- "$@"
+    return
+  fi
+
+  if command -v runuser >/dev/null 2>&1; then
+    runuser -u "$target_user" -- "$@"
+    return
+  fi
+
+  printf '[install] cannot run as target user %s (missing sudo/runuser)\n' "$target_user" >&2
+  exit 1
+}
+
 install_deps_pacman() {
   log "Installing dependencies with pacman"
   run_with_privilege pacman -Syu --needed --noconfirm \
-    vala meson ninja pkgconf gtk4 gtk4-layer-shell networkmanager
+    vala meson ninja pkgconf gtk4 gtk4-layer-shell json-glib networkmanager
 }
 
 install_deps_apt() {
@@ -119,14 +143,14 @@ install_deps_apt() {
   run_with_privilege apt-get update
   run_with_privilege apt-get install -y \
     valac meson ninja-build pkg-config \
-    libgtk-4-dev libgtk4-layer-shell-dev network-manager
+    libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager
 }
 
 install_deps_dnf() {
   log "Installing dependencies with dnf"
   run_with_privilege dnf install -y \
     vala meson ninja-build pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel NetworkManager
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager
 }
 
 install_deps_zypper() {
@@ -134,7 +158,7 @@ install_deps_zypper() {
   run_with_privilege zypper --non-interactive refresh
   run_with_privilege zypper --non-interactive install \
     vala meson ninja pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel NetworkManager
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager
 }
 
 install_dependencies() {
@@ -183,7 +207,7 @@ build_and_install() {
   if [[ "$INSTALL_SCOPE" == "system" ]]; then
     run_with_privilege meson install -C "$PROJECT_ROOT/$BUILD_DIR"
   else
-    meson install -C "$PROJECT_ROOT/$BUILD_DIR"
+    run_as_target_user meson install -C "$PROJECT_ROOT/$BUILD_DIR"
   fi
 }
 

@@ -6,6 +6,8 @@ INSTALL_PREFIX="${INSTALL_PREFIX:-}"
 SYSTEM_CONFIG_DIR="/etc/xdg/hypr-network-manager"
 CONFIG_TARGET_DIR=""
 BINARY_PATH=""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 log() {
   printf '[uninstall] %s\n' "$*"
@@ -133,11 +135,46 @@ remove_defaults() {
     return
   fi
 
-  if [[ -d "$CONFIG_TARGET_DIR" ]]; then
-    rm -rf "$CONFIG_TARGET_DIR"
-    log "Removed config/theme directory: $CONFIG_TARGET_DIR"
-  else
+  if [[ ! -d "$CONFIG_TARGET_DIR" ]]; then
     log "Config/theme directory not found: $CONFIG_TARGET_DIR"
+    return
+  fi
+
+  local removed_any=false
+  local user_themes_dir="$CONFIG_TARGET_DIR/themes"
+
+  if [[ -f "$CONFIG_TARGET_DIR/config.json" ]]; then
+    rm -f "$CONFIG_TARGET_DIR/config.json"
+    removed_any=true
+  fi
+
+  if [[ -f "$CONFIG_TARGET_DIR/base.css" ]]; then
+    rm -f "$CONFIG_TARGET_DIR/base.css"
+    removed_any=true
+  fi
+
+  if [[ -d "$user_themes_dir" ]]; then
+    local css_file css_name
+    for css_file in "$PROJECT_ROOT/themes"/*.css; do
+      css_name="$(basename "$css_file")"
+      if [[ "$css_name" == "base.css" ]]; then
+        continue
+      fi
+      if [[ -f "$user_themes_dir/$css_name" ]]; then
+        rm -f "$user_themes_dir/$css_name"
+        removed_any=true
+      fi
+    done
+
+    rmdir "$user_themes_dir" 2>/dev/null || true
+  fi
+
+  rmdir "$CONFIG_TARGET_DIR" 2>/dev/null || true
+
+  if [[ "$removed_any" == true ]]; then
+    log "Removed installer-managed defaults from: $CONFIG_TARGET_DIR"
+  else
+    log "No installer-managed defaults found in: $CONFIG_TARGET_DIR"
   fi
 }
 
