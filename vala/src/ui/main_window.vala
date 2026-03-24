@@ -585,6 +585,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         nav_row.add_css_class("nm-details-nav-row");
 
         var back_btn = new Gtk.Button.with_label("← Back");
+        back_btn.add_css_class("nm-button");
         back_btn.add_css_class("nm-nav-back");
         back_btn.set_halign(Gtk.Align.START);
         back_btn.clicked.connect(() => {
@@ -679,6 +680,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
         var back_btn = new Gtk.Button.with_label("Back");
+        back_btn.add_css_class("nm-button");
         back_btn.add_css_class("nm-nav-back");
         back_btn.clicked.connect(() => {
             if (selected_wifi_network != null) {
