@@ -216,6 +216,16 @@ public class MainWindow : Gtk.ApplicationWindow {
             return;
         }
 
+        bool keep_input_for_wifi_edit = wifi_stack != null
+            && wifi_stack.get_visible_child_name() == "edit";
+        bool keep_input_for_inline_prompt = active_wifi_password_revealer != null
+            && active_wifi_password_revealer.get_reveal_child();
+
+        if (keep_input_for_wifi_edit || keep_input_for_inline_prompt) {
+            GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+            return;
+        }
+
         GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.NONE);
     }
 
