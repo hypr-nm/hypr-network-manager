@@ -221,6 +221,11 @@ The application currently assigns these CSS classes in the UI runtime.
 | nm-page-ethernet | Ethernet page container |
 | nm-page-vpn | VPN page container |
 | nm-toolbar | Page toolbar row |
+| nm-toolbar-icon | Generic toolbar icon image class |
+| nm-refresh-icon | Shared refresh icon class |
+| nm-wifi-refresh-icon | Wi-Fi page refresh icon class |
+| nm-ethernet-refresh-icon | Ethernet page refresh icon class |
+| nm-vpn-refresh-icon | VPN page refresh icon class |
 | nm-section-title | Section title labels |
 | nm-button | Shared button base class |
 | nm-icon-button | Icon-only refresh buttons |
@@ -235,8 +240,18 @@ The application currently assigns these CSS classes in the UI runtime.
 | nm-device-row | Ethernet and VPN rows |
 | connected | State class for active/connected rows |
 | nm-signal-icon | Per-row signal/device icon |
+| nm-signal-icon-secured | Secured Wi-Fi icon variant class |
+| nm-wifi-icon | Wi-Fi icon hook class |
+| nm-ethernet-icon | Ethernet icon hook class |
+| nm-vpn-icon | VPN icon hook class |
 | nm-ssid-label | Primary row title text |
 | nm-sub-label | Secondary row subtitle text |
+| nm-row-root | Wi-Fi row vertical container |
+| nm-row-content | Wi-Fi row horizontal content container |
+| nm-row-info | Wi-Fi row text/info container |
+| nm-row-actions | Wi-Fi row actions container |
+| nm-row-action-button | Text-style row action button (connect/disconnect/forget) |
+| nm-row-icon-button | Icon-only row action button |
 | nm-action-button | "Forget" action button |
 | nm-connect-button | Connect action button |
 | nm-disconnect-button | Disconnect action button |
@@ -252,6 +267,16 @@ The application currently assigns these CSS classes in the UI runtime.
 | nm-inline-password-cancel | Inline cancel button |
 | nm-inline-password-connect | Inline connect button |
 | nm-inline-password-revealer | Inline prompt revealer widget |
+| nm-details-nav-row | Details page top navigation row |
+| nm-details-header | Details page icon/title header block |
+| nm-details-action-row | Details page action buttons row |
+| nm-details-action-button | Details page action button variant |
+| nm-details-open-button | Row details-open trigger button |
+| nm-details-open-icon | Icon inside details-open trigger button |
+| nm-details-button-icon | Details button icon hook class |
+| nm-details-key | Key label class used in details rows |
+| nm-details-value | Value label class used in details rows |
+| nm-details-network-icon | Large network icon on details page |
 | nm-details-section | Details section wrapper (basic/advanced) |
 | nm-details-rows | Details rows container |
 | nm-details-row | Single details key/value row |
@@ -261,6 +286,9 @@ The application currently assigns these CSS classes in the UI runtime.
 | nm-edit-form | Wi-Fi edit form wrapper |
 | nm-menu-button | Compact navigation button (e.g. `>` details nav) |
 | nm-wifi-switch | Wi-Fi-specific switch |
+| nm-wifi-placeholder-icon | Wi-Fi empty-state icon hook class |
+| nm-ethernet-placeholder-icon | Ethernet empty-state icon hook class |
+| nm-vpn-placeholder-icon | VPN empty-state icon hook class |
 | blank-window | Dismiss overlay window |
 | blank-window-surface | Click-capture surface inside dismiss overlay |
 
