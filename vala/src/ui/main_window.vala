@@ -42,12 +42,18 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Label wifi_details_title;
     private Gtk.Box wifi_details_basic_rows;
     private Gtk.Box wifi_details_advanced_rows;
+    private Gtk.Box wifi_details_ip_rows;
     private Gtk.Box wifi_details_action_row;
     private Gtk.Button wifi_details_forget_button;
     private Gtk.Button wifi_details_edit_button;
     private Gtk.Label wifi_edit_title;
     private Gtk.Entry wifi_edit_password_entry;
     private Gtk.Label wifi_edit_note;
+    private Gtk.DropDown wifi_edit_ipv4_method_dropdown;
+    private Gtk.Entry wifi_edit_ipv4_address_entry;
+    private Gtk.Entry wifi_edit_ipv4_prefix_entry;
+    private Gtk.Entry wifi_edit_ipv4_gateway_entry;
+    private Gtk.Entry wifi_edit_ipv4_dns_entry;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
     private Gtk.ListBox ethernet_listbox;
@@ -474,6 +480,53 @@ public class MainWindow : Gtk.ApplicationWindow {
         return section;
     }
 
+    private string get_ipv4_method_label(string method) {
+        switch (method.strip().down()) {
+        case "manual":
+            return "Manual";
+        case "disabled":
+            return "Disabled";
+        case "auto":
+        default:
+            return "Automatic (DHCP)";
+        }
+    }
+
+    private uint get_ipv4_method_dropdown_index(string method) {
+        switch (method.strip().down()) {
+        case "manual":
+            return 1;
+        case "disabled":
+            return 2;
+        case "auto":
+        default:
+            return 0;
+        }
+    }
+
+    private string get_selected_ipv4_method() {
+        switch (wifi_edit_ipv4_method_dropdown.get_selected()) {
+        case 1:
+            return "manual";
+        case 2:
+            return "disabled";
+        case 0:
+        default:
+            return "auto";
+        }
+    }
+
+    private string format_ip_with_prefix(string address, uint32 prefix) {
+        string ip = address.strip();
+        if (ip == "") {
+            return "n/a";
+        }
+        if (prefix > 0) {
+            return "%s/%u".printf(ip, prefix);
+        }
+        return ip;
+    }
+
     private void populate_wifi_details(WifiNetwork net) {
         wifi_details_title.set_text(net.ssid);
         bool can_manage_saved_profile = net.saved;
@@ -663,6 +716,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         body.set_margin_bottom(4);
         body.append(build_details_section("Basic", out wifi_details_basic_rows));
         body.append(build_details_section("Advanced", out wifi_details_advanced_rows));
+        body.append(build_details_section("IP", out wifi_details_ip_rows));
 
         scroll.set_child(body);
         page.append(scroll);
@@ -721,6 +775,54 @@ public class MainWindow : Gtk.ApplicationWindow {
             apply_wifi_edit();
         });
         form.append(wifi_edit_password_entry);
+
+        var ipv4_method_label = new Gtk.Label("IPv4 Method");
+        ipv4_method_label.set_xalign(0.0f);
+        ipv4_method_label.add_css_class("nm-form-label");
+        form.append(ipv4_method_label);
+
+        var ipv4_method_list = new Gtk.StringList(null);
+        ipv4_method_list.append("Automatic (DHCP)");
+        ipv4_method_list.append("Manual");
+        ipv4_method_list.append("Disabled");
+        wifi_edit_ipv4_method_dropdown = new Gtk.DropDown(ipv4_method_list, null);
+        form.append(wifi_edit_ipv4_method_dropdown);
+
+        var ipv4_address_label = new Gtk.Label("IPv4 Address");
+        ipv4_address_label.set_xalign(0.0f);
+        ipv4_address_label.add_css_class("nm-form-label");
+        form.append(ipv4_address_label);
+
+        wifi_edit_ipv4_address_entry = new Gtk.Entry();
+        wifi_edit_ipv4_address_entry.set_placeholder_text("192.168.1.100");
+        form.append(wifi_edit_ipv4_address_entry);
+
+        var ipv4_prefix_label = new Gtk.Label("Prefix (CIDR)");
+        ipv4_prefix_label.set_xalign(0.0f);
+        ipv4_prefix_label.add_css_class("nm-form-label");
+        form.append(ipv4_prefix_label);
+
+        wifi_edit_ipv4_prefix_entry = new Gtk.Entry();
+        wifi_edit_ipv4_prefix_entry.set_placeholder_text("24");
+        form.append(wifi_edit_ipv4_prefix_entry);
+
+        var ipv4_gateway_label = new Gtk.Label("Gateway");
+        ipv4_gateway_label.set_xalign(0.0f);
+        ipv4_gateway_label.add_css_class("nm-form-label");
+        form.append(ipv4_gateway_label);
+
+        wifi_edit_ipv4_gateway_entry = new Gtk.Entry();
+        wifi_edit_ipv4_gateway_entry.set_placeholder_text("192.168.1.1");
+        form.append(wifi_edit_ipv4_gateway_entry);
+
+        var ipv4_dns_label = new Gtk.Label("DNS Servers (comma-separated)");
+        ipv4_dns_label.set_xalign(0.0f);
+        ipv4_dns_label.add_css_class("nm-form-label");
+        form.append(ipv4_dns_label);
+
+        wifi_edit_ipv4_dns_entry = new Gtk.Entry();
+        wifi_edit_ipv4_dns_entry.set_placeholder_text("1.1.1.1, 8.8.8.8");
+        form.append(wifi_edit_ipv4_dns_entry);
 
         var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
 
