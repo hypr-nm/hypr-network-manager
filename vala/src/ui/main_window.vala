@@ -158,7 +158,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, shell_margin_bottom);
         GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, shell_margin_left);
 
-        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.NONE);
         GtkLayerShell.auto_exclusive_zone_enable(this);
     }
 
@@ -210,7 +210,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             return;
         }
 
-        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.NONE);
     }
 
     private Gtk.Widget build_status_bar() {
