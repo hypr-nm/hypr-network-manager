@@ -8,7 +8,7 @@ Built with **Vala + GTK 4**, the app uses **layer-shell** for native popup-style
 
 ## Documentation
 
-A detailed documentation is available, sectioned by each component of the project, including GUI, D-Bus interactions, theming, configuration, and Waybar/eww integrations.
+A detailed documentation is available [here](./docs/Documentation.md), sectioned by each component of the project, including GUI, D-Bus interactions, theming, configuration, and Waybar/eww integrations.
 
 ---
 

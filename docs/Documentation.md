@@ -7,18 +7,18 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
 ## Table of Contents
 
 1. [Installation](#installation)
-2. [Development](#development)
-3. [Getting Started](#getting-started)
-4. [Configuration](#configuration)
-5. [Theming](#theming)
-6. [Usage](#usage)
+2. [Getting Started](#getting-started)
+3. [Configuration](#configuration)
+4. [Theming](#theming)
+5. [Usage](#usage)
 
    * [Launching the GUI](#launching-the-gui)
    * [CLI Options](#cli-options)
-7. [Integration](#integration)
+6. [Integration](#integration)
 
   * [Waybar Integration](#waybar-integration)
   * [Hyprland Integration](#hyprland-integration)
+7. [Development](#development)
 8. [Component Details](#component-details)
 
    * [Wi-Fi Tab](#wi-fi-tab)
@@ -36,44 +36,6 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
 Use the install script for both system-wide and user-local installs in either interactive or non-interactive modes.
 
 
-### Interactive Install
-
-```bash
-./scripts/install.sh
-```
-
-The script installs dependencies, builds the project, and then installs to the scope selected.
-
-### Non-interactive Install
-
-```bash
-INSTALL_SCOPE=system ./scripts/install.sh
-INSTALL_SCOPE=user ./scripts/install.sh
-```
-
-With `INSTALL_SCOPE=system`, installs the binary under `/usr/local` and writes defaults under `/etc/xdg/hypr-network-manager`.
-
-With `INSTALL_SCOPE=user`, installs to `~/.local` and writes defaults under `~/.config/hypr-network-manager`.
-
-### Optional Install Customization
-
-```bash
-BUILD_DIR=builddir-dev BUILD_TYPE=debugoptimized STRIP_BIN=false ./scripts/install.sh
-```
-
-You can also override install prefix explicitly:
-
-```bash
-INSTALL_PREFIX=$HOME/.local INSTALL_SCOPE=user ./scripts/install.sh
-```
-
----
-
-## Development
-
-### Dependencies
-
-* Vala toolchain
 * GTK 4 runtime and development libraries
 * gtk4-layer-shell
 * json-glib
@@ -90,10 +52,10 @@ meson compile -C builddir
 
 ### Build Scripts (Dev/Prod)
 
-Use one compile script for both build modes:
+Use one compile script for all build modes:
 
 ```bash
-./scripts/compile.sh [dev|prod] [build_dir]
+./scripts/compile.sh [dev|prod|debug] [build_dir]
 ```
 
 Examples:
@@ -102,7 +64,15 @@ Examples:
 ./scripts/compile.sh            # dev build -> builddir-dev
 ./scripts/compile.sh dev        # dev build -> builddir-dev
 ./scripts/compile.sh prod       # prod build -> builddir-prod
+./scripts/compile.sh debug      # debug build -> builddir-debug
 ./scripts/compile.sh prod out   # prod build -> out
+./scripts/compile.sh --mode dev --install-deps
+```
+
+For run/build convenience during development:
+
+```bash
+./scripts/run-dev.sh
 ```
 
 ---
@@ -172,7 +142,7 @@ The app reads `config.json` from this precedence order:
 
 Placement is controlled by `position`, and spacing is controlled by `layer_shell_margin_*`.
 
-The shell enforces a minimum size of `480x560` to keep details/edit views readable.
+The shell enforces a minimum size of `480x560` as that is a reasonable size for readability.
 
 ### Notes on extra keys
 
@@ -186,17 +156,49 @@ Themes are CSS-based and hot-swappable.
 
 ### Base CSS Load Order
 
-1. `~/.config/hypr-network-manager/base.css` (user-local)
-2. `/etc/xdg/hypr-network-manager/base.css` (system-wide fallback)
-3. `themes/base.css` (bundled fallback)
+1. `~/.config/hypr-network-manager/themes/base.css` (user-local)
+2. `/etc/xdg/hypr-network-manager/themes/base.css` (system-wide fallback)
+
+This path is fixed and is not configurable through `config.json`.
 
 ### Custom Theme Example
 
 ```css
-@import url("./themes/frosted-glass.css");
+@import url("./frosted-glass.css");
 ```
 
-You can create themes in `~/.config/hypr-network-manager/themes/` and import them in `base.css`.
+You can create themes in `~/.config/hypr-network-manager/themes/` and import them in `themes/base.css`.
+
+### Clean Slate Theming (Strip GTK Defaults)
+
+If you want full visual control, start by neutralizing GTK defaults on app-scoped classes, then build styles back up intentionally.
+
+Recommended baseline reset (scoped to this app):
+
+```css
+/* Keep reset scoped so it does not affect other GTK apps */
+.nm-window,
+.nm-window * {
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+  border: none;
+  outline: none;
+}
+
+.nm-window button,
+.nm-window entry,
+.nm-window row,
+.nm-window box,
+.nm-window label,
+.nm-window separator {
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+}
+```
+
+Then add back explicit styling for containers, buttons, entries, focus, and hover states in your theme. This avoids fighting distro/GTK defaults and gives a predictable theming base.
 
 ### Theme Style Overrides
 
@@ -322,8 +324,6 @@ The application currently assigns these CSS classes in the UI runtime.
 | blank-window | Dismiss overlay window |
 | blank-window-surface | Click-capture surface inside dismiss overlay |
 
-The app also uses GTK's standard `suggested-action` class on the inline connect button.
-
 ---
 
 ## Usage
@@ -368,6 +368,52 @@ For blur on this app's layer-shell surface namespace, add this rule:
 
 ```conf
 layerrule = match:namespace ^(hypr-network-manager)$, blur on
+```
+
+---
+
+## Development
+
+### Dependencies
+
+* Vala toolchain
+* GTK 4 runtime and development libraries
+* gtk4-layer-shell
+* json-glib
+* NetworkManager
+
+The install script auto-installs dependencies when supported package managers are available.
+
+### Manual Build
+
+```bash
+meson setup builddir
+meson compile -C builddir
+```
+
+### Build Scripts
+
+Use one compile script for all build modes:
+
+```bash
+./scripts/compile.sh [dev|prod|debug] [build_dir]
+```
+
+Examples:
+
+```bash
+./scripts/compile.sh            # dev build -> builddir-dev
+./scripts/compile.sh dev        # dev build -> builddir-dev
+./scripts/compile.sh prod       # prod build -> builddir-prod
+./scripts/compile.sh debug      # debug build -> builddir-debug
+./scripts/compile.sh prod out   # prod build -> out
+./scripts/compile.sh --mode dev --install-deps
+```
+
+For run/build convenience during development:
+
+```bash
+./scripts/run-dev.sh
 ```
 
 ---
