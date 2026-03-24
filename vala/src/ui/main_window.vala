@@ -627,9 +627,31 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_edit_password_entry.set_text("");
 
         if (net.is_secured) {
-            wifi_edit_note.set_text("Enter a new password to update saved credentials.");
+            wifi_edit_note.set_text(
+                "Leave password empty to keep current credentials.\n"
+                + "IPv4 settings can be changed below (DHCP or manual)."
+            );
         } else {
             wifi_edit_note.set_text("Open network. Password is not required.");
+        }
+
+        NetworkIpSettings ip_settings;
+        string ip_error;
+        if (nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error)) {
+            wifi_edit_ipv4_method_dropdown.set_selected(get_ipv4_method_dropdown_index(ip_settings.ipv4_method));
+            wifi_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
+            wifi_edit_ipv4_prefix_entry.set_text(
+                ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
+            );
+            wifi_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
+            wifi_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
+        } else {
+            debug_log("Could not load current IP settings for edit: " + ip_error);
+            wifi_edit_ipv4_method_dropdown.set_selected(0);
+            wifi_edit_ipv4_address_entry.set_text("");
+            wifi_edit_ipv4_prefix_entry.set_text("");
+            wifi_edit_ipv4_gateway_entry.set_text("");
+            wifi_edit_ipv4_dns_entry.set_text("");
         }
 
         wifi_stack.set_visible_child_name("edit");
