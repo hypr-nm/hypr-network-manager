@@ -536,6 +536,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         clear_box(wifi_details_basic_rows);
         clear_box(wifi_details_advanced_rows);
+        clear_box(wifi_details_ip_rows);
 
         wifi_details_basic_rows.append(build_details_row("Connection Status", net.connected ? "Connected" : "Not connected"));
         wifi_details_basic_rows.append(build_details_row("Signal Strength", "%u%%".printf(net.signal)));
@@ -561,6 +562,53 @@ public class MainWindow : Gtk.ApplicationWindow {
             )
         );
         wifi_details_advanced_rows.append(build_details_row("Mode", get_mode_label(net.mode)));
+
+        NetworkIpSettings ip_settings;
+        string ip_error;
+        bool ip_ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
+        if (!ip_ok && ip_error != "") {
+            debug_log("Could not read IP settings for details page: " + ip_error);
+        }
+
+        wifi_details_ip_rows.append(
+            build_details_row("Configured IPv4 Method", get_ipv4_method_label(ip_settings.ipv4_method))
+        );
+        wifi_details_ip_rows.append(
+            build_details_row(
+                "Configured IPv4 Address",
+                format_ip_with_prefix(ip_settings.configured_address, ip_settings.configured_prefix)
+            )
+        );
+        wifi_details_ip_rows.append(
+            build_details_row(
+                "Configured Gateway",
+                ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
+            )
+        );
+        wifi_details_ip_rows.append(
+            build_details_row(
+                "Configured DNS",
+                ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
+            )
+        );
+        wifi_details_ip_rows.append(
+            build_details_row(
+                "Current IPv4 Address",
+                format_ip_with_prefix(ip_settings.current_address, ip_settings.current_prefix)
+            )
+        );
+        wifi_details_ip_rows.append(
+            build_details_row(
+                "Current Gateway",
+                ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
+            )
+        );
+        wifi_details_ip_rows.append(
+            build_details_row(
+                "Current DNS",
+                ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
+            )
+        );
     }
 
     private void open_wifi_details(WifiNetwork net) {
