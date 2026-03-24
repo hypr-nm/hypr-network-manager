@@ -243,6 +243,32 @@ public class NetworkManagerClientVala : Object {
         return "";
     }
 
+    private static bool parse_ipv4_to_uint32(string ip_text, out uint32 value) {
+        value = 0;
+        string ip = ip_text.strip();
+        string[] octets = ip.split(".");
+        if (octets.length != 4) {
+            return false;
+        }
+
+        uint[] parts = {0, 0, 0, 0};
+        for (int i = 0; i < 4; i++) {
+            uint parsed;
+            if (!uint.try_parse(octets[i], out parsed) || parsed > 255) {
+                return false;
+            }
+            parts[i] = parsed;
+        }
+
+        // NetworkManager legacy `u32` IPv4 values are interpreted in host order
+        // over D-Bus, so pack octets least-significant first.
+        value = (uint32) parts[0]
+            | ((uint32) parts[1] << 8)
+            | ((uint32) parts[2] << 16)
+            | ((uint32) parts[3] << 24);
+        return true;
+    }
+
     private static void fill_configured_ipv4_from_settings(Variant all_settings, NetworkIpSettings out_ip) {
         Variant? ipv4_group = all_settings.lookup_value("ipv4", new VariantType("a{sv}"));
         if (ipv4_group == null) {
@@ -406,12 +432,32 @@ public class NetworkManagerClientVala : Object {
             ipv4_dict.insert_value("method", new Variant.string(method));
 
             if (method == "manual") {
+                uint32 address_legacy;
+                if (!parse_ipv4_to_uint32(address, out address_legacy)) {
+                    error_message = "Invalid IPv4 address for manual mode.";
+                    return false;
+                }
+
                 var addresses = new VariantBuilder(new VariantType("aa{sv}"));
                 var addr_entry = new VariantBuilder(new VariantType("a{sv}"));
                 addr_entry.add("{sv}", "address", new Variant.string(address));
                 addr_entry.add("{sv}", "prefix", new Variant.uint32(ipv4_prefix));
                 addresses.add_value(addr_entry.end());
                 ipv4_dict.insert_value("address-data", addresses.end());
+
+                // Keep legacy key for older NetworkManager versions.
+                uint32 gateway_legacy = 0;
+                if (gateway != "" && !parse_ipv4_to_uint32(gateway, out gateway_legacy)) {
+                    error_message = "Invalid IPv4 gateway address.";
+                    return false;
+                }
+                var legacy_addresses = new VariantBuilder(new VariantType("aau"));
+                var legacy_addr_entry = new VariantBuilder(new VariantType("au"));
+                legacy_addr_entry.add("u", address_legacy);
+                legacy_addr_entry.add("u", ipv4_prefix);
+                legacy_addr_entry.add("u", gateway_legacy);
+                legacy_addresses.add_value(legacy_addr_entry.end());
+                ipv4_dict.insert_value("addresses", legacy_addresses.end());
 
                 if (gateway != "") {
                     ipv4_dict.insert_value("gateway", new Variant.string(gateway));
@@ -420,20 +466,38 @@ public class NetworkManagerClientVala : Object {
                 }
 
                 if (ipv4_dns_servers.length > 0) {
-                    var dns_builder = new VariantBuilder(new VariantType("as"));
+                    var dns_data_builder = new VariantBuilder(new VariantType("aa{sv}"));
+                    var dns_legacy_builder = new VariantBuilder(new VariantType("au"));
                     foreach (string dns in ipv4_dns_servers) {
-                        if (dns.strip() != "") {
-                            dns_builder.add("s", dns.strip());
+                        string dns_ip = dns.strip();
+                        if (dns_ip == "") {
+                            continue;
                         }
+
+                        uint32 dns_legacy;
+                        if (!parse_ipv4_to_uint32(dns_ip, out dns_legacy)) {
+                            error_message = "Invalid DNS server IPv4 address: " + dns_ip;
+                            return false;
+                        }
+
+                        var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
+                        dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
+                        dns_data_builder.add_value(dns_data_item.end());
+                        dns_legacy_builder.add("u", dns_legacy);
                     }
-                    ipv4_dict.insert_value("dns-data", dns_builder.end());
+
+                    ipv4_dict.insert_value("dns-data", dns_data_builder.end());
+                    ipv4_dict.insert_value("dns", dns_legacy_builder.end());
                 } else {
                     ipv4_dict.remove("dns-data");
+                    ipv4_dict.remove("dns");
                 }
             } else {
                 ipv4_dict.remove("address-data");
+                ipv4_dict.remove("addresses");
                 ipv4_dict.remove("gateway");
                 ipv4_dict.remove("dns-data");
+                ipv4_dict.remove("dns");
             }
 
             Variant updated_ipv4 = ipv4_dict.end();
