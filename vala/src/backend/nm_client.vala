@@ -181,6 +181,184 @@ public class NetworkManagerClientVala : Object {
         return ssid_bytes.end();
     }
 
+    private static string normalize_ipv4_method(string value) {
+        string method = value.strip().down();
+        switch (method) {
+        case "manual":
+        case "disabled":
+        case "auto":
+            return method;
+        default:
+            return "auto";
+        }
+    }
+
+    private static string join_string_variant_list(Variant list_variant) {
+        var out = new StringBuilder();
+        for (int i = 0; i < list_variant.n_children(); i++) {
+            Variant child = list_variant.get_child_value(i);
+            if (!child.is_of_type(new VariantType("s"))) {
+                continue;
+            }
+
+            string value = child.get_string();
+            if (value == "") {
+                continue;
+            }
+            if (out.len > 0) {
+                out.append(", ");
+            }
+            out.append(value);
+        }
+        return out.str;
+    }
+
+    private static string extract_dns_list_string(Variant dns_variant) {
+        if (dns_variant.is_of_type(new VariantType("as"))) {
+            return join_string_variant_list(dns_variant);
+        }
+
+        if (dns_variant.is_of_type(new VariantType("aa{sv}"))) {
+            var out = new StringBuilder();
+            for (int i = 0; i < dns_variant.n_children(); i++) {
+                Variant item = dns_variant.get_child_value(i);
+                Variant? addr_v = item.lookup_value("address", new VariantType("s"));
+                if (addr_v == null) {
+                    continue;
+                }
+
+                string addr = addr_v.get_string();
+                if (addr == "") {
+                    continue;
+                }
+
+                if (out.len > 0) {
+                    out.append(", ");
+                }
+                out.append(addr);
+            }
+            return out.str;
+        }
+
+        return "";
+    }
+
+    private static void fill_configured_ipv4_from_settings(Variant all_settings, NetworkIpSettings out_ip) {
+        Variant? ipv4_group = all_settings.lookup_value("ipv4", new VariantType("a{sv}"));
+        if (ipv4_group == null) {
+            out_ip.ipv4_method = "auto";
+            return;
+        }
+
+        Variant? method_v = ipv4_group.lookup_value("method", new VariantType("s"));
+        if (method_v != null) {
+            out_ip.ipv4_method = normalize_ipv4_method(method_v.get_string());
+        }
+
+        Variant? gateway_v = ipv4_group.lookup_value("gateway", new VariantType("s"));
+        if (gateway_v != null) {
+            out_ip.configured_gateway = gateway_v.get_string();
+        }
+
+        Variant? dns_data_v = ipv4_group.lookup_value("dns-data", null);
+        if (dns_data_v != null) {
+            out_ip.configured_dns = extract_dns_list_string(dns_data_v);
+        }
+
+        Variant? address_data_v = ipv4_group.lookup_value("address-data", new VariantType("aa{sv}"));
+        if (address_data_v == null || address_data_v.n_children() == 0) {
+            return;
+        }
+
+        Variant first_addr = address_data_v.get_child_value(0);
+        Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
+        Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
+        if (addr_v != null) {
+            out_ip.configured_address = addr_v.get_string();
+        }
+        if (prefix_v != null) {
+            out_ip.configured_prefix = prefix_v.get_uint32();
+        }
+    }
+
+    private void fill_runtime_ipv4_for_wifi(WifiNetwork network, NetworkIpSettings out_ip) {
+        if (!network.connected) {
+            return;
+        }
+
+        try {
+            string active_conn_path = get_prop(network.device_path, NM_DEVICE_IFACE, "ActiveConnection").get_string();
+            if (active_conn_path == "/") {
+                return;
+            }
+
+            string ip4_config_path = get_prop(active_conn_path, NM_ACTIVE_CONN_IFACE, "Ip4Config").get_string();
+            if (ip4_config_path == "/") {
+                return;
+            }
+
+            Variant address_data = get_prop(ip4_config_path, NM_IP4_CONFIG_IFACE, "AddressData");
+            if (address_data.n_children() > 0) {
+                Variant first_addr = address_data.get_child_value(0);
+                Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
+                Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
+                if (addr_v != null) {
+                    out_ip.current_address = addr_v.get_string();
+                }
+                if (prefix_v != null) {
+                    out_ip.current_prefix = prefix_v.get_uint32();
+                }
+            }
+
+            try {
+                out_ip.current_gateway = get_prop(ip4_config_path, NM_IP4_CONFIG_IFACE, "Gateway").get_string();
+            } catch (Error gateway_err) {
+                debug_log("could not read runtime IPv4 gateway: " + gateway_err.message);
+            }
+
+            try {
+                Variant dns_data = get_prop(ip4_config_path, NM_IP4_CONFIG_IFACE, "NameserverData");
+                out_ip.current_dns = extract_dns_list_string(dns_data);
+            } catch (Error dns_err) {
+                debug_log("could not read runtime IPv4 DNS: " + dns_err.message);
+            }
+        } catch (Error e) {
+            debug_log("could not read runtime IPv4 details: " + e.message);
+        }
+    }
+
+    public bool get_wifi_network_ip_settings(
+        WifiNetwork network,
+        out NetworkIpSettings ip_settings,
+        out string error_message
+    ) {
+        error_message = "";
+        ip_settings = new NetworkIpSettings();
+
+        if (network.saved) {
+            try {
+                string? conn_path = find_connection_by_ssid(network.ssid);
+                if (conn_path == null) {
+                    error_message = "Saved connection not found.";
+                    fill_runtime_ipv4_for_wifi(network, ip_settings);
+                    return false;
+                }
+
+                var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var all_settings = settings_res.get_child_value(0);
+                fill_configured_ipv4_from_settings(all_settings, ip_settings);
+            } catch (Error e) {
+                error_message = e.message;
+                fill_runtime_ipv4_for_wifi(network, ip_settings);
+                return false;
+            }
+        }
+
+        fill_runtime_ipv4_for_wifi(network, ip_settings);
+        return true;
+    }
+
     private static string json_escape(string value) {
         string out = value.replace("\\", "\\\\");
         out = out.replace("\"", "\\\"");
