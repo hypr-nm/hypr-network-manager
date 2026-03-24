@@ -2,7 +2,7 @@
 
 :root {
   --bg: #0f141b;
-  --panel: rgba(20, 27, 36, 0.82);
+  --panel: rgba(20, 27, 36, 0.72);
   --fg: #e8eef7;
   --muted: #9daaba;
   --line: rgba(255, 255, 255, 0.08);
@@ -15,7 +15,10 @@
 
 window.nm-window,
 .nm-window {
-  background: var(--panel);
+  /* Frosted layer: compositor performs the actual blur behind this alpha. */
+  background:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.0) 22%),
+    var(--panel);
   color: var(--fg);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -34,11 +37,29 @@ window.nm-window,
   font-size: 13px;
 }
 
+/* Surface reset (prevents GTK default gray slabs in stack/scroll containers) */
+.nm-root,
+.nm-notebook,
+.nm-notebook > stack,
+.nm-page,
+.nm-content-stack,
+.nm-scroll,
+.nm-scroll > viewport,
+.nm-scroll > viewport > widget,
+.nm-empty-state {
+  background: transparent;
+}
+
+/* Keep modern subtle translucency without introducing card structure */
+.nm-page {
+  background: rgba(8, 13, 22, 0.12);
+}
+
 /* Header */
 .nm-status-bar {
   padding: 10px 12px;
   border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(8, 13, 22, 0.16);
 }
 
 .nm-title,
@@ -93,7 +114,7 @@ notebook.nm-notebook > header > tabs {
 .nm-notebook > header,
 notebook.nm-notebook > header {
   border-bottom: 1px solid var(--line);
-  padding-bottom: 5px;
+  padding-bottom: 8px;
 }
 
 .nm-notebook tab,
@@ -102,6 +123,7 @@ notebook.nm-notebook > header > tabs > tab {
   font-size: 12px;
   font-weight: 600;
   padding: 5px 10px;
+  margin-bottom: 2px;
   min-height: 0;
   min-width: 0;
   border-radius: 999px;
@@ -121,6 +143,8 @@ notebook.nm-notebook > header > tabs > tab:checked {
 /* Toolbar */
 .nm-toolbar {
   border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 .nm-section-title {
@@ -343,12 +367,16 @@ button.nm-row-icon-button:hover,
 .nm-page-wifi-details,
 .nm-page-wifi-edit {
   padding: 2px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .nm-details-nav-row {
   padding-bottom: 2px;
 }
 
+button.nm-nav-back,
 .nm-nav-back {
   min-height: 24px;
   min-width: 0;
