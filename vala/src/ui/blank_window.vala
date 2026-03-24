@@ -8,6 +8,13 @@ using Gtk;
 using Gdk;
 using GtkLayerShell;
 
+[CCode (cname = "gtk_style_context_add_provider_for_display", cheader_filename = "gtk/gtk.h")]
+private extern void blank_window_style_provider_add_for_display(
+    Gdk.Display display,
+    Gtk.StyleProvider provider,
+    uint priority
+);
+
 public class BlankWindow : Gtk.ApplicationWindow {
     private Gtk.Box click_surface;
     private Gtk.GestureClick blank_window_gesture;
@@ -81,7 +88,7 @@ public class BlankWindow : Gtk.ApplicationWindow {
         );
         var display = Gdk.Display.get_default();
         if (display != null) {
-            Gtk.StyleContext.add_provider_for_display(
+            blank_window_style_provider_add_for_display(
                 display,
                 provider,
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 50
