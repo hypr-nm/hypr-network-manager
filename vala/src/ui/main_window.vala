@@ -164,7 +164,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         GtkLayerShell.set_margin(this, GtkLayerShell.Edge.BOTTOM, shell_margin_bottom);
         GtkLayerShell.set_margin(this, GtkLayerShell.Edge.LEFT, shell_margin_left);
 
-        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.NONE);
+        GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
         GtkLayerShell.auto_exclusive_zone_enable(this);
     }
 
@@ -655,6 +655,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
 
         wifi_stack.set_visible_child_name("edit");
+        set_popup_text_input_mode(true);
         wifi_edit_password_entry.grab_focus();
     }
 
@@ -718,6 +719,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         refresh_all();
         open_wifi_details(net);
+        set_popup_text_input_mode(false);
         return true;
     }
 
@@ -738,6 +740,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         back_btn.add_css_class("nm-nav-back");
         back_btn.set_halign(Gtk.Align.START);
         back_btn.clicked.connect(() => {
+            set_popup_text_input_mode(false);
             wifi_stack.set_visible_child_name("list");
         });
         nav_row.append(back_btn);
@@ -833,6 +836,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         back_btn.add_css_class("nm-button");
         back_btn.add_css_class("nm-nav-back");
         back_btn.clicked.connect(() => {
+            set_popup_text_input_mode(false);
             if (selected_wifi_network != null) {
                 open_wifi_details(selected_wifi_network);
             } else {
