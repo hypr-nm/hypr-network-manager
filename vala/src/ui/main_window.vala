@@ -759,7 +759,25 @@ public class MainWindow : Gtk.ApplicationWindow {
             return false;
         }
 
-        refresh_all();
+        if (net.connected) {
+            string disconnect_error;
+            if (!nm.disconnect_wifi(net, out disconnect_error)) {
+                show_error("Disconnect before reconnect failed: " + disconnect_error);
+                return false;
+            }
+
+            Timeout.add(750, () => {
+                string reconnect_error;
+                if (!nm.connect_wifi(net, null, out reconnect_error)) {
+                    show_error("Reconnect after edit failed: " + reconnect_error);
+                }
+                refresh_after_action(true);
+                return false;
+            });
+        } else {
+            refresh_after_action(method != "disabled");
+        }
+
         open_wifi_details(net);
         set_popup_text_input_mode(false);
         return true;
@@ -824,7 +842,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 return;
             }
 
-            refresh_all();
+            refresh_after_action(true);
             wifi_stack.set_visible_child_name("list");
         });
         wifi_details_action_row.append(wifi_details_forget_button);
@@ -1157,7 +1175,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 if (!nm.forget_network(net.ssid, out error_message)) {
                     show_error("Forget failed: " + error_message);
                 }
-                refresh_wifi();
+                refresh_after_action(true);
             });
             actions.append(forget);
         }
@@ -1230,7 +1248,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 if (!nm.disconnect_wifi(net, out error_message)) {
                     show_error("Disconnect failed: " + error_message);
                 }
-                refresh_wifi();
+                refresh_after_action(false);
                 return;
             }
 
@@ -1325,7 +1343,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             return;
         }
 
-        refresh_all();
+        refresh_after_action(true);
     }
 
     private Gtk.Widget build_ethernet_page() {
@@ -1445,7 +1463,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             if (!nm.disconnect_device(dev.name, out error_message)) {
                 show_error("Ethernet disconnect failed: " + error_message);
             }
-            refresh_ethernet();
+            refresh_after_action(false);
         });
         content.append(action);
 
@@ -1589,7 +1607,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                     show_error("VPN connect failed: " + error_message);
                 }
             }
-            refresh_vpn();
+            refresh_after_action(false);
         });
         content.append(action);
 
@@ -1612,6 +1630,35 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_wifi();
         refresh_ethernet();
         refresh_vpn();
+    }
+
+    private void refresh_after_action(bool request_wifi_scan) {
+        string error_message;
+
+        if (request_wifi_scan) {
+            if (!nm.scan_wifi(out error_message)) {
+                debug_log("Could not request Wi-Fi scan: " + error_message);
+            }
+        }
+
+        refresh_all();
+
+        // NetworkManager state transitions are async; refresh again shortly after actions.
+        Timeout.add(650, () => {
+            if (request_wifi_scan) {
+                string delayed_scan_error;
+                if (!nm.scan_wifi(out delayed_scan_error)) {
+                    debug_log("Could not request delayed Wi-Fi scan: " + delayed_scan_error);
+                }
+            }
+            refresh_all();
+            return false;
+        });
+
+        Timeout.add(1800, () => {
+            refresh_all();
+            return false;
+        });
     }
 
     private void refresh_switch_states() {
@@ -1637,18 +1684,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_after_toggle(bool scan_wifi) {
-        string error_message;
-        if (scan_wifi) {
-            if (!nm.scan_wifi(out error_message)) {
-                debug_log("Could not request Wi-Fi scan: " + error_message);
-            }
-        }
-
-        refresh_all();
-        Timeout.add(1200, () => {
-            refresh_all();
-            return false;
-        });
+        refresh_after_action(scan_wifi);
     }
 
     private void on_wifi_switch_changed() {
