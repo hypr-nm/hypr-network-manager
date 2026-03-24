@@ -42,11 +42,12 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Label wifi_details_title;
     private Gtk.Box wifi_details_basic_rows;
     private Gtk.Box wifi_details_advanced_rows;
+    private Gtk.Box wifi_details_action_row;
     private Gtk.Button wifi_details_forget_button;
+    private Gtk.Button wifi_details_edit_button;
     private Gtk.Label wifi_edit_title;
     private Gtk.Entry wifi_edit_password_entry;
     private Gtk.Label wifi_edit_note;
-    private Gtk.Button wifi_edit_forget_button;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
     private Gtk.ListBox ethernet_listbox;
@@ -270,7 +271,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_btn.add_css_class("nm-button");
         refresh_btn.add_css_class("nm-icon-button");
         var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
-        refresh_icon.set_pixel_size(16);
+        refresh_icon.add_css_class("nm-toolbar-icon");
+        refresh_icon.add_css_class("nm-refresh-icon");
+        refresh_icon.add_css_class("nm-wifi-refresh-icon");
         refresh_btn.set_child(refresh_icon);
         refresh_btn.clicked.connect(() => {
             refresh_wifi();
@@ -281,7 +284,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_switch.add_css_class("nm-switch");
         wifi_switch.add_css_class("nm-wifi-switch");
         wifi_switch.set_valign(Gtk.Align.CENTER);
-        wifi_switch.set_size_request(36, 20);
         wifi_switch.notify["active"].connect(() => {
             on_wifi_switch_changed();
         });
@@ -308,6 +310,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var ph_icon = new Gtk.Image.from_icon_name("network-wireless-offline-symbolic");
         ph_icon.set_pixel_size(24);
         ph_icon.add_css_class("nm-placeholder-icon");
+        ph_icon.add_css_class("nm-wifi-placeholder-icon");
         var ph_lbl = new Gtk.Label("No networks found");
         ph_lbl.add_css_class("nm-placeholder-label");
         wifi_placeholder.append(ph_icon);
@@ -384,6 +387,49 @@ public class MainWindow : Gtk.ApplicationWindow {
         return "....";
     }
 
+    private bool icon_exists(string icon_name) {
+        var display = Gdk.Display.get_default();
+        if (display == null) {
+            return false;
+        }
+
+        var icon_theme = Gtk.IconTheme.get_for_display(display);
+        return icon_theme.has_icon(icon_name);
+    }
+
+    private string get_secured_signal_icon_name(uint8 signal) {
+        if (signal >= 80) {
+            return "network-wireless-signal-excellent-secure-symbolic";
+        }
+        if (signal >= 60) {
+            return "network-wireless-signal-good-secure-symbolic";
+        }
+        if (signal >= 40) {
+            return "network-wireless-signal-ok-secure-symbolic";
+        }
+        if (signal >= 20) {
+            return "network-wireless-signal-weak-secure-symbolic";
+        }
+        return "network-wireless-signal-none-secure-symbolic";
+    }
+
+    private string resolve_wifi_row_icon_name(WifiNetwork net) {
+        if (!net.is_secured) {
+            return net.signal_icon_name;
+        }
+
+        string secure_signal_icon = get_secured_signal_icon_name(net.signal);
+        if (icon_exists(secure_signal_icon)) {
+            return secure_signal_icon;
+        }
+
+        if (icon_exists("network-wireless-encrypted-symbolic")) {
+            return "network-wireless-encrypted-symbolic";
+        }
+
+        return net.signal_icon_name;
+    }
+
     private Gtk.Widget build_details_row(string key, string value) {
         var row = new Gtk.Box(Gtk.Orientation.VERTICAL, 2);
         row.add_css_class("nm-details-row");
@@ -430,7 +476,10 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void populate_wifi_details(WifiNetwork net) {
         wifi_details_title.set_text(net.ssid);
-        wifi_details_forget_button.set_sensitive(net.saved);
+        bool can_manage_saved_profile = net.saved;
+        wifi_details_action_row.set_visible(can_manage_saved_profile);
+        wifi_details_forget_button.set_visible(can_manage_saved_profile);
+        wifi_details_edit_button.set_visible(can_manage_saved_profile);
 
         clear_box(wifi_details_basic_rows);
         clear_box(wifi_details_advanced_rows);
@@ -468,19 +517,20 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void open_wifi_edit(WifiNetwork net) {
+        if (!net.saved) {
+            return;
+        }
+
         selected_wifi_network = net;
         wifi_edit_title.set_text("Edit: %s".printf(net.ssid));
         wifi_edit_password_entry.set_text("");
 
         if (net.is_secured) {
-            wifi_edit_note.set_text(
-                "Enter a new password to update credentials. For saved networks, this recreates the profile."
-            );
+            wifi_edit_note.set_text("Enter a new password to update saved credentials.");
         } else {
             wifi_edit_note.set_text("Open network. Password is not required.");
         }
 
-        wifi_edit_forget_button.set_sensitive(net.saved);
         wifi_stack.set_visible_child_name("edit");
         wifi_edit_password_entry.grab_focus();
     }
@@ -535,7 +585,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         nav_row.add_css_class("nm-details-nav-row");
 
         var back_btn = new Gtk.Button.with_label("← Back");
-        back_btn.add_css_class("nm-button");
         back_btn.add_css_class("nm-nav-back");
         back_btn.set_halign(Gtk.Align.START);
         back_btn.clicked.connect(() => {
@@ -551,6 +600,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var network_icon = new Gtk.Image.from_icon_name("network-wireless-signal-excellent-symbolic");
         network_icon.set_pixel_size(28);
         network_icon.add_css_class("nm-signal-icon");
+        network_icon.add_css_class("nm-wifi-icon");
         network_icon.add_css_class("nm-details-network-icon");
         network_header.append(network_icon);
 
@@ -560,9 +610,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_details_title.add_css_class("nm-details-network-title");
         network_header.append(wifi_details_title);
 
-        var action_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        action_row.set_halign(Gtk.Align.CENTER);
-        action_row.add_css_class("nm-details-action-row");
+        wifi_details_action_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        wifi_details_action_row.set_halign(Gtk.Align.CENTER);
+        wifi_details_action_row.add_css_class("nm-details-action-row");
 
         wifi_details_forget_button = new Gtk.Button.with_label("Forget");
         wifi_details_forget_button.add_css_class("nm-button");
@@ -582,20 +632,20 @@ public class MainWindow : Gtk.ApplicationWindow {
             refresh_all();
             wifi_stack.set_visible_child_name("list");
         });
-        action_row.append(wifi_details_forget_button);
+        wifi_details_action_row.append(wifi_details_forget_button);
 
-        var edit_btn = new Gtk.Button.with_label("Edit");
-        edit_btn.add_css_class("nm-button");
-        edit_btn.add_css_class("nm-action-button");
-        edit_btn.add_css_class("nm-details-action-button");
-        edit_btn.clicked.connect(() => {
+        wifi_details_edit_button = new Gtk.Button.with_label("Edit");
+        wifi_details_edit_button.add_css_class("nm-button");
+        wifi_details_edit_button.add_css_class("nm-action-button");
+        wifi_details_edit_button.add_css_class("nm-details-action-button");
+        wifi_details_edit_button.clicked.connect(() => {
             if (selected_wifi_network != null) {
                 open_wifi_edit(selected_wifi_network);
             }
         });
-        action_row.append(edit_btn);
+        wifi_details_action_row.append(wifi_details_edit_button);
 
-        network_header.append(action_row);
+        network_header.append(wifi_details_action_row);
         page.append(network_header);
 
         var sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
@@ -629,7 +679,6 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
         var back_btn = new Gtk.Button.with_label("Back");
-        back_btn.add_css_class("nm-button");
         back_btn.add_css_class("nm-nav-back");
         back_btn.clicked.connect(() => {
             if (selected_wifi_network != null) {
@@ -673,25 +722,6 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
 
-        wifi_edit_forget_button = new Gtk.Button.with_label("Forget");
-        wifi_edit_forget_button.add_css_class("nm-button");
-        wifi_edit_forget_button.add_css_class("nm-action-button");
-        wifi_edit_forget_button.clicked.connect(() => {
-            if (selected_wifi_network == null) {
-                return;
-            }
-
-            string error_message;
-            if (!nm.forget_network(selected_wifi_network.ssid, out error_message)) {
-                show_error("Forget failed: " + error_message);
-                return;
-            }
-
-            refresh_all();
-            wifi_stack.set_visible_child_name("list");
-        });
-        actions.append(wifi_edit_forget_button);
-
         var save_btn = new Gtk.Button.with_label("Apply");
         save_btn.add_css_class("nm-button");
         save_btn.add_css_class("suggested-action");
@@ -723,20 +753,23 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
 
         var row_root = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+        row_root.add_css_class("nm-row-root");
 
         var content = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 10);
-        content.set_margin_start(12);
-        content.set_margin_end(8);
-        content.set_margin_top(8);
-        content.set_margin_bottom(8);
+        content.add_css_class("nm-row-content");
 
-        var icon = new Gtk.Image.from_icon_name(net.signal_icon_name);
-        icon.set_pixel_size(16);
-        icon.add_css_class("nm-signal-icon");
-        content.append(icon);
+        var signal_icon = new Gtk.Image.from_icon_name(resolve_wifi_row_icon_name(net));
+        signal_icon.set_pixel_size(16);
+        signal_icon.add_css_class("nm-signal-icon");
+        signal_icon.add_css_class("nm-wifi-icon");
+        if (net.is_secured) {
+            signal_icon.add_css_class("nm-signal-icon-secured");
+        }
+        content.append(signal_icon);
 
         var info = new Gtk.Box(Gtk.Orientation.VERTICAL, 1);
         info.set_hexpand(true);
+        info.add_css_class("nm-row-info");
         var ssid_lbl = new Gtk.Label(net.ssid);
         ssid_lbl.set_xalign(0.0f);
         ssid_lbl.add_css_class("nm-ssid-label");
@@ -763,23 +796,30 @@ public class MainWindow : Gtk.ApplicationWindow {
         content.append(info);
 
         var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+        actions.add_css_class("nm-row-actions");
+        actions.set_valign(Gtk.Align.CENTER);
 
         var details_btn = new Gtk.Button();
         details_btn.add_css_class("nm-button");
         details_btn.add_css_class("nm-menu-button");
         details_btn.add_css_class("nm-details-open-button");
-        var details_icon = new Gtk.Image.from_icon_name("go-next-symbolic");
-        details_icon.set_pixel_size(14);
+        details_btn.add_css_class("nm-row-icon-button");
+        details_btn.set_valign(Gtk.Align.CENTER);
+        details_btn.set_tooltip_text("Details");
+        var details_icon = new Gtk.Image.from_icon_name("document-properties-symbolic");
+        details_icon.add_css_class("nm-details-open-icon");
+        details_icon.add_css_class("nm-details-button-icon");
         details_btn.set_child(details_icon);
         details_btn.clicked.connect(() => {
             open_wifi_details(net);
         });
-        actions.append(details_btn);
 
         if (net.saved) {
             var forget = new Gtk.Button.with_label("Forget");
             forget.add_css_class("nm-button");
             forget.add_css_class("nm-action-button");
+            forget.add_css_class("nm-row-action-button");
+            forget.set_valign(Gtk.Align.CENTER);
             forget.clicked.connect(() => {
                 string error_message;
                 if (!nm.forget_network(net.ssid, out error_message)) {
@@ -793,6 +833,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         var action = new Gtk.Button.with_label(net.connected ? "Disconnect" : "Connect");
         action.add_css_class("nm-button");
         action.add_css_class(net.connected ? "nm-disconnect-button" : "nm-connect-button");
+        action.add_css_class("nm-row-action-button");
+        action.set_valign(Gtk.Align.CENTER);
 
         var prompt_label = new Gtk.Label("Password for %s".printf(net.ssid));
         prompt_label.set_xalign(0.0f);
@@ -867,6 +909,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             }
         });
         actions.append(action);
+        actions.append(details_btn);
         content.append(actions);
 
         row_root.append(content);
@@ -976,6 +1019,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_btn.add_css_class("nm-icon-button");
         var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
         refresh_icon.set_pixel_size(16);
+        refresh_icon.add_css_class("nm-toolbar-icon");
+        refresh_icon.add_css_class("nm-refresh-icon");
+        refresh_icon.add_css_class("nm-ethernet-refresh-icon");
         refresh_btn.set_child(refresh_icon);
         refresh_btn.clicked.connect(() => {
             refresh_ethernet();
@@ -1002,6 +1048,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var eth_icon = new Gtk.Image.from_icon_name("network-wired-symbolic");
         eth_icon.set_pixel_size(24);
         eth_icon.add_css_class("nm-placeholder-icon");
+        eth_icon.add_css_class("nm-ethernet-placeholder-icon");
         var eth_lbl = new Gtk.Label("No Ethernet devices found");
         eth_lbl.add_css_class("nm-placeholder-label");
         ethernet_placeholder.append(eth_icon);
@@ -1036,6 +1083,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var icon = new Gtk.Image.from_icon_name("network-wired-symbolic");
         icon.set_pixel_size(16);
         icon.add_css_class("nm-signal-icon");
+        icon.add_css_class("nm-ethernet-icon");
         content.append(icon);
 
         var info = new Gtk.Box(Gtk.Orientation.VERTICAL, 1);
@@ -1058,6 +1106,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var action = new Gtk.Button.with_label("Disconnect");
         action.add_css_class("nm-button");
         action.add_css_class("nm-disconnect-button");
+        action.add_css_class("nm-row-action-button");
         action.set_sensitive(dev.is_connected);
         action.clicked.connect(() => {
             string error_message;
@@ -1110,6 +1159,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_btn.add_css_class("nm-icon-button");
         var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
         refresh_icon.set_pixel_size(16);
+        refresh_icon.add_css_class("nm-toolbar-icon");
+        refresh_icon.add_css_class("nm-refresh-icon");
+        refresh_icon.add_css_class("nm-vpn-refresh-icon");
         refresh_btn.set_child(refresh_icon);
         refresh_btn.clicked.connect(() => {
             refresh_vpn();
@@ -1136,6 +1188,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var vpn_icon = new Gtk.Image.from_icon_name("network-vpn-symbolic");
         vpn_icon.set_pixel_size(24);
         vpn_icon.add_css_class("nm-placeholder-icon");
+        vpn_icon.add_css_class("nm-vpn-placeholder-icon");
         var vpn_lbl = new Gtk.Label("No VPN profiles found");
         vpn_lbl.add_css_class("nm-placeholder-label");
         vpn_placeholder.append(vpn_icon);
@@ -1170,6 +1223,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var icon = new Gtk.Image.from_icon_name("network-vpn-symbolic");
         icon.set_pixel_size(16);
         icon.add_css_class("nm-signal-icon");
+        icon.add_css_class("nm-vpn-icon");
         content.append(icon);
 
         var info = new Gtk.Box(Gtk.Orientation.VERTICAL, 1);
@@ -1188,6 +1242,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var action = new Gtk.Button.with_label(conn.is_connected ? "Disconnect" : "Connect");
         action.add_css_class("nm-button");
         action.add_css_class(conn.is_connected ? "nm-disconnect-button" : "nm-connect-button");
+        action.add_css_class("nm-row-action-button");
         action.clicked.connect(() => {
             string error_message;
             bool ok;
