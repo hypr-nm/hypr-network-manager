@@ -7,40 +7,78 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
 ## Table of Contents
 
 1. [Installation](#installation)
-2. [Getting Started](#getting-started)
-3. [Configuration](#configuration)
-4. [Theming](#theming)
-5. [Usage](#usage)
+2. [Development](#development)
+3. [Getting Started](#getting-started)
+4. [Configuration](#configuration)
+5. [Theming](#theming)
+6. [Usage](#usage)
 
    * [Launching the GUI](#launching-the-gui)
    * [CLI Options](#cli-options)
-6. [Integration](#integration)
+7. [Integration](#integration)
 
   * [Waybar Integration](#waybar-integration)
   * [Hyprland Integration](#hyprland-integration)
-7. [Component Details](#component-details)
+8. [Component Details](#component-details)
 
    * [Wi-Fi Tab](#wi-fi-tab)
    * [Ethernet Tab](#ethernet-tab)
    * [VPN Tab](#vpn-tab)
    * [NetworkManager D-Bus Client](#networkmanager-d-bus-client)
    * [GUI & Layer-Shell](#gui--layer-shell)
-8. [Security](#security)
-9. [Troubleshooting](#troubleshooting)
+9. [Security](#security)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Installation
 
-Detailed installation instructions for Arch, Debian/Ubuntu, and Fedora.
+Use the install script for both system-wide and user-local installs in either interactive or non-interactive modes.
 
-### Quick Install
+
+### Interactive Install
 
 ```bash
 ./scripts/install.sh
 ```
 
-This installs dependencies, builds the project, and installs it to `/usr/local` by default.
+The script installs dependencies, builds the project, and then installs to the scope selected.
+
+### Non-interactive Install
+
+```bash
+INSTALL_SCOPE=system ./scripts/install.sh
+INSTALL_SCOPE=user ./scripts/install.sh
+```
+
+With `INSTALL_SCOPE=system`, installs the binary under `/usr/local` and writes defaults under `/etc/xdg/hypr-network-manager`.
+
+With `INSTALL_SCOPE=user`, installs to `~/.local` and writes defaults under `~/.config/hypr-network-manager`.
+
+### Optional Install Customization
+
+```bash
+BUILD_DIR=builddir-dev BUILD_TYPE=debugoptimized STRIP_BIN=false ./scripts/install.sh
+```
+
+You can also override install prefix explicitly:
+
+```bash
+INSTALL_PREFIX=$HOME/.local INSTALL_SCOPE=user ./scripts/install.sh
+```
+
+---
+
+## Development
+
+### Dependencies
+
+* Vala toolchain
+* GTK 4 runtime and development libraries
+* gtk4-layer-shell
+* NetworkManager
+
+The install script auto-installs dependencies when supported package managers are available.
 
 ### Manual Build
 
@@ -65,15 +103,6 @@ Examples:
 ./scripts/compile.sh prod       # prod build -> builddir-prod
 ./scripts/compile.sh prod out   # prod build -> out
 ```
-
-### Dependencies
-
-* Vala toolchain
-* GTK 4 runtime and development libraries
-* gtk4-layer-shell
-* NetworkManager
-
-Refer to your distribution's package manager to install these.
 
 ---
 
