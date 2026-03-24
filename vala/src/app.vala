@@ -31,6 +31,7 @@ public class NetworkManagerValaApp : Gtk.Application {
             Environment.get_home_dir(),
             ".config",
             "hypr-network-manager",
+            "themes",
             "base.css"
         );
     }
@@ -40,6 +41,7 @@ public class NetworkManagerValaApp : Gtk.Application {
             "/etc",
             "xdg",
             "hypr-network-manager",
+            "themes",
             "base.css"
         );
     }
@@ -86,7 +88,7 @@ public class NetworkManagerValaApp : Gtk.Application {
     private void load_theme_css() {
         string? css_path = resolve_base_css_path();
         if (css_path == null) {
-            debug_log("no base.css found in local/system/bundled locations");
+            debug_log("no themes/base.css found in local/system/bundled locations");
             return;
         }
 

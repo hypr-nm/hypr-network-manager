@@ -152,19 +152,12 @@ install_defaults() {
   target_home="$(resolve_target_user_home)"
   user_config_dir="$target_home/.config/hypr-network-manager"
 
-  local base_src tmp_base
-  base_src="$PROJECT_ROOT/themes/base.css"
-  tmp_base="$(mktemp)"
-  # Installed base.css lives at config root, so theme imports must point to ./themes/*.css
-  sed -E 's|@import url\("\./([^"]+)"\);|@import url("./themes/\1");|g' "$base_src" > "$tmp_base"
-  trap 'rm -f "$tmp_base"' RETURN
-
   if [[ "$INSTALL_SCOPE" == "system" ]]; then
     log "Installing default config and themes to $CONFIG_TARGET_DIR"
     run_with_privilege install -d -m 755 "$CONFIG_TARGET_DIR"
     run_with_privilege install -d -m 755 "$CONFIG_TARGET_DIR/themes"
     run_with_privilege install -m 644 "$PROJECT_ROOT/config.json" "$CONFIG_TARGET_DIR/config.json"
-    run_with_privilege install -m 644 "$tmp_base" "$CONFIG_TARGET_DIR/base.css"
+    run_with_privilege install -m 644 "$PROJECT_ROOT/themes/base.css" "$CONFIG_TARGET_DIR/themes/base.css"
 
     local css_file css_name
     for css_file in "$PROJECT_ROOT/themes"/*.css; do
@@ -185,8 +178,8 @@ install_defaults() {
     install -m 644 "$PROJECT_ROOT/config.json" "$user_config_dir/config.json"
   fi
 
-  if [[ ! -f "$user_config_dir/base.css" ]]; then
-    install -m 644 "$tmp_base" "$user_config_dir/base.css"
+  if [[ ! -f "$user_config_dir/themes/base.css" ]]; then
+    install -m 644 "$PROJECT_ROOT/themes/base.css" "$user_config_dir/themes/base.css"
   fi
 
   local css_file css_name

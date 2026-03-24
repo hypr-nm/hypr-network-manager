@@ -148,12 +148,12 @@ remove_defaults() {
     removed_any=true
   fi
 
-  if [[ -f "$CONFIG_TARGET_DIR/base.css" ]]; then
-    rm -f "$CONFIG_TARGET_DIR/base.css"
-    removed_any=true
-  fi
-
   if [[ -d "$user_themes_dir" ]]; then
+    if [[ -f "$user_themes_dir/base.css" ]]; then
+      rm -f "$user_themes_dir/base.css"
+      removed_any=true
+    fi
+
     local css_file css_name
     for css_file in "$PROJECT_ROOT/themes"/*.css; do
       css_name="$(basename "$css_file")"
