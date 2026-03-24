@@ -359,6 +359,144 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
+    public bool update_wifi_network_settings(
+        WifiNetwork network,
+        string password,
+        string ipv4_method,
+        string ipv4_address,
+        uint32 ipv4_prefix,
+        string ipv4_gateway,
+        string[] ipv4_dns_servers,
+        out string error_message
+    ) {
+        error_message = "";
+
+        try {
+            string? conn_path = find_connection_by_ssid(network.ssid);
+            if (conn_path == null) {
+                error_message = "No saved connection found for this network.";
+                return false;
+            }
+
+            string method = normalize_ipv4_method(ipv4_method);
+            string address = ipv4_address.strip();
+            string gateway = ipv4_gateway.strip();
+
+            if (method == "manual") {
+                if (address == "") {
+                    error_message = "Manual IPv4 requires an address.";
+                    return false;
+                }
+                if (ipv4_prefix == 0 || ipv4_prefix > 32) {
+                    error_message = "Manual IPv4 prefix must be between 1 and 32.";
+                    return false;
+                }
+            }
+
+            var conn = make_proxy(conn_path, NM_CONN_IFACE);
+            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+            var all_settings = settings_res.get_child_value(0);
+
+            Variant? existing_ipv4 = all_settings.lookup_value("ipv4", new VariantType("a{sv}"));
+            Variant base_ipv4 = existing_ipv4 != null
+                ? existing_ipv4
+                : new VariantBuilder(new VariantType("a{sv}")).end();
+            var ipv4_dict = new VariantDict(base_ipv4);
+
+            ipv4_dict.insert_value("method", new Variant.string(method));
+
+            if (method == "manual") {
+                var addresses = new VariantBuilder(new VariantType("aa{sv}"));
+                var addr_entry = new VariantBuilder(new VariantType("a{sv}"));
+                addr_entry.add("{sv}", "address", new Variant.string(address));
+                addr_entry.add("{sv}", "prefix", new Variant.uint32(ipv4_prefix));
+                addresses.add_value(addr_entry.end());
+                ipv4_dict.insert_value("address-data", addresses.end());
+
+                if (gateway != "") {
+                    ipv4_dict.insert_value("gateway", new Variant.string(gateway));
+                } else {
+                    ipv4_dict.remove("gateway");
+                }
+
+                if (ipv4_dns_servers.length > 0) {
+                    var dns_builder = new VariantBuilder(new VariantType("as"));
+                    foreach (string dns in ipv4_dns_servers) {
+                        if (dns.strip() != "") {
+                            dns_builder.add("s", dns.strip());
+                        }
+                    }
+                    ipv4_dict.insert_value("dns-data", dns_builder.end());
+                } else {
+                    ipv4_dict.remove("dns-data");
+                }
+            } else {
+                ipv4_dict.remove("address-data");
+                ipv4_dict.remove("gateway");
+                ipv4_dict.remove("dns-data");
+            }
+
+            Variant updated_ipv4 = ipv4_dict.end();
+
+            Variant? updated_sec = null;
+            if (network.is_secured && password.strip() != "") {
+                Variant? existing_sec = all_settings.lookup_value(
+                    "802-11-wireless-security",
+                    new VariantType("a{sv}")
+                );
+                Variant base_sec = existing_sec != null
+                    ? existing_sec
+                    : new VariantBuilder(new VariantType("a{sv}")).end();
+                var sec_dict = new VariantDict(base_sec);
+                sec_dict.insert_value("psk", new Variant.string(password.strip()));
+                updated_sec = sec_dict.end();
+            }
+
+            var top_builder = new VariantBuilder(new VariantType("a{sa{sv}}"));
+            bool has_ipv4 = false;
+            bool has_sec = false;
+
+            for (int i = 0; i < all_settings.n_children(); i++) {
+                Variant entry = all_settings.get_child_value(i);
+                string section_name = entry.get_child_value(0).get_string();
+                Variant section_value = entry.get_child_value(1);
+
+                if (section_name == "ipv4") {
+                    top_builder.add("{s@a{sv}}", "ipv4", updated_ipv4);
+                    has_ipv4 = true;
+                    continue;
+                }
+
+                if (section_name == "802-11-wireless-security" && updated_sec != null) {
+                    top_builder.add("{s@a{sv}}", "802-11-wireless-security", updated_sec);
+                    has_sec = true;
+                    continue;
+                }
+
+                top_builder.add("{s@a{sv}}", section_name, section_value);
+            }
+
+            if (!has_ipv4) {
+                top_builder.add("{s@a{sv}}", "ipv4", updated_ipv4);
+            }
+            if (updated_sec != null && !has_sec) {
+                top_builder.add("{s@a{sv}}", "802-11-wireless-security", updated_sec);
+            }
+
+            conn.call_sync(
+                "Update",
+                new Variant("(@a{sa{sv}})", top_builder.end()),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
     private static string json_escape(string value) {
         string out = value.replace("\\", "\\\\");
         out = out.replace("\"", "\\\"");
