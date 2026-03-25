@@ -1,8 +1,13 @@
 using GLib;
 
 public class WifiRefreshData : Object {
-    public List<WifiNetwork> networks { get; construct; }
-    public List<NetworkDevice> devices { get; construct; }
+    public WifiNetwork[] networks;
+    public NetworkDevice[] devices;
+
+    public WifiRefreshData(WifiNetwork[] networks_in, NetworkDevice[] devices_in) {
+        networks = networks_in;
+        devices = devices_in;
+    }
 }
 
 public class NetworkManagerClientVala : Object {
@@ -472,12 +477,20 @@ public class NetworkManagerClientVala : Object {
     }
 
     public async WifiRefreshData get_wifi_refresh_data_async(Cancellable? cancellable = null) throws Error {
-        var networks = yield get_wifi_networks_async(cancellable);
-        var devices = yield get_devices_async(cancellable);
-        return new WifiRefreshData() {
-            networks = (owned) networks,
-            devices = (owned) devices
-        };
+        var networks_list = yield get_wifi_networks_async(cancellable);
+        var devices_list = yield get_devices_async(cancellable);
+
+        WifiNetwork[] networks = {};
+        foreach (var net in networks_list) {
+            networks += net;
+        }
+
+        NetworkDevice[] devices = {};
+        foreach (var dev in devices_list) {
+            devices += dev;
+        }
+
+        return new WifiRefreshData((owned) networks, (owned) devices);
     }
 
     private string? find_connection_by_uuid(string uuid) {
@@ -1111,8 +1124,27 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
+    private async bool set_nm_bool_property_async(
+        string prop_name,
+        bool value,
+        Cancellable? cancellable = null
+    ) throws Error {
+        var proxy = make_proxy(NM_PATH, DBUS_PROPS_IFACE);
+        yield call_async(
+            proxy,
+            "Set",
+            new Variant("(ssv)", NM_IFACE, prop_name, new Variant.boolean(value)),
+            cancellable
+        );
+        return true;
+    }
+
     public bool set_wifi_enabled(bool enabled, out string error_message) {
         return set_nm_bool_property("WirelessEnabled", enabled, out error_message);
+    }
+
+    public async bool set_wifi_enabled_async(bool enabled, Cancellable? cancellable = null) throws Error {
+        return yield set_nm_bool_property_async("WirelessEnabled", enabled, cancellable);
     }
 
     public bool set_networking_enabled(bool enabled, out string error_message) {
@@ -1128,6 +1160,22 @@ public class NetworkManagerClientVala : Object {
         } catch (Error e) {
             debug_log("Enable() failed, falling back to NetworkingEnabled property: " + e.message);
             return set_nm_bool_property("NetworkingEnabled", enabled, out error_message);
+        }
+    }
+
+    public async bool set_networking_enabled_async(bool enabled, Cancellable? cancellable = null) throws Error {
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            yield call_async(
+                nm,
+                "Enable",
+                new Variant("(b)", enabled),
+                cancellable
+            );
+            return true;
+        } catch (Error e) {
+            debug_log("Enable() failed, falling back to NetworkingEnabled property: " + e.message);
+            return yield set_nm_bool_property_async("NetworkingEnabled", enabled, cancellable);
         }
     }
 
@@ -1610,6 +1658,39 @@ public class NetworkManagerClientVala : Object {
             debug_log("scan_wifi failed: " + e.message);
             return false;
         }
+    }
+
+    public async bool scan_wifi_async(Cancellable? cancellable = null) throws Error {
+        var nm = make_proxy(NM_PATH, NM_IFACE);
+        var devices_res = yield call_async(nm, "GetDevices", null, cancellable);
+        var devices = devices_res.get_child_value(0);
+
+        uint scanned = 0;
+        for (int i = 0; i < devices.n_children(); i++) {
+            string dev_path = devices.get_child_value(i).get_string();
+            uint32 dev_type = (yield get_prop_async(
+                dev_path,
+                NM_DEVICE_IFACE,
+                "DeviceType",
+                cancellable
+            )).get_uint32();
+            if (dev_type != NM_DEVICE_TYPE_WIFI) {
+                continue;
+            }
+
+            var wifi = make_proxy(dev_path, NM_WIRELESS_IFACE);
+            var options = new VariantBuilder(new VariantType("a{sv}"));
+            yield call_async(
+                wifi,
+                "RequestScan",
+                new Variant("(@a{sv})", options.end()),
+                cancellable
+            );
+            scanned++;
+        }
+
+        debug_log("requested scan on %u wifi device(s)".printf(scanned));
+        return true;
     }
 
     public List<string> get_device_paths() {

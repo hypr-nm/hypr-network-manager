@@ -116,8 +116,8 @@ public class MainWindowWifiRuntimeController : Object {
                     return;
                 }
 
-                var networks = refresh_data.networks;
-                var devices = refresh_data.devices;
+                WifiNetwork[] networks = refresh_data.networks;
+                NetworkDevice[] devices = refresh_data.devices;
 
                 dispatch_ui(() => {
                     string? primary_connected_ssid = null;
@@ -178,10 +178,10 @@ public class MainWindowWifiRuntimeController : Object {
                         // Avoid touching ref parameters from async callbacks.
                         wifi_stack.set_visible_child_name(current_view);
                     } else {
-                        wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
+                        wifi_stack.set_visible_child_name(networks.length > 0 ? "list" : "empty");
                     }
 
-                    if (networks.length() > 0) {
+                    if (networks.length > 0) {
                         WifiNetwork? connected = null;
                         if (primary_connected_ssid != null) {
                             foreach (var net in networks) {
@@ -199,7 +199,7 @@ public class MainWindowWifiRuntimeController : Object {
                             status_label.set_text("Wi-Fi · %s".printf(primary_connected_ssid));
                             status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
                         } else {
-                            status_label.set_text("Wi-Fi available (%u networks)".printf(networks.length()));
+                            status_label.set_text("Wi-Fi available (%u networks)".printf(networks.length));
                             status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
                         }
                     } else {
@@ -207,7 +207,7 @@ public class MainWindowWifiRuntimeController : Object {
                         status_icon.set_from_icon_name("network-wireless-offline-symbolic");
                     }
 
-                    on_log("Rendered %u Wi-Fi rows".printf(networks.length()));
+                    on_log("Rendered %u Wi-Fi rows".printf(networks.length));
                 }, epoch);
             } catch (Error e) {
                 if (e is IOError.CANCELLED || !is_ui_epoch_valid(epoch)) {
@@ -298,19 +298,15 @@ public class MainWindowWifiRuntimeController : Object {
         uint epoch = capture_ui_epoch();
 
         if (request_wifi_scan) {
-            MainWindowAsyncExecutor.run(() => {
-                string error_message;
-                if (!nm.scan_wifi(out error_message)) {
+            nm.scan_wifi_async.begin(null, (obj, res) => {
+                try {
+                    nm.scan_wifi_async.end(res);
+                } catch (Error e) {
+                    string message = e.message;
                     dispatch_ui(() => {
-                        on_log("Could not request Wi-Fi scan: " + error_message);
+                        on_log("Could not request Wi-Fi scan: " + message);
                     }, epoch);
                 }
-            },
-            (message) => {
-                if (!is_ui_epoch_valid(epoch)) {
-                    return;
-                }
-                on_log("Could not spawn Wi-Fi scan thread: " + message);
             });
         }
 
@@ -328,19 +324,15 @@ public class MainWindowWifiRuntimeController : Object {
             }
 
             if (request_wifi_scan) {
-                MainWindowAsyncExecutor.run(() => {
-                    string delayed_scan_error;
-                    if (!nm.scan_wifi(out delayed_scan_error)) {
+                nm.scan_wifi_async.begin(null, (obj, res) => {
+                    try {
+                        nm.scan_wifi_async.end(res);
+                    } catch (Error e) {
+                        string message = e.message;
                         dispatch_ui(() => {
-                            on_log("Could not request delayed Wi-Fi scan: " + delayed_scan_error);
+                            on_log("Could not request delayed Wi-Fi scan: " + message);
                         }, epoch);
                     }
-                },
-                (message) => {
-                    if (!is_ui_epoch_valid(epoch)) {
-                        return;
-                    }
-                    on_log("Could not spawn delayed Wi-Fi scan thread: " + message);
                 });
             }
             on_refresh_all();
@@ -461,26 +453,20 @@ public class MainWindowWifiRuntimeController : Object {
 
         uint epoch = capture_ui_epoch();
         bool enabled = wifi_switch.get_active();
-        MainWindowAsyncExecutor.run(() => {
-            string error_message;
-            bool ok = nm.set_wifi_enabled(enabled, out error_message);
 
-            dispatch_ui(() => {
-                    if (!ok) {
-                        on_error("Could not toggle Wi-Fi: " + error_message);
+        nm.set_wifi_enabled_async.begin(enabled, null, (obj, res) => {
+            try {
+                nm.set_wifi_enabled_async.end(res);
+                dispatch_ui(() => {
+                        on_refresh_after_action(enabled);
+                    }, epoch);
+            } catch (Error e) {
+                string message = e.message;
+                dispatch_ui(() => {
+                    on_error("Could not toggle Wi-Fi: " + message);
                         on_refresh_switch_states();
-                        return;
-                    }
-
-                    on_refresh_after_action(enabled);
-                }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+                    }, epoch);
             }
-            on_error("Could not toggle Wi-Fi: " + message);
-            on_refresh_switch_states();
         });
     }
 
@@ -498,26 +484,20 @@ public class MainWindowWifiRuntimeController : Object {
 
         uint epoch = capture_ui_epoch();
         bool enabled = networking_switch.get_active();
-        MainWindowAsyncExecutor.run(() => {
-            string error_message;
-            bool ok = nm.set_networking_enabled(enabled, out error_message);
 
-            dispatch_ui(() => {
-                    if (!ok) {
-                        on_error("Could not toggle networking: " + error_message);
+        nm.set_networking_enabled_async.begin(enabled, null, (obj, res) => {
+            try {
+                nm.set_networking_enabled_async.end(res);
+                dispatch_ui(() => {
+                        on_refresh_after_action(enabled);
+                    }, epoch);
+            } catch (Error e) {
+                string message = e.message;
+                dispatch_ui(() => {
+                    on_error("Could not toggle networking: " + message);
                         on_refresh_switch_states();
-                        return;
-                    }
-
-                    on_refresh_after_action(enabled);
-                }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+                    }, epoch);
             }
-            on_error("Could not toggle networking: " + message);
-            on_refresh_switch_states();
         });
     }
 }
