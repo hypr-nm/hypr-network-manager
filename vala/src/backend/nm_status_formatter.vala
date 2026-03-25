@@ -51,11 +51,20 @@ public class NmStatusFormatter : Object {
     }
 
     public static string build_status_json(string text, string alt, string tooltip, string klass) {
-        return "{\"text\":\"%s\",\"alt\":\"%s\",\"tooltip\":\"%s\",\"class\":\"%s\"}".printf(
-            NmClientUtils.json_escape(text),
-            NmClientUtils.json_escape(alt),
-            NmClientUtils.json_escape(tooltip),
-            NmClientUtils.json_escape(klass)
-        );
+        var builder = new Json.Builder();
+        builder.begin_object();
+        builder.set_member_name("text");
+        builder.add_string_value(text);
+        builder.set_member_name("alt");
+        builder.add_string_value(alt);
+        builder.set_member_name("tooltip");
+        builder.add_string_value(tooltip);
+        builder.set_member_name("class");
+        builder.add_string_value(klass);
+        builder.end_object();
+
+        var generator = new Json.Generator();
+        generator.set_root(builder.get_root());
+        return generator.to_data(null);
     }
 }

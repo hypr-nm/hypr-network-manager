@@ -225,12 +225,4 @@ public class NmClientUtils : Object {
         }
     }
 
-    public static string json_escape(string value) {
-        string out = value.replace("\\", "\\\\");
-        out = out.replace("\"", "\\\"");
-        out = out.replace("\n", "\\n");
-        out = out.replace("\r", "\\r");
-        out = out.replace("\t", "\\t");
-        return out;
-    }
 }
