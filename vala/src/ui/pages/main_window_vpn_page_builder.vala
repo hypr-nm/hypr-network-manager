@@ -186,30 +186,35 @@ public class MainWindowVpnPageBuilder : Object {
         action.add_css_class("nm-row-action-button");
         action.clicked.connect(() => {
             uint epoch = capture_ui_epoch();
-            MainWindowAsyncExecutor.run(() => {
-                string error_message;
-                bool ok;
-                if (conn.is_connected) {
-                    ok = nm.disconnect_vpn(conn.name, out error_message);
-                } else {
-                    ok = nm.connect_vpn(conn.name, out error_message);
-                }
-
-                dispatch_ui(() => {
-                    if (!ok) {
-                        on_error(
-                            (conn.is_connected ? "VPN disconnect failed: " : "VPN connect failed: ")
-                            + error_message
-                        );
+            if (conn.is_connected) {
+                nm.disconnect_vpn_data.begin(conn.name, null, (obj, res) => {
+                    try {
+                        nm.disconnect_vpn_data.end(res);
+                    } catch (Error e) {
+                        if (!is_ui_epoch_valid(epoch)) {
+                            return;
+                        }
+                        on_error("VPN disconnect failed: " + e.message);
                     }
+                    dispatch_ui(() => {
+                        on_refresh_after_action(false);
+                    }, epoch);
+                });
+                return;
+            }
+
+            nm.connect_vpn_data.begin(conn.name, null, (obj, res) => {
+                try {
+                    nm.connect_vpn_data.end(res);
+                } catch (Error e) {
+                    if (!is_ui_epoch_valid(epoch)) {
+                        return;
+                    }
+                    on_error("VPN connect failed: " + e.message);
+                }
+                dispatch_ui(() => {
                     on_refresh_after_action(false);
                 }, epoch);
-            },
-            (message) => {
-                if (!is_ui_epoch_valid(epoch)) {
-                    return;
-                }
-                on_error("VPN action failed: " + message);
             });
         });
         content.append(action);
@@ -224,23 +229,24 @@ public class MainWindowVpnPageBuilder : Object {
         }
 
         uint epoch = capture_ui_epoch();
-        MainWindowAsyncExecutor.run(() => {
-            var connections = nm.get_vpn_connections();
-            dispatch_ui(() => {
-                MainWindowHelpers.clear_listbox(vpn_listbox);
+        nm.get_vpn_connections_data.begin(null, (obj, res) => {
+            try {
+                var connections = nm.get_vpn_connections_data.end(res);
+                dispatch_ui(() => {
+                    MainWindowHelpers.clear_listbox(vpn_listbox);
 
-                foreach (var conn in connections) {
-                    vpn_listbox.append(build_row(conn));
+                    foreach (var conn in connections) {
+                        vpn_listbox.append(build_row(conn));
+                    }
+
+                    vpn_stack.set_visible_child_name(connections.length() > 0 ? "list" : "empty");
+                }, epoch);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
                 }
-
-                vpn_stack.set_visible_child_name(connections.length() > 0 ? "list" : "empty");
-            }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+                on_error("VPN refresh failed: " + e.message);
             }
-            on_error("VPN refresh failed: " + message);
         });
     }
 }
