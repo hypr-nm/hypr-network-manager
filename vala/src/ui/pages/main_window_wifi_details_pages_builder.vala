@@ -20,6 +20,7 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         page.set_margin_bottom(12);
         page.add_css_class("nm-page");
         page.add_css_class("nm-page-wifi-details");
+        page.add_css_class("nm-page-network-details");
 
         var nav_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
         nav_row.add_css_class("nm-details-nav-row");
@@ -119,6 +120,7 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         page.set_margin_bottom(12);
         page.add_css_class("nm-page");
         page.add_css_class("nm-page-wifi-edit");
+        page.add_css_class("nm-page-network-edit");
 
         var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
         var back_btn = new Gtk.Button.with_label("Back");
@@ -139,6 +141,7 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         var form = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
         form.add_css_class("nm-edit-form");
         form.add_css_class("nm-edit-wifi-form");
+        form.add_css_class("nm-edit-network-form");
 
         wifi_edit_note = new Gtk.Label("");
         wifi_edit_note.set_xalign(0.0f);
