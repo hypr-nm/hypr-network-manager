@@ -383,9 +383,9 @@ public class MainWindowEthernetController : Object {
         uint epoch = capture_ui_epoch();
         bool target_connected = !dev.is_connected;
         if (dev.is_connected) {
-            nm.disconnect_device_data.begin(dev.name, null, (obj, res) => {
+            nm.disconnect_device.begin(dev.name, null, (obj, res) => {
                 try {
-                    nm.disconnect_device_data.end(res);
+                    nm.disconnect_device.end(res);
                     dispatch_ui(() => {
                         track_pending_action(dev, target_connected, epoch);
                         on_refresh_after_action(false);
@@ -400,9 +400,9 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
-        nm.connect_ethernet_device_data.begin(dev, null, (obj, res) => {
+        nm.connect_ethernet_device.begin(dev, null, (obj, res) => {
             try {
-                nm.connect_ethernet_device_data.end(res);
+            nm.connect_ethernet_device.end(res);
                 dispatch_ui(() => {
                     track_pending_action(dev, target_connected, epoch);
                     on_refresh_after_action(false);
@@ -444,9 +444,9 @@ public class MainWindowEthernetController : Object {
 
         ethernet_details_ip_rows.append(MainWindowHelpers.build_details_row("Loading", "Reading IP settings..."));
 
-        nm.get_ethernet_device_ip_settings_data.begin(dev, null, (obj, res) => {
+        nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
             try {
-                var ip_settings = nm.get_ethernet_device_ip_settings_data.end(res);
+            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
                 dispatch_ui(() => {
                     if (selected_ethernet_device == null
                         || (selected_ethernet_device.device_path != dev.device_path
@@ -552,9 +552,9 @@ public class MainWindowEthernetController : Object {
         ethernet_stack.set_visible_child_name("edit");
         on_set_popup_text_input_mode(true);
 
-        nm.get_ethernet_device_ip_settings_data.begin(dev, null, (obj, res) => {
+        nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
             try {
-                var ip_settings = nm.get_ethernet_device_ip_settings_data.end(res);
+            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
                 dispatch_ui(() => {
                     if (selected_ethernet_device == null
                         || (selected_ethernet_device.device_path != dev.device_path
@@ -640,7 +640,7 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
-        nm.update_ethernet_device_settings_data.begin(
+        nm.update_ethernet_device_settings.begin(
             dev,
             method,
             ipv4_address,
@@ -652,7 +652,7 @@ public class MainWindowEthernetController : Object {
             null,
             (obj, res) => {
                 try {
-                    nm.update_ethernet_device_settings_data.end(res);
+                    nm.update_ethernet_device_settings.end(res);
                 } catch (Error e) {
                     dispatch_ui(() => {
                         on_error("Apply failed: " + e.message);
@@ -669,9 +669,9 @@ public class MainWindowEthernetController : Object {
                     return;
                 }
 
-                nm.disconnect_device_data.begin(dev.name, null, (obj2, res2) => {
+                nm.disconnect_device.begin(dev.name, null, (obj2, res2) => {
                     try {
-                        nm.disconnect_device_data.end(res2);
+                        nm.disconnect_device.end(res2);
                     } catch (Error e) {
                         dispatch_ui(() => {
                             on_error("Disconnect before reconnect failed: " + e.message);
@@ -679,11 +679,11 @@ public class MainWindowEthernetController : Object {
                         return;
                     }
 
-                    nm.connect_ethernet_device_data.begin(dev, null, (obj3, res3) => {
+                    nm.connect_ethernet_device.begin(dev, null, (obj3, res3) => {
                         bool reconnect_ok = true;
                         string reconnect_error = "";
                         try {
-                            nm.connect_ethernet_device_data.end(res3);
+                            nm.connect_ethernet_device.end(res3);
                         } catch (Error e) {
                             reconnect_ok = false;
                             reconnect_error = e.message;
@@ -786,9 +786,9 @@ public class MainWindowEthernetController : Object {
     public void refresh() {
         uint epoch = capture_ui_epoch();
         string current_view = ethernet_stack.get_visible_child_name();
-        nm.get_devices_data.begin(null, (obj, res) => {
+        nm.get_devices.begin(null, (obj, res) => {
             try {
-                var devices = nm.get_devices_data.end(res);
+            var devices = nm.get_devices.end(res);
                 dispatch_ui(() => {
                 var ethernet_devices = new List<NetworkDevice>();
                 MainWindowHelpers.clear_listbox(ethernet_listbox);

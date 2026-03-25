@@ -187,9 +187,9 @@ public class MainWindowVpnPageBuilder : Object {
         action.clicked.connect(() => {
             uint epoch = capture_ui_epoch();
             if (conn.is_connected) {
-                nm.disconnect_vpn_data.begin(conn.name, null, (obj, res) => {
+                nm.disconnect_vpn.begin(conn.name, null, (obj, res) => {
                     try {
-                        nm.disconnect_vpn_data.end(res);
+                        nm.disconnect_vpn.end(res);
                     } catch (Error e) {
                         if (!is_ui_epoch_valid(epoch)) {
                             return;
@@ -203,9 +203,9 @@ public class MainWindowVpnPageBuilder : Object {
                 return;
             }
 
-            nm.connect_vpn_data.begin(conn.name, null, (obj, res) => {
+            nm.connect_vpn.begin(conn.name, null, (obj, res) => {
                 try {
-                    nm.connect_vpn_data.end(res);
+                    nm.connect_vpn.end(res);
                 } catch (Error e) {
                     if (!is_ui_epoch_valid(epoch)) {
                         return;
@@ -229,9 +229,9 @@ public class MainWindowVpnPageBuilder : Object {
         }
 
         uint epoch = capture_ui_epoch();
-        nm.get_vpn_connections_data.begin(null, (obj, res) => {
+        nm.get_vpn_connections.begin(null, (obj, res) => {
             try {
-                var connections = nm.get_vpn_connections_data.end(res);
+            var connections = nm.get_vpn_connections.end(res);
                 dispatch_ui(() => {
                     MainWindowHelpers.clear_listbox(vpn_listbox);
 

@@ -938,166 +938,6 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    public bool get_ethernet_device_ip_settings(
-        NetworkDevice device,
-        out NetworkIpSettings ip_settings,
-        out string error_message
-    ) {
-        error_message = "";
-        ip_settings = new NetworkIpSettings();
-
-        if (device.connection.strip() != "") {
-            try {
-                string? conn_path = null;
-                if (device.connection_uuid.strip() != "") {
-                    conn_path = find_connection_by_uuid(device.connection_uuid);
-                }
-                if (conn_path == null) {
-                    bool name_ambiguous = false;
-                    conn_path = find_connection_by_name(device.connection, out name_ambiguous);
-                    if (name_ambiguous) {
-                        error_message = "Multiple Ethernet profiles share this name. Select by UUID.";
-                    }
-                }
-                if (conn_path != null) {
-                    var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                    var settings_res = conn.call_sync(
-                        "GetSettings",
-                        null,
-                        DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-                    );
-                    var all_settings = settings_res.get_child_value(0);
-                    fill_configured_ipv4_from_settings(all_settings, ip_settings);
-                }
-            } catch (Error e) {
-                error_message = e.message;
-            }
-        }
-
-        fill_runtime_ipv4_for_device(device.device_path, device.is_connected, ip_settings);
-        return true;
-    }
-
-    public bool update_ethernet_device_settings(
-        NetworkDevice device,
-        string ipv4_method,
-        string ipv4_address,
-        uint32 ipv4_prefix,
-        bool gateway_auto,
-        string ipv4_gateway,
-        bool dns_auto,
-        string[] ipv4_dns_servers,
-        out string error_message
-    ) {
-        error_message = "";
-
-        if (device.connection.strip() == "") {
-            error_message = "No Ethernet profile is available for this interface.";
-            return false;
-        }
-
-        try {
-            string? conn_path = null;
-            if (device.connection_uuid.strip() != "") {
-                conn_path = find_connection_by_uuid(device.connection_uuid);
-            }
-            if (conn_path == null) {
-                bool name_ambiguous = false;
-                conn_path = find_connection_by_name(device.connection, out name_ambiguous);
-                if (name_ambiguous) {
-                    error_message = "Multiple Ethernet profiles share this name. Refusing ambiguous update.";
-                    return false;
-                }
-            }
-            if (conn_path == null) {
-                error_message = "No saved Ethernet profile found.";
-                return false;
-            }
-
-            string method = normalize_ipv4_method(ipv4_method);
-            string address = ipv4_address.strip();
-            string gateway = ipv4_gateway.strip();
-
-            if (!gateway_auto && gateway == "") {
-                error_message = "Manual gateway requires a gateway address.";
-                return false;
-            }
-
-            if (!gateway_auto && method == "disabled") {
-                error_message = "Manual gateway is not supported when IPv4 method is Disabled.";
-                return false;
-            }
-
-            if (!dns_auto && ipv4_dns_servers.length == 0) {
-                error_message = "Manual DNS requires at least one DNS server.";
-                return false;
-            }
-
-            if (method == "manual") {
-                if (address == "") {
-                    error_message = "Manual IPv4 requires an address.";
-                    return false;
-                }
-                if (ipv4_prefix == 0 || ipv4_prefix > 32) {
-                    error_message = "Manual IPv4 prefix must be between 1 and 32.";
-                    return false;
-                }
-            }
-
-            var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var all_settings = settings_res.get_child_value(0);
-
-            Variant updated_ipv4;
-            if (!NmWifiSettingsBuilder.build_updated_ipv4_section(
-                all_settings,
-                method,
-                address,
-                ipv4_prefix,
-                gateway_auto,
-                gateway,
-                dns_auto,
-                ipv4_dns_servers,
-                out updated_ipv4,
-                out error_message
-            )) {
-                return false;
-            }
-
-            Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings(
-                all_settings,
-                updated_ipv4,
-                false,
-                ""
-            );
-
-            conn.call_sync(
-                "Update",
-                new Variant("(@a{sa{sv}})", updated_settings),
-                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-            );
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
-    public bool connect_ethernet_device(NetworkDevice device, out string error_message) {
-        error_message = "";
-
-        if (device.connection.strip() == "") {
-            error_message = "No saved Ethernet profile available for this interface.";
-            return false;
-        }
-
-        if (device.connection_uuid.strip() != "") {
-            return activate_connection_by_uuid(device.connection_uuid, out error_message);
-        }
-
-        return activate_connection(device.connection, out error_message);
-    }
-
     private async string resolve_ethernet_connection_path(
         NetworkDevice device,
         string ambiguous_message,
@@ -1161,7 +1001,7 @@ public class NetworkManagerClientVala : Object {
         return name_match;
     }
 
-    public async bool connect_ethernet_device_data(
+    public async bool connect_ethernet_device(
         NetworkDevice device,
         Cancellable? cancellable = null
     ) throws Error {
@@ -1186,7 +1026,7 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    public async bool disconnect_device_data(
+    public async bool disconnect_device(
         string interface_name,
         Cancellable? cancellable = null
     ) throws Error {
@@ -1214,7 +1054,7 @@ public class NetworkManagerClientVala : Object {
         throw new IOError.NOT_FOUND("Device not found.");
     }
 
-    public async NetworkIpSettings get_ethernet_device_ip_settings_data(
+    public async NetworkIpSettings get_ethernet_device_ip_settings(
         NetworkDevice device,
         Cancellable? cancellable = null
     ) {
@@ -1246,7 +1086,7 @@ public class NetworkManagerClientVala : Object {
         return ip_settings;
     }
 
-    public async bool update_ethernet_device_settings_data(
+    public async bool update_ethernet_device_settings(
         NetworkDevice device,
         string ipv4_method,
         string ipv4_address,
@@ -1327,7 +1167,7 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    public async List<NetworkDevice> get_devices_data(Cancellable? cancellable = null) throws Error {
+    public async List<NetworkDevice> get_devices(Cancellable? cancellable = null) throws Error {
         return yield get_devices_dbus(cancellable);
     }
 
@@ -1345,7 +1185,7 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
-    public List<NetworkDevice> get_devices() {
+    private List<NetworkDevice> get_devices_sync() {
         var devices_out = new List<NetworkDevice>();
 
         try {
@@ -1801,182 +1641,7 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    public bool disconnect_device(string interface_name, out string error_message) {
-        error_message = "";
-
-        try {
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var devices = devices_res.get_child_value(0);
-
-            for (int i = 0; i < devices.n_children(); i++) {
-                string dev_path = devices.get_child_value(i).get_string();
-                string iface = get_prop(dev_path, NM_DEVICE_IFACE, "Interface").get_string();
-                if (iface != interface_name) {
-                    continue;
-                }
-
-                var dev = make_proxy(dev_path, NM_DEVICE_IFACE);
-                dev.call_sync("Disconnect", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                return true;
-            }
-
-            error_message = "Device not found.";
-            return false;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
-    public List<VpnConnection> get_vpn_connections() {
-        var vpns = new List<VpnConnection>();
-
-        try {
-            var active_map = new HashTable<string, string>(str_hash, str_equal);
-            var active_conns = get_prop(NM_PATH, NM_IFACE, "ActiveConnections");
-            for (int i = 0; i < active_conns.n_children(); i++) {
-                string ac_path = active_conns.get_child_value(i).get_string();
-                try {
-                    string id = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Id").get_string();
-                    active_map.insert(id, "activated");
-                } catch (Error e) {
-                    debug_log("Could not read active VPN id: " + e.message);
-                }
-            }
-
-            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var conns = list_res.get_child_value(0);
-
-            for (int i = 0; i < conns.n_children(); i++) {
-                string conn_path = conns.get_child_value(i).get_string();
-                var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                var all_settings = settings_res.get_child_value(0);
-
-                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-                if (conn_group == null) {
-                    continue;
-                }
-                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-                if (type_v == null || type_v.get_string() != "vpn") {
-                    continue;
-                }
-
-                Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-                string name = id_v != null ? id_v.get_string() : "VPN";
-
-                Variant? vpn_group = all_settings.lookup_value("vpn", new VariantType("a{sv}"));
-                string vpn_type = "vpn";
-                if (vpn_group != null) {
-                    Variant? svc_v = vpn_group.lookup_value("service-type", new VariantType("s"));
-                    if (svc_v != null) {
-                        string svc = svc_v.get_string();
-                        var parts = svc.split(".");
-                        if (parts.length > 0) {
-                            vpn_type = parts[parts.length - 1];
-                        }
-                    }
-                }
-
-                vpns.append(new VpnConnection() {
-                    name = name,
-                    state = active_map.contains(name) ? "activated" : "deactivated",
-                    vpn_type = vpn_type
-                });
-            }
-        } catch (Error e) {
-            debug_log("get_vpn_connections failed: " + e.message);
-        }
-
-        return vpns;
-    }
-
-    private bool activate_connection(string name, out string error_message) {
-        error_message = "";
-        try {
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-            bool ambiguous = false;
-            string? conn_path = find_connection_by_name(name, out ambiguous);
-            if (ambiguous) {
-                error_message = "Multiple connections share this name. Use UUID to activate a specific profile.";
-                return false;
-            }
-            if (conn_path == null) {
-                error_message = "Connection not found.";
-                return false;
-            }
-            nm.call_sync(
-                "ActivateConnection",
-                new Variant("(ooo)", conn_path, "/", "/"),
-                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-            );
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
-    private bool activate_connection_by_uuid(string uuid, out string error_message) {
-        error_message = "";
-        try {
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-            string? conn_path = find_connection_by_uuid(uuid);
-            if (conn_path == null) {
-                error_message = "Connection UUID not found.";
-                return false;
-            }
-            nm.call_sync(
-                "ActivateConnection",
-                new Variant("(ooo)", conn_path, "/", "/"),
-                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-            );
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
-    private bool deactivate_connection(string name, out string error_message) {
-        error_message = "";
-        try {
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-            var active_conns = get_prop(NM_PATH, NM_IFACE, "ActiveConnections");
-            for (int i = 0; i < active_conns.n_children(); i++) {
-                string ac_path = active_conns.get_child_value(i).get_string();
-                string id = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Id").get_string();
-                if (id != name) {
-                    continue;
-                }
-
-                nm.call_sync(
-                    "DeactivateConnection",
-                    new Variant("(o)", ac_path),
-                    DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-                );
-                return true;
-            }
-
-            error_message = "Active connection not found.";
-            return false;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
-    public bool connect_vpn(string name, out string error_message) {
-        return activate_connection(name, out error_message);
-    }
-
-    public bool disconnect_vpn(string name, out string error_message) {
-        return deactivate_connection(name, out error_message);
-    }
-
-    public async bool connect_vpn_data(string name, Cancellable? cancellable = null) throws Error {
+    public async bool connect_vpn(string name, Cancellable? cancellable = null) throws Error {
         bool ambiguous = false;
         string? conn_path = find_connection_by_name(name, out ambiguous);
         if (ambiguous) {
@@ -1998,7 +1663,7 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    public async bool disconnect_vpn_data(string name, Cancellable? cancellable = null) throws Error {
+    public async bool disconnect_vpn(string name, Cancellable? cancellable = null) throws Error {
         var nm = make_proxy(NM_PATH, NM_IFACE);
         Variant active_conns = yield get_prop_dbus(NM_PATH, NM_IFACE, "ActiveConnections", cancellable);
         for (int i = 0; i < active_conns.n_children(); i++) {
@@ -2020,7 +1685,7 @@ public class NetworkManagerClientVala : Object {
         throw new IOError.NOT_FOUND("Active connection not found.");
     }
 
-    public async List<VpnConnection> get_vpn_connections_data(Cancellable? cancellable = null) throws Error {
+    public async List<VpnConnection> get_vpn_connections(Cancellable? cancellable = null) throws Error {
         var vpns = new List<VpnConnection>();
 
         var active_map = new HashTable<string, string>(str_hash, str_equal);
@@ -2143,7 +1808,7 @@ public class NetworkManagerClientVala : Object {
             wifi_on = false;
         }
 
-        var devices = get_devices();
+        var devices = get_devices_sync();
         NetworkDevice? active_wifi = null;
         NetworkDevice? active_eth = null;
         foreach (var dev in devices) {
