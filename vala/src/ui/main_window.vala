@@ -154,9 +154,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                     nm.scan_wifi.end(res);
                 } catch (Error e) {
                     string message = e.message;
-                    MainWindowAsyncExecutor.dispatch(() => {
-                        debug_log("Could not request periodic Wi-Fi scan: " + message);
-                    });
+                    debug_log("Could not request periodic Wi-Fi scan: " + message);
                 }
             });
             refresh_all();

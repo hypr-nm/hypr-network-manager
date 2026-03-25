@@ -37,12 +37,10 @@ public class MainWindowWifiRuntimeController : Object {
     }
 
     private void dispatch_ui(owned MainWindowActionCallback action, uint epoch) {
-        MainWindowAsyncExecutor.dispatch(() => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
-            }
-            action();
-        });
+        if (!is_ui_epoch_valid(epoch)) {
+            return;
+        }
+        action();
     }
 
     private void invalidate_ui_state() {
