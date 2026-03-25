@@ -12,18 +12,34 @@ public class NmClientUtils : Object {
             return "";
         }
 
-        var out = new StringBuilder();
+        // SSID is an arbitrary byte array. Keep raw non-NUL bytes so valid UTF-8
+        // names (for example, accented characters) survive unchanged.
+        uint8[] cleaned = new uint8[raw.length + 1];
+        int cleaned_len = 0;
         foreach (uint8 b in raw) {
             if (b == 0) {
                 continue;
             }
+            cleaned[cleaned_len++] = b;
+        }
+
+        cleaned[cleaned_len] = 0;
+        string decoded = (string) cleaned;
+        if (decoded.validate()) {
+            return decoded;
+        }
+
+        // Fallback for non-UTF-8 SSIDs: keep printable ASCII, escape other bytes.
+        var escaped = new StringBuilder();
+        for (int i = 0; i < cleaned_len; i++) {
+            uint8 b = cleaned[i];
             if (b >= 32 && b <= 126) {
-                out.append_c((char) b);
+                escaped.append_c((char) b);
             } else {
-                out.append_printf("\\x%02X", b);
+                escaped.append_printf("\\x%02X", b);
             }
         }
-        return out.str;
+        return escaped.str;
     }
 
     public static Variant make_ssid_variant(string ssid) {
