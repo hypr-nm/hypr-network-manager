@@ -122,6 +122,14 @@ public class NmClientUtils : Object {
         return true;
     }
 
+    public static string format_ipv4_from_uint32(uint32 value) {
+        uint32 o1 = value & 0xFF;
+        uint32 o2 = (value >> 8) & 0xFF;
+        uint32 o3 = (value >> 16) & 0xFF;
+        uint32 o4 = (value >> 24) & 0xFF;
+        return "%u.%u.%u.%u".printf(o1, o2, o3, o4);
+    }
+
     public static void fill_configured_ipv4_from_settings(
         Variant all_settings,
         NetworkIpSettings out_ip
@@ -152,6 +160,48 @@ public class NmClientUtils : Object {
         Variant? gateway_v = ipv4_group.lookup_value("gateway", new VariantType("s"));
         if (gateway_v != null) {
             out_ip.configured_gateway = gateway_v.get_string();
+        }
+
+        if (out_ip.configured_gateway.strip() == "") {
+            Variant? route_data_v = ipv4_group.lookup_value("route-data", new VariantType("aa{sv}"));
+            if (route_data_v != null) {
+                for (int i = 0; i < route_data_v.n_children(); i++) {
+                    Variant route = route_data_v.get_child_value(i);
+                    Variant? dest_v = route.lookup_value("dest", new VariantType("s"));
+                    Variant? prefix_v = route.lookup_value("prefix", new VariantType("u"));
+                    Variant? hop_v = route.lookup_value("next-hop", new VariantType("s"));
+                    if (dest_v == null || prefix_v == null || hop_v == null) {
+                        continue;
+                    }
+
+                    string dest = dest_v.get_string();
+                    uint32 prefix = prefix_v.get_uint32();
+                    if ((dest == "0.0.0.0" || dest == "") && prefix == 0) {
+                        out_ip.configured_gateway = hop_v.get_string();
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (out_ip.configured_gateway.strip() == "") {
+            Variant? routes_v = ipv4_group.lookup_value("routes", new VariantType("aau"));
+            if (routes_v != null) {
+                for (int i = 0; i < routes_v.n_children(); i++) {
+                    Variant route = routes_v.get_child_value(i);
+                    if (route.n_children() < 3) {
+                        continue;
+                    }
+
+                    uint32 dest_legacy = route.get_child_value(0).get_uint32();
+                    uint32 prefix_legacy = route.get_child_value(1).get_uint32();
+                    if (dest_legacy == 0 && prefix_legacy == 0) {
+                        uint32 hop_legacy = route.get_child_value(2).get_uint32();
+                        out_ip.configured_gateway = format_ipv4_from_uint32(hop_legacy);
+                        break;
+                    }
+                }
+            }
         }
 
         Variant? dns_data_v = ipv4_group.lookup_value("dns-data", null);
