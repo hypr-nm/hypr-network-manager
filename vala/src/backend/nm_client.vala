@@ -24,8 +24,23 @@ public class WifiSavedProfileIndex : Object {
     }
 }
 
+public class NmSignalSubscription : Object {
+    public DBusProxy proxy;
+    public ulong handler_id;
+
+    public NmSignalSubscription(DBusProxy proxy, ulong handler_id) {
+        this.proxy = proxy;
+        this.handler_id = handler_id;
+    }
+}
+
 public class NetworkManagerClientVala : Object {
     private bool debug_enabled;
+    private bool nm_signals_active = false;
+    private List<NmSignalSubscription> nm_signal_subscriptions = new List<NmSignalSubscription>();
+    private HashTable<string, bool> nm_subscribed_device_paths = new HashTable<string, bool>(str_hash, str_equal);
+
+    public signal void network_events_changed();
 
     public NetworkManagerClientVala(bool debug_enabled) {
         this.debug_enabled = debug_enabled;
@@ -35,6 +50,54 @@ public class NetworkManagerClientVala : Object {
         if (debug_enabled) {
             stderr.printf("[hypr-nm] %s\n", message);
         }
+    }
+
+    private void add_nm_signal_subscription(DBusProxy proxy, ulong handler_id) {
+        nm_signal_subscriptions.append(new NmSignalSubscription(proxy, handler_id));
+    }
+
+    private void emit_nm_change_event(string reason) {
+        debug_log("NM signal received: " + reason);
+        network_events_changed();
+    }
+
+    private void subscribe_device_signals(string device_path) {
+        if (nm_subscribed_device_paths.contains(device_path)) {
+            return;
+        }
+
+        try {
+            var dev_proxy = make_proxy(device_path, NM_DEVICE_IFACE);
+            ulong state_handler_id = dev_proxy.g_signal.connect((sender_name, signal_name, parameters) => {
+                if (signal_name == "StateChanged") {
+                    emit_nm_change_event("Device.StateChanged (" + device_path + ")");
+                }
+            });
+            add_nm_signal_subscription(dev_proxy, state_handler_id);
+
+            uint32 dev_type = get_prop(device_path, NM_DEVICE_IFACE, "DeviceType").get_uint32();
+            if (dev_type == NM_DEVICE_TYPE_WIFI) {
+                var wireless_proxy = make_proxy(device_path, NM_WIRELESS_IFACE);
+                ulong wifi_handler_id = wireless_proxy.g_signal.connect((sender_name, signal_name, parameters) => {
+                    if (signal_name == "AccessPointAdded" || signal_name == "AccessPointRemoved") {
+                        emit_nm_change_event("Wireless." + signal_name + " (" + device_path + ")");
+                    }
+                });
+                add_nm_signal_subscription(wireless_proxy, wifi_handler_id);
+            }
+
+            nm_subscribed_device_paths.insert(device_path, true);
+        } catch (Error e) {
+            debug_log("could not subscribe device signals for " + device_path + ": " + e.message);
+        }
+    }
+
+    private void clear_nm_signal_subscriptions() {
+        foreach (var sub in nm_signal_subscriptions) {
+            SignalHandler.disconnect(sub.proxy, sub.handler_id);
+        }
+        nm_signal_subscriptions = new List<NmSignalSubscription>();
+        nm_subscribed_device_paths.remove_all();
     }
 
     private DBusProxy make_proxy(string object_path, string iface) throws Error {
@@ -94,6 +157,69 @@ public class NetworkManagerClientVala : Object {
 
     private static string decode_ssid(Variant v) {
         return NmClientUtils.decode_ssid(v);
+    }
+
+    public bool subscribe_network_events(out string error_message) {
+        error_message = "";
+
+        if (nm_signals_active) {
+            return true;
+        }
+
+        try {
+            var nm_proxy = make_proxy(NM_PATH, NM_IFACE);
+            ulong nm_handler_id = nm_proxy.g_signal.connect((sender_name, signal_name, parameters) => {
+                if (signal_name == "StateChanged") {
+                    emit_nm_change_event("NetworkManager.StateChanged");
+                    return;
+                }
+
+                if (signal_name == "DeviceAdded") {
+                    string? device_path = null;
+                    if (parameters != null && parameters.n_children() > 0) {
+                        device_path = parameters.get_child_value(0).get_string();
+                    }
+
+                    if (device_path != null && device_path != "") {
+                        subscribe_device_signals(device_path);
+                    }
+
+                    emit_nm_change_event("NetworkManager.DeviceAdded");
+                    return;
+                }
+
+                if (signal_name == "DeviceRemoved") {
+                    emit_nm_change_event("NetworkManager.DeviceRemoved");
+                    return;
+                }
+            });
+            add_nm_signal_subscription(nm_proxy, nm_handler_id);
+
+            var devices_res = nm_proxy.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
+            var devices = devices_res.get_child_value(0);
+            for (int i = 0; i < devices.n_children(); i++) {
+                subscribe_device_signals(devices.get_child_value(i).get_string());
+            }
+
+            nm_signals_active = true;
+            debug_log("subscribed to NetworkManager D-Bus signals");
+            return true;
+        } catch (Error e) {
+            clear_nm_signal_subscriptions();
+            nm_signals_active = false;
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    public void unsubscribe_network_events() {
+        if (!nm_signals_active && nm_signal_subscriptions.length() == 0) {
+            return;
+        }
+
+        clear_nm_signal_subscriptions();
+        nm_signals_active = false;
+        debug_log("unsubscribed from NetworkManager D-Bus signals");
     }
 
     private void index_wifi_saved_profile(
@@ -1713,5 +1839,9 @@ public class NetworkManagerClientVala : Object {
         );
 
         return NmStatusFormatter.build_status_json(text, alt, tooltip, klass);
+    }
+
+    ~NetworkManagerClientVala() {
+        unsubscribe_network_events();
     }
 }

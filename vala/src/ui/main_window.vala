@@ -69,6 +69,9 @@ public class MainWindow : Gtk.ApplicationWindow {
     private bool updating_switches = false;
     private Gtk.EventControllerKey key_controller;
     private uint periodic_refresh_source_id = 0;
+    private uint signal_refresh_source_id = 0;
+    private ulong nm_events_changed_handler_id = 0;
+    private bool nm_events_subscription_enabled = false;
 
     public MainWindow(
         Gtk.Application app,
@@ -148,6 +151,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         build_ui();
         configure_key_handling();
         refresh_all();
+        configure_nm_signal_refresh();
         periodic_refresh_source_id = Timeout.add_seconds(refresh_interval_seconds, () => {
             nm.scan_wifi.begin(null, (obj, res) => {
                 try {
@@ -157,7 +161,11 @@ public class MainWindow : Gtk.ApplicationWindow {
                     debug_log("Could not request periodic Wi-Fi scan: " + message);
                 }
             });
-            refresh_all();
+
+            // Keep periodic polling as a fallback when D-Bus signal subscription is unavailable.
+            if (!nm_events_subscription_enabled) {
+                refresh_all();
+            }
             return true;
         });
 
@@ -228,6 +236,33 @@ public class MainWindow : Gtk.ApplicationWindow {
         key_controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
         ((Gtk.Widget) this).add_controller(key_controller);
         key_controller.key_pressed.connect(key_press_event_cb);
+    }
+
+    private void schedule_signal_refresh() {
+        if (signal_refresh_source_id != 0) {
+            return;
+        }
+
+        signal_refresh_source_id = Timeout.add(200, () => {
+            signal_refresh_source_id = 0;
+            refresh_all();
+            return false;
+        });
+    }
+
+    private void configure_nm_signal_refresh() {
+        string error_message;
+        nm_events_subscription_enabled = nm.subscribe_network_events(out error_message);
+        if (!nm_events_subscription_enabled) {
+            debug_log("Could not subscribe to NM D-Bus signals, using polling fallback: " + error_message);
+            return;
+        }
+
+        nm_events_changed_handler_id = nm.network_events_changed.connect(() => {
+            schedule_signal_refresh();
+        });
+
+        debug_log("NetworkManager D-Bus signal refresh enabled");
     }
 
     private bool key_press_event_cb(uint keyval, uint keycode, Gdk.ModifierType state) {
@@ -764,6 +799,19 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void dispose_lifecycle_owners() {
+        if (signal_refresh_source_id != 0) {
+            Source.remove(signal_refresh_source_id);
+            signal_refresh_source_id = 0;
+        }
+
+        if (nm_events_changed_handler_id != 0) {
+            SignalHandler.disconnect(nm, nm_events_changed_handler_id);
+            nm_events_changed_handler_id = 0;
+        }
+
+        nm.unsubscribe_network_events();
+        nm_events_subscription_enabled = false;
+
         if (periodic_refresh_source_id != 0) {
             Source.remove(periodic_refresh_source_id);
             periodic_refresh_source_id = 0;
