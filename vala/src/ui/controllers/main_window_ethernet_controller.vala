@@ -298,35 +298,32 @@ public class MainWindowEthernetController : Object {
         }
 
         bool target_connected = !dev.is_connected;
-        try {
-            Thread.create<void>(() => {
-                string error_message;
-                bool ok;
+        MainWindowAsyncExecutor.run(() => {
+            string error_message;
+            bool ok;
 
-                if (dev.is_connected) {
-                    ok = nm.disconnect_device(dev.name, out error_message);
-                } else {
-                    ok = nm.connect_ethernet_device(dev, out error_message);
+            if (dev.is_connected) {
+                ok = nm.disconnect_device(dev.name, out error_message);
+            } else {
+                ok = nm.connect_ethernet_device(dev, out error_message);
+            }
+
+            MainWindowAsyncExecutor.dispatch(() => {
+                if (!ok) {
+                    on_error(
+                        (dev.is_connected ? "Ethernet disconnect failed: " : "Ethernet connect failed: ")
+                        + error_message
+                    );
+                    return;
                 }
 
-                Idle.add(() => {
-                    if (!ok) {
-                        on_error(
-                            (dev.is_connected ? "Ethernet disconnect failed: " : "Ethernet connect failed: ")
-                            + error_message
-                        );
-                        return false;
-                    }
-
-                    track_pending_action(dev, target_connected);
-                    on_refresh_after_action(false);
-                    return false;
-                });
-                return;
-            }, false);
-        } catch (ThreadError e) {
-            on_error("Ethernet action failed: " + e.message);
-        }
+                track_pending_action(dev, target_connected);
+                on_refresh_after_action(false);
+            });
+        },
+        (message) => {
+            on_error("Ethernet action failed: " + message);
+        });
     }
 
     private void populate_details(NetworkDevice dev) {
@@ -356,18 +353,17 @@ public class MainWindowEthernetController : Object {
 
         ethernet_details_ip_rows.append(MainWindowHelpers.build_details_row("Loading", "Reading IP settings..."));
 
-        try {
-            Thread.create<void>(() => {
-                NetworkIpSettings ip_settings;
-                string ip_error;
-                nm.get_ethernet_device_ip_settings(dev, out ip_settings, out ip_error);
+        MainWindowAsyncExecutor.run(() => {
+            NetworkIpSettings ip_settings;
+            string ip_error;
+            nm.get_ethernet_device_ip_settings(dev, out ip_settings, out ip_error);
 
-                Idle.add(() => {
-                    if (selected_ethernet_device == null
-                        || (selected_ethernet_device.device_path != dev.device_path
-                            && selected_ethernet_device.name != dev.name)) {
-                        return false;
-                    }
+            MainWindowAsyncExecutor.dispatch(() => {
+                if (selected_ethernet_device == null
+                    || (selected_ethernet_device.device_path != dev.device_path
+                        && selected_ethernet_device.name != dev.name)) {
+                    return;
+                }
 
                     MainWindowHelpers.clear_box(ethernet_details_ip_rows);
                     ethernet_details_ip_rows.append(
@@ -419,14 +415,12 @@ public class MainWindowEthernetController : Object {
                         )
                     );
 
-                    return false;
-                });
-                return;
-            }, false);
-        } catch (ThreadError e) {
+            });
+        },
+        (message) => {
             MainWindowHelpers.clear_box(ethernet_details_ip_rows);
-            ethernet_details_ip_rows.append(MainWindowHelpers.build_details_row("IP", "Failed to load: " + e.message));
-        }
+            ethernet_details_ip_rows.append(MainWindowHelpers.build_details_row("IP", "Failed to load: " + message));
+        });
 
         if (pending) {
             ethernet_details_primary_button.set_label("Updating...");
@@ -464,18 +458,17 @@ public class MainWindowEthernetController : Object {
         ethernet_stack.set_visible_child_name("edit");
         on_set_popup_text_input_mode(true);
 
-        try {
-            Thread.create<void>(() => {
-                NetworkIpSettings ip_settings;
-                string ip_error;
-                nm.get_ethernet_device_ip_settings(dev, out ip_settings, out ip_error);
+        MainWindowAsyncExecutor.run(() => {
+            NetworkIpSettings ip_settings;
+            string ip_error;
+            nm.get_ethernet_device_ip_settings(dev, out ip_settings, out ip_error);
 
-                Idle.add(() => {
-                    if (selected_ethernet_device == null
-                        || (selected_ethernet_device.device_path != dev.device_path
-                            && selected_ethernet_device.name != dev.name)) {
-                        return false;
-                    }
+            MainWindowAsyncExecutor.dispatch(() => {
+                if (selected_ethernet_device == null
+                    || (selected_ethernet_device.device_path != dev.device_path
+                        && selected_ethernet_device.name != dev.name)) {
+                    return;
+                }
 
                     ethernet_edit_ipv4_method_dropdown.set_selected(
                         MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
@@ -489,15 +482,13 @@ public class MainWindowEthernetController : Object {
                     ethernet_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
                     ethernet_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
 
-                    sync_edit_gateway_dns_sensitivity();
-                    ethernet_edit_ipv4_address_entry.grab_focus();
-                    return false;
-                });
-                return;
-            }, false);
-        } catch (ThreadError e) {
-            on_error("Could not load Ethernet IP settings: " + e.message);
-        }
+                sync_edit_gateway_dns_sensitivity();
+                ethernet_edit_ipv4_address_entry.grab_focus();
+            });
+        },
+        (message) => {
+            on_error("Could not load Ethernet IP settings: " + message);
+        });
     }
 
     private void apply_edit() {
@@ -553,65 +544,60 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
-        try {
-            Thread.create<void>(() => {
-                string error_message;
-                bool ok = nm.update_ethernet_device_settings(
-                    dev,
-                    method,
-                    ipv4_address,
-                    ipv4_prefix,
-                    gateway_auto,
-                    ipv4_gateway,
-                    dns_auto,
-                    dns_servers,
-                    out error_message
-                );
+        MainWindowAsyncExecutor.run(() => {
+            string error_message;
+            bool ok = nm.update_ethernet_device_settings(
+                dev,
+                method,
+                ipv4_address,
+                ipv4_prefix,
+                gateway_auto,
+                ipv4_gateway,
+                dns_auto,
+                dns_servers,
+                out error_message
+            );
 
-                if (!ok) {
-                    Idle.add(() => {
-                        on_error("Apply failed: " + error_message);
-                        return false;
+            if (!ok) {
+                MainWindowAsyncExecutor.dispatch(() => {
+                    on_error("Apply failed: " + error_message);
+                });
+                return;
+            }
+
+            if (dev.is_connected) {
+                string disconnect_error;
+                if (!nm.disconnect_device(dev.name, out disconnect_error)) {
+                    MainWindowAsyncExecutor.dispatch(() => {
+                        on_error("Disconnect before reconnect failed: " + disconnect_error);
                     });
                     return;
                 }
 
-                if (dev.is_connected) {
-                    string disconnect_error;
-                    if (!nm.disconnect_device(dev.name, out disconnect_error)) {
-                        Idle.add(() => {
-                            on_error("Disconnect before reconnect failed: " + disconnect_error);
-                            return false;
-                        });
-                        return;
+                string reconnect_error;
+                bool reconnect_ok = nm.connect_ethernet_device(dev, out reconnect_error);
+
+                MainWindowAsyncExecutor.dispatch(() => {
+                    track_pending_action(dev, true);
+                    if (!reconnect_ok) {
+                        on_error("Reconnect after edit failed: " + reconnect_error);
                     }
-
-                    string reconnect_error;
-                    bool reconnect_ok = nm.connect_ethernet_device(dev, out reconnect_error);
-
-                    Idle.add(() => {
-                        track_pending_action(dev, true);
-                        if (!reconnect_ok) {
-                            on_error("Reconnect after edit failed: " + reconnect_error);
-                        }
-                        on_refresh_after_action(false);
-                        open_details(dev);
-                        on_set_popup_text_input_mode(false);
-                        return false;
-                    });
-                    return;
-                }
-
-                Idle.add(() => {
                     on_refresh_after_action(false);
                     open_details(dev);
                     on_set_popup_text_input_mode(false);
-                    return false;
                 });
-            }, false);
-        } catch (ThreadError e) {
-            on_error("Apply failed: " + e.message);
-        }
+                return;
+            }
+
+            MainWindowAsyncExecutor.dispatch(() => {
+                on_refresh_after_action(false);
+                open_details(dev);
+                on_set_popup_text_input_mode(false);
+            });
+        },
+        (message) => {
+            on_error("Apply failed: " + message);
+        });
     }
 
     private Gtk.ListBoxRow build_row(NetworkDevice dev) {
@@ -695,13 +681,12 @@ public class MainWindowEthernetController : Object {
 
     public void refresh() {
         string current_view = ethernet_stack.get_visible_child_name();
-        try {
-            Thread.create<void>(() => {
-                var devices = nm.get_devices();
+        MainWindowAsyncExecutor.run(() => {
+            var devices = nm.get_devices();
 
-                Idle.add(() => {
-                    var ethernet_devices = new List<NetworkDevice>();
-                    MainWindowHelpers.clear_listbox(ethernet_listbox);
+            MainWindowAsyncExecutor.dispatch(() => {
+                var ethernet_devices = new List<NetworkDevice>();
+                MainWindowHelpers.clear_listbox(ethernet_listbox);
 
                     foreach (var dev in devices) {
                         if (!dev.is_ethernet) {
@@ -750,16 +735,14 @@ public class MainWindowEthernetController : Object {
                                 ethernet_devices.length() > 0 ? "list" : "empty"
                             );
                         }
-                        return false;
+                        return;
                     }
 
                     ethernet_stack.set_visible_child_name(ethernet_devices.length() > 0 ? "list" : "empty");
-                    return false;
-                });
-                return;
-            }, false);
-        } catch (ThreadError e) {
-            on_error("Ethernet refresh failed: " + e.message);
-        }
+            });
+        },
+        (message) => {
+            on_error("Ethernet refresh failed: " + message);
+        });
     }
 }

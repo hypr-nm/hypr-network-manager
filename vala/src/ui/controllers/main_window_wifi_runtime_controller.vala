@@ -20,12 +20,11 @@ public class MainWindowWifiRuntimeController : Object {
         on_hide_active_wifi_password_prompt();
         on_refresh_switch_states();
 
-        try {
-            Thread.create<void>(() => {
-                var networks = nm.get_wifi_networks();
-                var devices = nm.get_devices();
+        MainWindowAsyncExecutor.run(() => {
+            var networks = nm.get_wifi_networks();
+            var devices = nm.get_devices();
 
-                Idle.add(() => {
+            MainWindowAsyncExecutor.dispatch(() => {
                     string? primary_connected_ssid = null;
 
                     active_wifi_connections.remove_all();
@@ -114,13 +113,11 @@ public class MainWindowWifiRuntimeController : Object {
                     }
 
                     on_log("Rendered %u Wi-Fi rows".printf(networks.length()));
-                    return false;
                 });
-                return;
-            }, false);
-        } catch (ThreadError e) {
-            on_log("Failed to spawn Wi-Fi refresh thread: " + e.message);
-        }
+        },
+        (message) => {
+            on_log("Failed to spawn Wi-Fi refresh thread: " + message);
+        });
     }
 
     public static void connect_wifi_with_optional_password(
@@ -141,22 +138,21 @@ public class MainWindowWifiRuntimeController : Object {
             pending_wifi_seen_connecting.remove(net.ssid);
         }
 
-        try {
-            Thread.create<void>(() => {
-                string error_message;
-                bool ok = nm.connect_wifi(net, password, out error_message);
+        MainWindowAsyncExecutor.run(() => {
+            string error_message;
+            bool ok = nm.connect_wifi(net, password, out error_message);
 
-                Idle.add(() => {
+            MainWindowAsyncExecutor.dispatch(() => {
                     if (!ok) {
                         pending_wifi_connect.remove(net.ssid);
                         pending_wifi_seen_connecting.remove(net.ssid);
                         on_error("Connect failed: " + error_message);
-                        return false;
+                        return;
                     }
 
                     if (close_on_connect) {
                         on_close_window();
-                        return false;
+                        return;
                     }
 
                     on_refresh_after_action(true);
@@ -170,15 +166,13 @@ public class MainWindowWifiRuntimeController : Object {
                         }
                         return false;
                     });
-                    return false;
                 });
-                return;
-            }, false);
-        } catch (ThreadError e) {
+        },
+        (message) => {
             pending_wifi_connect.remove(net.ssid);
             pending_wifi_seen_connecting.remove(net.ssid);
-            on_error("Connect failed: " + e.message);
-        }
+            on_error("Connect failed: " + message);
+        });
     }
 
     public static void refresh_after_action(
@@ -188,20 +182,17 @@ public class MainWindowWifiRuntimeController : Object {
         MainWindowLogCallback on_log
     ) {
         if (request_wifi_scan) {
-            try {
-                Thread.create<void>(() => {
-                    string error_message;
-                    if (!nm.scan_wifi(out error_message)) {
-                        Idle.add(() => {
-                            on_log("Could not request Wi-Fi scan: " + error_message);
-                            return false;
-                        });
-                    }
-                    return;
-                }, false);
-            } catch (ThreadError e) {
-                on_log("Could not spawn Wi-Fi scan thread: " + e.message);
-            }
+            MainWindowAsyncExecutor.run(() => {
+                string error_message;
+                if (!nm.scan_wifi(out error_message)) {
+                    MainWindowAsyncExecutor.dispatch(() => {
+                        on_log("Could not request Wi-Fi scan: " + error_message);
+                    });
+                }
+            },
+            (message) => {
+                on_log("Could not spawn Wi-Fi scan thread: " + message);
+            });
         }
 
         on_refresh_all();
@@ -209,20 +200,17 @@ public class MainWindowWifiRuntimeController : Object {
         // NetworkManager state transitions are async; refresh again shortly after actions.
         Timeout.add(650, () => {
             if (request_wifi_scan) {
-                try {
-                    Thread.create<void>(() => {
-                        string delayed_scan_error;
-                        if (!nm.scan_wifi(out delayed_scan_error)) {
-                            Idle.add(() => {
-                                on_log("Could not request delayed Wi-Fi scan: " + delayed_scan_error);
-                                return false;
-                            });
-                        }
-                        return;
-                    }, false);
-                } catch (ThreadError e) {
-                    on_log("Could not spawn delayed Wi-Fi scan thread: " + e.message);
-                }
+                MainWindowAsyncExecutor.run(() => {
+                    string delayed_scan_error;
+                    if (!nm.scan_wifi(out delayed_scan_error)) {
+                        MainWindowAsyncExecutor.dispatch(() => {
+                            on_log("Could not request delayed Wi-Fi scan: " + delayed_scan_error);
+                        });
+                    }
+                },
+                (message) => {
+                    on_log("Could not spawn delayed Wi-Fi scan thread: " + message);
+                });
             }
             on_refresh_all();
             return false;
@@ -334,27 +322,24 @@ public class MainWindowWifiRuntimeController : Object {
         }
 
         bool enabled = wifi_switch.get_active();
-        try {
-            Thread.create<void>(() => {
-                string error_message;
-                bool ok = nm.set_wifi_enabled(enabled, out error_message);
+        MainWindowAsyncExecutor.run(() => {
+            string error_message;
+            bool ok = nm.set_wifi_enabled(enabled, out error_message);
 
-                Idle.add(() => {
+            MainWindowAsyncExecutor.dispatch(() => {
                     if (!ok) {
                         on_error("Could not toggle Wi-Fi: " + error_message);
                         on_refresh_switch_states();
-                        return false;
+                        return;
                     }
 
                     on_refresh_after_action(enabled);
-                    return false;
                 });
-                return;
-            }, false);
-        } catch (ThreadError e) {
-            on_error("Could not toggle Wi-Fi: " + e.message);
+        },
+        (message) => {
+            on_error("Could not toggle Wi-Fi: " + message);
             on_refresh_switch_states();
-        }
+        });
     }
 
     public static void on_networking_switch_changed(
@@ -370,26 +355,23 @@ public class MainWindowWifiRuntimeController : Object {
         }
 
         bool enabled = networking_switch.get_active();
-        try {
-            Thread.create<void>(() => {
-                string error_message;
-                bool ok = nm.set_networking_enabled(enabled, out error_message);
+        MainWindowAsyncExecutor.run(() => {
+            string error_message;
+            bool ok = nm.set_networking_enabled(enabled, out error_message);
 
-                Idle.add(() => {
+            MainWindowAsyncExecutor.dispatch(() => {
                     if (!ok) {
                         on_error("Could not toggle networking: " + error_message);
                         on_refresh_switch_states();
-                        return false;
+                        return;
                     }
 
                     on_refresh_after_action(enabled);
-                    return false;
                 });
-                return;
-            }, false);
-        } catch (ThreadError e) {
-            on_error("Could not toggle networking: " + e.message);
+        },
+        (message) => {
+            on_error("Could not toggle networking: " + message);
             on_refresh_switch_states();
-        }
+        });
     }
 }
