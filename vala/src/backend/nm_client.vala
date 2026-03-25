@@ -10,6 +10,20 @@ public class WifiRefreshData : Object {
     }
 }
 
+public class WifiSavedProfileIndex : Object {
+    public HashTable<string, bool> saved_ssids;
+    public HashTable<string, string> unique_saved_ssid_uuids;
+    public HashTable<string, string> ssid_to_conn_path;
+    public HashTable<string, bool> ambiguous_ssids;
+
+    public WifiSavedProfileIndex() {
+        saved_ssids = new HashTable<string, bool>(str_hash, str_equal);
+        unique_saved_ssid_uuids = new HashTable<string, string>(str_hash, str_equal);
+        ssid_to_conn_path = new HashTable<string, string>(str_hash, str_equal);
+        ambiguous_ssids = new HashTable<string, bool>(str_hash, str_equal);
+    }
+}
+
 public class NetworkManagerClientVala : Object {
     private bool debug_enabled;
 
@@ -82,8 +96,59 @@ public class NetworkManagerClientVala : Object {
         return NmClientUtils.decode_ssid(v);
     }
 
-    private HashTable<string, bool> get_saved_ssids() {
-        var saved = new HashTable<string, bool>(str_hash, str_equal);
+    private void index_wifi_saved_profile(
+        WifiSavedProfileIndex index,
+        string conn_path,
+        Variant all_settings
+    ) {
+        Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+        Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+        if (conn_group == null || wifi_group == null) {
+            return;
+        }
+
+        Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+        Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+        if (type_v == null || type_v.get_string() != "802-11-wireless" || ssid_v == null) {
+            return;
+        }
+
+        string ssid = decode_ssid(ssid_v);
+        if (ssid == "") {
+            return;
+        }
+
+        index.saved_ssids.insert(ssid, true);
+
+        Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+        if (uuid_v != null) {
+            if (index.ambiguous_ssids.contains(ssid)) {
+                // Already ambiguous for UUID/path matching; keep suppressed.
+            } else if (index.unique_saved_ssid_uuids.contains(ssid)) {
+                index.unique_saved_ssid_uuids.remove(ssid);
+                index.ambiguous_ssids.insert(ssid, true);
+            } else {
+                index.unique_saved_ssid_uuids.insert(ssid, uuid_v.get_string());
+            }
+        }
+
+        if (index.ambiguous_ssids.contains(ssid)) {
+            index.ssid_to_conn_path.remove(ssid);
+            return;
+        }
+
+        if (index.ssid_to_conn_path.contains(ssid)) {
+            index.ssid_to_conn_path.remove(ssid);
+            index.ambiguous_ssids.insert(ssid, true);
+            index.unique_saved_ssid_uuids.remove(ssid);
+            return;
+        }
+
+        index.ssid_to_conn_path.insert(ssid, conn_path);
+    }
+
+    private WifiSavedProfileIndex build_wifi_saved_profile_index() {
+        var index = new WifiSavedProfileIndex();
 
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
@@ -95,133 +160,19 @@ public class NetworkManagerClientVala : Object {
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
                 var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
-
-                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-                Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
-                if (conn_group == null || wifi_group == null) {
-                    continue;
-                }
-
-                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-                if (type_v == null || type_v.get_string() != "802-11-wireless") {
-                    continue;
-                }
-
-                Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-                if (ssid_v == null) {
-                    continue;
-                }
-
-                string ssid = decode_ssid(ssid_v);
-                if (ssid != "") {
-                    saved.insert(ssid, true);
-                }
+                index_wifi_saved_profile(index, conn_path, all_settings);
             }
         } catch (Error e) {
-            debug_log("could not load saved ssids: " + e.message);
+            debug_log("could not build wifi saved profile index: " + e.message);
         }
 
-        return saved;
+        return index;
     }
 
-    private async HashTable<string, bool> get_saved_ssids_dbus(Cancellable? cancellable = null) throws Error {
-        var saved = new HashTable<string, bool>(str_hash, str_equal);
-
-        var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-        var list_res = yield call_dbus(settings, "ListConnections", null, cancellable);
-        var conns = list_res.get_child_value(0);
-
-        for (int i = 0; i < conns.n_children(); i++) {
-            string conn_path = conns.get_child_value(i).get_string();
-            var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
-            var all_settings = settings_res.get_child_value(0);
-
-            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-            Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
-            if (conn_group == null || wifi_group == null) {
-                continue;
-            }
-
-            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-            if (type_v == null || type_v.get_string() != "802-11-wireless") {
-                continue;
-            }
-
-            Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-            if (ssid_v == null) {
-                continue;
-            }
-
-            string ssid = decode_ssid(ssid_v);
-            if (ssid != "") {
-                saved.insert(ssid, true);
-            }
-        }
-
-        return saved;
-    }
-
-    private HashTable<string, string> get_unique_saved_ssid_uuids() {
-        var unique = new HashTable<string, string>(str_hash, str_equal);
-        var duplicates = new HashTable<string, bool>(str_hash, str_equal);
-
-        try {
-            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var conns = list_res.get_child_value(0);
-
-            for (int i = 0; i < conns.n_children(); i++) {
-                string conn_path = conns.get_child_value(i).get_string();
-                var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                var all_settings = settings_res.get_child_value(0);
-
-                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-                Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
-                if (conn_group == null || wifi_group == null) {
-                    continue;
-                }
-
-                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-                Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
-                Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-                if (type_v == null
-                    || type_v.get_string() != "802-11-wireless"
-                    || uuid_v == null
-                    || ssid_v == null) {
-                    continue;
-                }
-
-                string ssid = decode_ssid(ssid_v);
-                if (ssid == "") {
-                    continue;
-                }
-
-                if (duplicates.contains(ssid)) {
-                    continue;
-                }
-
-                if (unique.contains(ssid)) {
-                    unique.remove(ssid);
-                    duplicates.insert(ssid, true);
-                    continue;
-                }
-
-                unique.insert(ssid, uuid_v.get_string());
-            }
-        } catch (Error e) {
-            debug_log("could not build saved ssid uuid index: " + e.message);
-        }
-
-        return unique;
-    }
-
-    private async HashTable<string, string> get_unique_saved_ssid_uuids_dbus(
+    private async WifiSavedProfileIndex build_wifi_saved_profile_index_dbus(
         Cancellable? cancellable = null
     ) throws Error {
-        var unique = new HashTable<string, string>(str_hash, str_equal);
-        var duplicates = new HashTable<string, bool>(str_hash, str_equal);
+        var index = new WifiSavedProfileIndex();
 
         var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
         var list_res = yield call_dbus(settings, "ListConnections", null, cancellable);
@@ -232,49 +183,16 @@ public class NetworkManagerClientVala : Object {
             var conn = make_proxy(conn_path, NM_CONN_IFACE);
             var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
             var all_settings = settings_res.get_child_value(0);
-
-            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-            Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
-            if (conn_group == null || wifi_group == null) {
-                continue;
-            }
-
-            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-            Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
-            Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-            if (type_v == null
-                || type_v.get_string() != "802-11-wireless"
-                || uuid_v == null
-                || ssid_v == null) {
-                continue;
-            }
-
-            string ssid = decode_ssid(ssid_v);
-            if (ssid == "") {
-                continue;
-            }
-
-            if (duplicates.contains(ssid)) {
-                continue;
-            }
-
-            if (unique.contains(ssid)) {
-                unique.remove(ssid);
-                duplicates.insert(ssid, true);
-                continue;
-            }
-
-            unique.insert(ssid, uuid_v.get_string());
+            index_wifi_saved_profile(index, conn_path, all_settings);
         }
 
-        return unique;
+        return index;
     }
 
     private async List<WifiNetwork> get_wifi_networks_dbus(Cancellable? cancellable = null) throws Error {
         var networks = new List<WifiNetwork>();
         var by_ssid = new HashTable<string, WifiNetwork>(str_hash, str_equal);
-        var saved_ssids = yield get_saved_ssids_dbus(cancellable);
-        var unique_saved_ssid_uuids = yield get_unique_saved_ssid_uuids_dbus(cancellable);
+        var saved_profile_index = yield build_wifi_saved_profile_index_dbus(cancellable);
 
         var nm = make_proxy(NM_PATH, NM_IFACE);
         var devices_res = yield call_dbus(nm, "GetDevices", null, cancellable);
@@ -339,9 +257,9 @@ public class NetworkManagerClientVala : Object {
                     existing.signal = signal;
                     existing.connected = is_connected;
                     existing.is_secured = is_secured;
-                    existing.saved = saved_ssids.contains(ssid);
-                    existing.saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
-                        ? unique_saved_ssid_uuids.get(ssid)
+                    existing.saved = saved_profile_index.saved_ssids.contains(ssid);
+                    existing.saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
+                        ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
                         : "";
                     existing.device_path = dev_path;
                     existing.ap_path = ap_path;
@@ -357,13 +275,13 @@ public class NetworkManagerClientVala : Object {
 
                 var network = new WifiNetwork() {
                     ssid = ssid,
-                    saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
-                        ? unique_saved_ssid_uuids.get(ssid)
+                    saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
+                        ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
                         : "",
                     signal = signal,
                     connected = is_connected,
                     is_secured = is_secured,
-                    saved = saved_ssids.contains(ssid),
+                    saved = saved_profile_index.saved_ssids.contains(ssid),
                     device_path = dev_path,
                     ap_path = ap_path,
                     bssid = bssid,
@@ -523,49 +441,17 @@ public class NetworkManagerClientVala : Object {
     }
 
     private string? find_connection_by_ssid(string ssid, out bool ambiguous) {
-        ambiguous = false;
-        string? match = null;
-
-        try {
-            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var conns = list_res.get_child_value(0);
-
-            for (int i = 0; i < conns.n_children(); i++) {
-                string conn_path = conns.get_child_value(i).get_string();
-                var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                var all_settings = settings_res.get_child_value(0);
-
-                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-                Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
-                if (conn_group == null || wifi_group == null) {
-                    continue;
-                }
-
-                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-                if (type_v == null || type_v.get_string() != "802-11-wireless") {
-                    continue;
-                }
-
-                Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-                if (ssid_v == null) {
-                    continue;
-                }
-
-                if (decode_ssid(ssid_v) == ssid) {
-                    if (match != null) {
-                        ambiguous = true;
-                        return null;
-                    }
-                    match = conn_path;
-                }
-            }
-        } catch (Error e) {
-            debug_log("could not resolve saved connection: " + e.message);
+        var saved_profile_index = build_wifi_saved_profile_index();
+        ambiguous = saved_profile_index.ambiguous_ssids.contains(ssid);
+        if (ambiguous) {
+            return null;
         }
 
-        return match;
+        if (saved_profile_index.ssid_to_conn_path.contains(ssid)) {
+            return saved_profile_index.ssid_to_conn_path.get(ssid);
+        }
+
+        return null;
     }
 
     private string? find_connection_by_name(string name, out bool ambiguous) {
@@ -1370,8 +1256,7 @@ public class NetworkManagerClientVala : Object {
     public List<WifiNetwork> get_wifi_networks() {
         var networks = new List<WifiNetwork>();
         var by_ssid = new HashTable<string, WifiNetwork>(str_hash, str_equal);
-        var saved_ssids = get_saved_ssids();
-        var unique_saved_ssid_uuids = get_unique_saved_ssid_uuids();
+        var saved_profile_index = build_wifi_saved_profile_index();
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
@@ -1427,9 +1312,9 @@ public class NetworkManagerClientVala : Object {
                         existing.signal = signal;
                         existing.connected = is_connected;
                         existing.is_secured = is_secured;
-                        existing.saved = saved_ssids.contains(ssid);
-                        existing.saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
-                            ? unique_saved_ssid_uuids.get(ssid)
+                        existing.saved = saved_profile_index.saved_ssids.contains(ssid);
+                        existing.saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
+                            ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
                             : "";
                         existing.device_path = dev_path;
                         existing.ap_path = ap_path;
@@ -1445,13 +1330,13 @@ public class NetworkManagerClientVala : Object {
 
                     var network = new WifiNetwork() {
                         ssid = ssid,
-                        saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
-                            ? unique_saved_ssid_uuids.get(ssid)
+                        saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
+                            ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
                             : "",
                         signal = signal,
                         connected = is_connected,
                         is_secured = is_secured,
-                        saved = saved_ssids.contains(ssid),
+                        saved = saved_profile_index.saved_ssids.contains(ssid),
                         device_path = dev_path,
                         ap_path = ap_path,
                         bssid = bssid,
