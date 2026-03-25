@@ -485,20 +485,6 @@ public class NetworkManagerClientVala : Object {
         return yield get_devices_dbus(cancellable);
     }
 
-    public bool is_networking_enabled(out string error_message) {
-        error_message = "";
-
-        try {
-            bool enabled = get_prop(NM_PATH, NM_IFACE, "NetworkingEnabled").get_boolean();
-            debug_log("networking enabled: %s".printf(enabled.to_string()));
-            return enabled;
-        } catch (Error e) {
-            error_message = e.message;
-            debug_log("failed to read NetworkingEnabled: " + e.message);
-            return false;
-        }
-    }
-
     private List<NetworkDevice> get_devices_sync() {
         var devices_out = new List<NetworkDevice>();
 
