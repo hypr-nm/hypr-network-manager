@@ -284,6 +284,11 @@ public class NetworkManagerClientVala : Object {
                 return false;
             }
 
+            if (!gateway_auto && method == "disabled") {
+                error_message = "Manual gateway is not supported when IPv4 method is Disabled.";
+                return false;
+            }
+
             if (!dns_auto && ipv4_dns_servers.length == 0) {
                 error_message = "Manual DNS requires at least one DNS server.";
                 return false;
@@ -404,6 +409,11 @@ public class NetworkManagerClientVala : Object {
 
             if (!gateway_auto && gateway == "") {
                 error_message = "Manual gateway requires a gateway address.";
+                return false;
+            }
+
+            if (!gateway_auto && method == "disabled") {
+                error_message = "Manual gateway is not supported when IPv4 method is Disabled.";
                 return false;
             }
 

@@ -492,6 +492,11 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
+        if (!gateway_auto && method == "disabled") {
+            on_error("Manual gateway is not supported when IPv4 method is Disabled.");
+            return;
+        }
+
         string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv(dns_csv);
         if (!dns_auto && dns_servers.length == 0) {
             on_error("Manual DNS is enabled; provide at least one DNS server.");
