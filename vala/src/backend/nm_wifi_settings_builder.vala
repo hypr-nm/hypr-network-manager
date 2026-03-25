@@ -1,6 +1,8 @@
 using GLib;
 
 public class NmWifiSettingsBuilder : Object {
+    private const uint32 MANUAL_DEFAULT_ROUTE_METRIC = 100;
+
     private static bool apply_manual_dns(
         VariantDict ipv4_dict,
         Variant? existing_ipv4,
@@ -49,6 +51,31 @@ public class NmWifiSettingsBuilder : Object {
         }
         ipv4_dict.insert_value("dns", dns_legacy_builder.end());
         return true;
+    }
+
+    private static void apply_gateway_route_override(
+        VariantDict ipv4_dict,
+        string gateway,
+        uint32 gateway_legacy
+    ) {
+        var route_data = new VariantBuilder(new VariantType("aa{sv}"));
+        var route_entry = new VariantBuilder(new VariantType("a{sv}"));
+        route_entry.add("{sv}", "dest", new Variant.string("0.0.0.0"));
+        route_entry.add("{sv}", "prefix", new Variant.uint32(0));
+        route_entry.add("{sv}", "next-hop", new Variant.string(gateway));
+        route_entry.add("{sv}", "metric", new Variant.uint32(MANUAL_DEFAULT_ROUTE_METRIC));
+        route_data.add_value(route_entry.end());
+        ipv4_dict.insert_value("route-data", route_data.end());
+
+        // Keep legacy key for older NetworkManager versions.
+        var legacy_routes = new VariantBuilder(new VariantType("aau"));
+        var legacy_route = new VariantBuilder(new VariantType("au"));
+        legacy_route.add("u", 0u);
+        legacy_route.add("u", 0u);
+        legacy_route.add("u", gateway_legacy);
+        legacy_route.add("u", MANUAL_DEFAULT_ROUTE_METRIC);
+        legacy_routes.add_value(legacy_route.end());
+        ipv4_dict.insert_value("routes", legacy_routes.end());
     }
 
     public static bool build_updated_ipv4_section(
@@ -111,9 +138,23 @@ public class NmWifiSettingsBuilder : Object {
         }
 
         if (!gateway_auto) {
-            ipv4_dict.insert_value("gateway", new Variant.string(gateway));
+            if (method == "manual") {
+                ipv4_dict.insert_value("gateway", new Variant.string(gateway));
+                ipv4_dict.remove("route-data");
+                ipv4_dict.remove("routes");
+            } else if (method == "auto") {
+                // DHCP + manual gateway is represented as a static default route override.
+                ipv4_dict.remove("gateway");
+                apply_gateway_route_override(ipv4_dict, gateway, gateway_legacy);
+            } else {
+                error_message = "Manual gateway is not supported when IPv4 method is Disabled.";
+                updated_ipv4 = new VariantBuilder(new VariantType("a{sv}")).end();
+                return false;
+            }
         } else {
             ipv4_dict.remove("gateway");
+            ipv4_dict.remove("route-data");
+            ipv4_dict.remove("routes");
         }
 
         if (!dns_auto) {
