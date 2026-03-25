@@ -1663,25 +1663,6 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    public List<string> get_device_paths() {
-        var paths = new List<string>();
-
-        try {
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var devices = devices_res.get_child_value(0);
-
-            for (int i = 0; i < devices.n_children(); i++) {
-                paths.append(devices.get_child_value(i).get_string());
-            }
-            debug_log("found %u devices".printf(paths.length()));
-        } catch (Error e) {
-            debug_log("GetDevices failed: " + e.message);
-        }
-
-        return paths;
-    }
-
     public string get_status_json() {
         bool networking_on;
         bool wifi_on;
