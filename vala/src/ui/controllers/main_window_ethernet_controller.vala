@@ -142,10 +142,11 @@ public class MainWindowEthernetController : Object {
         header.set_halign(Gtk.Align.CENTER);
         header.add_css_class("nm-details-header");
 
-        var icon = new Gtk.Image.from_icon_name("network-wired-symbolic");
+        var icon = new Gtk.Image.from_icon_name("network-transmit-receive-symbolic");
         icon.set_pixel_size(28);
         icon.add_css_class("nm-signal-icon");
         icon.add_css_class("nm-ethernet-icon");
+        icon.add_css_class("nm-details-network-icon");
         header.append(icon);
 
         ethernet_details_title = new Gtk.Label("Ethernet");
