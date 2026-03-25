@@ -84,7 +84,94 @@ public class NetworkManagerClientVala : Object {
         return saved;
     }
 
-    private string? find_connection_by_ssid(string ssid) {
+    private HashTable<string, string> get_unique_saved_ssid_uuids() {
+        var unique = new HashTable<string, string>(str_hash, str_equal);
+        var duplicates = new HashTable<string, bool>(str_hash, str_equal);
+
+        try {
+            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var conns = list_res.get_child_value(0);
+
+            for (int i = 0; i < conns.n_children(); i++) {
+                string conn_path = conns.get_child_value(i).get_string();
+                var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var all_settings = settings_res.get_child_value(0);
+
+                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+                Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+                if (conn_group == null || wifi_group == null) {
+                    continue;
+                }
+
+                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+                Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+                Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+                if (type_v == null
+                    || type_v.get_string() != "802-11-wireless"
+                    || uuid_v == null
+                    || ssid_v == null) {
+                    continue;
+                }
+
+                string ssid = decode_ssid(ssid_v);
+                if (ssid == "") {
+                    continue;
+                }
+
+                if (duplicates.contains(ssid)) {
+                    continue;
+                }
+
+                if (unique.contains(ssid)) {
+                    unique.remove(ssid);
+                    duplicates.insert(ssid, true);
+                    continue;
+                }
+
+                unique.insert(ssid, uuid_v.get_string());
+            }
+        } catch (Error e) {
+            debug_log("could not build saved ssid uuid index: " + e.message);
+        }
+
+        return unique;
+    }
+
+    private string? find_connection_by_uuid(string uuid) {
+        try {
+            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var conns = list_res.get_child_value(0);
+
+            for (int i = 0; i < conns.n_children(); i++) {
+                string conn_path = conns.get_child_value(i).get_string();
+                var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var all_settings = settings_res.get_child_value(0);
+
+                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+                if (conn_group == null) {
+                    continue;
+                }
+
+                Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+                if (uuid_v != null && uuid_v.get_string() == uuid) {
+                    return conn_path;
+                }
+            }
+        } catch (Error e) {
+            debug_log("could not resolve connection by uuid: " + e.message);
+        }
+
+        return null;
+    }
+
+    private string? find_connection_by_ssid(string ssid, out bool ambiguous) {
+        ambiguous = false;
+        string? match = null;
+
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
             var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
@@ -113,17 +200,24 @@ public class NetworkManagerClientVala : Object {
                 }
 
                 if (decode_ssid(ssid_v) == ssid) {
-                    return conn_path;
+                    if (match != null) {
+                        ambiguous = true;
+                        return null;
+                    }
+                    match = conn_path;
                 }
             }
         } catch (Error e) {
             debug_log("could not resolve saved connection: " + e.message);
         }
 
-        return null;
+        return match;
     }
 
-    private string? find_connection_by_name(string name) {
+    private string? find_connection_by_name(string name, out bool ambiguous) {
+        ambiguous = false;
+        string? match = null;
+
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
             var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
@@ -142,14 +236,18 @@ public class NetworkManagerClientVala : Object {
 
                 Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
                 if (id_v != null && id_v.get_string() == name) {
-                    return conn_path;
+                    if (match != null) {
+                        ambiguous = true;
+                        return null;
+                    }
+                    match = conn_path;
                 }
             }
         } catch (Error e) {
             debug_log("could not resolve connection by name: " + e.message);
         }
 
-        return null;
+        return match;
     }
 
     private static Variant make_ssid_variant(string ssid) {
@@ -232,7 +330,19 @@ public class NetworkManagerClientVala : Object {
 
         if (network.saved) {
             try {
-                string? conn_path = find_connection_by_ssid(network.ssid);
+                string? conn_path = null;
+                if (network.saved_connection_uuid.strip() != "") {
+                    conn_path = find_connection_by_uuid(network.saved_connection_uuid);
+                }
+                if (conn_path == null) {
+                    bool ssid_ambiguous = false;
+                    conn_path = find_connection_by_ssid(network.ssid, out ssid_ambiguous);
+                    if (ssid_ambiguous) {
+                        error_message = "Multiple saved profiles share this SSID. Select a specific profile by UUID.";
+                        fill_runtime_ipv4_for_wifi(network, ip_settings);
+                        return false;
+                    }
+                }
                 if (conn_path == null) {
                     error_message = "Saved connection not found.";
                     fill_runtime_ipv4_for_wifi(network, ip_settings);
@@ -269,7 +379,18 @@ public class NetworkManagerClientVala : Object {
         error_message = "";
 
         try {
-            string? conn_path = find_connection_by_ssid(network.ssid);
+            string? conn_path = null;
+            if (network.saved_connection_uuid.strip() != "") {
+                conn_path = find_connection_by_uuid(network.saved_connection_uuid);
+            }
+            if (conn_path == null) {
+                bool ssid_ambiguous = false;
+                conn_path = find_connection_by_ssid(network.ssid, out ssid_ambiguous);
+                if (ssid_ambiguous) {
+                    error_message = "Multiple saved profiles share this SSID. Refusing ambiguous update.";
+                    return false;
+                }
+            }
             if (conn_path == null) {
                 error_message = "No saved connection found for this network.";
                 return false;
@@ -356,7 +477,17 @@ public class NetworkManagerClientVala : Object {
 
         if (device.connection.strip() != "") {
             try {
-                string? conn_path = find_connection_by_name(device.connection);
+                string? conn_path = null;
+                if (device.connection_uuid.strip() != "") {
+                    conn_path = find_connection_by_uuid(device.connection_uuid);
+                }
+                if (conn_path == null) {
+                    bool name_ambiguous = false;
+                    conn_path = find_connection_by_name(device.connection, out name_ambiguous);
+                    if (name_ambiguous) {
+                        error_message = "Multiple Ethernet profiles share this name. Select by UUID.";
+                    }
+                }
                 if (conn_path != null) {
                     var conn = make_proxy(conn_path, NM_CONN_IFACE);
                     var settings_res = conn.call_sync(
@@ -397,7 +528,18 @@ public class NetworkManagerClientVala : Object {
         }
 
         try {
-            string? conn_path = find_connection_by_name(device.connection);
+            string? conn_path = null;
+            if (device.connection_uuid.strip() != "") {
+                conn_path = find_connection_by_uuid(device.connection_uuid);
+            }
+            if (conn_path == null) {
+                bool name_ambiguous = false;
+                conn_path = find_connection_by_name(device.connection, out name_ambiguous);
+                if (name_ambiguous) {
+                    error_message = "Multiple Ethernet profiles share this name. Refusing ambiguous update.";
+                    return false;
+                }
+            }
             if (conn_path == null) {
                 error_message = "No saved Ethernet profile found.";
                 return false;
@@ -482,6 +624,10 @@ public class NetworkManagerClientVala : Object {
             return false;
         }
 
+        if (device.connection_uuid.strip() != "") {
+            return activate_connection_by_uuid(device.connection_uuid, out error_message);
+        }
+
         return activate_connection(device.connection, out error_message);
     }
 
@@ -518,10 +664,12 @@ public class NetworkManagerClientVala : Object {
                 uint32 state = get_prop(dev_path, NM_DEVICE_IFACE, "State").get_uint32();
 
                 string conn_name = "";
+                string conn_uuid = "";
                 string ac_path = get_prop(dev_path, NM_DEVICE_IFACE, "ActiveConnection").get_string();
                 if (ac_path != "/") {
                     try {
                         conn_name = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Id").get_string();
+                        conn_uuid = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Uuid").get_string();
                     } catch (Error e) {
                         debug_log("Could not read active connection id: " + e.message);
                     }
@@ -560,8 +708,10 @@ public class NetworkManagerClientVala : Object {
                             }
 
                             Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+                            Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
                             if (id_v != null && id_v.get_string() != "") {
                                 conn_name = id_v.get_string();
+                                conn_uuid = uuid_v != null ? uuid_v.get_string() : "";
                                 break;
                             }
                         }
@@ -575,7 +725,8 @@ public class NetworkManagerClientVala : Object {
                     device_path = dev_path,
                     device_type = dev_type,
                     state = state,
-                    connection = conn_name
+                    connection = conn_name,
+                    connection_uuid = conn_uuid
                 });
             }
         } catch (Error e) {
@@ -669,8 +820,9 @@ public class NetworkManagerClientVala : Object {
 
     public List<WifiNetwork> get_wifi_networks() {
         var networks = new List<WifiNetwork>();
-        var seen = new HashTable<string, bool>(str_hash, str_equal);
+        var by_ssid = new HashTable<string, WifiNetwork>(str_hash, str_equal);
         var saved_ssids = get_saved_ssids();
+        var unique_saved_ssid_uuids = get_unique_saved_ssid_uuids();
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
@@ -697,9 +849,6 @@ public class NetworkManagerClientVala : Object {
                     if (ssid == "") {
                         ssid = get_prop(ap_path, NM_AP_IFACE, "HwAddress").get_string();
                     }
-                    if (seen.contains(ssid)) {
-                        continue;
-                    }
 
                     uint8 signal = get_prop(ap_path, NM_AP_IFACE, "Strength").get_byte();
                     uint32 flags = get_prop(ap_path, NM_AP_IFACE, "Flags").get_uint32();
@@ -710,12 +859,48 @@ public class NetworkManagerClientVala : Object {
                     uint32 max_bitrate = get_prop(ap_path, NM_AP_IFACE, "MaxBitrate").get_uint32();
                     uint32 mode = get_prop(ap_path, NM_AP_IFACE, "Mode").get_uint32();
                     bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
+                    bool is_connected = (ap_path == active_ap_path);
 
-                    seen.insert(ssid, true);
-                    networks.append(new WifiNetwork() {
+                    WifiNetwork? existing = by_ssid.get(ssid);
+                    if (existing != null) {
+                        bool prefer_candidate = false;
+
+                        if (is_connected && !existing.connected) {
+                            prefer_candidate = true;
+                        } else if (is_connected == existing.connected && signal > existing.signal) {
+                            prefer_candidate = true;
+                        }
+
+                        if (!prefer_candidate) {
+                            continue;
+                        }
+
+                        existing.signal = signal;
+                        existing.connected = is_connected;
+                        existing.is_secured = is_secured;
+                        existing.saved = saved_ssids.contains(ssid);
+                        existing.saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
+                            ? unique_saved_ssid_uuids.get(ssid)
+                            : "";
+                        existing.device_path = dev_path;
+                        existing.ap_path = ap_path;
+                        existing.bssid = bssid;
+                        existing.frequency_mhz = frequency;
+                        existing.max_bitrate_kbps = max_bitrate;
+                        existing.mode = mode;
+                        existing.flags = flags;
+                        existing.wpa_flags = wpa_flags;
+                        existing.rsn_flags = rsn_flags;
+                        continue;
+                    }
+
+                    var network = new WifiNetwork() {
                         ssid = ssid,
+                        saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
+                            ? unique_saved_ssid_uuids.get(ssid)
+                            : "",
                         signal = signal,
-                        connected = (ap_path == active_ap_path),
+                        connected = is_connected,
                         is_secured = is_secured,
                         saved = saved_ssids.contains(ssid),
                         device_path = dev_path,
@@ -727,7 +912,9 @@ public class NetworkManagerClientVala : Object {
                         flags = flags,
                         wpa_flags = wpa_flags,
                         rsn_flags = rsn_flags
-                    });
+                    };
+                    by_ssid.insert(ssid, network);
+                    networks.append(network);
                 }
             }
         } catch (Error e) {
@@ -749,7 +936,18 @@ public class NetworkManagerClientVala : Object {
         error_message = "";
 
         try {
-            string? conn_path = find_connection_by_ssid(network.ssid);
+            string? conn_path = null;
+            if (network.saved_connection_uuid.strip() != "") {
+                conn_path = find_connection_by_uuid(network.saved_connection_uuid);
+            }
+            if (conn_path == null) {
+                bool ssid_ambiguous = false;
+                conn_path = find_connection_by_ssid(network.ssid, out ssid_ambiguous);
+                if (ssid_ambiguous) {
+                    error_message = "Multiple saved profiles share this SSID. Refusing ambiguous connect.";
+                    return false;
+                }
+            }
             if (conn_path == null) {
                 error_message = "No saved profile found for SSID.";
                 return false;
@@ -850,12 +1048,22 @@ public class NetworkManagerClientVala : Object {
         error_message = "";
 
         try {
-            string? conn_path = find_connection_by_ssid(ssid_or_name);
+            string? conn_path = find_connection_by_uuid(ssid_or_name);
+
+            bool ssid_ambiguous = false;
+            bool name_ambiguous = false;
             if (conn_path == null) {
-                conn_path = find_connection_by_name(ssid_or_name);
+                conn_path = find_connection_by_ssid(ssid_or_name, out ssid_ambiguous);
+            }
+            if (conn_path == null) {
+                conn_path = find_connection_by_name(ssid_or_name, out name_ambiguous);
             }
 
             if (conn_path == null) {
+                if (ssid_ambiguous || name_ambiguous) {
+                    error_message = "Multiple profiles match this identifier. Use UUID to avoid ambiguity.";
+                    return false;
+                }
                 error_message = "No saved connection found.";
                 return false;
             }
@@ -965,9 +1173,37 @@ public class NetworkManagerClientVala : Object {
         error_message = "";
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
-            string? conn_path = find_connection_by_name(name);
+            bool ambiguous = false;
+            string? conn_path = find_connection_by_name(name, out ambiguous);
+            if (ambiguous) {
+                error_message = "Multiple connections share this name. Use UUID to activate a specific profile.";
+                return false;
+            }
             if (conn_path == null) {
                 error_message = "Connection not found.";
+                return false;
+            }
+            nm.call_sync(
+                "ActivateConnection",
+                new Variant("(ooo)", conn_path, "/", "/"),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    private bool activate_connection_by_uuid(string uuid, out string error_message) {
+        error_message = "";
+        try {
+            var nm = make_proxy(NM_PATH, NM_IFACE);
+            string? conn_path = find_connection_by_uuid(uuid);
+            if (conn_path == null) {
+                error_message = "Connection UUID not found.";
                 return false;
             }
             nm.call_sync(
