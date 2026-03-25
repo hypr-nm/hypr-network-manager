@@ -36,6 +36,8 @@ public class NmSignalSubscription : Object {
 
 public class NetworkManagerClientVala : Object {
     private bool debug_enabled;
+    private NmEthernetClient ethernet_client;
+    private NmVpnClient vpn_client;
     private bool nm_signals_active = false;
     private List<NmSignalSubscription> nm_signal_subscriptions = new List<NmSignalSubscription>();
     private HashTable<string, bool> nm_subscribed_device_paths = new HashTable<string, bool>(str_hash, str_equal);
@@ -44,9 +46,11 @@ public class NetworkManagerClientVala : Object {
 
     public NetworkManagerClientVala(bool debug_enabled) {
         this.debug_enabled = debug_enabled;
+        ethernet_client = new NmEthernetClient(this);
+        vpn_client = new NmVpnClient(this);
     }
 
-    private void debug_log(string message) {
+    internal void debug_log(string message) {
         if (debug_enabled) {
             stderr.printf("[hypr-nm] %s\n", message);
         }
@@ -100,7 +104,7 @@ public class NetworkManagerClientVala : Object {
         nm_subscribed_device_paths.remove_all();
     }
 
-    private DBusProxy make_proxy(string object_path, string iface) throws Error {
+    internal DBusProxy make_proxy(string object_path, string iface) throws Error {
         return new DBusProxy.for_bus_sync(
             BusType.SYSTEM,
             DBusProxyFlags.NONE,
@@ -123,7 +127,7 @@ public class NetworkManagerClientVala : Object {
         return boxed.get_variant();
     }
 
-    private async Variant call_dbus(
+    internal async Variant call_dbus(
         DBusProxy proxy,
         string method,
         Variant? parameters,
@@ -138,7 +142,7 @@ public class NetworkManagerClientVala : Object {
         );
     }
 
-    private async Variant get_prop_dbus(
+    internal async Variant get_prop_dbus(
         string object_path,
         string iface,
         string prop,
@@ -580,47 +584,11 @@ public class NetworkManagerClientVala : Object {
         return null;
     }
 
-    private string? find_connection_by_name(string name, out bool ambiguous) {
-        ambiguous = false;
-        string? match = null;
-
-        try {
-            var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var conns = list_res.get_child_value(0);
-
-            for (int i = 0; i < conns.n_children(); i++) {
-                string conn_path = conns.get_child_value(i).get_string();
-                var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                var all_settings = settings_res.get_child_value(0);
-
-                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-                if (conn_group == null) {
-                    continue;
-                }
-
-                Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-                if (id_v != null && id_v.get_string() == name) {
-                    if (match != null) {
-                        ambiguous = true;
-                        return null;
-                    }
-                    match = conn_path;
-                }
-            }
-        } catch (Error e) {
-            debug_log("could not resolve connection by name: " + e.message);
-        }
-
-        return match;
-    }
-
     private static Variant make_ssid_variant(string ssid) {
         return NmClientUtils.make_ssid_variant(ssid);
     }
 
-    private static string normalize_ipv4_method(string value) {
+    internal static string normalize_ipv4_method(string value) {
         return NmClientUtils.normalize_ipv4_method(value);
     }
 
@@ -628,7 +596,7 @@ public class NetworkManagerClientVala : Object {
         return NmClientUtils.extract_dns_list_string(dns_variant);
     }
 
-    private static void fill_configured_ipv4_from_settings(Variant all_settings, NetworkIpSettings out_ip) {
+    internal static void fill_configured_ipv4_from_settings(Variant all_settings, NetworkIpSettings out_ip) {
         NmClientUtils.fill_configured_ipv4_from_settings(all_settings, out_ip);
     }
 
@@ -686,7 +654,7 @@ public class NetworkManagerClientVala : Object {
         fill_runtime_ipv4_for_device(network.device_path, network.connected, out_ip);
     }
 
-    private async void fill_runtime_ipv4_for_device_dbus(
+    internal async void fill_runtime_ipv4_for_device_dbus(
         string device_path,
         bool device_connected,
         NetworkIpSettings out_ip,
@@ -950,152 +918,25 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    private async string resolve_ethernet_connection_path(
-        NetworkDevice device,
-        string ambiguous_message,
-        string not_found_message,
-        Cancellable? cancellable = null
-    ) throws Error {
-        string? uuid_match = null;
-        string? name_match = null;
-        bool name_ambiguous = false;
-
-        var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-        var list_res = yield call_dbus(settings, "ListConnections", null, cancellable);
-        var conns = list_res.get_child_value(0);
-
-        for (int i = 0; i < conns.n_children(); i++) {
-            string candidate_path = conns.get_child_value(i).get_string();
-            var conn = make_proxy(candidate_path, NM_CONN_IFACE);
-            var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
-            var all_settings = settings_res.get_child_value(0);
-
-            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-            if (conn_group == null) {
-                continue;
-            }
-
-            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-            if (type_v == null || type_v.get_string() != "802-3-ethernet") {
-                continue;
-            }
-
-            if (device.connection_uuid.strip() != "") {
-                Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
-                if (uuid_v != null && uuid_v.get_string() == device.connection_uuid) {
-                    uuid_match = candidate_path;
-                    break;
-                }
-            }
-
-            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-            if (id_v != null && id_v.get_string() == device.connection) {
-                if (name_match != null) {
-                    name_ambiguous = true;
-                } else {
-                    name_match = candidate_path;
-                }
-            }
-        }
-
-        if (uuid_match != null) {
-            return uuid_match;
-        }
-
-        if (name_ambiguous) {
-            throw new IOError.FAILED(ambiguous_message);
-        }
-
-        if (name_match == null) {
-            throw new IOError.NOT_FOUND(not_found_message);
-        }
-
-        return name_match;
-    }
-
     public async bool connect_ethernet_device(
         NetworkDevice device,
         Cancellable? cancellable = null
     ) throws Error {
-        if (device.connection.strip() == "") {
-            throw new IOError.FAILED("No saved Ethernet profile available for this interface.");
-        }
-
-        string conn_path = yield resolve_ethernet_connection_path(
-            device,
-            "Multiple Ethernet profiles share this name. Use UUID to activate a specific profile.",
-            "No saved Ethernet profile found.",
-            cancellable
-        );
-
-        var nm = make_proxy(NM_PATH, NM_IFACE);
-        yield call_dbus(
-            nm,
-            "ActivateConnection",
-            new Variant("(ooo)", conn_path, "/", "/"),
-            cancellable
-        );
-        return true;
+        return yield ethernet_client.connect_device(device, cancellable);
     }
 
     public async bool disconnect_device(
         string interface_name,
         Cancellable? cancellable = null
     ) throws Error {
-        var nm = make_proxy(NM_PATH, NM_IFACE);
-        var devices_res = yield call_dbus(nm, "GetDevices", null, cancellable);
-        var devices = devices_res.get_child_value(0);
-
-        for (int i = 0; i < devices.n_children(); i++) {
-            string dev_path = devices.get_child_value(i).get_string();
-            string iface = (yield get_prop_dbus(
-                dev_path,
-                NM_DEVICE_IFACE,
-                "Interface",
-                cancellable
-            )).get_string();
-            if (iface != interface_name) {
-                continue;
-            }
-
-            var dev = make_proxy(dev_path, NM_DEVICE_IFACE);
-            yield call_dbus(dev, "Disconnect", null, cancellable);
-            return true;
-        }
-
-        throw new IOError.NOT_FOUND("Device not found.");
+        return yield ethernet_client.disconnect_device(interface_name, cancellable);
     }
 
     public async NetworkIpSettings get_ethernet_device_ip_settings(
         NetworkDevice device,
         Cancellable? cancellable = null
     ) {
-        var ip_settings = new NetworkIpSettings();
-
-        if (device.connection.strip() != "") {
-            try {
-                string conn_path = yield resolve_ethernet_connection_path(
-                    device,
-                    "Multiple Ethernet profiles share this name. Select by UUID.",
-                    "No saved Ethernet profile found.",
-                    cancellable
-                );
-                var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
-                var all_settings = settings_res.get_child_value(0);
-                fill_configured_ipv4_from_settings(all_settings, ip_settings);
-            } catch (Error e) {
-                debug_log("could not read saved ethernet ipv4 settings: " + e.message);
-            }
-        }
-
-        yield fill_runtime_ipv4_for_device_dbus(
-            device.device_path,
-            device.is_connected,
-            ip_settings,
-            cancellable
-        );
-        return ip_settings;
+        return yield ethernet_client.get_device_ip_settings(device, cancellable);
     }
 
     public async bool update_ethernet_device_settings(
@@ -1109,74 +950,17 @@ public class NetworkManagerClientVala : Object {
         string[] ipv4_dns_servers,
         Cancellable? cancellable = null
     ) throws Error {
-        if (device.connection.strip() == "") {
-            throw new IOError.FAILED("No Ethernet profile is available for this interface.");
-        }
-
-        string conn_path = yield resolve_ethernet_connection_path(
+        return yield ethernet_client.update_device_settings(
             device,
-            "Multiple Ethernet profiles share this name. Refusing ambiguous update.",
-            "No saved Ethernet profile found.",
-            cancellable
-        );
-
-        string method = normalize_ipv4_method(ipv4_method);
-        string address = ipv4_address.strip();
-        string gateway = ipv4_gateway.strip();
-
-        if (!gateway_auto && gateway == "") {
-            throw new IOError.FAILED("Manual gateway requires a gateway address.");
-        }
-        if (!gateway_auto && method == "disabled") {
-            throw new IOError.FAILED("Manual gateway is not supported when IPv4 method is Disabled.");
-        }
-        if (!dns_auto && ipv4_dns_servers.length == 0) {
-            throw new IOError.FAILED("Manual DNS requires at least one DNS server.");
-        }
-        if (method == "manual") {
-            if (address == "") {
-                throw new IOError.FAILED("Manual IPv4 requires an address.");
-            }
-            if (ipv4_prefix == 0 || ipv4_prefix > 32) {
-                throw new IOError.FAILED("Manual IPv4 prefix must be between 1 and 32.");
-            }
-        }
-
-        var conn = make_proxy(conn_path, NM_CONN_IFACE);
-        var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
-        var all_settings = settings_res.get_child_value(0);
-
-        Variant updated_ipv4;
-        string builder_error = "";
-        if (!NmWifiSettingsBuilder.build_updated_ipv4_section(
-            all_settings,
-            method,
-            address,
+            ipv4_method,
+            ipv4_address,
             ipv4_prefix,
             gateway_auto,
-            gateway,
+            ipv4_gateway,
             dns_auto,
             ipv4_dns_servers,
-            out updated_ipv4,
-            out builder_error
-        )) {
-            throw new IOError.FAILED(builder_error);
-        }
-
-        Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings(
-            all_settings,
-            updated_ipv4,
-            false,
-            ""
-        );
-
-        yield call_dbus(
-            conn,
-            "Update",
-            new Variant("(@a{sa{sv}})", updated_settings),
             cancellable
         );
-        return true;
     }
 
     public async List<NetworkDevice> get_devices(Cancellable? cancellable = null) throws Error {
@@ -1653,107 +1437,15 @@ public class NetworkManagerClientVala : Object {
     }
 
     public async bool connect_vpn(string name, Cancellable? cancellable = null) throws Error {
-        bool ambiguous = false;
-        string? conn_path = find_connection_by_name(name, out ambiguous);
-        if (ambiguous) {
-            throw new IOError.FAILED(
-                "Multiple connections share this name. Use UUID to activate a specific profile."
-            );
-        }
-        if (conn_path == null) {
-            throw new IOError.NOT_FOUND("Connection not found.");
-        }
-
-        var nm = make_proxy(NM_PATH, NM_IFACE);
-        yield call_dbus(
-            nm,
-            "ActivateConnection",
-            new Variant("(ooo)", conn_path, "/", "/"),
-            cancellable
-        );
-        return true;
+        return yield vpn_client.connect(name, cancellable);
     }
 
     public async bool disconnect_vpn(string name, Cancellable? cancellable = null) throws Error {
-        var nm = make_proxy(NM_PATH, NM_IFACE);
-        Variant active_conns = yield get_prop_dbus(NM_PATH, NM_IFACE, "ActiveConnections", cancellable);
-        for (int i = 0; i < active_conns.n_children(); i++) {
-            string ac_path = active_conns.get_child_value(i).get_string();
-            string id = (yield get_prop_dbus(
-                ac_path,
-                NM_ACTIVE_CONN_IFACE,
-                "Id",
-                cancellable
-            )).get_string();
-            if (id != name) {
-                continue;
-            }
-
-            yield call_dbus(nm, "DeactivateConnection", new Variant("(o)", ac_path), cancellable);
-            return true;
-        }
-
-        throw new IOError.NOT_FOUND("Active connection not found.");
+        return yield vpn_client.disconnect(name, cancellable);
     }
 
     public async List<VpnConnection> get_vpn_connections(Cancellable? cancellable = null) throws Error {
-        var vpns = new List<VpnConnection>();
-
-        var active_map = new HashTable<string, string>(str_hash, str_equal);
-        Variant active_conns = yield get_prop_dbus(NM_PATH, NM_IFACE, "ActiveConnections", cancellable);
-        for (int i = 0; i < active_conns.n_children(); i++) {
-            string ac_path = active_conns.get_child_value(i).get_string();
-            try {
-                string id = (yield get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Id", cancellable)).get_string();
-                active_map.insert(id, "activated");
-            } catch (Error e) {
-                debug_log("Could not read active VPN id: " + e.message);
-            }
-        }
-
-        var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-        var list_res = yield call_dbus(settings, "ListConnections", null, cancellable);
-        var conns = list_res.get_child_value(0);
-
-        for (int i = 0; i < conns.n_children(); i++) {
-            string conn_path = conns.get_child_value(i).get_string();
-            var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
-            var all_settings = settings_res.get_child_value(0);
-
-            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-            if (conn_group == null) {
-                continue;
-            }
-            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-            if (type_v == null || type_v.get_string() != "vpn") {
-                continue;
-            }
-
-            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-            string name = id_v != null ? id_v.get_string() : "VPN";
-
-            Variant? vpn_group = all_settings.lookup_value("vpn", new VariantType("a{sv}"));
-            string vpn_type = "vpn";
-            if (vpn_group != null) {
-                Variant? svc_v = vpn_group.lookup_value("service-type", new VariantType("s"));
-                if (svc_v != null) {
-                    string svc = svc_v.get_string();
-                    var parts = svc.split(".");
-                    if (parts.length > 0) {
-                        vpn_type = parts[parts.length - 1];
-                    }
-                }
-            }
-
-            vpns.append(new VpnConnection() {
-                name = name,
-                state = active_map.contains(name) ? "activated" : "deactivated",
-                vpn_type = vpn_type
-            });
-        }
-
-        return vpns;
+        return yield vpn_client.get_connections(cancellable);
     }
 
     public async bool scan_wifi(Cancellable? cancellable = null) throws Error {
