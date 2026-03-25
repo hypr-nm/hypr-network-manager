@@ -3,6 +3,30 @@ using Gtk;
 using Gdk;
 
 public class MainWindowHelpers : Object {
+    public static Gtk.Button build_back_button(MainWindowActionCallback on_back) {
+        var back_btn = new Gtk.Button();
+        back_btn.add_css_class("nm-button");
+        back_btn.add_css_class("nm-nav-back");
+
+        var content = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+        var icon = new Gtk.Image.from_icon_name("go-previous-symbolic");
+        icon.set_pixel_size(14);
+        icon.add_css_class("nm-back-icon");
+
+        var label = new Gtk.Label("Back");
+        label.add_css_class("nm-back-label");
+
+        content.append(icon);
+        content.append(label);
+        back_btn.set_child(content);
+
+        back_btn.clicked.connect(() => {
+            on_back();
+        });
+
+        return back_btn;
+    }
+
     public static void clear_listbox(Gtk.ListBox listbox) {
         Gtk.Widget? child = listbox.get_first_child();
         while (child != null) {

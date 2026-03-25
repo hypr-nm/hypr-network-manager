@@ -131,10 +131,7 @@ public class MainWindowEthernetController : Object {
         var nav_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
         nav_row.add_css_class("nm-details-nav-row");
 
-        var back_btn = new Gtk.Button.with_label("<- Back");
-        back_btn.add_css_class("nm-button");
-        back_btn.add_css_class("nm-nav-back");
-        back_btn.clicked.connect(() => {
+        var back_btn = MainWindowHelpers.build_back_button(() => {
             on_set_popup_text_input_mode(false);
             ethernet_stack.set_visible_child_name("list");
         });
@@ -218,10 +215,7 @@ public class MainWindowEthernetController : Object {
         page.add_css_class("nm-page-network-edit");
 
         var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        var back_btn = new Gtk.Button.with_label("Back");
-        back_btn.add_css_class("nm-button");
-        back_btn.add_css_class("nm-nav-back");
-        back_btn.clicked.connect(() => {
+        var back_btn = MainWindowHelpers.build_back_button(() => {
             on_set_popup_text_input_mode(false);
             if (selected_ethernet_device != null) {
                 open_details(selected_ethernet_device);

@@ -25,13 +25,10 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         var nav_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
         nav_row.add_css_class("nm-details-nav-row");
 
-        var back_btn = new Gtk.Button.with_label("← Back");
-        back_btn.add_css_class("nm-button");
-        back_btn.add_css_class("nm-nav-back");
-        back_btn.set_halign(Gtk.Align.START);
-        back_btn.clicked.connect(() => {
+        var back_btn = MainWindowHelpers.build_back_button(() => {
             on_back();
         });
+        back_btn.set_halign(Gtk.Align.START);
         nav_row.append(back_btn);
         page.append(nav_row);
 
@@ -123,10 +120,7 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         page.add_css_class("nm-page-network-edit");
 
         var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        var back_btn = new Gtk.Button.with_label("Back");
-        back_btn.add_css_class("nm-button");
-        back_btn.add_css_class("nm-nav-back");
-        back_btn.clicked.connect(() => {
+        var back_btn = MainWindowHelpers.build_back_button(() => {
             on_back();
         });
         header.append(back_btn);
