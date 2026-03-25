@@ -20,116 +20,107 @@ public class MainWindowWifiRuntimeController : Object {
         on_hide_active_wifi_password_prompt();
         on_refresh_switch_states();
 
-        var networks = nm.get_wifi_networks();
-        var devices = nm.get_devices();
-        string? primary_connected_ssid = null;
+        try {
+            Thread.create<void>(() => {
+                var networks = nm.get_wifi_networks();
+                var devices = nm.get_devices();
 
-        active_wifi_connections.remove_all();
-        foreach (var dev in devices) {
-            if (!dev.is_wifi || !dev.is_connected || dev.connection == "") {
-                continue;
-            }
-            active_wifi_connections.insert(dev.connection, true);
-            if (primary_connected_ssid == null) {
-                primary_connected_ssid = dev.connection;
-            }
-        }
+                Idle.add(() => {
+                    string? primary_connected_ssid = null;
 
-        foreach (var net in networks) {
-            if (!pending_wifi_connect.contains(net.ssid)) {
-                continue;
-            }
-
-            if (active_wifi_connections.contains(net.ssid)) {
-                pending_wifi_connect.remove(net.ssid);
-                pending_wifi_seen_connecting.remove(net.ssid);
-                continue;
-            }
-
-            NetworkDevice? matched_device = null;
-            foreach (var dev in devices) {
-                if (dev.is_wifi && dev.device_path == net.device_path) {
-                    matched_device = dev;
-                    break;
-                }
-            }
-
-            if (matched_device == null) {
-                continue;
-            }
-
-            bool is_connecting_state = matched_device.state >= 40
-                && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
-            if (is_connecting_state) {
-                pending_wifi_seen_connecting.insert(net.ssid, true);
-                continue;
-            }
-
-            if (pending_wifi_seen_connecting.contains(net.ssid)) {
-                pending_wifi_connect.remove(net.ssid);
-                pending_wifi_seen_connecting.remove(net.ssid);
-            }
-        }
-
-        MainWindowHelpers.clear_listbox(wifi_listbox);
-        foreach (var net in networks) {
-            wifi_listbox.append(on_build_wifi_row(net));
-        }
-
-        if (current_view == "details" || current_view == "edit") {
-            if (selected_wifi_network != null) {
-                WifiNetwork? updated = null;
-                foreach (var net in networks) {
-                    if (net.ssid == selected_wifi_network.ssid) {
-                        updated = net;
-                        break;
+                    active_wifi_connections.remove_all();
+                    foreach (var dev in devices) {
+                        if (!dev.is_wifi || !dev.is_connected || dev.connection == "") {
+                            continue;
+                        }
+                        active_wifi_connections.insert(dev.connection, true);
+                        if (primary_connected_ssid == null) {
+                            primary_connected_ssid = dev.connection;
+                        }
                     }
-                }
 
-                if (updated != null) {
-                    selected_wifi_network = updated;
-                    if (current_view == "details") {
-                        on_populate_wifi_details(updated);
+                    foreach (var net in networks) {
+                        if (!pending_wifi_connect.contains(net.ssid)) {
+                            continue;
+                        }
+
+                        if (active_wifi_connections.contains(net.ssid)) {
+                            pending_wifi_connect.remove(net.ssid);
+                            pending_wifi_seen_connecting.remove(net.ssid);
+                            continue;
+                        }
+
+                        NetworkDevice? matched_device = null;
+                        foreach (var dev in devices) {
+                            if (dev.is_wifi && dev.device_path == net.device_path) {
+                                matched_device = dev;
+                                break;
+                            }
+                        }
+
+                        if (matched_device == null) {
+                            continue;
+                        }
+
+                        bool is_connecting_state = matched_device.state >= 40
+                            && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
+                        if (is_connecting_state) {
+                            pending_wifi_seen_connecting.insert(net.ssid, true);
+                            continue;
+                        }
+
+                        if (pending_wifi_seen_connecting.contains(net.ssid)) {
+                            pending_wifi_connect.remove(net.ssid);
+                            pending_wifi_seen_connecting.remove(net.ssid);
+                        }
                     }
-                    wifi_stack.set_visible_child_name(current_view);
-                } else {
-                    selected_wifi_network = null;
-                    wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
-                }
-            } else {
-                wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
-            }
-        } else {
-            wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
-        }
 
-        if (networks.length() > 0) {
-            WifiNetwork? connected = null;
-            if (primary_connected_ssid != null) {
-                foreach (var net in networks) {
-                    if (net.ssid == primary_connected_ssid) {
-                        connected = net;
-                        break;
+                    MainWindowHelpers.clear_listbox(wifi_listbox);
+                    foreach (var net in networks) {
+                        wifi_listbox.append(on_build_wifi_row(net));
                     }
-                }
-            }
 
-            if (connected != null) {
-                status_label.set_text("Wi-Fi · %s (%u%%)".printf(connected.ssid, connected.signal));
-                status_icon.set_from_icon_name(connected.signal_icon_name);
-            } else if (primary_connected_ssid != null) {
-                status_label.set_text("Wi-Fi · %s".printf(primary_connected_ssid));
-                status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
-            } else {
-                status_label.set_text("Wi-Fi available (%u networks)".printf(networks.length()));
-                status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
-            }
-        } else {
-            status_label.set_text("No Wi-Fi networks found");
-            status_icon.set_from_icon_name("network-wireless-offline-symbolic");
+                    if (current_view == "details" || current_view == "edit") {
+                        // Avoid touching ref parameters from async callbacks.
+                        wifi_stack.set_visible_child_name(current_view);
+                    } else {
+                        wifi_stack.set_visible_child_name(networks.length() > 0 ? "list" : "empty");
+                    }
+
+                    if (networks.length() > 0) {
+                        WifiNetwork? connected = null;
+                        if (primary_connected_ssid != null) {
+                            foreach (var net in networks) {
+                                if (net.ssid == primary_connected_ssid) {
+                                    connected = net;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (connected != null) {
+                            status_label.set_text("Wi-Fi · %s (%u%%)".printf(connected.ssid, connected.signal));
+                            status_icon.set_from_icon_name(connected.signal_icon_name);
+                        } else if (primary_connected_ssid != null) {
+                            status_label.set_text("Wi-Fi · %s".printf(primary_connected_ssid));
+                            status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
+                        } else {
+                            status_label.set_text("Wi-Fi available (%u networks)".printf(networks.length()));
+                            status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
+                        }
+                    } else {
+                        status_label.set_text("No Wi-Fi networks found");
+                        status_icon.set_from_icon_name("network-wireless-offline-symbolic");
+                    }
+
+                    on_log("Rendered %u Wi-Fi rows".printf(networks.length()));
+                    return false;
+                });
+                return;
+            }, false);
+        } catch (ThreadError e) {
+            on_log("Failed to spawn Wi-Fi refresh thread: " + e.message);
         }
-
-        on_log("Rendered %u Wi-Fi rows".printf(networks.length()));
     }
 
     public static void connect_wifi_with_optional_password(
@@ -150,30 +141,44 @@ public class MainWindowWifiRuntimeController : Object {
             pending_wifi_seen_connecting.remove(net.ssid);
         }
 
-        string error_message;
-        if (!nm.connect_wifi(net, password, out error_message)) {
+        try {
+            Thread.create<void>(() => {
+                string error_message;
+                bool ok = nm.connect_wifi(net, password, out error_message);
+
+                Idle.add(() => {
+                    if (!ok) {
+                        pending_wifi_connect.remove(net.ssid);
+                        pending_wifi_seen_connecting.remove(net.ssid);
+                        on_error("Connect failed: " + error_message);
+                        return false;
+                    }
+
+                    if (close_on_connect) {
+                        on_close_window();
+                        return false;
+                    }
+
+                    on_refresh_after_action(true);
+
+                    string pending_ssid = net.ssid;
+                    Timeout.add(20000, () => {
+                        if (pending_wifi_connect.contains(pending_ssid)) {
+                            pending_wifi_connect.remove(pending_ssid);
+                            pending_wifi_seen_connecting.remove(pending_ssid);
+                            on_refresh_wifi();
+                        }
+                        return false;
+                    });
+                    return false;
+                });
+                return;
+            }, false);
+        } catch (ThreadError e) {
             pending_wifi_connect.remove(net.ssid);
             pending_wifi_seen_connecting.remove(net.ssid);
-            on_error("Connect failed: " + error_message);
-            return;
+            on_error("Connect failed: " + e.message);
         }
-
-        if (close_on_connect) {
-            on_close_window();
-            return;
-        }
-
-        on_refresh_after_action(true);
-
-        string pending_ssid = net.ssid;
-        Timeout.add(20000, () => {
-            if (pending_wifi_connect.contains(pending_ssid)) {
-                pending_wifi_connect.remove(pending_ssid);
-                pending_wifi_seen_connecting.remove(pending_ssid);
-                on_refresh_wifi();
-            }
-            return false;
-        });
     }
 
     public static void refresh_after_action(
@@ -182,11 +187,20 @@ public class MainWindowWifiRuntimeController : Object {
         MainWindowActionCallback on_refresh_all,
         MainWindowLogCallback on_log
     ) {
-        string error_message;
-
         if (request_wifi_scan) {
-            if (!nm.scan_wifi(out error_message)) {
-                on_log("Could not request Wi-Fi scan: " + error_message);
+            try {
+                Thread.create<void>(() => {
+                    string error_message;
+                    if (!nm.scan_wifi(out error_message)) {
+                        Idle.add(() => {
+                            on_log("Could not request Wi-Fi scan: " + error_message);
+                            return false;
+                        });
+                    }
+                    return;
+                }, false);
+            } catch (ThreadError e) {
+                on_log("Could not spawn Wi-Fi scan thread: " + e.message);
             }
         }
 
@@ -195,9 +209,19 @@ public class MainWindowWifiRuntimeController : Object {
         // NetworkManager state transitions are async; refresh again shortly after actions.
         Timeout.add(650, () => {
             if (request_wifi_scan) {
-                string delayed_scan_error;
-                if (!nm.scan_wifi(out delayed_scan_error)) {
-                    on_log("Could not request delayed Wi-Fi scan: " + delayed_scan_error);
+                try {
+                    Thread.create<void>(() => {
+                        string delayed_scan_error;
+                        if (!nm.scan_wifi(out delayed_scan_error)) {
+                            Idle.add(() => {
+                                on_log("Could not request delayed Wi-Fi scan: " + delayed_scan_error);
+                                return false;
+                            });
+                        }
+                        return;
+                    }, false);
+                } catch (ThreadError e) {
+                    on_log("Could not spawn delayed Wi-Fi scan thread: " + e.message);
                 }
             }
             on_refresh_all();
@@ -309,15 +333,28 @@ public class MainWindowWifiRuntimeController : Object {
             return;
         }
 
-        string error_message;
         bool enabled = wifi_switch.get_active();
-        if (!nm.set_wifi_enabled(enabled, out error_message)) {
-            on_error("Could not toggle Wi-Fi: " + error_message);
-            on_refresh_switch_states();
-            return;
-        }
+        try {
+            Thread.create<void>(() => {
+                string error_message;
+                bool ok = nm.set_wifi_enabled(enabled, out error_message);
 
-        on_refresh_after_action(enabled);
+                Idle.add(() => {
+                    if (!ok) {
+                        on_error("Could not toggle Wi-Fi: " + error_message);
+                        on_refresh_switch_states();
+                        return false;
+                    }
+
+                    on_refresh_after_action(enabled);
+                    return false;
+                });
+                return;
+            }, false);
+        } catch (ThreadError e) {
+            on_error("Could not toggle Wi-Fi: " + e.message);
+            on_refresh_switch_states();
+        }
     }
 
     public static void on_networking_switch_changed(
@@ -332,14 +369,27 @@ public class MainWindowWifiRuntimeController : Object {
             return;
         }
 
-        string error_message;
         bool enabled = networking_switch.get_active();
-        if (!nm.set_networking_enabled(enabled, out error_message)) {
-            on_error("Could not toggle networking: " + error_message);
-            on_refresh_switch_states();
-            return;
-        }
+        try {
+            Thread.create<void>(() => {
+                string error_message;
+                bool ok = nm.set_networking_enabled(enabled, out error_message);
 
-        on_refresh_after_action(enabled);
+                Idle.add(() => {
+                    if (!ok) {
+                        on_error("Could not toggle networking: " + error_message);
+                        on_refresh_switch_states();
+                        return false;
+                    }
+
+                    on_refresh_after_action(enabled);
+                    return false;
+                });
+                return;
+            }, false);
+        } catch (ThreadError e) {
+            on_error("Could not toggle networking: " + e.message);
+            on_refresh_switch_states();
+        }
     }
 }

@@ -1,4 +1,5 @@
 using Gtk;
+using GLib;
 
 public class MainWindowVpnPageBuilder : Object {
     public static Gtk.Widget build_page(
@@ -118,20 +119,31 @@ public class MainWindowVpnPageBuilder : Object {
         action.add_css_class(conn.is_connected ? "nm-disconnect-button" : "nm-connect-button");
         action.add_css_class("nm-row-action-button");
         action.clicked.connect(() => {
-            string error_message;
-            bool ok;
-            if (conn.is_connected) {
-                ok = nm.disconnect_vpn(conn.name, out error_message);
-                if (!ok) {
-                    on_error("VPN disconnect failed: " + error_message);
-                }
-            } else {
-                ok = nm.connect_vpn(conn.name, out error_message);
-                if (!ok) {
-                    on_error("VPN connect failed: " + error_message);
-                }
+            try {
+                Thread.create<void>(() => {
+                    string error_message;
+                    bool ok;
+                    if (conn.is_connected) {
+                        ok = nm.disconnect_vpn(conn.name, out error_message);
+                    } else {
+                        ok = nm.connect_vpn(conn.name, out error_message);
+                    }
+
+                    Idle.add(() => {
+                        if (!ok) {
+                            on_error(
+                                (conn.is_connected ? "VPN disconnect failed: " : "VPN connect failed: ")
+                                + error_message
+                            );
+                        }
+                        on_refresh_after_action(false);
+                        return false;
+                    });
+                    return;
+                }, false);
+            } catch (ThreadError e) {
+                on_error("VPN action failed: " + e.message);
             }
-            on_refresh_after_action(false);
         });
         content.append(action);
 
@@ -146,13 +158,23 @@ public class MainWindowVpnPageBuilder : Object {
         MainWindowErrorCallback on_error,
         MainWindowRefreshActionCallback on_refresh_after_action
     ) {
-        var connections = nm.get_vpn_connections();
-        MainWindowHelpers.clear_listbox(vpn_listbox);
+        try {
+            Thread.create<void>(() => {
+                var connections = nm.get_vpn_connections();
+                Idle.add(() => {
+                    MainWindowHelpers.clear_listbox(vpn_listbox);
 
-        foreach (var conn in connections) {
-            vpn_listbox.append(build_row(conn, nm, on_error, on_refresh_after_action));
+                    foreach (var conn in connections) {
+                        vpn_listbox.append(build_row(conn, nm, on_error, on_refresh_after_action));
+                    }
+
+                    vpn_stack.set_visible_child_name(connections.length() > 0 ? "list" : "empty");
+                    return false;
+                });
+                return;
+            }, false);
+        } catch (ThreadError e) {
+            on_error("VPN refresh failed: " + e.message);
         }
-
-        vpn_stack.set_visible_child_name(connections.length() > 0 ? "list" : "empty");
     }
 }

@@ -136,9 +136,19 @@ public class MainWindow : Gtk.ApplicationWindow {
         configure_key_handling();
         refresh_all();
         Timeout.add_seconds(refresh_interval_seconds, () => {
-            string error_message;
-            if (!nm.scan_wifi(out error_message)) {
-                debug_log("Could not request periodic Wi-Fi scan: " + error_message);
+            try {
+                Thread.create<void>(() => {
+                    string error_message;
+                    if (!nm.scan_wifi(out error_message)) {
+                        Idle.add(() => {
+                            debug_log("Could not request periodic Wi-Fi scan: " + error_message);
+                            return false;
+                        });
+                    }
+                    return;
+                }, false);
+            } catch (ThreadError e) {
+                debug_log("Could not spawn periodic Wi-Fi scan thread: " + e.message);
             }
             refresh_all();
             return true;
@@ -481,20 +491,42 @@ public class MainWindow : Gtk.ApplicationWindow {
                 open_wifi_details(wifi_net);
             },
             (wifi_net) => {
-                string error_message;
-                if (!nm.forget_network(wifi_net.ssid, out error_message)) {
-                    show_error("Forget failed: " + error_message);
+                try {
+                    Thread.create<void>(() => {
+                        string error_message;
+                        bool ok = nm.forget_network(wifi_net.ssid, out error_message);
+                        Idle.add(() => {
+                            if (!ok) {
+                                show_error("Forget failed: " + error_message);
+                            }
+                            refresh_after_action(true);
+                            return false;
+                        });
+                        return;
+                    }, false);
+                } catch (ThreadError e) {
+                    show_error("Forget failed: " + e.message);
                 }
-                refresh_after_action(true);
             },
             (wifi_net) => {
                 pending_wifi_connect.remove(wifi_net.ssid);
                 pending_wifi_seen_connecting.remove(wifi_net.ssid);
-                string error_message;
-                if (!nm.disconnect_wifi(wifi_net, out error_message)) {
-                    show_error("Disconnect failed: " + error_message);
+                try {
+                    Thread.create<void>(() => {
+                        string error_message;
+                        bool ok = nm.disconnect_wifi(wifi_net, out error_message);
+                        Idle.add(() => {
+                            if (!ok) {
+                                show_error("Disconnect failed: " + error_message);
+                            }
+                            refresh_after_action(false);
+                            return false;
+                        });
+                        return;
+                    }, false);
+                } catch (ThreadError e) {
+                    show_error("Disconnect failed: " + e.message);
                 }
-                refresh_after_action(false);
             },
             (wifi_net, password) => {
                 connect_wifi_with_optional_password(wifi_net, password);
