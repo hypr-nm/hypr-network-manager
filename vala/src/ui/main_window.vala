@@ -450,14 +450,16 @@ public class MainWindow : Gtk.ApplicationWindow {
                     return;
                 }
 
-                string error_message;
-                if (!nm.forget_network(selected_wifi_network.ssid, out error_message)) {
-                    show_error("Forget failed: " + error_message);
-                    return;
-                }
-
-                refresh_after_action(true);
-                wifi_stack.set_visible_child_name("list");
+                string ssid = selected_wifi_network.ssid;
+                nm.forget_network.begin(ssid, null, (obj, res) => {
+                    try {
+                        nm.forget_network.end(res);
+                        refresh_after_action(true);
+                        wifi_stack.set_visible_child_name("list");
+                    } catch (Error e) {
+                        show_error("Forget failed: " + e.message);
+                    }
+                });
             },
             () => {
                 if (selected_wifi_network != null) {
@@ -512,18 +514,13 @@ public class MainWindow : Gtk.ApplicationWindow {
                 open_wifi_details(wifi_net);
             },
             (wifi_net) => {
-                MainWindowAsyncExecutor.run(() => {
-                    string error_message;
-                    bool ok = nm.forget_network(wifi_net.ssid, out error_message);
-                    MainWindowAsyncExecutor.dispatch(() => {
-                        if (!ok) {
-                            show_error("Forget failed: " + error_message);
-                        }
+                nm.forget_network.begin(wifi_net.ssid, null, (obj, res) => {
+                    try {
+                        nm.forget_network.end(res);
                         refresh_after_action(true);
-                    });
-                },
-                (message) => {
-                    show_error("Forget failed: " + message);
+                    } catch (Error e) {
+                        show_error("Forget failed: " + e.message);
+                    }
                 });
             },
             (wifi_net) => {

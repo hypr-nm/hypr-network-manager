@@ -1390,37 +1390,84 @@ public class NetworkManagerClientVala : Object {
         return true;
     }
 
-    public bool forget_network(string ssid_or_name, out string error_message) {
-        error_message = "";
+    public async bool forget_network(string ssid_or_name, Cancellable? cancellable = null) throws Error {
+        string? conn_path = null;
+        string? ssid_match = null;
+        string? name_match = null;
+        bool ssid_ambiguous = false;
+        bool name_ambiguous = false;
 
-        try {
-            string? conn_path = find_connection_by_uuid(ssid_or_name);
+        var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var list_res = yield call_dbus(settings, "ListConnections", null, cancellable);
+        var conns = list_res.get_child_value(0);
 
-            bool ssid_ambiguous = false;
-            bool name_ambiguous = false;
-            if (conn_path == null) {
-                conn_path = find_connection_by_ssid(ssid_or_name, out ssid_ambiguous);
+        for (int i = 0; i < conns.n_children(); i++) {
+            string candidate_path = conns.get_child_value(i).get_string();
+            var conn = make_proxy(candidate_path, NM_CONN_IFACE);
+            var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
+            var all_settings = settings_res.get_child_value(0);
+
+            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+            if (conn_group == null) {
+                continue;
             }
-            if (conn_path == null) {
-                conn_path = find_connection_by_name(ssid_or_name, out name_ambiguous);
+
+            Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+            if (uuid_v != null && uuid_v.get_string() == ssid_or_name) {
+                conn_path = candidate_path;
+                break;
             }
 
-            if (conn_path == null) {
-                if (ssid_ambiguous || name_ambiguous) {
-                    error_message = "Multiple profiles match this identifier. Use UUID to avoid ambiguity.";
-                    return false;
+            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+            if (id_v != null && id_v.get_string() == ssid_or_name) {
+                if (name_match != null) {
+                    name_ambiguous = true;
+                } else {
+                    name_match = candidate_path;
                 }
-                error_message = "No saved connection found.";
-                return false;
             }
 
-            var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            conn.call_sync("Delete", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
+            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+            if (type_v == null || type_v.get_string() != "802-11-wireless") {
+                continue;
+            }
+
+            Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+            if (wifi_group == null) {
+                continue;
+            }
+
+            Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+            if (ssid_v == null || decode_ssid(ssid_v) != ssid_or_name) {
+                continue;
+            }
+
+            if (ssid_match != null) {
+                ssid_ambiguous = true;
+            } else {
+                ssid_match = candidate_path;
+            }
         }
+
+        if (conn_path == null) {
+            conn_path = ssid_match != null && !ssid_ambiguous ? ssid_match : null;
+        }
+        if (conn_path == null) {
+            conn_path = name_match != null && !name_ambiguous ? name_match : null;
+        }
+
+        if (conn_path == null) {
+            if (ssid_ambiguous || name_ambiguous) {
+                throw new IOError.FAILED(
+                    "Multiple profiles match this identifier. Use UUID to avoid ambiguity."
+                );
+            }
+            throw new IOError.NOT_FOUND("No saved connection found.");
+        }
+
+        var conn = make_proxy(conn_path, NM_CONN_IFACE);
+        yield call_dbus(conn, "Delete", null, cancellable);
+        return true;
     }
 
     public bool disconnect_device(string interface_name, out string error_message) {
