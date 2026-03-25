@@ -705,6 +705,7 @@ public class NetworkManagerClientVala : Object {
 
                 devices_out.append(new NetworkDevice() {
                     name = iface,
+                    device_path = dev_path,
                     device_type = dev_type,
                     state = state,
                     connection = conn_name

@@ -62,6 +62,8 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Stack ethernet_stack;
     private Gtk.ListBox vpn_listbox;
     private Gtk.Stack vpn_stack;
+    private HashTable<string, bool> pending_wifi_connect;
+    private HashTable<string, bool> pending_wifi_seen_connecting;
     private bool updating_switches = false;
     private Gtk.EventControllerKey key_controller;
 
@@ -113,6 +115,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         set_opacity(1.0);
         add_css_class("nm-window");
         nm = new NetworkManagerClientVala(debug_enabled);
+        pending_wifi_connect = new HashTable<string, bool>(str_hash, str_equal);
+        pending_wifi_seen_connecting = new HashTable<string, bool>(str_hash, str_equal);
 
         configure_layer_shell();
         build_ui();
@@ -767,8 +771,12 @@ public class MainWindow : Gtk.ApplicationWindow {
             }
 
             Timeout.add(750, () => {
+                pending_wifi_connect.insert(net.ssid, true);
+                pending_wifi_seen_connecting.remove(net.ssid);
                 string reconnect_error;
                 if (!nm.connect_wifi(net, null, out reconnect_error)) {
+                    pending_wifi_connect.remove(net.ssid);
+                    pending_wifi_seen_connecting.remove(net.ssid);
                     show_error("Reconnect after edit failed: " + reconnect_error);
                 }
                 refresh_after_action(true);
@@ -1180,11 +1188,14 @@ public class MainWindow : Gtk.ApplicationWindow {
             actions.append(forget);
         }
 
-        var action = new Gtk.Button.with_label(net.connected ? "Disconnect" : "Connect");
+        bool is_connecting = pending_wifi_connect.contains(net.ssid);
+        string action_label = is_connecting ? "Connecting..." : (net.connected ? "Disconnect" : "Connect");
+        var action = new Gtk.Button.with_label(action_label);
         action.add_css_class("nm-button");
-        action.add_css_class(net.connected ? "nm-disconnect-button" : "nm-connect-button");
+        action.add_css_class(net.connected && !is_connecting ? "nm-disconnect-button" : "nm-connect-button");
         action.add_css_class("nm-row-action-button");
         action.set_valign(Gtk.Align.CENTER);
+        action.set_sensitive(!is_connecting);
 
         var prompt_label = new Gtk.Label("Password for %s".printf(net.ssid));
         prompt_label.set_xalign(0.0f);
@@ -1244,6 +1255,8 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         action.clicked.connect(() => {
             if (net.connected) {
+                pending_wifi_connect.remove(net.ssid);
+                pending_wifi_seen_connecting.remove(net.ssid);
                 string error_message;
                 if (!nm.disconnect_wifi(net, out error_message)) {
                     show_error("Disconnect failed: " + error_message);
@@ -1274,6 +1287,43 @@ public class MainWindow : Gtk.ApplicationWindow {
         hide_active_wifi_password_prompt();
         refresh_switch_states();
         var networks = nm.get_wifi_networks();
+        var devices = nm.get_devices();
+
+        foreach (var net in networks) {
+            if (!pending_wifi_connect.contains(net.ssid)) {
+                continue;
+            }
+
+            if (net.connected) {
+                pending_wifi_connect.remove(net.ssid);
+                pending_wifi_seen_connecting.remove(net.ssid);
+                continue;
+            }
+
+            NetworkDevice? matched_device = null;
+            foreach (var dev in devices) {
+                if (dev.is_wifi && dev.device_path == net.device_path) {
+                    matched_device = dev;
+                    break;
+                }
+            }
+
+            if (matched_device == null) {
+                continue;
+            }
+
+            bool is_connecting_state = matched_device.state >= 40
+                && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
+            if (is_connecting_state) {
+                pending_wifi_seen_connecting.insert(net.ssid, true);
+                continue;
+            }
+
+            if (pending_wifi_seen_connecting.contains(net.ssid)) {
+                pending_wifi_connect.remove(net.ssid);
+                pending_wifi_seen_connecting.remove(net.ssid);
+            }
+        }
 
         clear_listbox(wifi_listbox);
         foreach (var net in networks) {
@@ -1332,8 +1382,15 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void connect_wifi_with_optional_password(WifiNetwork net, string? password) {
+        if (!net.connected) {
+            pending_wifi_connect.insert(net.ssid, true);
+            pending_wifi_seen_connecting.remove(net.ssid);
+        }
+
         string error_message;
         if (!nm.connect_wifi(net, password, out error_message)) {
+            pending_wifi_connect.remove(net.ssid);
+            pending_wifi_seen_connecting.remove(net.ssid);
             show_error("Connect failed: " + error_message);
             return;
         }
@@ -1344,6 +1401,16 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
 
         refresh_after_action(true);
+
+        string pending_ssid = net.ssid;
+        Timeout.add(20000, () => {
+            if (pending_wifi_connect.contains(pending_ssid)) {
+                pending_wifi_connect.remove(pending_ssid);
+                pending_wifi_seen_connecting.remove(pending_ssid);
+                refresh_wifi();
+            }
+            return false;
+        });
     }
 
     private Gtk.Widget build_ethernet_page() {

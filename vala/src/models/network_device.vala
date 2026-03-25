@@ -1,5 +1,6 @@
 public class NetworkDevice : Object {
     public string name { get; construct set; }
+        public string device_path { get; construct set; }
     public uint32 device_type { get; construct set; }
     public uint32 state { get; construct set; }
     public string connection { get; construct set; }

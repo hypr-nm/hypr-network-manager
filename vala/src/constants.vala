@@ -12,4 +12,6 @@ const string NM_SETTINGS_IFACE = "org.freedesktop.NetworkManager.Settings";
 const string NM_CONN_IFACE = "org.freedesktop.NetworkManager.Settings.Connection";
 const uint32 NM_DEVICE_TYPE_ETHERNET = 1;
 const uint32 NM_DEVICE_TYPE_WIFI = 2;
+const uint32 NM_DEVICE_STATE_DISCONNECTED = 30;
 const uint32 NM_DEVICE_STATE_ACTIVATED = 100;
+const uint32 NM_DEVICE_STATE_FAILED = 120;
