@@ -2,7 +2,25 @@ using GLib;
 using Gtk;
 
 public class MainWindowWifiController : Object {
-    public static void sync_edit_gateway_dns_sensitivity(
+    private MainWindowWifiRuntimeController runtime_controller;
+    private MainWindowWifiDetailsEditController details_edit_controller;
+
+    public MainWindowWifiController() {
+        runtime_controller = new MainWindowWifiRuntimeController();
+        details_edit_controller = new MainWindowWifiDetailsEditController();
+    }
+
+    public void on_page_leave() {
+        runtime_controller.on_page_leave();
+        details_edit_controller.on_page_leave();
+    }
+
+    public void dispose_controller() {
+        runtime_controller.dispose_controller();
+        details_edit_controller.dispose_controller();
+    }
+
+    public void sync_edit_gateway_dns_sensitivity(
         Gtk.Entry? wifi_edit_ipv4_gateway_entry,
         Gtk.Switch? wifi_edit_gateway_auto_switch,
         Gtk.Entry? wifi_edit_ipv4_dns_entry,
@@ -17,7 +35,7 @@ public class MainWindowWifiController : Object {
         }
     }
 
-    public static void populate_details(
+    public void populate_details(
         NetworkManagerClientVala nm,
         WifiNetwork net,
         HashTable<string, bool> active_wifi_connections,
@@ -30,7 +48,7 @@ public class MainWindowWifiController : Object {
         Gtk.Button wifi_details_edit_button,
         MainWindowLogCallback on_log
     ) {
-        MainWindowWifiDetailsEditController.populate_wifi_details(
+        details_edit_controller.populate_wifi_details(
             nm,
             net,
             active_wifi_connections,
@@ -45,7 +63,7 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public static void open_details(
+    public void open_details(
         ref WifiNetwork? selected_wifi_network,
         WifiNetwork net,
         Gtk.Stack wifi_stack,
@@ -56,7 +74,7 @@ public class MainWindowWifiController : Object {
         wifi_stack.set_visible_child_name("details");
     }
 
-    public static void open_edit(
+    public void open_edit(
         ref WifiNetwork? selected_wifi_network,
         NetworkManagerClientVala nm,
         WifiNetwork net,
@@ -80,7 +98,7 @@ public class MainWindowWifiController : Object {
         }
 
         selected_wifi_network = net;
-        MainWindowWifiDetailsEditController.open_wifi_edit(
+        details_edit_controller.open_wifi_edit(
             nm,
             net,
             wifi_edit_title,
@@ -100,7 +118,7 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public static bool apply_edit(
+    public bool apply_edit(
         ref WifiNetwork? selected_wifi_network,
         NetworkManagerClientVala nm,
         Gtk.Entry wifi_edit_password_entry,
@@ -123,7 +141,7 @@ public class MainWindowWifiController : Object {
         }
 
         var net = selected_wifi_network;
-        return MainWindowWifiDetailsEditController.apply_wifi_edit(
+        return details_edit_controller.apply_wifi_edit(
             nm,
             net,
             wifi_edit_password_entry,
@@ -143,7 +161,7 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public static Gtk.Widget build_details_page(
+    public Gtk.Widget build_details_page(
         out Gtk.Label wifi_details_title,
         out Gtk.Box wifi_details_basic_rows,
         out Gtk.Box wifi_details_advanced_rows,
@@ -169,7 +187,7 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public static Gtk.Widget build_edit_page(
+    public Gtk.Widget build_edit_page(
         out Gtk.Label wifi_edit_title,
         out Gtk.Entry wifi_edit_password_entry,
         out Gtk.Label wifi_edit_note,
@@ -201,7 +219,7 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public static Gtk.ListBoxRow build_row(
+    public Gtk.ListBoxRow build_row(
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting,
@@ -233,7 +251,7 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public static void refresh(
+    public void refresh(
         NetworkManagerClientVala nm,
         Gtk.Stack wifi_stack,
         Gtk.ListBox wifi_listbox,
@@ -242,14 +260,12 @@ public class MainWindowWifiController : Object {
         HashTable<string, bool> active_wifi_connections,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
-        ref WifiNetwork? selected_wifi_network,
         MainWindowActionCallback on_hide_active_wifi_password_prompt,
         MainWindowActionCallback on_refresh_switch_states,
         MainWindowWifiRowBuildCallback on_build_wifi_row,
-        MainWindowWifiNetworkCallback on_populate_wifi_details,
         MainWindowLogCallback on_log
     ) {
-        MainWindowWifiRuntimeController.refresh_wifi(
+        runtime_controller.refresh_wifi(
             nm,
             wifi_stack,
             wifi_listbox,
@@ -258,16 +274,14 @@ public class MainWindowWifiController : Object {
             active_wifi_connections,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
-            ref selected_wifi_network,
             on_hide_active_wifi_password_prompt,
             on_refresh_switch_states,
             on_build_wifi_row,
-            on_populate_wifi_details,
             on_log
         );
     }
 
-    public static void connect_with_optional_password(
+    public void connect_with_optional_password(
         NetworkManagerClientVala nm,
         WifiNetwork net,
         string? password,
@@ -280,7 +294,7 @@ public class MainWindowWifiController : Object {
         MainWindowActionCallback on_refresh_wifi,
         MainWindowErrorCallback on_error
     ) {
-        MainWindowWifiRuntimeController.connect_wifi_with_optional_password(
+        runtime_controller.connect_wifi_with_optional_password(
             nm,
             net,
             password,
@@ -292,6 +306,118 @@ public class MainWindowWifiController : Object {
             on_refresh_after_action,
             on_refresh_wifi,
             on_error
+        );
+    }
+
+    public void refresh_after_action(
+        NetworkManagerClientVala nm,
+        bool request_wifi_scan,
+        MainWindowActionCallback on_refresh_all,
+        MainWindowLogCallback on_log
+    ) {
+        runtime_controller.refresh_after_action(
+            nm,
+            request_wifi_scan,
+            on_refresh_all,
+            on_log
+        );
+    }
+
+    public void refresh_switch_states(
+        NetworkManagerClientVala nm,
+        Gtk.Switch wifi_switch,
+        Gtk.Switch networking_switch,
+        ref bool updating_switches,
+        MainWindowLogCallback on_log
+    ) {
+        runtime_controller.refresh_switch_states(
+            nm,
+            wifi_switch,
+            networking_switch,
+            ref updating_switches,
+            on_log
+        );
+    }
+
+    public void on_wifi_switch_changed(
+        NetworkManagerClientVala nm,
+        Gtk.Switch wifi_switch,
+        bool updating_switches,
+        MainWindowErrorCallback on_error,
+        MainWindowActionCallback on_refresh_switch_states,
+        MainWindowRefreshActionCallback on_refresh_after_action
+    ) {
+        runtime_controller.on_wifi_switch_changed(
+            nm,
+            wifi_switch,
+            updating_switches,
+            on_error,
+            on_refresh_switch_states,
+            on_refresh_after_action
+        );
+    }
+
+    public void on_networking_switch_changed(
+        NetworkManagerClientVala nm,
+        Gtk.Switch networking_switch,
+        bool updating_switches,
+        MainWindowErrorCallback on_error,
+        MainWindowActionCallback on_refresh_switch_states,
+        MainWindowRefreshActionCallback on_refresh_after_action
+    ) {
+        runtime_controller.on_networking_switch_changed(
+            nm,
+            networking_switch,
+            updating_switches,
+            on_error,
+            on_refresh_switch_states,
+            on_refresh_after_action
+        );
+    }
+
+    public void show_wifi_password_prompt(
+        ref Gtk.Revealer? active_wifi_password_revealer,
+        ref Gtk.Entry? active_wifi_password_entry,
+        Gtk.Revealer revealer,
+        Gtk.Entry entry,
+        MainWindowBoolCallback on_set_popup_text_input_mode
+    ) {
+        runtime_controller.show_wifi_password_prompt(
+            ref active_wifi_password_revealer,
+            ref active_wifi_password_entry,
+            revealer,
+            entry,
+            on_set_popup_text_input_mode
+        );
+    }
+
+    public void hide_wifi_password_prompt(
+        ref Gtk.Revealer? active_wifi_password_revealer,
+        ref Gtk.Entry? active_wifi_password_entry,
+        Gtk.Revealer revealer,
+        Gtk.Entry entry,
+        string? value,
+        MainWindowBoolCallback on_set_popup_text_input_mode
+    ) {
+        runtime_controller.hide_wifi_password_prompt(
+            ref active_wifi_password_revealer,
+            ref active_wifi_password_entry,
+            revealer,
+            entry,
+            value,
+            on_set_popup_text_input_mode
+        );
+    }
+
+    public void hide_active_wifi_password_prompt(
+        ref Gtk.Revealer? active_wifi_password_revealer,
+        ref Gtk.Entry? active_wifi_password_entry,
+        MainWindowBoolCallback on_set_popup_text_input_mode
+    ) {
+        runtime_controller.hide_active_wifi_password_prompt(
+            ref active_wifi_password_revealer,
+            ref active_wifi_password_entry,
+            on_set_popup_text_input_mode
         );
     }
 }

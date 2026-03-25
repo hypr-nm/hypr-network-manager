@@ -2,7 +2,62 @@ using GLib;
 using Gtk;
 
 public class MainWindowWifiDetailsEditController : Object {
-    public static void populate_wifi_details(
+    private bool is_disposed = false;
+    private uint ui_epoch = 1;
+    private uint[] timeout_source_ids = {};
+
+    public MainWindowWifiDetailsEditController() {
+    }
+
+    public void on_page_leave() {
+        invalidate_ui_state();
+    }
+
+    public void dispose_controller() {
+        if (is_disposed) {
+            return;
+        }
+        is_disposed = true;
+        invalidate_ui_state();
+    }
+
+    private uint capture_ui_epoch() {
+        return ui_epoch;
+    }
+
+    private bool is_ui_epoch_valid(uint epoch) {
+        return !is_disposed && epoch == ui_epoch;
+    }
+
+    private void dispatch_ui(owned MainWindowActionCallback action, uint epoch) {
+        MainWindowAsyncExecutor.dispatch(() => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
+            action();
+        });
+    }
+
+    private void invalidate_ui_state() {
+        ui_epoch++;
+        if (ui_epoch == 0) {
+            ui_epoch = 1;
+        }
+        cancel_all_timeout_sources();
+    }
+
+    private void cancel_all_timeout_sources() {
+        if (timeout_source_ids.length == 0) {
+            return;
+        }
+
+        foreach (uint source_id in timeout_source_ids) {
+            Source.remove(source_id);
+        }
+        timeout_source_ids = {};
+    }
+
+    public void populate_wifi_details(
         NetworkManagerClientVala nm,
         WifiNetwork net,
         HashTable<string, bool> active_wifi_connections,
@@ -15,6 +70,8 @@ public class MainWindowWifiDetailsEditController : Object {
         Gtk.Button wifi_details_edit_button,
         MainWindowLogCallback log_debug
     ) {
+        uint epoch = capture_ui_epoch();
+
         wifi_details_title.set_text(net.ssid);
         bool is_connected_now = active_wifi_connections.contains(net.ssid);
         bool can_manage_saved_profile = net.saved;
@@ -83,7 +140,7 @@ public class MainWindowWifiDetailsEditController : Object {
             string ip_error;
             bool ip_ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 if (wifi_details_title.get_text() != net.ssid) {
                     return;
                 }
@@ -141,14 +198,17 @@ public class MainWindowWifiDetailsEditController : Object {
                         ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
                     )
                 );
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             log_debug("Could not read IP settings for details page: " + message);
         });
     }
 
-    public static void open_wifi_edit(
+    public void open_wifi_edit(
         NetworkManagerClientVala nm,
         WifiNetwork net,
         Gtk.Label wifi_edit_title,
@@ -166,6 +226,8 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowActionCallback enable_popup_text_input,
         MainWindowLogCallback log_debug
     ) {
+        uint epoch = capture_ui_epoch();
+
         wifi_edit_title.set_text("Edit: %s".printf(net.ssid));
         wifi_edit_password_entry.set_text("");
 
@@ -196,7 +258,7 @@ public class MainWindowWifiDetailsEditController : Object {
             string ip_error;
             bool ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 if (wifi_edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
                     return;
                 }
@@ -218,14 +280,17 @@ public class MainWindowWifiDetailsEditController : Object {
                 }
 
                 sync_sensitivity();
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             log_debug("Could not load current IP settings for edit: " + message);
         });
     }
 
-    public static bool apply_wifi_edit(
+    public bool apply_wifi_edit(
         NetworkManagerClientVala nm,
         WifiNetwork net,
         Gtk.Entry wifi_edit_password_entry,
@@ -243,6 +308,7 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowActionCallback on_open_details,
         MainWindowActionCallback disable_popup_text_input
     ) {
+        uint epoch = capture_ui_epoch();
         string password = wifi_edit_password_entry.get_text().strip();
 
         string method = MainWindowWifiEditUtils.get_selected_ipv4_method(wifi_edit_ipv4_method_dropdown);
@@ -304,18 +370,18 @@ public class MainWindowWifiDetailsEditController : Object {
                 dns_servers,
                 out error_message
             )) {
-                MainWindowAsyncExecutor.dispatch(() => {
+                dispatch_ui(() => {
                     on_error("Apply failed: " + error_message);
-                });
+                }, epoch);
                 return;
             }
 
             if (net.connected) {
                 string disconnect_error;
                 if (!nm.disconnect_wifi(net, out disconnect_error)) {
-                    MainWindowAsyncExecutor.dispatch(() => {
+                    dispatch_ui(() => {
                         on_error("Disconnect before reconnect failed: " + disconnect_error);
-                    });
+                    }, epoch);
                     return;
                 }
 
@@ -324,7 +390,7 @@ public class MainWindowWifiDetailsEditController : Object {
 
                 string reconnect_error;
                 bool reconnect_ok = nm.connect_wifi(net, null, out reconnect_error);
-                MainWindowAsyncExecutor.dispatch(() => {
+                dispatch_ui(() => {
                     if (!reconnect_ok) {
                         pending_wifi_connect.remove(net.ssid);
                         pending_wifi_seen_connecting.remove(net.ssid);
@@ -333,17 +399,20 @@ public class MainWindowWifiDetailsEditController : Object {
                     on_refresh_after_action(true);
                     on_open_details();
                     disable_popup_text_input();
-                });
+                }, epoch);
                 return;
             }
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 on_refresh_after_action(method != "disabled");
                 on_open_details();
                 disable_popup_text_input();
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             on_error("Apply failed: " + message);
         });
         return true;

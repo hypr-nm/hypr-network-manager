@@ -2,6 +2,10 @@ using GLib;
 using Gtk;
 
 public class MainWindowEthernetController : Object {
+    private bool is_disposed = false;
+    private uint ui_epoch = 1;
+    private uint[] timeout_source_ids = {};
+
     private NetworkManagerClientVala nm;
     private owned MainWindowErrorCallback on_error;
     private owned MainWindowRefreshActionCallback on_refresh_after_action;
@@ -44,6 +48,75 @@ public class MainWindowEthernetController : Object {
         this.on_set_popup_text_input_mode = (owned) on_set_popup_text_input_mode;
         pending_ethernet_action = new HashTable<string, bool>(str_hash, str_equal);
         pending_ethernet_target_connected = new HashTable<string, bool>(str_hash, str_equal);
+    }
+
+    public void on_page_leave() {
+        invalidate_ui_state();
+    }
+
+    public void dispose_controller() {
+        if (is_disposed) {
+            return;
+        }
+        is_disposed = true;
+        invalidate_ui_state();
+    }
+
+    private uint capture_ui_epoch() {
+        return ui_epoch;
+    }
+
+    private bool is_ui_epoch_valid(uint epoch) {
+        return !is_disposed && epoch == ui_epoch;
+    }
+
+    private void dispatch_ui(owned MainWindowActionCallback action, uint epoch) {
+        MainWindowAsyncExecutor.dispatch(() => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
+            action();
+        });
+    }
+
+    private void invalidate_ui_state() {
+        ui_epoch++;
+        if (ui_epoch == 0) {
+            ui_epoch = 1;
+        }
+        cancel_all_timeout_sources();
+    }
+
+    private void track_timeout_source(uint source_id) {
+        if (source_id == 0) {
+            return;
+        }
+        timeout_source_ids += source_id;
+    }
+
+    private void untrack_timeout_source(uint source_id) {
+        if (source_id == 0 || timeout_source_ids.length == 0) {
+            return;
+        }
+
+        uint[] remaining = {};
+        foreach (uint id in timeout_source_ids) {
+            if (id != source_id) {
+                remaining += id;
+            }
+        }
+        timeout_source_ids = remaining;
+    }
+
+    private void cancel_all_timeout_sources() {
+        if (timeout_source_ids.length == 0) {
+            return;
+        }
+
+        foreach (uint source_id in timeout_source_ids) {
+            Source.remove(source_id);
+        }
+        timeout_source_ids = {};
     }
 
     public Gtk.Widget build_page() {
@@ -283,17 +356,23 @@ public class MainWindowEthernetController : Object {
         }
     }
 
-    private void track_pending_action(NetworkDevice dev, bool target_connected) {
+    private void track_pending_action(NetworkDevice dev, bool target_connected, uint epoch) {
         pending_ethernet_action.insert(dev.name, true);
         pending_ethernet_target_connected.insert(dev.name, target_connected);
 
         string iface_name = dev.name;
-        Timeout.add(20000, () => {
+        uint timeout_id = 0;
+        timeout_id = Timeout.add(20000, () => {
+            untrack_timeout_source(timeout_id);
+            if (!is_ui_epoch_valid(epoch)) {
+                return false;
+            }
             pending_ethernet_action.remove(iface_name);
             pending_ethernet_target_connected.remove(iface_name);
             refresh();
             return false;
         });
+        track_timeout_source(timeout_id);
     }
 
     private void trigger_toggle(NetworkDevice dev) {
@@ -301,6 +380,7 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
+        uint epoch = capture_ui_epoch();
         bool target_connected = !dev.is_connected;
         MainWindowAsyncExecutor.run(() => {
             string error_message;
@@ -312,7 +392,7 @@ public class MainWindowEthernetController : Object {
                 ok = nm.connect_ethernet_device(dev, out error_message);
             }
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 if (!ok) {
                     on_error(
                         (dev.is_connected ? "Ethernet disconnect failed: " : "Ethernet connect failed: ")
@@ -321,16 +401,20 @@ public class MainWindowEthernetController : Object {
                     return;
                 }
 
-                track_pending_action(dev, target_connected);
+                track_pending_action(dev, target_connected, epoch);
                 on_refresh_after_action(false);
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             on_error("Ethernet action failed: " + message);
         });
     }
 
     private void populate_details(NetworkDevice dev) {
+        uint epoch = capture_ui_epoch();
         ethernet_details_title.set_text(dev.name);
 
         MainWindowHelpers.clear_box(ethernet_details_basic_rows);
@@ -362,7 +446,7 @@ public class MainWindowEthernetController : Object {
             string ip_error;
             nm.get_ethernet_device_ip_settings(dev, out ip_settings, out ip_error);
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 if (selected_ethernet_device == null
                     || (selected_ethernet_device.device_path != dev.device_path
                         && selected_ethernet_device.name != dev.name)) {
@@ -419,9 +503,12 @@ public class MainWindowEthernetController : Object {
                         )
                     );
 
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             MainWindowHelpers.clear_box(ethernet_details_ip_rows);
             ethernet_details_ip_rows.append(MainWindowHelpers.build_details_row("IP", "Failed to load: " + message));
         });
@@ -456,6 +543,7 @@ public class MainWindowEthernetController : Object {
         }
 
         selected_ethernet_device = dev;
+        uint epoch = capture_ui_epoch();
         ethernet_edit_title.set_text("Edit: %s".printf(dev.name));
         ethernet_edit_note.set_text("Update IPv4 settings for profile: %s".printf(dev.connection));
 
@@ -467,7 +555,7 @@ public class MainWindowEthernetController : Object {
             string ip_error;
             nm.get_ethernet_device_ip_settings(dev, out ip_settings, out ip_error);
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 if (selected_ethernet_device == null
                     || (selected_ethernet_device.device_path != dev.device_path
                         && selected_ethernet_device.name != dev.name)) {
@@ -488,9 +576,12 @@ public class MainWindowEthernetController : Object {
 
                 sync_edit_gateway_dns_sensitivity();
                 ethernet_edit_ipv4_address_entry.grab_focus();
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             on_error("Could not load Ethernet IP settings: " + message);
         });
     }
@@ -500,6 +591,7 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
+        uint epoch = capture_ui_epoch();
         NetworkDevice dev = selected_ethernet_device;
         string method = MainWindowWifiEditUtils.get_selected_ipv4_method(
             ethernet_edit_ipv4_method_dropdown
@@ -563,43 +655,46 @@ public class MainWindowEthernetController : Object {
             );
 
             if (!ok) {
-                MainWindowAsyncExecutor.dispatch(() => {
+                dispatch_ui(() => {
                     on_error("Apply failed: " + error_message);
-                });
+                }, epoch);
                 return;
             }
 
             if (dev.is_connected) {
                 string disconnect_error;
                 if (!nm.disconnect_device(dev.name, out disconnect_error)) {
-                    MainWindowAsyncExecutor.dispatch(() => {
+                    dispatch_ui(() => {
                         on_error("Disconnect before reconnect failed: " + disconnect_error);
-                    });
+                    }, epoch);
                     return;
                 }
 
                 string reconnect_error;
                 bool reconnect_ok = nm.connect_ethernet_device(dev, out reconnect_error);
 
-                MainWindowAsyncExecutor.dispatch(() => {
-                    track_pending_action(dev, true);
+                dispatch_ui(() => {
+                    track_pending_action(dev, true, epoch);
                     if (!reconnect_ok) {
                         on_error("Reconnect after edit failed: " + reconnect_error);
                     }
                     on_refresh_after_action(false);
                     open_details(dev);
                     on_set_popup_text_input_mode(false);
-                });
+                }, epoch);
                 return;
             }
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 on_refresh_after_action(false);
                 open_details(dev);
                 on_set_popup_text_input_mode(false);
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             on_error("Apply failed: " + message);
         });
     }
@@ -684,11 +779,12 @@ public class MainWindowEthernetController : Object {
     }
 
     public void refresh() {
+        uint epoch = capture_ui_epoch();
         string current_view = ethernet_stack.get_visible_child_name();
         MainWindowAsyncExecutor.run(() => {
             var devices = nm.get_devices();
 
-            MainWindowAsyncExecutor.dispatch(() => {
+            dispatch_ui(() => {
                 var ethernet_devices = new List<NetworkDevice>();
                 MainWindowHelpers.clear_listbox(ethernet_listbox);
 
@@ -743,9 +839,12 @@ public class MainWindowEthernetController : Object {
                     }
 
                     ethernet_stack.set_visible_child_name(ethernet_devices.length() > 0 ? "list" : "empty");
-            });
+            }, epoch);
         },
         (message) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
             on_error("Ethernet refresh failed: " + message);
         });
     }

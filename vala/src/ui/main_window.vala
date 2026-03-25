@@ -58,7 +58,9 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Entry wifi_edit_ipv4_dns_entry;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
+    private MainWindowWifiController wifi_controller;
     private MainWindowEthernetController ethernet_controller;
+    private MainWindowVpnController vpn_controller;
     private Gtk.ListBox vpn_listbox;
     private Gtk.Stack vpn_stack;
     private HashTable<string, bool> pending_wifi_connect;
@@ -66,6 +68,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private HashTable<string, bool> active_wifi_connections;
     private bool updating_switches = false;
     private Gtk.EventControllerKey key_controller;
+    private uint periodic_refresh_source_id = 0;
 
     public MainWindow(
         Gtk.Application app,
@@ -115,6 +118,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         set_opacity(1.0);
         add_css_class("nm-window");
         nm = new NetworkManagerClientVala(debug_enabled);
+        wifi_controller = new MainWindowWifiController();
         ethernet_controller = new MainWindowEthernetController(
             nm,
             (message) => {
@@ -127,6 +131,15 @@ public class MainWindow : Gtk.ApplicationWindow {
                 set_popup_text_input_mode(enabled);
             }
         );
+        vpn_controller = new MainWindowVpnController(
+            nm,
+            (message) => {
+                show_error(message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action(request_wifi_scan);
+            }
+        );
         pending_wifi_connect = new HashTable<string, bool>(str_hash, str_equal);
         pending_wifi_seen_connecting = new HashTable<string, bool>(str_hash, str_equal);
         active_wifi_connections = new HashTable<string, bool>(str_hash, str_equal);
@@ -135,7 +148,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         build_ui();
         configure_key_handling();
         refresh_all();
-        Timeout.add_seconds(refresh_interval_seconds, () => {
+        periodic_refresh_source_id = Timeout.add_seconds(refresh_interval_seconds, () => {
             MainWindowAsyncExecutor.run(() => {
                 string error_message;
                 if (!nm.scan_wifi(out error_message)) {
@@ -149,6 +162,11 @@ public class MainWindow : Gtk.ApplicationWindow {
             });
             refresh_all();
             return true;
+        });
+
+        this.close_request.connect(() => {
+            dispose_lifecycle_owners();
+            return false;
         });
 
         debug_log("Main window created");
@@ -319,7 +337,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             return;
         }
 
-        MainWindowWifiController.sync_edit_gateway_dns_sensitivity(
+        wifi_controller.sync_edit_gateway_dns_sensitivity(
             wifi_edit_ipv4_gateway_entry,
             wifi_edit_gateway_auto_switch,
             wifi_edit_ipv4_dns_entry,
@@ -328,7 +346,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void populate_wifi_details(WifiNetwork net) {
-        MainWindowWifiController.populate_details(
+        wifi_controller.populate_details(
             nm,
             net,
             active_wifi_connections,
@@ -346,7 +364,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void open_wifi_details(WifiNetwork net) {
-        MainWindowWifiController.open_details(
+        wifi_controller.open_details(
             ref selected_wifi_network,
             net,
             wifi_stack,
@@ -357,7 +375,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void open_wifi_edit(WifiNetwork net) {
-        MainWindowWifiController.open_edit(
+        wifi_controller.open_edit(
             ref selected_wifi_network,
             nm,
             net,
@@ -385,7 +403,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private bool apply_wifi_edit() {
-        return MainWindowWifiController.apply_edit(
+        return wifi_controller.apply_edit(
             ref selected_wifi_network,
             nm,
             wifi_edit_password_entry,
@@ -416,7 +434,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_wifi_details_page() {
-        return MainWindowWifiController.build_details_page(
+        return wifi_controller.build_details_page(
             out wifi_details_title,
             out wifi_details_basic_rows,
             out wifi_details_advanced_rows,
@@ -451,7 +469,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_wifi_edit_page() {
-        return MainWindowWifiController.build_edit_page(
+        return wifi_controller.build_edit_page(
             out wifi_edit_title,
             out wifi_edit_password_entry,
             out wifi_edit_note,
@@ -483,7 +501,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         bool is_connected_now = active_wifi_connections.contains(net.ssid);
         bool is_connecting = pending_wifi_connect.contains(net.ssid);
 
-        return MainWindowWifiController.build_row(
+        return wifi_controller.build_row(
             net,
             is_connected_now,
             is_connecting,
@@ -539,7 +557,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_wifi() {
-        MainWindowWifiController.refresh(
+        wifi_controller.refresh(
             nm,
             wifi_stack,
             wifi_listbox,
@@ -548,7 +566,6 @@ public class MainWindow : Gtk.ApplicationWindow {
             active_wifi_connections,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
-            ref selected_wifi_network,
             () => {
                 hide_active_wifi_password_prompt();
             },
@@ -558,9 +575,6 @@ public class MainWindow : Gtk.ApplicationWindow {
             (net) => {
                 return build_wifi_row(net);
             },
-            (net) => {
-                populate_wifi_details(net);
-            },
             (message) => {
                 debug_log(message);
             }
@@ -568,7 +582,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void connect_wifi_with_optional_password(WifiNetwork net, string? password) {
-        MainWindowWifiController.connect_with_optional_password(
+        wifi_controller.connect_with_optional_password(
             nm,
             net,
             password,
@@ -591,26 +605,12 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
     }
 
-    private void on_network_section_error(string message) {
-        show_error(message);
-    }
-
-    private void on_network_section_refresh_after_action(bool request_wifi_scan) {
-        refresh_after_action(request_wifi_scan);
-    }
-
     private void refresh_ethernet_section() {
         ethernet_controller.refresh();
     }
 
     private void refresh_vpn_section() {
-        MainWindowVpnController.refresh(
-            vpn_listbox,
-            vpn_stack,
-            nm,
-            on_network_section_error,
-            on_network_section_refresh_after_action
-        );
+        vpn_controller.refresh();
     }
 
     private void refresh_all() {
@@ -620,7 +620,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_after_action(bool request_wifi_scan) {
-        MainWindowWifiRuntimeController.refresh_after_action(
+        wifi_controller.refresh_after_action(
             nm,
             request_wifi_scan,
             () => {
@@ -633,7 +633,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_switch_states() {
-        MainWindowWifiRuntimeController.refresh_switch_states(
+        wifi_controller.refresh_switch_states(
             nm,
             wifi_switch,
             networking_switch,
@@ -645,7 +645,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void on_wifi_switch_changed() {
-        MainWindowWifiRuntimeController.on_wifi_switch_changed(
+        wifi_controller.on_wifi_switch_changed(
             nm,
             wifi_switch,
             updating_switches,
@@ -662,7 +662,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void on_networking_switch_changed() {
-        MainWindowWifiRuntimeController.on_networking_switch_changed(
+        wifi_controller.on_networking_switch_changed(
             nm,
             networking_switch,
             updating_switches,
@@ -679,7 +679,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void show_wifi_password_prompt(Gtk.Revealer revealer, Gtk.Entry entry) {
-        MainWindowWifiRuntimeController.show_wifi_password_prompt(
+        wifi_controller.show_wifi_password_prompt(
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry,
             revealer,
@@ -691,7 +691,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void hide_wifi_password_prompt(Gtk.Revealer revealer, Gtk.Entry entry, string? value) {
-        MainWindowWifiRuntimeController.hide_wifi_password_prompt(
+        wifi_controller.hide_wifi_password_prompt(
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry,
             revealer,
@@ -704,7 +704,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void hide_active_wifi_password_prompt() {
-        MainWindowWifiRuntimeController.hide_active_wifi_password_prompt(
+        wifi_controller.hide_active_wifi_password_prompt(
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry,
             (enabled) => {
@@ -734,6 +734,17 @@ public class MainWindow : Gtk.ApplicationWindow {
         var notebook = new Gtk.Notebook();
         notebook.set_show_border(false);
         notebook.add_css_class("nm-notebook");
+        notebook.switch_page.connect((page, page_num) => {
+            if (page_num != 0) {
+                wifi_controller.on_page_leave();
+            }
+            if (page_num != 1) {
+                ethernet_controller.on_page_leave();
+            }
+            if (page_num != 2) {
+                vpn_controller.on_page_leave();
+            }
+        });
 
         var wifi_tab = new Gtk.Label("Wi-Fi");
         wifi_tab.add_css_class("nm-tab-label");
@@ -749,7 +760,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var vpn_tab = new Gtk.Label("VPN");
         vpn_tab.add_css_class("nm-tab-label");
         notebook.append_page(
-            MainWindowVpnController.build_page(
+            vpn_controller.build_page(
                 out vpn_listbox,
                 out vpn_stack,
                 () => {
@@ -760,5 +771,19 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
 
         root.append(notebook);
+    }
+
+    private void dispose_lifecycle_owners() {
+        if (periodic_refresh_source_id != 0) {
+            Source.remove(periodic_refresh_source_id);
+            periodic_refresh_source_id = 0;
+        }
+        wifi_controller.dispose_controller();
+        ethernet_controller.dispose_controller();
+        vpn_controller.dispose_controller();
+    }
+
+    ~MainWindow() {
+        dispose_lifecycle_owners();
     }
 }
