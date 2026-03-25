@@ -223,6 +223,7 @@ public class MainWindowWifiDetailsEditController : Object {
 
         wifi_stack.set_visible_child_name("edit");
         enable_popup_text_input();
+        wifi_edit_password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
         wifi_edit_password_entry.grab_focus();
 
         wifi_edit_ipv4_method_dropdown.set_selected(0);

@@ -359,6 +359,7 @@ public class MainWindowWifiRuntimeController : Object {
         active_wifi_password_revealer = revealer;
         active_wifi_password_entry = entry;
         entry.set_text("");
+        entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
         on_set_popup_text_input_mode(true);
         revealer.set_reveal_child(true);
         entry.grab_focus();
