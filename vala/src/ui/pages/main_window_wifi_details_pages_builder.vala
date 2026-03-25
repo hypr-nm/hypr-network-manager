@@ -167,128 +167,18 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         });
         form.append(wifi_edit_password_entry);
 
-        var ipv4_method_label = new Gtk.Label("IPv4 Method");
-        ipv4_method_label.set_xalign(0.0f);
-        ipv4_method_label.add_css_class("nm-form-label");
-        ipv4_method_label.add_css_class("nm-edit-field-label");
-        ipv4_method_label.add_css_class("nm-edit-ipv4-method-label");
-        form.append(ipv4_method_label);
-
-        var ipv4_method_list = new Gtk.StringList(null);
-        ipv4_method_list.append("Automatic (DHCP)");
-        ipv4_method_list.append("Manual");
-        ipv4_method_list.append("Disabled");
-        wifi_edit_ipv4_method_dropdown = new Gtk.DropDown(ipv4_method_list, null);
-        wifi_edit_ipv4_method_dropdown.add_css_class("nm-edit-field-control");
-        wifi_edit_ipv4_method_dropdown.add_css_class("nm-edit-dropdown");
-        wifi_edit_ipv4_method_dropdown.add_css_class("nm-edit-ipv4-method-dropdown");
-        form.append(wifi_edit_ipv4_method_dropdown);
-
-        var ipv4_address_label = new Gtk.Label("IPv4 Address");
-        ipv4_address_label.set_xalign(0.0f);
-        ipv4_address_label.add_css_class("nm-form-label");
-        ipv4_address_label.add_css_class("nm-edit-field-label");
-        ipv4_address_label.add_css_class("nm-edit-ipv4-address-label");
-        form.append(ipv4_address_label);
-
-        wifi_edit_ipv4_address_entry = new Gtk.Entry();
-        wifi_edit_ipv4_address_entry.set_placeholder_text("192.168.1.100");
-        wifi_edit_ipv4_address_entry.add_css_class("nm-edit-field-control");
-        wifi_edit_ipv4_address_entry.add_css_class("nm-edit-field-entry");
-        wifi_edit_ipv4_address_entry.add_css_class("nm-edit-ipv4-address-entry");
-        form.append(wifi_edit_ipv4_address_entry);
-
-        var ipv4_prefix_label = new Gtk.Label("Prefix (CIDR)");
-        ipv4_prefix_label.set_xalign(0.0f);
-        ipv4_prefix_label.add_css_class("nm-form-label");
-        ipv4_prefix_label.add_css_class("nm-edit-field-label");
-        ipv4_prefix_label.add_css_class("nm-edit-ipv4-prefix-label");
-        form.append(ipv4_prefix_label);
-
-        wifi_edit_ipv4_prefix_entry = new Gtk.Entry();
-        wifi_edit_ipv4_prefix_entry.set_placeholder_text("24");
-        wifi_edit_ipv4_prefix_entry.add_css_class("nm-edit-field-control");
-        wifi_edit_ipv4_prefix_entry.add_css_class("nm-edit-field-entry");
-        wifi_edit_ipv4_prefix_entry.add_css_class("nm-edit-ipv4-prefix-entry");
-        form.append(wifi_edit_ipv4_prefix_entry);
-
-        var ipv4_gateway_label = new Gtk.Label("Gateway");
-        ipv4_gateway_label.set_xalign(0.0f);
-        ipv4_gateway_label.add_css_class("nm-form-label");
-        ipv4_gateway_label.add_css_class("nm-edit-field-label");
-        ipv4_gateway_label.add_css_class("nm-edit-gateway-label");
-        form.append(ipv4_gateway_label);
-
-        var gateway_mode_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        gateway_mode_row.add_css_class("nm-edit-mode-row");
-        gateway_mode_row.add_css_class("nm-edit-gateway-mode-row");
-        gateway_mode_row.set_halign(Gtk.Align.FILL);
-        gateway_mode_row.set_hexpand(true);
-        var gateway_mode_label = new Gtk.Label("Automatic gateway");
-        gateway_mode_label.set_xalign(0.0f);
-        gateway_mode_label.set_hexpand(true);
-        gateway_mode_label.set_valign(Gtk.Align.CENTER);
-        gateway_mode_label.add_css_class("nm-edit-mode-label");
-        gateway_mode_label.add_css_class("nm-edit-gateway-mode-label");
-        gateway_mode_row.append(gateway_mode_label);
-        wifi_edit_gateway_auto_switch = new Gtk.Switch();
-        wifi_edit_gateway_auto_switch.add_css_class("nm-switch");
-        wifi_edit_gateway_auto_switch.add_css_class("nm-edit-field-control");
-        wifi_edit_gateway_auto_switch.add_css_class("nm-edit-mode-switch");
-        wifi_edit_gateway_auto_switch.add_css_class("nm-edit-gateway-mode-switch");
-        wifi_edit_gateway_auto_switch.set_valign(Gtk.Align.CENTER);
-        wifi_edit_gateway_auto_switch.set_active(true);
-        wifi_edit_gateway_auto_switch.notify["active"].connect(() => {
-            on_sync_sensitivity();
-        });
-        gateway_mode_row.append(wifi_edit_gateway_auto_switch);
-        form.append(gateway_mode_row);
-
-        wifi_edit_ipv4_gateway_entry = new Gtk.Entry();
-        wifi_edit_ipv4_gateway_entry.set_placeholder_text("192.168.1.1");
-        wifi_edit_ipv4_gateway_entry.add_css_class("nm-edit-field-control");
-        wifi_edit_ipv4_gateway_entry.add_css_class("nm-edit-field-entry");
-        wifi_edit_ipv4_gateway_entry.add_css_class("nm-edit-gateway-entry");
-        form.append(wifi_edit_ipv4_gateway_entry);
-
-        var ipv4_dns_label = new Gtk.Label("DNS Servers (comma-separated)");
-        ipv4_dns_label.set_xalign(0.0f);
-        ipv4_dns_label.add_css_class("nm-form-label");
-        ipv4_dns_label.add_css_class("nm-edit-field-label");
-        ipv4_dns_label.add_css_class("nm-edit-dns-label");
-        form.append(ipv4_dns_label);
-
-        var dns_mode_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        dns_mode_row.add_css_class("nm-edit-mode-row");
-        dns_mode_row.add_css_class("nm-edit-dns-mode-row");
-        dns_mode_row.set_halign(Gtk.Align.FILL);
-        dns_mode_row.set_hexpand(true);
-        var dns_mode_label = new Gtk.Label("Automatic DNS");
-        dns_mode_label.set_xalign(0.0f);
-        dns_mode_label.set_hexpand(true);
-        dns_mode_label.set_valign(Gtk.Align.CENTER);
-        dns_mode_label.add_css_class("nm-edit-mode-label");
-        dns_mode_label.add_css_class("nm-edit-dns-mode-label");
-        dns_mode_row.append(dns_mode_label);
-        wifi_edit_dns_auto_switch = new Gtk.Switch();
-        wifi_edit_dns_auto_switch.add_css_class("nm-switch");
-        wifi_edit_dns_auto_switch.add_css_class("nm-edit-field-control");
-        wifi_edit_dns_auto_switch.add_css_class("nm-edit-mode-switch");
-        wifi_edit_dns_auto_switch.add_css_class("nm-edit-dns-mode-switch");
-        wifi_edit_dns_auto_switch.set_valign(Gtk.Align.CENTER);
-        wifi_edit_dns_auto_switch.set_active(true);
-        wifi_edit_dns_auto_switch.notify["active"].connect(() => {
-            on_sync_sensitivity();
-        });
-        dns_mode_row.append(wifi_edit_dns_auto_switch);
-        form.append(dns_mode_row);
-
-        wifi_edit_ipv4_dns_entry = new Gtk.Entry();
-        wifi_edit_ipv4_dns_entry.set_placeholder_text("1.1.1.1, 8.8.8.8");
-        wifi_edit_ipv4_dns_entry.add_css_class("nm-edit-field-control");
-        wifi_edit_ipv4_dns_entry.add_css_class("nm-edit-field-entry");
-        wifi_edit_ipv4_dns_entry.add_css_class("nm-edit-dns-entry");
-        form.append(wifi_edit_ipv4_dns_entry);
+        MainWindowIpEditFormBuilder.append_ipv4_section(
+            form,
+            out wifi_edit_ipv4_method_dropdown,
+            out wifi_edit_ipv4_address_entry,
+            out wifi_edit_ipv4_prefix_entry,
+            out wifi_edit_gateway_auto_switch,
+            out wifi_edit_ipv4_gateway_entry,
+            out wifi_edit_dns_auto_switch,
+            out wifi_edit_ipv4_dns_entry,
+            on_sync_sensitivity,
+            true
+        );
 
         on_sync_sensitivity();
 
