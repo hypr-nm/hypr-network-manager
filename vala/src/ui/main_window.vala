@@ -64,6 +64,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Stack vpn_stack;
     private HashTable<string, bool> pending_wifi_connect;
     private HashTable<string, bool> pending_wifi_seen_connecting;
+    private HashTable<string, bool> active_wifi_connections;
     private bool updating_switches = false;
     private Gtk.EventControllerKey key_controller;
 
@@ -117,6 +118,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         nm = new NetworkManagerClientVala(debug_enabled);
         pending_wifi_connect = new HashTable<string, bool>(str_hash, str_equal);
         pending_wifi_seen_connecting = new HashTable<string, bool>(str_hash, str_equal);
+        active_wifi_connections = new HashTable<string, bool>(str_hash, str_equal);
 
         configure_layer_shell();
         build_ui();
@@ -555,6 +557,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void populate_wifi_details(WifiNetwork net) {
         wifi_details_title.set_text(net.ssid);
+        bool is_connected_now = active_wifi_connections.contains(net.ssid);
         bool can_manage_saved_profile = net.saved;
         wifi_details_action_row.set_visible(can_manage_saved_profile);
         wifi_details_forget_button.set_visible(can_manage_saved_profile);
@@ -564,7 +567,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         clear_box(wifi_details_advanced_rows);
         clear_box(wifi_details_ip_rows);
 
-        wifi_details_basic_rows.append(build_details_row("Connection Status", net.connected ? "Connected" : "Not connected"));
+        wifi_details_basic_rows.append(build_details_row("Connection Status", is_connected_now ? "Connected" : "Not connected"));
         wifi_details_basic_rows.append(build_details_row("Signal Strength", "%u%%".printf(net.signal)));
         wifi_details_basic_rows.append(build_details_row("Bars", get_signal_bars(net.signal)));
         wifi_details_basic_rows.append(build_details_row("Security", net.is_secured ? "Secured" : "Open"));
@@ -1104,9 +1107,10 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.ListBoxRow build_wifi_row(WifiNetwork net) {
+        bool is_connected_now = active_wifi_connections.contains(net.ssid);
         var row = new Gtk.ListBoxRow();
         row.add_css_class("nm-wifi-row");
-        if (net.connected) {
+        if (is_connected_now) {
             row.add_css_class("connected");
         }
 
@@ -1189,10 +1193,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
 
         bool is_connecting = pending_wifi_connect.contains(net.ssid);
-        string action_label = is_connecting ? "Connecting..." : (net.connected ? "Disconnect" : "Connect");
+        string action_label = is_connecting ? "Connecting..." : (is_connected_now ? "Disconnect" : "Connect");
         var action = new Gtk.Button.with_label(action_label);
         action.add_css_class("nm-button");
-        action.add_css_class(net.connected && !is_connecting ? "nm-disconnect-button" : "nm-connect-button");
+        action.add_css_class(is_connected_now && !is_connecting ? "nm-disconnect-button" : "nm-connect-button");
         action.add_css_class("nm-row-action-button");
         action.set_valign(Gtk.Align.CENTER);
         action.set_sensitive(!is_connecting);
@@ -1254,7 +1258,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         });
 
         action.clicked.connect(() => {
-            if (net.connected) {
+            if (is_connected_now) {
                 pending_wifi_connect.remove(net.ssid);
                 pending_wifi_seen_connecting.remove(net.ssid);
                 string error_message;
@@ -1288,13 +1292,25 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_switch_states();
         var networks = nm.get_wifi_networks();
         var devices = nm.get_devices();
+        string? primary_connected_ssid = null;
+
+        active_wifi_connections.remove_all();
+        foreach (var dev in devices) {
+            if (!dev.is_wifi || !dev.is_connected || dev.connection == "") {
+                continue;
+            }
+            active_wifi_connections.insert(dev.connection, true);
+            if (primary_connected_ssid == null) {
+                primary_connected_ssid = dev.connection;
+            }
+        }
 
         foreach (var net in networks) {
             if (!pending_wifi_connect.contains(net.ssid)) {
                 continue;
             }
 
-            if (net.connected) {
+            if (active_wifi_connections.contains(net.ssid)) {
                 pending_wifi_connect.remove(net.ssid);
                 pending_wifi_seen_connecting.remove(net.ssid);
                 continue;
@@ -1359,16 +1375,21 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         if (networks.length() > 0) {
             WifiNetwork? connected = null;
-            foreach (var net in networks) {
-                if (net.connected) {
-                    connected = net;
-                    break;
+            if (primary_connected_ssid != null) {
+                foreach (var net in networks) {
+                    if (net.ssid == primary_connected_ssid) {
+                        connected = net;
+                        break;
+                    }
                 }
             }
 
             if (connected != null) {
                 status_label.set_text("Wi-Fi · %s (%u%%)".printf(connected.ssid, connected.signal));
                 status_icon.set_from_icon_name(connected.signal_icon_name);
+            } else if (primary_connected_ssid != null) {
+                status_label.set_text("Wi-Fi · %s".printf(primary_connected_ssid));
+                status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
             } else {
                 status_label.set_text("Wi-Fi available (%u networks)".printf(networks.length()));
                 status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
@@ -1382,7 +1403,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void connect_wifi_with_optional_password(WifiNetwork net, string? password) {
-        if (!net.connected) {
+        if (!active_wifi_connections.contains(net.ssid)) {
             pending_wifi_connect.insert(net.ssid, true);
             pending_wifi_seen_connecting.remove(net.ssid);
         }
