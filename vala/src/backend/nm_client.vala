@@ -39,28 +39,7 @@ public class NetworkManagerClientVala : Object {
     }
 
     private static string decode_ssid(Variant v) {
-        var bytes = v.get_data_as_bytes();
-        if (bytes == null) {
-            return "";
-        }
-
-        unowned uint8[] raw = bytes.get_data();
-        if (raw.length == 0) {
-            return "";
-        }
-
-        var out = new StringBuilder();
-        foreach (uint8 b in raw) {
-            if (b == 0) {
-                continue;
-            }
-            if (b >= 32 && b <= 126) {
-                out.append_c((char) b);
-            } else {
-                out.append_printf("\\x%02X", b);
-            }
-        }
-        return out.str;
+        return NmClientUtils.decode_ssid(v);
     }
 
     private HashTable<string, bool> get_saved_ssids() {
@@ -174,149 +153,19 @@ public class NetworkManagerClientVala : Object {
     }
 
     private static Variant make_ssid_variant(string ssid) {
-        var ssid_bytes = new VariantBuilder(new VariantType("ay"));
-        for (int i = 0; i < ssid.length; i++) {
-            ssid_bytes.add("y", (uint8) ssid[i]);
-        }
-        return ssid_bytes.end();
+        return NmClientUtils.make_ssid_variant(ssid);
     }
 
     private static string normalize_ipv4_method(string value) {
-        string method = value.strip().down();
-        switch (method) {
-        case "manual":
-        case "disabled":
-        case "auto":
-            return method;
-        default:
-            return "auto";
-        }
-    }
-
-    private static string join_string_variant_list(Variant list_variant) {
-        var out = new StringBuilder();
-        for (int i = 0; i < list_variant.n_children(); i++) {
-            Variant child = list_variant.get_child_value(i);
-            if (!child.is_of_type(new VariantType("s"))) {
-                continue;
-            }
-
-            string value = child.get_string();
-            if (value == "") {
-                continue;
-            }
-            if (out.len > 0) {
-                out.append(", ");
-            }
-            out.append(value);
-        }
-        return out.str;
+        return NmClientUtils.normalize_ipv4_method(value);
     }
 
     private static string extract_dns_list_string(Variant dns_variant) {
-        if (dns_variant.is_of_type(new VariantType("as"))) {
-            return join_string_variant_list(dns_variant);
-        }
-
-        if (dns_variant.is_of_type(new VariantType("aa{sv}"))) {
-            var out = new StringBuilder();
-            for (int i = 0; i < dns_variant.n_children(); i++) {
-                Variant item = dns_variant.get_child_value(i);
-                Variant? addr_v = item.lookup_value("address", new VariantType("s"));
-                if (addr_v == null) {
-                    continue;
-                }
-
-                string addr = addr_v.get_string();
-                if (addr == "") {
-                    continue;
-                }
-
-                if (out.len > 0) {
-                    out.append(", ");
-                }
-                out.append(addr);
-            }
-            return out.str;
-        }
-
-        return "";
-    }
-
-    private static bool parse_ipv4_to_uint32(string ip_text, out uint32 value) {
-        value = 0;
-        string ip = ip_text.strip();
-        string[] octets = ip.split(".");
-        if (octets.length != 4) {
-            return false;
-        }
-
-        uint[] parts = {0, 0, 0, 0};
-        for (int i = 0; i < 4; i++) {
-            uint parsed;
-            if (!uint.try_parse(octets[i], out parsed) || parsed > 255) {
-                return false;
-            }
-            parts[i] = parsed;
-        }
-
-        // NetworkManager legacy `u32` IPv4 values are interpreted in host order
-        // over D-Bus, so pack octets least-significant first.
-        value = (uint32) parts[0]
-            | ((uint32) parts[1] << 8)
-            | ((uint32) parts[2] << 16)
-            | ((uint32) parts[3] << 24);
-        return true;
+        return NmClientUtils.extract_dns_list_string(dns_variant);
     }
 
     private static void fill_configured_ipv4_from_settings(Variant all_settings, NetworkIpSettings out_ip) {
-        Variant? ipv4_group = all_settings.lookup_value("ipv4", new VariantType("a{sv}"));
-        if (ipv4_group == null) {
-            out_ip.ipv4_method = "auto";
-            out_ip.gateway_auto = true;
-            out_ip.dns_auto = true;
-            return;
-        }
-
-        Variant? method_v = ipv4_group.lookup_value("method", new VariantType("s"));
-        if (method_v != null) {
-            out_ip.ipv4_method = normalize_ipv4_method(method_v.get_string());
-        }
-
-        Variant? ignore_routes_v = ipv4_group.lookup_value("ignore-auto-routes", new VariantType("b"));
-        if (ignore_routes_v != null) {
-            out_ip.gateway_auto = !ignore_routes_v.get_boolean();
-        }
-
-        Variant? ignore_dns_v = ipv4_group.lookup_value("ignore-auto-dns", new VariantType("b"));
-        if (ignore_dns_v != null) {
-            out_ip.dns_auto = !ignore_dns_v.get_boolean();
-        }
-
-        Variant? gateway_v = ipv4_group.lookup_value("gateway", new VariantType("s"));
-        if (gateway_v != null) {
-            out_ip.configured_gateway = gateway_v.get_string();
-        }
-
-        Variant? dns_data_v = ipv4_group.lookup_value("dns-data", null);
-        if (dns_data_v != null) {
-            out_ip.configured_dns = extract_dns_list_string(dns_data_v);
-        }
-
-        Variant? address_data_v = ipv4_group.lookup_value("address-data", new VariantType("aa{sv}"));
-        if (address_data_v == null || address_data_v.n_children() == 0) {
-            return;
-        }
-
-        Variant first_addr = address_data_v.get_child_value(0);
-        Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
-        Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
-        if (addr_v != null) {
-            out_ip.configured_address = addr_v.get_string();
-        }
-        if (prefix_v != null) {
-            out_ip.configured_prefix = prefix_v.get_uint32();
-        }
+        NmClientUtils.fill_configured_ipv4_from_settings(all_settings, out_ip);
     }
 
     private void fill_runtime_ipv4_for_wifi(WifiNetwork network, NetworkIpSettings out_ip) {
@@ -447,200 +296,32 @@ public class NetworkManagerClientVala : Object {
             var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
             var all_settings = settings_res.get_child_value(0);
 
-            Variant? existing_ipv4 = all_settings.lookup_value("ipv4", new VariantType("a{sv}"));
-            Variant base_ipv4 = existing_ipv4 != null
-                ? existing_ipv4
-                : new VariantBuilder(new VariantType("a{sv}")).end();
-            var ipv4_dict = new VariantDict(base_ipv4);
-
-            ipv4_dict.insert_value("method", new Variant.string(method));
-            ipv4_dict.insert_value("ignore-auto-routes", new Variant.boolean(!gateway_auto));
-            ipv4_dict.insert_value("ignore-auto-dns", new Variant.boolean(!dns_auto));
-
-            uint32 gateway_legacy = 0;
-            if (!gateway_auto && !parse_ipv4_to_uint32(gateway, out gateway_legacy)) {
-                error_message = "Invalid IPv4 gateway address.";
+            Variant updated_ipv4;
+            if (!NmWifiSettingsBuilder.build_updated_ipv4_section(
+                all_settings,
+                method,
+                address,
+                ipv4_prefix,
+                gateway_auto,
+                gateway,
+                dns_auto,
+                ipv4_dns_servers,
+                out updated_ipv4,
+                out error_message
+            )) {
                 return false;
             }
 
-            if (method == "manual") {
-                uint32 address_legacy;
-                if (!parse_ipv4_to_uint32(address, out address_legacy)) {
-                    error_message = "Invalid IPv4 address for manual mode.";
-                    return false;
-                }
-
-                var addresses = new VariantBuilder(new VariantType("aa{sv}"));
-                var addr_entry = new VariantBuilder(new VariantType("a{sv}"));
-                addr_entry.add("{sv}", "address", new Variant.string(address));
-                addr_entry.add("{sv}", "prefix", new Variant.uint32(ipv4_prefix));
-                addresses.add_value(addr_entry.end());
-                ipv4_dict.insert_value("address-data", addresses.end());
-
-                // Keep legacy key for older NetworkManager versions.
-                var legacy_addresses = new VariantBuilder(new VariantType("aau"));
-                var legacy_addr_entry = new VariantBuilder(new VariantType("au"));
-                legacy_addr_entry.add("u", address_legacy);
-                legacy_addr_entry.add("u", ipv4_prefix);
-                legacy_addr_entry.add("u", gateway_legacy);
-                legacy_addresses.add_value(legacy_addr_entry.end());
-                ipv4_dict.insert_value("addresses", legacy_addresses.end());
-
-                if (!gateway_auto) {
-                    ipv4_dict.insert_value("gateway", new Variant.string(gateway));
-                } else {
-                    ipv4_dict.remove("gateway");
-                }
-
-                if (!dns_auto) {
-                    Variant? existing_dns_data = existing_ipv4 != null
-                        ? existing_ipv4.lookup_value("dns-data", null)
-                        : null;
-                    bool dns_data_uses_dict_items = existing_dns_data != null
-                        && existing_dns_data.is_of_type(new VariantType("aa{sv}"));
-
-                    var dns_data_strings_builder = new VariantBuilder(new VariantType("as"));
-                    var dns_data_dict_builder = new VariantBuilder(new VariantType("aa{sv}"));
-                    var dns_legacy_builder = new VariantBuilder(new VariantType("au"));
-                    foreach (string dns in ipv4_dns_servers) {
-                        string dns_ip = dns.strip();
-                        if (dns_ip == "") {
-                            continue;
-                        }
-
-                        uint32 dns_legacy;
-                        if (!parse_ipv4_to_uint32(dns_ip, out dns_legacy)) {
-                            error_message = "Invalid DNS server IPv4 address: " + dns_ip;
-                            return false;
-                        }
-
-                        if (dns_data_uses_dict_items) {
-                            var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
-                            dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
-                            dns_data_dict_builder.add_value(dns_data_item.end());
-                        } else {
-                            dns_data_strings_builder.add("s", dns_ip);
-                        }
-
-                        dns_legacy_builder.add("u", dns_legacy);
-                    }
-
-                    if (dns_data_uses_dict_items) {
-                        ipv4_dict.insert_value("dns-data", dns_data_dict_builder.end());
-                    } else {
-                        ipv4_dict.insert_value("dns-data", dns_data_strings_builder.end());
-                    }
-                    ipv4_dict.insert_value("dns", dns_legacy_builder.end());
-                } else {
-                    ipv4_dict.remove("dns-data");
-                    ipv4_dict.remove("dns");
-                }
-            } else {
-                ipv4_dict.remove("address-data");
-                ipv4_dict.remove("addresses");
-
-                if (!gateway_auto) {
-                    ipv4_dict.insert_value("gateway", new Variant.string(gateway));
-                } else {
-                    ipv4_dict.remove("gateway");
-                }
-
-                if (!dns_auto) {
-                    Variant? existing_dns_data = existing_ipv4 != null
-                        ? existing_ipv4.lookup_value("dns-data", null)
-                        : null;
-                    bool dns_data_uses_dict_items = existing_dns_data != null
-                        && existing_dns_data.is_of_type(new VariantType("aa{sv}"));
-
-                    var dns_data_strings_builder = new VariantBuilder(new VariantType("as"));
-                    var dns_data_dict_builder = new VariantBuilder(new VariantType("aa{sv}"));
-                    var dns_legacy_builder = new VariantBuilder(new VariantType("au"));
-
-                    foreach (string dns in ipv4_dns_servers) {
-                        string dns_ip = dns.strip();
-                        if (dns_ip == "") {
-                            continue;
-                        }
-
-                        uint32 dns_legacy;
-                        if (!parse_ipv4_to_uint32(dns_ip, out dns_legacy)) {
-                            error_message = "Invalid DNS server IPv4 address: " + dns_ip;
-                            return false;
-                        }
-
-                        if (dns_data_uses_dict_items) {
-                            var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
-                            dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
-                            dns_data_dict_builder.add_value(dns_data_item.end());
-                        } else {
-                            dns_data_strings_builder.add("s", dns_ip);
-                        }
-
-                        dns_legacy_builder.add("u", dns_legacy);
-                    }
-
-                    if (dns_data_uses_dict_items) {
-                        ipv4_dict.insert_value("dns-data", dns_data_dict_builder.end());
-                    } else {
-                        ipv4_dict.insert_value("dns-data", dns_data_strings_builder.end());
-                    }
-                    ipv4_dict.insert_value("dns", dns_legacy_builder.end());
-                } else {
-                    ipv4_dict.remove("dns-data");
-                    ipv4_dict.remove("dns");
-                }
-            }
-
-            Variant updated_ipv4 = ipv4_dict.end();
-
-            Variant? updated_sec = null;
-            if (network.is_secured && password.strip() != "") {
-                Variant? existing_sec = all_settings.lookup_value(
-                    "802-11-wireless-security",
-                    new VariantType("a{sv}")
-                );
-                Variant base_sec = existing_sec != null
-                    ? existing_sec
-                    : new VariantBuilder(new VariantType("a{sv}")).end();
-                var sec_dict = new VariantDict(base_sec);
-                sec_dict.insert_value("psk", new Variant.string(password.strip()));
-                updated_sec = sec_dict.end();
-            }
-
-            var top_builder = new VariantBuilder(new VariantType("a{sa{sv}}"));
-            bool has_ipv4 = false;
-            bool has_sec = false;
-
-            for (int i = 0; i < all_settings.n_children(); i++) {
-                Variant entry = all_settings.get_child_value(i);
-                string section_name = entry.get_child_value(0).get_string();
-                Variant section_value = entry.get_child_value(1);
-
-                if (section_name == "ipv4") {
-                    top_builder.add("{s@a{sv}}", "ipv4", updated_ipv4);
-                    has_ipv4 = true;
-                    continue;
-                }
-
-                if (section_name == "802-11-wireless-security" && updated_sec != null) {
-                    top_builder.add("{s@a{sv}}", "802-11-wireless-security", updated_sec);
-                    has_sec = true;
-                    continue;
-                }
-
-                top_builder.add("{s@a{sv}}", section_name, section_value);
-            }
-
-            if (!has_ipv4) {
-                top_builder.add("{s@a{sv}}", "ipv4", updated_ipv4);
-            }
-            if (updated_sec != null && !has_sec) {
-                top_builder.add("{s@a{sv}}", "802-11-wireless-security", updated_sec);
-            }
+            Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings(
+                all_settings,
+                updated_ipv4,
+                network.is_secured,
+                password
+            );
 
             conn.call_sync(
                 "Update",
-                new Variant("(@a{sa{sv}})", top_builder.end()),
+                new Variant("(@a{sa{sv}})", updated_settings),
                 DBusCallFlags.NONE,
                 -1,
                 null
@@ -650,15 +331,6 @@ public class NetworkManagerClientVala : Object {
             error_message = e.message;
             return false;
         }
-    }
-
-    private static string json_escape(string value) {
-        string out = value.replace("\\", "\\\\");
-        out = out.replace("\"", "\\\"");
-        out = out.replace("\n", "\\n");
-        out = out.replace("\r", "\\r");
-        out = out.replace("\t", "\\t");
-        return out;
     }
 
     public bool is_networking_enabled(out string error_message) {
@@ -1233,23 +905,8 @@ public class NetworkManagerClientVala : Object {
             }
         }
 
-        string text;
-        string alt;
-        string tooltip;
-        string klass;
-
-        if (!networking_on) {
-            text = "NET-OFF";
-            alt = "Offline";
-            tooltip = "Networking is disabled";
-            klass = "offline";
-        } else if (active_eth != null) {
-            text = "ETH";
-            alt = active_eth.connection != "" ? active_eth.connection : "Ethernet";
-            tooltip = "Ethernet: " + active_eth.name;
-            klass = "ethernet";
-        } else if (active_wifi != null) {
-            uint signal = 100;
+        uint signal = 100;
+        if (active_wifi != null) {
             var wifi_nets = get_wifi_networks();
             foreach (var net in wifi_nets) {
                 if (net.connected) {
@@ -1257,28 +914,24 @@ public class NetworkManagerClientVala : Object {
                     break;
                 }
             }
-
-            text = "WIFI";
-            alt = active_wifi.connection != "" ? active_wifi.connection : "WiFi";
-            tooltip = "WiFi: " + alt + " (" + signal.to_string() + "%)\\nDevice: " + active_wifi.name;
-            klass = "wifi";
-        } else if (!wifi_on) {
-            text = "WIFI-OFF";
-            alt = "WiFi Off";
-            tooltip = "WiFi is disabled";
-            klass = "wifi-off";
-        } else {
-            text = "DISCONNECTED";
-            alt = "Disconnected";
-            tooltip = "Not connected to any network";
-            klass = "disconnected";
         }
 
-        return "{\"text\":\"%s\",\"alt\":\"%s\",\"tooltip\":\"%s\",\"class\":\"%s\"}".printf(
-            json_escape(text),
-            json_escape(alt),
-            json_escape(tooltip),
-            json_escape(klass)
+        string text;
+        string alt;
+        string tooltip;
+        string klass;
+        NmStatusFormatter.pick_status_fields(
+            networking_on,
+            wifi_on,
+            active_wifi,
+            active_eth,
+            signal,
+            out text,
+            out alt,
+            out tooltip,
+            out klass
         );
+
+        return NmStatusFormatter.build_status_json(text, alt, tooltip, klass);
     }
 }
