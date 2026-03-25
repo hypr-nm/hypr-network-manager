@@ -32,9 +32,9 @@ window.nm-window,
   font-size: 13px;
 }
 
-/* Wi-Fi details/edit layout */
-.nm-page-wifi-details,
-.nm-page-wifi-edit {
+/* Network details/edit layout */
+.nm-page-network-details,
+.nm-page-network-edit {
   padding: 2px;
 }
 
@@ -114,7 +114,7 @@ window.nm-window,
   padding-top: 6px;
 }
 
-.nm-edit-wifi-form {
+.nm-edit-network-form {
   padding-bottom: 2px;
 }
 

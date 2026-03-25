@@ -150,9 +150,9 @@ window.nm-window,
    font-size: 13px;
 }
 
-/* Wi-Fi details/edit layout */
-.nm-page-wifi-details,
-.nm-page-wifi-edit { padding: 2px; }
+/* Network details/edit layout */
+.nm-page-network-details,
+.nm-page-network-edit { padding: 2px; }
 .nm-details-nav-row { padding-bottom: 2px; }
 .nm-nav-back { color: #f8f8f2; background: rgba(98, 114, 164, 0.22); border: 1px solid rgba(98, 114, 164, 0.55); border-radius: 8px; padding: 2px 10px; min-height: 26px; min-width: 68px; font-size: 12px; }
 .nm-nav-back:hover { color: #f8f8f2; background: rgba(98, 114, 164, 0.35); }
@@ -167,7 +167,7 @@ window.nm-window,
 .nm-details-key, .nm-details-item-key { color: #8be9fd; font-size: 12px; font-weight: 600; text-decoration: underline; }
 .nm-details-value, .nm-details-item-value { color: #f8f8f2; font-size: 16px; font-weight: 500; }
 .nm-edit-form { padding-top: 6px; }
-.nm-edit-wifi-form { padding-bottom: 2px; }
+.nm-edit-network-form { padding-bottom: 2px; }
 .nm-edit-field-label,
 .nm-edit-mode-label { color: #6272a4; font-size: 12px; font-weight: 600; }
 .nm-edit-field-control,

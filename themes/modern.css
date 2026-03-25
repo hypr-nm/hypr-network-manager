@@ -364,8 +364,8 @@ button.nm-row-icon-button:hover,
 }
 
 /* Details/Edit pages */
-.nm-page-wifi-details,
-.nm-page-wifi-edit {
+.nm-page-network-details,
+.nm-page-network-edit {
   padding: 2px;
   background: transparent;
   border: none;
@@ -441,17 +441,17 @@ button.nm-nav-back:hover > label,
   padding: 2px 0 8px;
 }
 
-.nm-page-wifi-details > .nm-separator,
-.nm-page-wifi-details .nm-details-section .nm-separator {
+.nm-page-network-details > .nm-separator,
+.nm-page-network-details .nm-details-section .nm-separator {
   color: rgba(158, 193, 255, 0.34);
 }
 
-.nm-page-wifi-details > .nm-separator {
+.nm-page-network-details > .nm-separator {
   margin-top: 4px;
   margin-bottom: 8px;
 }
 
-.nm-page-wifi-details .nm-details-section .nm-separator {
+.nm-page-network-details .nm-details-section .nm-separator {
   margin-top: 2px;
   margin-bottom: 6px;
 }
@@ -484,7 +484,7 @@ button.nm-nav-back:hover > label,
   padding-top: 6px;
 }
 
-.nm-edit-wifi-form {
+.nm-edit-network-form {
   padding-bottom: 2px;
 }
 
