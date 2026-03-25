@@ -42,13 +42,6 @@ public class MainWindowVpnPageBuilder : Object {
         return !is_disposed && epoch == ui_epoch;
     }
 
-    private void dispatch_ui(owned MainWindowActionCallback action, uint epoch) {
-        if (!is_ui_epoch_valid(epoch)) {
-            return;
-        }
-        action();
-    }
-
     private void invalidate_ui_state() {
         ui_epoch++;
         if (ui_epoch == 0) {
@@ -194,9 +187,10 @@ public class MainWindowVpnPageBuilder : Object {
                         }
                         on_error("VPN disconnect failed: " + e.message);
                     }
-                    dispatch_ui(() => {
-                        on_refresh_after_action(false);
-                    }, epoch);
+                    if (!is_ui_epoch_valid(epoch)) {
+                        return;
+                    }
+                    on_refresh_after_action(false);
                 });
                 return;
             }
@@ -210,9 +204,10 @@ public class MainWindowVpnPageBuilder : Object {
                     }
                     on_error("VPN connect failed: " + e.message);
                 }
-                dispatch_ui(() => {
-                    on_refresh_after_action(false);
-                }, epoch);
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
+                }
+                on_refresh_after_action(false);
             });
         });
         content.append(action);
@@ -229,16 +224,17 @@ public class MainWindowVpnPageBuilder : Object {
         uint epoch = capture_ui_epoch();
         nm.get_vpn_connections.begin(null, (obj, res) => {
             try {
-            var connections = nm.get_vpn_connections.end(res);
-                dispatch_ui(() => {
-                    MainWindowHelpers.clear_listbox(vpn_listbox);
+                var connections = nm.get_vpn_connections.end(res);
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
+                }
+                MainWindowHelpers.clear_listbox(vpn_listbox);
 
-                    foreach (var conn in connections) {
-                        vpn_listbox.append(build_row(conn));
-                    }
+                foreach (var conn in connections) {
+                    vpn_listbox.append(build_row(conn));
+                }
 
-                    vpn_stack.set_visible_child_name(connections.length() > 0 ? "list" : "empty");
-                }, epoch);
+                vpn_stack.set_visible_child_name(connections.length() > 0 ? "list" : "empty");
             } catch (Error e) {
                 if (!is_ui_epoch_valid(epoch)) {
                     return;

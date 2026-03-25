@@ -70,13 +70,6 @@ public class MainWindowEthernetController : Object {
         return !is_disposed && epoch == ui_epoch;
     }
 
-    private void dispatch_ui(owned MainWindowActionCallback action, uint epoch) {
-        if (!is_ui_epoch_valid(epoch)) {
-            return;
-        }
-        action();
-    }
-
     private void invalidate_ui_state() {
         ui_epoch++;
         if (ui_epoch == 0) {
@@ -384,10 +377,11 @@ public class MainWindowEthernetController : Object {
             nm.disconnect_device.begin(dev.name, null, (obj, res) => {
                 try {
                     nm.disconnect_device.end(res);
-                    dispatch_ui(() => {
-                        track_pending_action(dev, target_connected, epoch);
-                        on_refresh_after_action(false);
-                    }, epoch);
+                    if (!is_ui_epoch_valid(epoch)) {
+                        return;
+                    }
+                    track_pending_action(dev, target_connected, epoch);
+                    on_refresh_after_action(false);
                 } catch (Error e) {
                     if (!is_ui_epoch_valid(epoch)) {
                         return;
@@ -400,11 +394,12 @@ public class MainWindowEthernetController : Object {
 
         nm.connect_ethernet_device.begin(dev, null, (obj, res) => {
             try {
-            nm.connect_ethernet_device.end(res);
-                dispatch_ui(() => {
-                    track_pending_action(dev, target_connected, epoch);
-                    on_refresh_after_action(false);
-                }, epoch);
+                nm.connect_ethernet_device.end(res);
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
+                }
+                track_pending_action(dev, target_connected, epoch);
+                on_refresh_after_action(false);
             } catch (Error e) {
                 if (!is_ui_epoch_valid(epoch)) {
                     return;
@@ -444,64 +439,66 @@ public class MainWindowEthernetController : Object {
 
         nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
             try {
-            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
-                dispatch_ui(() => {
-                    if (selected_ethernet_device == null
-                        || (selected_ethernet_device.device_path != dev.device_path
-                            && selected_ethernet_device.name != dev.name)) {
-                        return;
-                    }
+                var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
+                }
 
-                    MainWindowHelpers.clear_box(ethernet_details_ip_rows);
-                    ethernet_details_ip_rows.append(
-                        MainWindowHelpers.build_details_row(
-                            "Configured IPv4 Method",
-                            MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
+                if (selected_ethernet_device == null
+                    || (selected_ethernet_device.device_path != dev.device_path
+                        && selected_ethernet_device.name != dev.name)) {
+                    return;
+                }
+
+                MainWindowHelpers.clear_box(ethernet_details_ip_rows);
+                ethernet_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured IPv4 Method",
+                        MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
+                    )
+                );
+                ethernet_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured IPv4 Address",
+                        MainWindowHelpers.format_ip_with_prefix(
+                            ip_settings.configured_address,
+                            ip_settings.configured_prefix
                         )
-                    );
-                    ethernet_details_ip_rows.append(
-                        MainWindowHelpers.build_details_row(
-                            "Configured IPv4 Address",
-                            MainWindowHelpers.format_ip_with_prefix(
-                                ip_settings.configured_address,
-                                ip_settings.configured_prefix
-                            )
+                    )
+                );
+                ethernet_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured Gateway",
+                        ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
+                    )
+                );
+                ethernet_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured DNS",
+                        ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
+                    )
+                );
+                ethernet_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Current IPv4 Address",
+                        MainWindowHelpers.format_ip_with_prefix(
+                            ip_settings.current_address,
+                            ip_settings.current_prefix
                         )
-                    );
-                    ethernet_details_ip_rows.append(
-                        MainWindowHelpers.build_details_row(
-                            "Configured Gateway",
-                            ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
-                        )
-                    );
-                    ethernet_details_ip_rows.append(
-                        MainWindowHelpers.build_details_row(
-                            "Configured DNS",
-                            ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
-                        )
-                    );
-                    ethernet_details_ip_rows.append(
-                        MainWindowHelpers.build_details_row(
-                            "Current IPv4 Address",
-                            MainWindowHelpers.format_ip_with_prefix(
-                                ip_settings.current_address,
-                                ip_settings.current_prefix
-                            )
-                        )
-                    );
-                    ethernet_details_ip_rows.append(
-                        MainWindowHelpers.build_details_row(
-                            "Current Gateway",
-                            ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
-                        )
-                    );
-                    ethernet_details_ip_rows.append(
-                        MainWindowHelpers.build_details_row(
-                            "Current DNS",
-                            ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
-                        )
-                    );
-                }, epoch);
+                    )
+                );
+                ethernet_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Current Gateway",
+                        ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
+                    )
+                );
+                ethernet_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Current DNS",
+                        ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
+                    )
+                );
             } catch (Error e) {
                 if (!is_ui_epoch_valid(epoch)) {
                     return;
@@ -552,29 +549,31 @@ public class MainWindowEthernetController : Object {
 
         nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
             try {
-            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
-                dispatch_ui(() => {
-                    if (selected_ethernet_device == null
-                        || (selected_ethernet_device.device_path != dev.device_path
-                            && selected_ethernet_device.name != dev.name)) {
-                        return;
-                    }
+                var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
+                }
 
-                    ethernet_edit_ipv4_method_dropdown.set_selected(
-                        MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
-                    );
-                    ethernet_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
-                    ethernet_edit_ipv4_prefix_entry.set_text(
-                        ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
-                    );
-                    ethernet_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
-                    ethernet_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
-                    ethernet_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
-                    ethernet_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
+                if (selected_ethernet_device == null
+                    || (selected_ethernet_device.device_path != dev.device_path
+                        && selected_ethernet_device.name != dev.name)) {
+                    return;
+                }
+
+                ethernet_edit_ipv4_method_dropdown.set_selected(
+                    MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
+                );
+                ethernet_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
+                ethernet_edit_ipv4_prefix_entry.set_text(
+                    ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
+                );
+                ethernet_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
+                ethernet_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
+                ethernet_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
+                ethernet_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
 
                 sync_edit_gateway_dns_sensitivity();
                 ethernet_edit_ipv4_address_entry.grab_focus();
-                }, epoch);
             } catch (Error e) {
                 if (!is_ui_epoch_valid(epoch)) {
                     return;
@@ -652,18 +651,20 @@ public class MainWindowEthernetController : Object {
                 try {
                     nm.update_ethernet_device_settings.end(res);
                 } catch (Error e) {
-                    dispatch_ui(() => {
-                        on_error("Apply failed: " + e.message);
-                    }, epoch);
+                    if (!is_ui_epoch_valid(epoch)) {
+                        return;
+                    }
+                    on_error("Apply failed: " + e.message);
                     return;
                 }
 
                 if (!dev.is_connected) {
-                    dispatch_ui(() => {
-                        on_refresh_after_action(false);
-                        open_details(dev);
-                        on_set_popup_text_input_mode(false);
-                    }, epoch);
+                    if (!is_ui_epoch_valid(epoch)) {
+                        return;
+                    }
+                    on_refresh_after_action(false);
+                    open_details(dev);
+                    on_set_popup_text_input_mode(false);
                     return;
                 }
 
@@ -671,9 +672,10 @@ public class MainWindowEthernetController : Object {
                     try {
                         nm.disconnect_device.end(res2);
                     } catch (Error e) {
-                        dispatch_ui(() => {
-                            on_error("Disconnect before reconnect failed: " + e.message);
-                        }, epoch);
+                        if (!is_ui_epoch_valid(epoch)) {
+                            return;
+                        }
+                        on_error("Disconnect before reconnect failed: " + e.message);
                         return;
                     }
 
@@ -687,15 +689,16 @@ public class MainWindowEthernetController : Object {
                             reconnect_error = e.message;
                         }
 
-                        dispatch_ui(() => {
-                            track_pending_action(dev, true, epoch);
-                            if (!reconnect_ok) {
-                                on_error("Reconnect after edit failed: " + reconnect_error);
-                            }
-                            on_refresh_after_action(false);
-                            open_details(dev);
-                            on_set_popup_text_input_mode(false);
-                        }, epoch);
+                        if (!is_ui_epoch_valid(epoch)) {
+                            return;
+                        }
+                        track_pending_action(dev, true, epoch);
+                        if (!reconnect_ok) {
+                            on_error("Reconnect after edit failed: " + reconnect_error);
+                        }
+                        on_refresh_after_action(false);
+                        open_details(dev);
+                        on_set_popup_text_input_mode(false);
                     });
                 });
             }
@@ -786,63 +789,65 @@ public class MainWindowEthernetController : Object {
         string current_view = ethernet_stack.get_visible_child_name();
         nm.get_devices.begin(null, (obj, res) => {
             try {
-            var devices = nm.get_devices.end(res);
-                dispatch_ui(() => {
+                var devices = nm.get_devices.end(res);
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
+                }
+
                 var ethernet_devices = new List<NetworkDevice>();
                 MainWindowHelpers.clear_listbox(ethernet_listbox);
 
-                    foreach (var dev in devices) {
-                        if (!dev.is_ethernet) {
-                            continue;
-                        }
-
-                        if (pending_ethernet_action.contains(dev.name)
-                            && pending_ethernet_target_connected.contains(dev.name)) {
-                            bool target_connected = pending_ethernet_target_connected.get(dev.name);
-                            if (dev.is_connected == target_connected) {
-                                pending_ethernet_action.remove(dev.name);
-                                pending_ethernet_target_connected.remove(dev.name);
-                            }
-                        }
-
-                        ethernet_devices.append(dev);
-                        ethernet_listbox.append(build_row(dev));
+                foreach (var dev in devices) {
+                    if (!dev.is_ethernet) {
+                        continue;
                     }
 
-                    if (current_view == "details" || current_view == "edit") {
-                        if (selected_ethernet_device != null) {
-                            NetworkDevice? updated = null;
-                            foreach (var dev in ethernet_devices) {
-                                if (dev.device_path == selected_ethernet_device.device_path
-                                    || dev.name == selected_ethernet_device.name) {
-                                    updated = dev;
-                                    break;
-                                }
-                            }
+                    if (pending_ethernet_action.contains(dev.name)
+                        && pending_ethernet_target_connected.contains(dev.name)) {
+                        bool target_connected = pending_ethernet_target_connected.get(dev.name);
+                        if (dev.is_connected == target_connected) {
+                            pending_ethernet_action.remove(dev.name);
+                            pending_ethernet_target_connected.remove(dev.name);
+                        }
+                    }
 
-                            if (updated != null) {
-                                selected_ethernet_device = updated;
-                                if (current_view == "details") {
-                                    populate_details(updated);
-                                }
-                                ethernet_stack.set_visible_child_name(current_view);
-                            } else {
-                                selected_ethernet_device = null;
-                                on_set_popup_text_input_mode(false);
-                                ethernet_stack.set_visible_child_name(
-                                    ethernet_devices.length() > 0 ? "list" : "empty"
-                                );
+                    ethernet_devices.append(dev);
+                    ethernet_listbox.append(build_row(dev));
+                }
+
+                if (current_view == "details" || current_view == "edit") {
+                    if (selected_ethernet_device != null) {
+                        NetworkDevice? updated = null;
+                        foreach (var dev in ethernet_devices) {
+                            if (dev.device_path == selected_ethernet_device.device_path
+                                || dev.name == selected_ethernet_device.name) {
+                                updated = dev;
+                                break;
                             }
+                        }
+
+                        if (updated != null) {
+                            selected_ethernet_device = updated;
+                            if (current_view == "details") {
+                                populate_details(updated);
+                            }
+                            ethernet_stack.set_visible_child_name(current_view);
                         } else {
+                            selected_ethernet_device = null;
+                            on_set_popup_text_input_mode(false);
                             ethernet_stack.set_visible_child_name(
                                 ethernet_devices.length() > 0 ? "list" : "empty"
                             );
                         }
-                        return;
+                    } else {
+                        ethernet_stack.set_visible_child_name(
+                            ethernet_devices.length() > 0 ? "list" : "empty"
+                        );
                     }
+                    return;
+                }
 
-                    ethernet_stack.set_visible_child_name(ethernet_devices.length() > 0 ? "list" : "empty");
-                }, epoch);
+                ethernet_stack.set_visible_child_name(ethernet_devices.length() > 0 ? "list" : "empty");
             } catch (Error e) {
                 if (!is_ui_epoch_valid(epoch)) {
                     return;
