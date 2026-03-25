@@ -76,44 +76,29 @@ public class MainWindow : Gtk.ApplicationWindow {
     public MainWindow(
         Gtk.Application app,
         bool debug_enabled,
-        int window_width,
-        int window_height,
-        bool anchor_top,
-        bool anchor_right,
-        bool anchor_bottom,
-        bool anchor_left,
-        int margin_top,
-        int margin_right,
-        int margin_bottom,
-        int margin_left,
-        string shell_layer,
-        int scan_interval,
-        bool close_on_connect,
-        bool show_bssid,
-        bool show_frequency,
-        bool show_band
+        AppConfig config
     ) {
         Object(application: app, title: "Network Manager");
         this.debug_enabled = debug_enabled;
-        this.window_width = window_width;
-        this.window_height = window_height;
-        this.anchor_top = anchor_top;
-        this.anchor_right = anchor_right;
-        this.anchor_bottom = anchor_bottom;
-        this.anchor_left = anchor_left;
-        this.shell_margin_top = margin_top;
-        this.shell_margin_right = margin_right;
-        this.shell_margin_bottom = margin_bottom;
-        this.shell_margin_left = margin_left;
-        this.shell_layer = shell_layer;
-        this.refresh_interval_seconds = (uint) (scan_interval > 0 ? scan_interval : 30);
-        this.close_on_connect = close_on_connect;
-        this.show_bssid = show_bssid;
-        this.show_frequency = show_frequency;
-        this.show_band = show_band;
+        this.window_width = config.window_width;
+        this.window_height = config.window_height;
+        this.anchor_top = config.anchor_top;
+        this.anchor_right = config.anchor_right;
+        this.anchor_bottom = config.anchor_bottom;
+        this.anchor_left = config.anchor_left;
+        this.shell_margin_top = config.margin_top;
+        this.shell_margin_right = config.margin_right;
+        this.shell_margin_bottom = config.margin_bottom;
+        this.shell_margin_left = config.margin_left;
+        this.shell_layer = config.layer;
+        this.refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval : 30);
+        this.close_on_connect = config.close_on_connect;
+        this.show_bssid = config.show_bssid;
+        this.show_frequency = config.show_frequency;
+        this.show_band = config.show_band;
 
-        int effective_width = window_width < MIN_WINDOW_WIDTH ? MIN_WINDOW_WIDTH : window_width;
-        int effective_height = window_height < MIN_WINDOW_HEIGHT ? MIN_WINDOW_HEIGHT : window_height;
+        int effective_width = this.window_width < MIN_WINDOW_WIDTH ? MIN_WINDOW_WIDTH : this.window_width;
+        int effective_height = this.window_height < MIN_WINDOW_HEIGHT ? MIN_WINDOW_HEIGHT : this.window_height;
 
         set_default_size(effective_width, effective_height);
         set_size_request(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT);

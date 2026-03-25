@@ -149,22 +149,7 @@ public class NetworkManagerValaApp : Gtk.Application {
         window = new MainWindow(
             this,
             debug_enabled,
-            config.window_width,
-            config.window_height,
-            config.anchor_top,
-            config.anchor_right,
-            config.anchor_bottom,
-            config.anchor_left,
-            config.margin_top,
-            config.margin_right,
-            config.margin_bottom,
-            config.margin_left,
-            config.layer,
-            config.scan_interval,
-            config.close_on_connect,
-            config.show_bssid,
-            config.show_frequency,
-            config.show_band
+            config
         );
         window.close_request.connect(() => {
             hide_dismiss_overlay();
