@@ -674,51 +674,190 @@ public class NetworkManagerClientVala : Object {
         fill_runtime_ipv4_for_device(network.device_path, network.connected, out_ip);
     }
 
-    public bool get_wifi_network_ip_settings(
-        WifiNetwork network,
-        out NetworkIpSettings ip_settings,
-        out string error_message
+    private async void fill_runtime_ipv4_for_device_dbus(
+        string device_path,
+        bool device_connected,
+        NetworkIpSettings out_ip,
+        Cancellable? cancellable = null
     ) {
-        error_message = "";
-        ip_settings = new NetworkIpSettings();
+        if (!device_connected) {
+            return;
+        }
+
+        try {
+            string active_conn_path = (yield get_prop_dbus(
+                device_path,
+                NM_DEVICE_IFACE,
+                "ActiveConnection",
+                cancellable
+            )).get_string();
+            if (active_conn_path == "/") {
+                return;
+            }
+
+            string ip4_config_path = (yield get_prop_dbus(
+                active_conn_path,
+                NM_ACTIVE_CONN_IFACE,
+                "Ip4Config",
+                cancellable
+            )).get_string();
+            if (ip4_config_path == "/") {
+                return;
+            }
+
+            Variant address_data = yield get_prop_dbus(
+                ip4_config_path,
+                NM_IP4_CONFIG_IFACE,
+                "AddressData",
+                cancellable
+            );
+            if (address_data.n_children() > 0) {
+                Variant first_addr = address_data.get_child_value(0);
+                Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
+                Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
+                if (addr_v != null) {
+                    out_ip.current_address = addr_v.get_string();
+                }
+                if (prefix_v != null) {
+                    out_ip.current_prefix = prefix_v.get_uint32();
+                }
+            }
+
+            try {
+                out_ip.current_gateway = (yield get_prop_dbus(
+                    ip4_config_path,
+                    NM_IP4_CONFIG_IFACE,
+                    "Gateway",
+                    cancellable
+                )).get_string();
+            } catch (Error gateway_err) {
+                debug_log("could not read runtime IPv4 gateway: " + gateway_err.message);
+            }
+
+            try {
+                Variant dns_data = yield get_prop_dbus(
+                    ip4_config_path,
+                    NM_IP4_CONFIG_IFACE,
+                    "NameserverData",
+                    cancellable
+                );
+                out_ip.current_dns = extract_dns_list_string(dns_data);
+            } catch (Error dns_err) {
+                debug_log("could not read runtime IPv4 DNS: " + dns_err.message);
+            }
+        } catch (Error e) {
+            debug_log("could not read runtime IPv4 details: " + e.message);
+        }
+    }
+
+    private async void fill_runtime_ipv4_for_wifi_dbus(
+        WifiNetwork network,
+        NetworkIpSettings out_ip,
+        Cancellable? cancellable = null
+    ) {
+        yield fill_runtime_ipv4_for_device_dbus(
+            network.device_path,
+            network.connected,
+            out_ip,
+            cancellable
+        );
+    }
+
+    public async NetworkIpSettings get_wifi_network_ip_settings(
+        WifiNetwork network,
+        Cancellable? cancellable = null
+    ) {
+        var ip_settings = new NetworkIpSettings();
 
         if (network.saved) {
             try {
-                string? conn_path = null;
-                if (network.saved_connection_uuid.strip() != "") {
-                    conn_path = find_connection_by_uuid(network.saved_connection_uuid);
-                }
-                if (conn_path == null) {
-                    bool ssid_ambiguous = false;
-                    conn_path = find_connection_by_ssid(network.ssid, out ssid_ambiguous);
-                    if (ssid_ambiguous) {
-                        error_message = "Multiple saved profiles share this SSID. Select a specific profile by UUID.";
-                        fill_runtime_ipv4_for_wifi(network, ip_settings);
-                        return false;
-                    }
-                }
-                if (conn_path == null) {
-                    error_message = "Saved connection not found.";
-                    fill_runtime_ipv4_for_wifi(network, ip_settings);
-                    return false;
-                }
+                string conn_path = yield resolve_wifi_connection_path(
+                    network,
+                    "Multiple saved profiles share this SSID. Select a specific profile by UUID.",
+                    "Saved connection not found.",
+                    cancellable
+                );
 
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
+                var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
                 var all_settings = settings_res.get_child_value(0);
                 fill_configured_ipv4_from_settings(all_settings, ip_settings);
             } catch (Error e) {
-                error_message = e.message;
-                fill_runtime_ipv4_for_wifi(network, ip_settings);
-                return false;
+                debug_log("could not read saved wifi ipv4 settings: " + e.message);
             }
         }
 
-        fill_runtime_ipv4_for_wifi(network, ip_settings);
-        return true;
+        yield fill_runtime_ipv4_for_wifi_dbus(network, ip_settings, cancellable);
+        return ip_settings;
     }
 
-    public bool update_wifi_network_settings(
+    private async string resolve_wifi_connection_path(
+        WifiNetwork network,
+        string ambiguous_message,
+        string not_found_message,
+        Cancellable? cancellable = null
+    ) throws Error {
+        string? uuid_match = null;
+        string? ssid_match = null;
+        bool ssid_ambiguous = false;
+
+        var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var list_res = yield call_dbus(settings, "ListConnections", null, cancellable);
+        var conns = list_res.get_child_value(0);
+
+        for (int i = 0; i < conns.n_children(); i++) {
+            string candidate_path = conns.get_child_value(i).get_string();
+            var conn = make_proxy(candidate_path, NM_CONN_IFACE);
+            var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
+            var all_settings = settings_res.get_child_value(0);
+
+            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+            Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+            if (conn_group == null || wifi_group == null) {
+                continue;
+            }
+
+            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+            if (type_v == null || type_v.get_string() != "802-11-wireless") {
+                continue;
+            }
+
+            if (network.saved_connection_uuid.strip() != "") {
+                Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+                if (uuid_v != null && uuid_v.get_string() == network.saved_connection_uuid) {
+                    uuid_match = candidate_path;
+                    break;
+                }
+            }
+
+            Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+            if (ssid_v == null || decode_ssid(ssid_v) != network.ssid) {
+                continue;
+            }
+
+            if (ssid_match != null) {
+                ssid_ambiguous = true;
+            } else {
+                ssid_match = candidate_path;
+            }
+        }
+
+        if (uuid_match != null) {
+            return uuid_match;
+        }
+
+        if (ssid_ambiguous) {
+            throw new IOError.FAILED(ambiguous_message);
+        }
+
+        if (ssid_match == null) {
+            throw new IOError.NOT_FOUND(not_found_message);
+        }
+
+        return ssid_match;
+    }
+
+    public async bool update_wifi_network_settings(
         WifiNetwork network,
         string password,
         string ipv4_method,
@@ -728,95 +867,75 @@ public class NetworkManagerClientVala : Object {
         string ipv4_gateway,
         bool dns_auto,
         string[] ipv4_dns_servers,
-        out string error_message
-    ) {
-        error_message = "";
+        Cancellable? cancellable = null
+    ) throws Error {
+        string conn_path = yield resolve_wifi_connection_path(
+            network,
+            "Multiple saved profiles share this SSID. Refusing ambiguous update.",
+            "No saved connection found for this network.",
+            cancellable
+        );
 
-        try {
-            string? conn_path = null;
-            if (network.saved_connection_uuid.strip() != "") {
-                conn_path = find_connection_by_uuid(network.saved_connection_uuid);
-            }
-            if (conn_path == null) {
-                bool ssid_ambiguous = false;
-                conn_path = find_connection_by_ssid(network.ssid, out ssid_ambiguous);
-                if (ssid_ambiguous) {
-                    error_message = "Multiple saved profiles share this SSID. Refusing ambiguous update.";
-                    return false;
-                }
-            }
-            if (conn_path == null) {
-                error_message = "No saved connection found for this network.";
-                return false;
-            }
+        string method = normalize_ipv4_method(ipv4_method);
+        string address = ipv4_address.strip();
+        string gateway = ipv4_gateway.strip();
 
-            string method = normalize_ipv4_method(ipv4_method);
-            string address = ipv4_address.strip();
-            string gateway = ipv4_gateway.strip();
-
-            if (!gateway_auto && gateway == "") {
-                error_message = "Manual gateway requires a gateway address.";
-                return false;
-            }
-
-            if (!gateway_auto && method == "disabled") {
-                error_message = "Manual gateway is not supported when IPv4 method is Disabled.";
-                return false;
-            }
-
-            if (!dns_auto && ipv4_dns_servers.length == 0) {
-                error_message = "Manual DNS requires at least one DNS server.";
-                return false;
-            }
-
-            if (method == "manual") {
-                if (address == "") {
-                    error_message = "Manual IPv4 requires an address.";
-                    return false;
-                }
-                if (ipv4_prefix == 0 || ipv4_prefix > 32) {
-                    error_message = "Manual IPv4 prefix must be between 1 and 32.";
-                    return false;
-                }
-            }
-
-            var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var all_settings = settings_res.get_child_value(0);
-
-            Variant updated_ipv4;
-            if (!NmWifiSettingsBuilder.build_updated_ipv4_section(
-                all_settings,
-                method,
-                address,
-                ipv4_prefix,
-                gateway_auto,
-                gateway,
-                dns_auto,
-                ipv4_dns_servers,
-                out updated_ipv4,
-                out error_message
-            )) {
-                return false;
-            }
-
-            Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings(
-                all_settings,
-                updated_ipv4,
-                network.is_secured,
-                password
-            );
-
-            conn.call_sync(
-                "Update",
-                new Variant("(@a{sa{sv}})", updated_settings),
-                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-            );
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
+        if (!gateway_auto && gateway == "") {
+            throw new IOError.FAILED("Manual gateway requires a gateway address.");
         }
+
+        if (!gateway_auto && method == "disabled") {
+            throw new IOError.FAILED("Manual gateway is not supported when IPv4 method is Disabled.");
+        }
+
+        if (!dns_auto && ipv4_dns_servers.length == 0) {
+            throw new IOError.FAILED("Manual DNS requires at least one DNS server.");
+        }
+
+        if (method == "manual") {
+            if (address == "") {
+                throw new IOError.FAILED("Manual IPv4 requires an address.");
+            }
+            if (ipv4_prefix == 0 || ipv4_prefix > 32) {
+                throw new IOError.FAILED("Manual IPv4 prefix must be between 1 and 32.");
+            }
+        }
+
+        var conn = make_proxy(conn_path, NM_CONN_IFACE);
+        var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
+        var all_settings = settings_res.get_child_value(0);
+
+        Variant updated_ipv4;
+        string builder_error = "";
+        if (!NmWifiSettingsBuilder.build_updated_ipv4_section(
+            all_settings,
+            method,
+            address,
+            ipv4_prefix,
+            gateway_auto,
+            gateway,
+            dns_auto,
+            ipv4_dns_servers,
+            out updated_ipv4,
+            out builder_error
+        )) {
+            throw new IOError.FAILED(builder_error);
+        }
+
+        Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings(
+            all_settings,
+            updated_ipv4,
+            network.is_secured,
+            password
+        );
+
+        yield call_dbus(
+            conn,
+            "Update",
+            new Variant("(@a{sa{sv}})", updated_settings),
+            cancellable
+        );
+        return true;
     }
 
     public bool get_ethernet_device_ip_settings(
@@ -1289,99 +1408,78 @@ public class NetworkManagerClientVala : Object {
         return networks;
     }
 
-    public bool connect_saved_wifi(WifiNetwork network, out string error_message) {
-        error_message = "";
+    public async bool connect_saved_wifi(WifiNetwork network, Cancellable? cancellable = null) throws Error {
+        string conn_path = yield resolve_wifi_connection_path(
+            network,
+            "Multiple saved profiles share this SSID. Refusing ambiguous connect.",
+            "No saved profile found for SSID.",
+            cancellable
+        );
 
-        try {
-            string? conn_path = null;
-            if (network.saved_connection_uuid.strip() != "") {
-                conn_path = find_connection_by_uuid(network.saved_connection_uuid);
-            }
-            if (conn_path == null) {
-                bool ssid_ambiguous = false;
-                conn_path = find_connection_by_ssid(network.ssid, out ssid_ambiguous);
-                if (ssid_ambiguous) {
-                    error_message = "Multiple saved profiles share this SSID. Refusing ambiguous connect.";
-                    return false;
-                }
-            }
-            if (conn_path == null) {
-                error_message = "No saved profile found for SSID.";
-                return false;
-            }
-
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-            nm.call_sync(
-                "ActivateConnection",
-                new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
-                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-            );
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
+        var nm = make_proxy(NM_PATH, NM_IFACE);
+        yield call_dbus(
+            nm,
+            "ActivateConnection",
+            new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
+            cancellable
+        );
+        return true;
     }
 
-    public bool connect_wifi(WifiNetwork network, string? password, out string error_message) {
-        error_message = "";
-
+    public async bool connect_wifi(
+        WifiNetwork network,
+        string? password,
+        Cancellable? cancellable = null
+    ) throws Error {
         if (network.saved) {
-            return connect_saved_wifi(network, out error_message);
+            return yield connect_saved_wifi(network, cancellable);
         }
 
         if (password == null) {
             password = "";
         }
 
-        return connect_wifi_with_password(network, password, out error_message);
+        return yield connect_wifi_with_password(network, password, cancellable);
     }
 
-    public bool connect_wifi_with_password(
+    public async bool connect_wifi_with_password(
         WifiNetwork network,
         string password,
-        out string error_message
-    ) {
-        error_message = "";
-
-        try {
-            if (network.is_secured && password.strip() == "") {
-                error_message = "Password is required for secured networks.";
-                return false;
-            }
-
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-
-            var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
-
-            var conn_section = new VariantBuilder(new VariantType("a{sv}"));
-            conn_section.add("{sv}", "id", new Variant.string(network.ssid));
-            conn_section.add("{sv}", "type", new Variant.string("802-11-wireless"));
-            conn_section.add("{sv}", "uuid", new Variant.string(Uuid.string_random()));
-            conn_section.add("{sv}", "autoconnect", new Variant.boolean(true));
-            conn.add("{s@a{sv}}", "connection", conn_section.end());
-
-            var wifi_section = new VariantBuilder(new VariantType("a{sv}"));
-            wifi_section.add("{sv}", "ssid", make_ssid_variant(network.ssid));
-            conn.add("{s@a{sv}}", "802-11-wireless", wifi_section.end());
-
-            if (network.is_secured) {
-                var sec = new VariantBuilder(new VariantType("a{sv}"));
-                sec.add("{sv}", "key-mgmt", new Variant.string("wpa-psk"));
-                sec.add("{sv}", "psk", new Variant.string(password));
-                conn.add("{s@a{sv}}", "802-11-wireless-security", sec.end());
-            }
-
-            nm.call_sync(
-                "AddAndActivateConnection",
-                new Variant("(@a{sa{sv}}oo)", conn.end(), network.device_path, network.ap_path),
-                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-            );
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
+        Cancellable? cancellable = null
+    ) throws Error {
+        if (network.is_secured && password.strip() == "") {
+            throw new IOError.FAILED("Password is required for secured networks.");
         }
+
+        var nm = make_proxy(NM_PATH, NM_IFACE);
+
+        var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
+
+        var conn_section = new VariantBuilder(new VariantType("a{sv}"));
+        conn_section.add("{sv}", "id", new Variant.string(network.ssid));
+        conn_section.add("{sv}", "type", new Variant.string("802-11-wireless"));
+        conn_section.add("{sv}", "uuid", new Variant.string(Uuid.string_random()));
+        conn_section.add("{sv}", "autoconnect", new Variant.boolean(true));
+        conn.add("{s@a{sv}}", "connection", conn_section.end());
+
+        var wifi_section = new VariantBuilder(new VariantType("a{sv}"));
+        wifi_section.add("{sv}", "ssid", make_ssid_variant(network.ssid));
+        conn.add("{s@a{sv}}", "802-11-wireless", wifi_section.end());
+
+        if (network.is_secured) {
+            var sec = new VariantBuilder(new VariantType("a{sv}"));
+            sec.add("{sv}", "key-mgmt", new Variant.string("wpa-psk"));
+            sec.add("{sv}", "psk", new Variant.string(password));
+            conn.add("{s@a{sv}}", "802-11-wireless-security", sec.end());
+        }
+
+        yield call_dbus(
+            nm,
+            "AddAndActivateConnection",
+            new Variant("(@a{sa{sv}}oo)", conn.end(), network.device_path, network.ap_path),
+            cancellable
+        );
+        return true;
     }
 
     public async bool disconnect_wifi(WifiNetwork network, Cancellable? cancellable = null) throws Error {

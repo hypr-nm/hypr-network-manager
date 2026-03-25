@@ -135,76 +135,71 @@ public class MainWindowWifiDetailsEditController : Object {
             MainWindowHelpers.build_details_row("Loading", "Reading IP settings...")
         );
 
-        MainWindowAsyncExecutor.run(() => {
-            NetworkIpSettings ip_settings;
-            string ip_error;
-            bool ip_ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
+        nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
+            try {
+                var ip_settings = nm.get_wifi_network_ip_settings.end(res);
 
-            dispatch_ui(() => {
-                if (wifi_details_title.get_text() != net.ssid) {
+                dispatch_ui(() => {
+                    if (wifi_details_title.get_text() != net.ssid) {
+                        return;
+                    }
+
+                    MainWindowHelpers.clear_box(wifi_details_ip_rows);
+                    wifi_details_ip_rows.append(
+                        MainWindowHelpers.build_details_row(
+                            "Configured IPv4 Method",
+                            MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
+                        )
+                    );
+                    wifi_details_ip_rows.append(
+                        MainWindowHelpers.build_details_row(
+                            "Configured IPv4 Address",
+                            MainWindowHelpers.format_ip_with_prefix(
+                                ip_settings.configured_address,
+                                ip_settings.configured_prefix
+                            )
+                        )
+                    );
+                    wifi_details_ip_rows.append(
+                        MainWindowHelpers.build_details_row(
+                            "Configured Gateway",
+                            ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
+                        )
+                    );
+                    wifi_details_ip_rows.append(
+                        MainWindowHelpers.build_details_row(
+                            "Configured DNS",
+                            ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
+                        )
+                    );
+                    wifi_details_ip_rows.append(
+                        MainWindowHelpers.build_details_row(
+                            "Current IPv4 Address",
+                            MainWindowHelpers.format_ip_with_prefix(
+                                ip_settings.current_address,
+                                ip_settings.current_prefix
+                            )
+                        )
+                    );
+                    wifi_details_ip_rows.append(
+                        MainWindowHelpers.build_details_row(
+                            "Current Gateway",
+                            ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
+                        )
+                    );
+                    wifi_details_ip_rows.append(
+                        MainWindowHelpers.build_details_row(
+                            "Current DNS",
+                            ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
+                        )
+                    );
+                }, epoch);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid(epoch)) {
                     return;
                 }
-
-                if (!ip_ok && ip_error != "") {
-                    log_debug("Could not read IP settings for details page: " + ip_error);
-                }
-
-                MainWindowHelpers.clear_box(wifi_details_ip_rows);
-                wifi_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured IPv4 Method",
-                        MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
-                    )
-                );
-                wifi_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured IPv4 Address",
-                        MainWindowHelpers.format_ip_with_prefix(
-                            ip_settings.configured_address,
-                            ip_settings.configured_prefix
-                        )
-                    )
-                );
-                wifi_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured Gateway",
-                        ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
-                    )
-                );
-                wifi_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured DNS",
-                        ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
-                    )
-                );
-                wifi_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Current IPv4 Address",
-                        MainWindowHelpers.format_ip_with_prefix(
-                            ip_settings.current_address,
-                            ip_settings.current_prefix
-                        )
-                    )
-                );
-                wifi_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Current Gateway",
-                        ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
-                    )
-                );
-                wifi_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Current DNS",
-                        ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
-                    )
-                );
-            }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+                log_debug("Could not read IP settings for details page: " + e.message);
             }
-            log_debug("Could not read IP settings for details page: " + message);
         });
     }
 
@@ -253,17 +248,15 @@ public class MainWindowWifiDetailsEditController : Object {
         wifi_edit_ipv4_dns_entry.set_text("");
         sync_sensitivity();
 
-        MainWindowAsyncExecutor.run(() => {
-            NetworkIpSettings ip_settings;
-            string ip_error;
-            bool ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
+        nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
+            try {
+                var ip_settings = nm.get_wifi_network_ip_settings.end(res);
 
-            dispatch_ui(() => {
-                if (wifi_edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
-                    return;
-                }
+                dispatch_ui(() => {
+                    if (wifi_edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
+                        return;
+                    }
 
-                if (ok) {
                     wifi_edit_ipv4_method_dropdown.set_selected(
                         MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
                     );
@@ -275,18 +268,14 @@ public class MainWindowWifiDetailsEditController : Object {
                     wifi_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
                     wifi_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
                     wifi_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
-                } else {
-                    log_debug("Could not load current IP settings for edit: " + ip_error);
+                    sync_sensitivity();
+                }, epoch);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
                 }
-
-                sync_sensitivity();
-            }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+                log_debug("Could not load current IP settings for edit: " + e.message);
             }
-            log_debug("Could not load current IP settings for edit: " + message);
         });
     }
 
@@ -356,80 +345,75 @@ public class MainWindowWifiDetailsEditController : Object {
             return false;
         }
 
-        MainWindowAsyncExecutor.run(() => {
-            string error_message;
-            if (!nm.update_wifi_network_settings(
-                net,
-                password,
-                method,
-                ipv4_address,
-                ipv4_prefix,
-                gateway_auto,
-                ipv4_gateway,
-                dns_auto,
-                dns_servers,
-                out error_message
-            )) {
-                dispatch_ui(() => {
-                    on_error("Apply failed: " + error_message);
-                }, epoch);
-                return;
-            }
-
-            if (net.connected) {
-                string disconnect_error;
-                string? device_interface = null;
-                foreach (var dev in nm.get_devices()) {
-                    if (dev.device_path == net.device_path && dev.name.strip() != "") {
-                        device_interface = dev.name;
-                        break;
-                    }
-                }
-
-                if (device_interface == null) {
+        nm.update_wifi_network_settings.begin(
+            net,
+            password,
+            method,
+            ipv4_address,
+            ipv4_prefix,
+            gateway_auto,
+            ipv4_gateway,
+            dns_auto,
+            dns_servers,
+            null,
+            (obj, res) => {
+                try {
+                    nm.update_wifi_network_settings.end(res);
+                } catch (Error e) {
                     dispatch_ui(() => {
-                        on_error("Disconnect before reconnect failed: device interface not found.");
+                        on_error("Apply failed: " + e.message);
                     }, epoch);
                     return;
                 }
 
-                if (!nm.disconnect_device(device_interface, out disconnect_error)) {
+                if (!net.connected) {
                     dispatch_ui(() => {
-                        on_error("Disconnect before reconnect failed: " + disconnect_error);
+                        on_refresh_after_action(method != "disabled");
+                        on_open_details();
+                        disable_popup_text_input();
                     }, epoch);
                     return;
                 }
 
-                pending_wifi_connect.insert(net.ssid, true);
-                pending_wifi_seen_connecting.remove(net.ssid);
-
-                string reconnect_error;
-                bool reconnect_ok = nm.connect_wifi(net, null, out reconnect_error);
-                dispatch_ui(() => {
-                    if (!reconnect_ok) {
-                        pending_wifi_connect.remove(net.ssid);
-                        pending_wifi_seen_connecting.remove(net.ssid);
-                        on_error("Reconnect after edit failed: " + reconnect_error);
+                nm.disconnect_wifi.begin(net, null, (obj2, res2) => {
+                    try {
+                        nm.disconnect_wifi.end(res2);
+                    } catch (Error e) {
+                        dispatch_ui(() => {
+                            on_error("Disconnect before reconnect failed: " + e.message);
+                        }, epoch);
+                        return;
                     }
-                    on_refresh_after_action(true);
-                    on_open_details();
-                    disable_popup_text_input();
-                }, epoch);
-                return;
-            }
 
-            dispatch_ui(() => {
-                on_refresh_after_action(method != "disabled");
-                on_open_details();
-                disable_popup_text_input();
-            }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+                    pending_wifi_connect.insert(net.ssid, true);
+                    pending_wifi_seen_connecting.remove(net.ssid);
+
+                    nm.connect_wifi.begin(net, null, null, (obj3, res3) => {
+                        try {
+                            nm.connect_wifi.end(res3);
+                            dispatch_ui(() => {
+                                on_refresh_after_action(true);
+                                on_open_details();
+                                disable_popup_text_input();
+                            }, epoch);
+                        } catch (Error e) {
+                            dispatch_ui(() => {
+                                pending_wifi_connect.remove(net.ssid);
+                                pending_wifi_seen_connecting.remove(net.ssid);
+                                on_error("Reconnect after edit failed: " + e.message);
+                                on_refresh_after_action(true);
+                                on_open_details();
+                                disable_popup_text_input();
+                            }, epoch);
+                        }
+                    });
+                });
             }
-            on_error("Apply failed: " + message);
-        });
+        );
+
+        if (!is_ui_epoch_valid(epoch)) {
+            return false;
+        }
         return true;
     }
 }

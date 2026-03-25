@@ -242,50 +242,42 @@ public class MainWindowWifiRuntimeController : Object {
             pending_wifi_seen_connecting.remove(net.ssid);
         }
 
-        MainWindowAsyncExecutor.run(() => {
-            string error_message;
-            bool ok = nm.connect_wifi(net, password, out error_message);
+        nm.connect_wifi.begin(net, password, null, (obj, res) => {
+            try {
+                nm.connect_wifi.end(res);
+                dispatch_ui(() => {
+                        if (close_on_connect) {
+                            on_close_window();
+                            return;
+                        }
 
-            dispatch_ui(() => {
-                    if (!ok) {
-                        pending_wifi_connect.remove(net.ssid);
-                        pending_wifi_seen_connecting.remove(net.ssid);
-                        on_error("Connect failed: " + error_message);
-                        return;
-                    }
+                        on_refresh_after_action(true);
 
-                    if (close_on_connect) {
-                        on_close_window();
-                        return;
-                    }
+                        string pending_ssid = net.ssid;
+                        uint timeout_id = 0;
+                        timeout_id = Timeout.add(20000, () => {
+                            untrack_timeout_source(timeout_id);
+                            if (!is_ui_epoch_valid(epoch)) {
+                                return false;
+                            }
 
-                    on_refresh_after_action(true);
-
-                    string pending_ssid = net.ssid;
-                    uint timeout_id = 0;
-                    timeout_id = Timeout.add(20000, () => {
-                        untrack_timeout_source(timeout_id);
-                        if (!is_ui_epoch_valid(epoch)) {
+                            if (pending_wifi_connect.contains(pending_ssid)) {
+                                pending_wifi_connect.remove(pending_ssid);
+                                pending_wifi_seen_connecting.remove(pending_ssid);
+                                on_refresh_wifi();
+                            }
                             return false;
-                        }
-
-                        if (pending_wifi_connect.contains(pending_ssid)) {
-                            pending_wifi_connect.remove(pending_ssid);
-                            pending_wifi_seen_connecting.remove(pending_ssid);
-                            on_refresh_wifi();
-                        }
-                        return false;
-                    });
-                    track_timeout_source(timeout_id);
-                }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+                        });
+                        track_timeout_source(timeout_id);
+                    }, epoch);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid(epoch)) {
+                    return;
+                }
+                pending_wifi_connect.remove(net.ssid);
+                pending_wifi_seen_connecting.remove(net.ssid);
+                on_error("Connect failed: " + e.message);
             }
-            pending_wifi_connect.remove(net.ssid);
-            pending_wifi_seen_connecting.remove(net.ssid);
-            on_error("Connect failed: " + message);
         });
     }
 
