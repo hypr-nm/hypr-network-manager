@@ -16,6 +16,7 @@ executable(
     'src/backend/nm_wifi_settings_builder.vala',
     'src/backend/nm_status_formatter.vala',
     'src/backend/nm_ethernet_client.vala',
+    'src/backend/nm_wifi_client.vala',
     'src/backend/nm_client.vala',
     'src/backend/nm_vpn_client.vala',
     'src/ui/blank_window.vala',
