@@ -74,58 +74,78 @@ public class MainWindowWifiDetailsEditController : Object {
             MainWindowHelpers.build_details_row("Mode", MainWindowHelpers.get_mode_label(net.mode))
         );
 
-        NetworkIpSettings ip_settings;
-        string ip_error;
-        bool ip_ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
-        if (!ip_ok && ip_error != "") {
-            log_debug("Could not read IP settings for details page: " + ip_error);
-        }
+        wifi_details_ip_rows.append(
+            MainWindowHelpers.build_details_row("Loading", "Reading IP settings...")
+        );
 
-        wifi_details_ip_rows.append(
-            MainWindowHelpers.build_details_row(
-                "Configured IPv4 Method",
-                MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
-            )
-        );
-        wifi_details_ip_rows.append(
-            MainWindowHelpers.build_details_row(
-                "Configured IPv4 Address",
-                MainWindowHelpers.format_ip_with_prefix(
-                    ip_settings.configured_address,
-                    ip_settings.configured_prefix
-                )
-            )
-        );
-        wifi_details_ip_rows.append(
-            MainWindowHelpers.build_details_row(
-                "Configured Gateway",
-                ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
-            )
-        );
-        wifi_details_ip_rows.append(
-            MainWindowHelpers.build_details_row(
-                "Configured DNS",
-                ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
-            )
-        );
-        wifi_details_ip_rows.append(
-            MainWindowHelpers.build_details_row(
-                "Current IPv4 Address",
-                MainWindowHelpers.format_ip_with_prefix(ip_settings.current_address, ip_settings.current_prefix)
-            )
-        );
-        wifi_details_ip_rows.append(
-            MainWindowHelpers.build_details_row(
-                "Current Gateway",
-                ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
-            )
-        );
-        wifi_details_ip_rows.append(
-            MainWindowHelpers.build_details_row(
-                "Current DNS",
-                ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
-            )
-        );
+        MainWindowAsyncExecutor.run(() => {
+            NetworkIpSettings ip_settings;
+            string ip_error;
+            bool ip_ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
+
+            MainWindowAsyncExecutor.dispatch(() => {
+                if (wifi_details_title.get_text() != net.ssid) {
+                    return;
+                }
+
+                if (!ip_ok && ip_error != "") {
+                    log_debug("Could not read IP settings for details page: " + ip_error);
+                }
+
+                MainWindowHelpers.clear_box(wifi_details_ip_rows);
+                wifi_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured IPv4 Method",
+                        MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
+                    )
+                );
+                wifi_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured IPv4 Address",
+                        MainWindowHelpers.format_ip_with_prefix(
+                            ip_settings.configured_address,
+                            ip_settings.configured_prefix
+                        )
+                    )
+                );
+                wifi_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured Gateway",
+                        ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
+                    )
+                );
+                wifi_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Configured DNS",
+                        ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
+                    )
+                );
+                wifi_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Current IPv4 Address",
+                        MainWindowHelpers.format_ip_with_prefix(
+                            ip_settings.current_address,
+                            ip_settings.current_prefix
+                        )
+                    )
+                );
+                wifi_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Current Gateway",
+                        ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
+                    )
+                );
+                wifi_details_ip_rows.append(
+                    MainWindowHelpers.build_details_row(
+                        "Current DNS",
+                        ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
+                    )
+                );
+            });
+        },
+        (message) => {
+            log_debug("Could not read IP settings for details page: " + message);
+        });
     }
 
     public static void open_wifi_edit(
@@ -158,36 +178,51 @@ public class MainWindowWifiDetailsEditController : Object {
             wifi_edit_note.set_text("Open network. Password is not required.");
         }
 
-        NetworkIpSettings ip_settings;
-        string ip_error;
-        if (nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error)) {
-            wifi_edit_ipv4_method_dropdown.set_selected(
-                MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
-            );
-            wifi_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
-            wifi_edit_ipv4_prefix_entry.set_text(
-                ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
-            );
-            wifi_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
-            wifi_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
-            wifi_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
-            wifi_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
-        } else {
-            log_debug("Could not load current IP settings for edit: " + ip_error);
-            wifi_edit_ipv4_method_dropdown.set_selected(0);
-            wifi_edit_ipv4_address_entry.set_text("");
-            wifi_edit_ipv4_prefix_entry.set_text("");
-            wifi_edit_gateway_auto_switch.set_active(true);
-            wifi_edit_ipv4_gateway_entry.set_text("");
-            wifi_edit_dns_auto_switch.set_active(true);
-            wifi_edit_ipv4_dns_entry.set_text("");
-        }
-
-        sync_sensitivity();
-
         wifi_stack.set_visible_child_name("edit");
         enable_popup_text_input();
         wifi_edit_password_entry.grab_focus();
+
+        wifi_edit_ipv4_method_dropdown.set_selected(0);
+        wifi_edit_ipv4_address_entry.set_text("");
+        wifi_edit_ipv4_prefix_entry.set_text("");
+        wifi_edit_gateway_auto_switch.set_active(true);
+        wifi_edit_ipv4_gateway_entry.set_text("");
+        wifi_edit_dns_auto_switch.set_active(true);
+        wifi_edit_ipv4_dns_entry.set_text("");
+        sync_sensitivity();
+
+        MainWindowAsyncExecutor.run(() => {
+            NetworkIpSettings ip_settings;
+            string ip_error;
+            bool ok = nm.get_wifi_network_ip_settings(net, out ip_settings, out ip_error);
+
+            MainWindowAsyncExecutor.dispatch(() => {
+                if (wifi_edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
+                    return;
+                }
+
+                if (ok) {
+                    wifi_edit_ipv4_method_dropdown.set_selected(
+                        MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
+                    );
+                    wifi_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
+                    wifi_edit_ipv4_prefix_entry.set_text(
+                        ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
+                    );
+                    wifi_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
+                    wifi_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
+                    wifi_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
+                    wifi_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
+                } else {
+                    log_debug("Could not load current IP settings for edit: " + ip_error);
+                }
+
+                sync_sensitivity();
+            });
+        },
+        (message) => {
+            log_debug("Could not load current IP settings for edit: " + message);
+        });
     }
 
     public static bool apply_wifi_edit(
@@ -255,48 +290,62 @@ public class MainWindowWifiDetailsEditController : Object {
             return false;
         }
 
-        string error_message;
-        if (!nm.update_wifi_network_settings(
-            net,
-            password,
-            method,
-            ipv4_address,
-            ipv4_prefix,
-            gateway_auto,
-            ipv4_gateway,
-            dns_auto,
-            dns_servers,
-            out error_message
-        )) {
-            on_error("Apply failed: " + error_message);
-            return false;
-        }
-
-        if (net.connected) {
-            string disconnect_error;
-            if (!nm.disconnect_wifi(net, out disconnect_error)) {
-                on_error("Disconnect before reconnect failed: " + disconnect_error);
-                return false;
+        MainWindowAsyncExecutor.run(() => {
+            string error_message;
+            if (!nm.update_wifi_network_settings(
+                net,
+                password,
+                method,
+                ipv4_address,
+                ipv4_prefix,
+                gateway_auto,
+                ipv4_gateway,
+                dns_auto,
+                dns_servers,
+                out error_message
+            )) {
+                MainWindowAsyncExecutor.dispatch(() => {
+                    on_error("Apply failed: " + error_message);
+                });
+                return;
             }
 
-            Timeout.add(750, () => {
+            if (net.connected) {
+                string disconnect_error;
+                if (!nm.disconnect_wifi(net, out disconnect_error)) {
+                    MainWindowAsyncExecutor.dispatch(() => {
+                        on_error("Disconnect before reconnect failed: " + disconnect_error);
+                    });
+                    return;
+                }
+
                 pending_wifi_connect.insert(net.ssid, true);
                 pending_wifi_seen_connecting.remove(net.ssid);
-                string reconnect_error;
-                if (!nm.connect_wifi(net, null, out reconnect_error)) {
-                    pending_wifi_connect.remove(net.ssid);
-                    pending_wifi_seen_connecting.remove(net.ssid);
-                    on_error("Reconnect after edit failed: " + reconnect_error);
-                }
-                on_refresh_after_action(true);
-                return false;
-            });
-        } else {
-            on_refresh_after_action(method != "disabled");
-        }
 
-        on_open_details();
-        disable_popup_text_input();
+                string reconnect_error;
+                bool reconnect_ok = nm.connect_wifi(net, null, out reconnect_error);
+                MainWindowAsyncExecutor.dispatch(() => {
+                    if (!reconnect_ok) {
+                        pending_wifi_connect.remove(net.ssid);
+                        pending_wifi_seen_connecting.remove(net.ssid);
+                        on_error("Reconnect after edit failed: " + reconnect_error);
+                    }
+                    on_refresh_after_action(true);
+                    on_open_details();
+                    disable_popup_text_input();
+                });
+                return;
+            }
+
+            MainWindowAsyncExecutor.dispatch(() => {
+                on_refresh_after_action(method != "disabled");
+                on_open_details();
+                disable_popup_text_input();
+            });
+        },
+        (message) => {
+            on_error("Apply failed: " + message);
+        });
         return true;
     }
 }

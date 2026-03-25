@@ -14,15 +14,16 @@ public class MainWindowAsyncExecutor : Object {
         string spawn_error_prefix = "Async task failed"
     ) {
         try {
-            Thread.create<void>(() => {
+            new Thread<void>.try("hyp-nm-ui", () => {
                 worker();
                 return;
-            }, false);
+            });
             return true;
         } catch (ThreadError e) {
             if (on_spawn_error != null) {
+                string message = e.message;
                 dispatch(() => {
-                    on_spawn_error(spawn_error_prefix + ": " + e.message);
+                    on_spawn_error(spawn_error_prefix + ": " + message);
                 });
             }
             return false;
