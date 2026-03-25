@@ -10,6 +10,7 @@ const string NM_IP4_CONFIG_IFACE = "org.freedesktop.NetworkManager.IP4Config";
 const string NM_SETTINGS_PATH = "/org/freedesktop/NetworkManager/Settings";
 const string NM_SETTINGS_IFACE = "org.freedesktop.NetworkManager.Settings";
 const string NM_CONN_IFACE = "org.freedesktop.NetworkManager.Settings.Connection";
+const int NM_DBUS_TIMEOUT_MS = 10000;
 const uint32 NM_DEVICE_TYPE_ETHERNET = 1;
 const uint32 NM_DEVICE_TYPE_WIFI = 2;
 const uint32 NM_DEVICE_STATE_DISCONNECTED = 30;

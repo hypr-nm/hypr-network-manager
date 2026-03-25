@@ -30,9 +30,7 @@ public class NetworkManagerClientVala : Object {
         var result = proxy.call_sync(
             "Get",
             new Variant("(ss)", iface, prop),
-            DBusCallFlags.NONE,
-            -1,
-            null
+            DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
         );
         var boxed = result.get_child_value(0);
         return boxed.get_variant();
@@ -47,13 +45,13 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var conns = list_res.get_child_value(0);
 
             for (int i = 0; i < conns.n_children(); i++) {
                 string conn_path = conns.get_child_value(i).get_string();
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
 
                 Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
@@ -90,13 +88,13 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var conns = list_res.get_child_value(0);
 
             for (int i = 0; i < conns.n_children(); i++) {
                 string conn_path = conns.get_child_value(i).get_string();
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
 
                 Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
@@ -142,13 +140,13 @@ public class NetworkManagerClientVala : Object {
     private string? find_connection_by_uuid(string uuid) {
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var conns = list_res.get_child_value(0);
 
             for (int i = 0; i < conns.n_children(); i++) {
                 string conn_path = conns.get_child_value(i).get_string();
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
 
                 Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
@@ -174,13 +172,13 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var conns = list_res.get_child_value(0);
 
             for (int i = 0; i < conns.n_children(); i++) {
                 string conn_path = conns.get_child_value(i).get_string();
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
 
                 Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
@@ -220,13 +218,13 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var conns = list_res.get_child_value(0);
 
             for (int i = 0; i < conns.n_children(); i++) {
                 string conn_path = conns.get_child_value(i).get_string();
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
 
                 Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
@@ -350,7 +348,7 @@ public class NetworkManagerClientVala : Object {
                 }
 
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
                 fill_configured_ipv4_from_settings(all_settings, ip_settings);
             } catch (Error e) {
@@ -427,7 +425,7 @@ public class NetworkManagerClientVala : Object {
             }
 
             var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var all_settings = settings_res.get_child_value(0);
 
             Variant updated_ipv4;
@@ -456,9 +454,7 @@ public class NetworkManagerClientVala : Object {
             conn.call_sync(
                 "Update",
                 new Variant("(@a{sa{sv}})", updated_settings),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -493,9 +489,7 @@ public class NetworkManagerClientVala : Object {
                     var settings_res = conn.call_sync(
                         "GetSettings",
                         null,
-                        DBusCallFlags.NONE,
-                        -1,
-                        null
+                        DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
                     );
                     var all_settings = settings_res.get_child_value(0);
                     fill_configured_ipv4_from_settings(all_settings, ip_settings);
@@ -576,7 +570,7 @@ public class NetworkManagerClientVala : Object {
             }
 
             var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var all_settings = settings_res.get_child_value(0);
 
             Variant updated_ipv4;
@@ -605,9 +599,7 @@ public class NetworkManagerClientVala : Object {
             conn.call_sync(
                 "Update",
                 new Variant("(@a{sa{sv}})", updated_settings),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -650,7 +642,7 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var devices = devices_res.get_child_value(0);
 
             for (int i = 0; i < devices.n_children(); i++) {
@@ -688,9 +680,7 @@ public class NetworkManagerClientVala : Object {
                             var settings_res = conn.call_sync(
                                 "GetSettings",
                                 null,
-                                DBusCallFlags.NONE,
-                                -1,
-                                null
+                                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
                             );
                             var all_settings = settings_res.get_child_value(0);
 
@@ -769,9 +759,7 @@ public class NetworkManagerClientVala : Object {
             proxy.call_sync(
                 "Set",
                 new Variant("(ssv)", NM_IFACE, prop_name, new Variant.boolean(value)),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -791,9 +779,7 @@ public class NetworkManagerClientVala : Object {
             nm.call_sync(
                 "Enable",
                 new Variant("(b)", enabled),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -826,7 +812,7 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var devices = devices_res.get_child_value(0);
 
             for (int i = 0; i < devices.n_children(); i++) {
@@ -839,7 +825,7 @@ public class NetworkManagerClientVala : Object {
                 string active_ap_path = get_prop(dev_path, NM_WIRELESS_IFACE, "ActiveAccessPoint").get_string();
 
                 var wifi = make_proxy(dev_path, NM_WIRELESS_IFACE);
-                var aps_res = wifi.call_sync("GetAccessPoints", null, DBusCallFlags.NONE, -1, null);
+                var aps_res = wifi.call_sync("GetAccessPoints", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var aps = aps_res.get_child_value(0);
 
                 for (int j = 0; j < aps.n_children(); j++) {
@@ -957,9 +943,7 @@ public class NetworkManagerClientVala : Object {
             nm.call_sync(
                 "ActivateConnection",
                 new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -1020,9 +1004,7 @@ public class NetworkManagerClientVala : Object {
             nm.call_sync(
                 "AddAndActivateConnection",
                 new Variant("(@a{sa{sv}}oo)", conn.end(), network.device_path, network.ap_path),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -1036,7 +1018,7 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var dev = make_proxy(network.device_path, NM_DEVICE_IFACE);
-            dev.call_sync("Disconnect", null, DBusCallFlags.NONE, -1, null);
+            dev.call_sync("Disconnect", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             return true;
         } catch (Error e) {
             error_message = e.message;
@@ -1069,7 +1051,7 @@ public class NetworkManagerClientVala : Object {
             }
 
             var conn = make_proxy(conn_path, NM_CONN_IFACE);
-            conn.call_sync("Delete", null, DBusCallFlags.NONE, -1, null);
+            conn.call_sync("Delete", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             return true;
         } catch (Error e) {
             error_message = e.message;
@@ -1082,7 +1064,7 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var devices = devices_res.get_child_value(0);
 
             for (int i = 0; i < devices.n_children(); i++) {
@@ -1093,7 +1075,7 @@ public class NetworkManagerClientVala : Object {
                 }
 
                 var dev = make_proxy(dev_path, NM_DEVICE_IFACE);
-                dev.call_sync("Disconnect", null, DBusCallFlags.NONE, -1, null);
+                dev.call_sync("Disconnect", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 return true;
             }
 
@@ -1122,13 +1104,13 @@ public class NetworkManagerClientVala : Object {
             }
 
             var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, -1, null);
+            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var conns = list_res.get_child_value(0);
 
             for (int i = 0; i < conns.n_children(); i++) {
                 string conn_path = conns.get_child_value(i).get_string();
                 var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
 
                 Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
@@ -1186,9 +1168,7 @@ public class NetworkManagerClientVala : Object {
             nm.call_sync(
                 "ActivateConnection",
                 new Variant("(ooo)", conn_path, "/", "/"),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -1209,9 +1189,7 @@ public class NetworkManagerClientVala : Object {
             nm.call_sync(
                 "ActivateConnection",
                 new Variant("(ooo)", conn_path, "/", "/"),
-                DBusCallFlags.NONE,
-                -1,
-                null
+                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
             );
             return true;
         } catch (Error e) {
@@ -1235,9 +1213,7 @@ public class NetworkManagerClientVala : Object {
                 nm.call_sync(
                     "DeactivateConnection",
                     new Variant("(o)", ac_path),
-                    DBusCallFlags.NONE,
-                    -1,
-                    null
+                    DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
                 );
                 return true;
             }
@@ -1263,7 +1239,7 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var devices = devices_res.get_child_value(0);
 
             uint scanned = 0;
@@ -1279,9 +1255,7 @@ public class NetworkManagerClientVala : Object {
                 wifi.call_sync(
                     "RequestScan",
                     new Variant("(@a{sv})", options.end()),
-                    DBusCallFlags.NONE,
-                    -1,
-                    null
+                    DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
                 );
                 scanned++;
             }
@@ -1300,7 +1274,7 @@ public class NetworkManagerClientVala : Object {
 
         try {
             var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, -1, null);
+            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
             var devices = devices_res.get_child_value(0);
 
             for (int i = 0; i < devices.n_children(); i++) {
