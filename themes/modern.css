@@ -390,8 +390,8 @@ button.nm-nav-back,
   padding: 0 2px;
 }
 
-button.nm-nav-back > label,
-.nm-nav-back > label {
+button.nm-nav-back label,
+.nm-nav-back label {
   text-decoration-line: underline;
   text-decoration-style: solid;
   text-decoration-color: currentColor;
@@ -404,8 +404,8 @@ button.nm-nav-back:hover,
   color: var(--fg);
 }
 
-button.nm-nav-back:hover > label,
-.nm-nav-back:hover > label {
+button.nm-nav-back:hover label,
+.nm-nav-back:hover label {
   text-decoration-thickness: 2px;
 }
 
