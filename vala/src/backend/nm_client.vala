@@ -1,5 +1,10 @@
 using GLib;
 
+public class WifiRefreshData : Object {
+    public List<WifiNetwork> networks { get; construct; }
+    public List<NetworkDevice> devices { get; construct; }
+}
+
 public class NetworkManagerClientVala : Object {
     private bool debug_enabled;
 
@@ -31,6 +36,38 @@ public class NetworkManagerClientVala : Object {
             "Get",
             new Variant("(ss)", iface, prop),
             DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
+        );
+        var boxed = result.get_child_value(0);
+        return boxed.get_variant();
+    }
+
+    private async Variant call_async(
+        DBusProxy proxy,
+        string method,
+        Variant? parameters,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield proxy.call(
+            method,
+            parameters,
+            DBusCallFlags.NONE,
+            NM_DBUS_TIMEOUT_MS,
+            cancellable
+        );
+    }
+
+    private async Variant get_prop_async(
+        string object_path,
+        string iface,
+        string prop,
+        Cancellable? cancellable = null
+    ) throws Error {
+        var proxy = make_proxy(object_path, DBUS_PROPS_IFACE);
+        var result = yield call_async(
+            proxy,
+            "Get",
+            new Variant("(ss)", iface, prop),
+            cancellable
         );
         var boxed = result.get_child_value(0);
         return boxed.get_variant();
@@ -77,6 +114,44 @@ public class NetworkManagerClientVala : Object {
             }
         } catch (Error e) {
             debug_log("could not load saved ssids: " + e.message);
+        }
+
+        return saved;
+    }
+
+    private async HashTable<string, bool> get_saved_ssids_async(Cancellable? cancellable = null) throws Error {
+        var saved = new HashTable<string, bool>(str_hash, str_equal);
+
+        var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var list_res = yield call_async(settings, "ListConnections", null, cancellable);
+        var conns = list_res.get_child_value(0);
+
+        for (int i = 0; i < conns.n_children(); i++) {
+            string conn_path = conns.get_child_value(i).get_string();
+            var conn = make_proxy(conn_path, NM_CONN_IFACE);
+            var settings_res = yield call_async(conn, "GetSettings", null, cancellable);
+            var all_settings = settings_res.get_child_value(0);
+
+            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+            Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+            if (conn_group == null || wifi_group == null) {
+                continue;
+            }
+
+            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+            if (type_v == null || type_v.get_string() != "802-11-wireless") {
+                continue;
+            }
+
+            Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+            if (ssid_v == null) {
+                continue;
+            }
+
+            string ssid = decode_ssid(ssid_v);
+            if (ssid != "") {
+                saved.insert(ssid, true);
+            }
         }
 
         return saved;
@@ -135,6 +210,274 @@ public class NetworkManagerClientVala : Object {
         }
 
         return unique;
+    }
+
+    private async HashTable<string, string> get_unique_saved_ssid_uuids_async(
+        Cancellable? cancellable = null
+    ) throws Error {
+        var unique = new HashTable<string, string>(str_hash, str_equal);
+        var duplicates = new HashTable<string, bool>(str_hash, str_equal);
+
+        var settings = make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var list_res = yield call_async(settings, "ListConnections", null, cancellable);
+        var conns = list_res.get_child_value(0);
+
+        for (int i = 0; i < conns.n_children(); i++) {
+            string conn_path = conns.get_child_value(i).get_string();
+            var conn = make_proxy(conn_path, NM_CONN_IFACE);
+            var settings_res = yield call_async(conn, "GetSettings", null, cancellable);
+            var all_settings = settings_res.get_child_value(0);
+
+            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+            Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
+            if (conn_group == null || wifi_group == null) {
+                continue;
+            }
+
+            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+            Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+            Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
+            if (type_v == null
+                || type_v.get_string() != "802-11-wireless"
+                || uuid_v == null
+                || ssid_v == null) {
+                continue;
+            }
+
+            string ssid = decode_ssid(ssid_v);
+            if (ssid == "") {
+                continue;
+            }
+
+            if (duplicates.contains(ssid)) {
+                continue;
+            }
+
+            if (unique.contains(ssid)) {
+                unique.remove(ssid);
+                duplicates.insert(ssid, true);
+                continue;
+            }
+
+            unique.insert(ssid, uuid_v.get_string());
+        }
+
+        return unique;
+    }
+
+    private async List<WifiNetwork> get_wifi_networks_async(Cancellable? cancellable = null) throws Error {
+        var networks = new List<WifiNetwork>();
+        var by_ssid = new HashTable<string, WifiNetwork>(str_hash, str_equal);
+        var saved_ssids = yield get_saved_ssids_async(cancellable);
+        var unique_saved_ssid_uuids = yield get_unique_saved_ssid_uuids_async(cancellable);
+
+        var nm = make_proxy(NM_PATH, NM_IFACE);
+        var devices_res = yield call_async(nm, "GetDevices", null, cancellable);
+        var devices = devices_res.get_child_value(0);
+
+        for (int i = 0; i < devices.n_children(); i++) {
+            string dev_path = devices.get_child_value(i).get_string();
+            uint32 dev_type = (yield get_prop_async(
+                dev_path,
+                NM_DEVICE_IFACE,
+                "DeviceType",
+                cancellable
+            )).get_uint32();
+            if (dev_type != NM_DEVICE_TYPE_WIFI) {
+                continue;
+            }
+
+            string active_ap_path = (yield get_prop_async(
+                dev_path,
+                NM_WIRELESS_IFACE,
+                "ActiveAccessPoint",
+                cancellable
+            )).get_string();
+
+            var wifi = make_proxy(dev_path, NM_WIRELESS_IFACE);
+            var aps_res = yield call_async(wifi, "GetAccessPoints", null, cancellable);
+            var aps = aps_res.get_child_value(0);
+
+            for (int j = 0; j < aps.n_children(); j++) {
+                string ap_path = aps.get_child_value(j).get_string();
+
+                string ssid = decode_ssid(yield get_prop_async(ap_path, NM_AP_IFACE, "Ssid", cancellable));
+                if (ssid == "") {
+                    ssid = (yield get_prop_async(ap_path, NM_AP_IFACE, "HwAddress", cancellable)).get_string();
+                }
+
+                uint8 signal = (yield get_prop_async(ap_path, NM_AP_IFACE, "Strength", cancellable)).get_byte();
+                uint32 flags = (yield get_prop_async(ap_path, NM_AP_IFACE, "Flags", cancellable)).get_uint32();
+                uint32 wpa_flags = (yield get_prop_async(ap_path, NM_AP_IFACE, "WpaFlags", cancellable)).get_uint32();
+                uint32 rsn_flags = (yield get_prop_async(ap_path, NM_AP_IFACE, "RsnFlags", cancellable)).get_uint32();
+                string bssid = (yield get_prop_async(ap_path, NM_AP_IFACE, "HwAddress", cancellable)).get_string();
+                uint32 frequency = (yield get_prop_async(ap_path, NM_AP_IFACE, "Frequency", cancellable)).get_uint32();
+                uint32 max_bitrate = (yield get_prop_async(ap_path, NM_AP_IFACE, "MaxBitrate", cancellable)).get_uint32();
+                uint32 mode = (yield get_prop_async(ap_path, NM_AP_IFACE, "Mode", cancellable)).get_uint32();
+                bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
+                bool is_connected = (ap_path == active_ap_path);
+
+                WifiNetwork? existing = by_ssid.get(ssid);
+                if (existing != null) {
+                    bool prefer_candidate = false;
+
+                    if (is_connected && !existing.connected) {
+                        prefer_candidate = true;
+                    } else if (is_connected == existing.connected && signal > existing.signal) {
+                        prefer_candidate = true;
+                    }
+
+                    if (!prefer_candidate) {
+                        continue;
+                    }
+
+                    existing.signal = signal;
+                    existing.connected = is_connected;
+                    existing.is_secured = is_secured;
+                    existing.saved = saved_ssids.contains(ssid);
+                    existing.saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
+                        ? unique_saved_ssid_uuids.get(ssid)
+                        : "";
+                    existing.device_path = dev_path;
+                    existing.ap_path = ap_path;
+                    existing.bssid = bssid;
+                    existing.frequency_mhz = frequency;
+                    existing.max_bitrate_kbps = max_bitrate;
+                    existing.mode = mode;
+                    existing.flags = flags;
+                    existing.wpa_flags = wpa_flags;
+                    existing.rsn_flags = rsn_flags;
+                    continue;
+                }
+
+                var network = new WifiNetwork() {
+                    ssid = ssid,
+                    saved_connection_uuid = unique_saved_ssid_uuids.contains(ssid)
+                        ? unique_saved_ssid_uuids.get(ssid)
+                        : "",
+                    signal = signal,
+                    connected = is_connected,
+                    is_secured = is_secured,
+                    saved = saved_ssids.contains(ssid),
+                    device_path = dev_path,
+                    ap_path = ap_path,
+                    bssid = bssid,
+                    frequency_mhz = frequency,
+                    max_bitrate_kbps = max_bitrate,
+                    mode = mode,
+                    flags = flags,
+                    wpa_flags = wpa_flags,
+                    rsn_flags = rsn_flags
+                };
+                by_ssid.insert(ssid, network);
+                networks.append(network);
+            }
+        }
+
+        networks.sort((a, b) => {
+            if (a.connected != b.connected) {
+                return a.connected ? -1 : 1;
+            }
+            return (int) b.signal - (int) a.signal;
+        });
+
+        return networks;
+    }
+
+    private async List<NetworkDevice> get_devices_async(Cancellable? cancellable = null) throws Error {
+        var devices_out = new List<NetworkDevice>();
+
+        var nm = make_proxy(NM_PATH, NM_IFACE);
+        var devices_res = yield call_async(nm, "GetDevices", null, cancellable);
+        var devices = devices_res.get_child_value(0);
+
+        for (int i = 0; i < devices.n_children(); i++) {
+            string dev_path = devices.get_child_value(i).get_string();
+            string iface = (yield get_prop_async(dev_path, NM_DEVICE_IFACE, "Interface", cancellable)).get_string();
+            if (iface == "" || iface == "lo") {
+                continue;
+            }
+
+            uint32 dev_type = (yield get_prop_async(dev_path, NM_DEVICE_IFACE, "DeviceType", cancellable)).get_uint32();
+            uint32 state = (yield get_prop_async(dev_path, NM_DEVICE_IFACE, "State", cancellable)).get_uint32();
+
+            string conn_name = "";
+            string conn_uuid = "";
+            string ac_path = (yield get_prop_async(
+                dev_path,
+                NM_DEVICE_IFACE,
+                "ActiveConnection",
+                cancellable
+            )).get_string();
+            if (ac_path != "/") {
+                try {
+                    conn_name = (yield get_prop_async(ac_path, NM_ACTIVE_CONN_IFACE, "Id", cancellable)).get_string();
+                    conn_uuid = (yield get_prop_async(ac_path, NM_ACTIVE_CONN_IFACE, "Uuid", cancellable)).get_string();
+                } catch (Error e) {
+                    debug_log("Could not read active connection id: " + e.message);
+                }
+            }
+
+            if (conn_name == "" && dev_type == NM_DEVICE_TYPE_ETHERNET) {
+                try {
+                    Variant available_connections = yield get_prop_async(
+                        dev_path,
+                        NM_DEVICE_IFACE,
+                        "AvailableConnections",
+                        cancellable
+                    );
+                    for (int j = 0; j < available_connections.n_children(); j++) {
+                        string conn_path = available_connections.get_child_value(j).get_string();
+                        var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                        var settings_res = yield call_async(conn, "GetSettings", null, cancellable);
+                        var all_settings = settings_res.get_child_value(0);
+
+                        Variant? conn_group = all_settings.lookup_value(
+                            "connection",
+                            new VariantType("a{sv}")
+                        );
+                        if (conn_group == null) {
+                            continue;
+                        }
+
+                        Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+                        if (type_v == null || type_v.get_string() != "802-3-ethernet") {
+                            continue;
+                        }
+
+                        Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+                        Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+                        if (id_v != null && id_v.get_string() != "") {
+                            conn_name = id_v.get_string();
+                            conn_uuid = uuid_v != null ? uuid_v.get_string() : "";
+                            break;
+                        }
+                    }
+                } catch (Error e) {
+                    debug_log("Could not read available Ethernet profiles: " + e.message);
+                }
+            }
+
+            devices_out.append(new NetworkDevice() {
+                name = iface,
+                device_path = dev_path,
+                device_type = dev_type,
+                state = state,
+                connection = conn_name,
+                connection_uuid = conn_uuid
+            });
+        }
+
+        return devices_out;
+    }
+
+    public async WifiRefreshData get_wifi_refresh_data_async(Cancellable? cancellable = null) throws Error {
+        var networks = yield get_wifi_networks_async(cancellable);
+        var devices = yield get_devices_async(cancellable);
+        return new WifiRefreshData() {
+            networks = (owned) networks,
+            devices = (owned) devices
+        };
     }
 
     private string? find_connection_by_uuid(string uuid) {

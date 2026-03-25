@@ -2,11 +2,13 @@ public class MainWindowWifiRuntimeController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
+    private Cancellable? wifi_refresh_cancellable = null;
 
     public MainWindowWifiRuntimeController() {
     }
 
     public void on_page_leave() {
+        cancel_wifi_refresh();
         invalidate_ui_state();
     }
 
@@ -15,7 +17,15 @@ public class MainWindowWifiRuntimeController : Object {
             return;
         }
         is_disposed = true;
+        cancel_wifi_refresh();
         invalidate_ui_state();
+    }
+
+    private void cancel_wifi_refresh() {
+        if (wifi_refresh_cancellable != null) {
+            wifi_refresh_cancellable.cancel();
+            wifi_refresh_cancellable = null;
+        }
     }
 
     private uint capture_ui_epoch() {
@@ -95,11 +105,21 @@ public class MainWindowWifiRuntimeController : Object {
         on_hide_active_wifi_password_prompt();
         on_refresh_switch_states();
 
-        MainWindowAsyncExecutor.run(() => {
-            var networks = nm.get_wifi_networks();
-            var devices = nm.get_devices();
+        cancel_wifi_refresh();
+        var request_cancellable = new Cancellable();
+        wifi_refresh_cancellable = request_cancellable;
 
-            dispatch_ui(() => {
+        nm.get_wifi_refresh_data_async.begin(request_cancellable, (obj, res) => {
+            try {
+                var refresh_data = nm.get_wifi_refresh_data_async.end(res);
+                if (wifi_refresh_cancellable != request_cancellable) {
+                    return;
+                }
+
+                var networks = refresh_data.networks;
+                var devices = refresh_data.devices;
+
+                dispatch_ui(() => {
                     string? primary_connected_ssid = null;
 
                     active_wifi_connections.remove_all();
@@ -189,12 +209,16 @@ public class MainWindowWifiRuntimeController : Object {
 
                     on_log("Rendered %u Wi-Fi rows".printf(networks.length()));
                 }, epoch);
-        },
-        (message) => {
-            if (!is_ui_epoch_valid(epoch)) {
-                return;
+            } catch (Error e) {
+                if (e is IOError.CANCELLED || !is_ui_epoch_valid(epoch)) {
+                    return;
+                }
+                on_log("Wi-Fi refresh failed: " + e.message);
+            } finally {
+                if (wifi_refresh_cancellable == request_cancellable) {
+                    wifi_refresh_cancellable = null;
+                }
             }
-            on_log("Failed to spawn Wi-Fi refresh thread: " + message);
         });
     }
 
