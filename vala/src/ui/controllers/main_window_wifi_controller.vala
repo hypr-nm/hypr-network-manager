@@ -3,10 +3,10 @@ using Gtk;
 
 public class MainWindowWifiController : Object {
     public static void sync_edit_gateway_dns_sensitivity(
-        Gtk.Entry wifi_edit_ipv4_gateway_entry,
-        Gtk.Switch wifi_edit_gateway_auto_switch,
-        Gtk.Entry wifi_edit_ipv4_dns_entry,
-        Gtk.Switch wifi_edit_dns_auto_switch
+        Gtk.Entry? wifi_edit_ipv4_gateway_entry,
+        Gtk.Switch? wifi_edit_gateway_auto_switch,
+        Gtk.Entry? wifi_edit_ipv4_dns_entry,
+        Gtk.Switch? wifi_edit_dns_auto_switch
     ) {
         if (wifi_edit_ipv4_gateway_entry != null && wifi_edit_gateway_auto_switch != null) {
             wifi_edit_ipv4_gateway_entry.set_sensitive(!wifi_edit_gateway_auto_switch.get_active());
@@ -177,8 +177,8 @@ public class MainWindowWifiController : Object {
         out Gtk.Entry wifi_edit_ipv4_address_entry,
         out Gtk.Switch wifi_edit_gateway_auto_switch,
         out Gtk.Entry wifi_edit_ipv4_prefix_entry,
-        out Gtk.Switch wifi_edit_dns_auto_switch,
         out Gtk.Entry wifi_edit_ipv4_gateway_entry,
+        out Gtk.Switch wifi_edit_dns_auto_switch,
         out Gtk.Entry wifi_edit_ipv4_dns_entry,
         MainWindowActionCallback on_back,
         MainWindowActionCallback on_apply,
@@ -192,8 +192,8 @@ public class MainWindowWifiController : Object {
             out wifi_edit_ipv4_address_entry,
             out wifi_edit_gateway_auto_switch,
             out wifi_edit_ipv4_prefix_entry,
-            out wifi_edit_dns_auto_switch,
             out wifi_edit_ipv4_gateway_entry,
+            out wifi_edit_dns_auto_switch,
             out wifi_edit_ipv4_dns_entry,
             on_back,
             on_apply,

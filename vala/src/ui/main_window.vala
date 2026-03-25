@@ -312,6 +312,13 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void sync_wifi_edit_gateway_dns_sensitivity() {
+        if (wifi_edit_ipv4_gateway_entry == null
+            || wifi_edit_gateway_auto_switch == null
+            || wifi_edit_ipv4_dns_entry == null
+            || wifi_edit_dns_auto_switch == null) {
+            return;
+        }
+
         MainWindowWifiController.sync_edit_gateway_dns_sensitivity(
             wifi_edit_ipv4_gateway_entry,
             wifi_edit_gateway_auto_switch,
@@ -452,8 +459,8 @@ public class MainWindow : Gtk.ApplicationWindow {
             out wifi_edit_ipv4_address_entry,
             out wifi_edit_gateway_auto_switch,
             out wifi_edit_ipv4_prefix_entry,
-            out wifi_edit_dns_auto_switch,
             out wifi_edit_ipv4_gateway_entry,
+            out wifi_edit_dns_auto_switch,
             out wifi_edit_ipv4_dns_entry,
             () => {
                 set_popup_text_input_mode(false);

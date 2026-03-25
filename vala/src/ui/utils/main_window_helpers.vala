@@ -27,7 +27,11 @@ public class MainWindowHelpers : Object {
         return back_btn;
     }
 
-    public static void clear_listbox(Gtk.ListBox listbox) {
+    public static void clear_listbox(Gtk.ListBox? listbox) {
+        if (listbox == null) {
+            return;
+        }
+
         Gtk.Widget? child = listbox.get_first_child();
         while (child != null) {
             Gtk.Widget? next = child.get_next_sibling();
@@ -36,7 +40,11 @@ public class MainWindowHelpers : Object {
         }
     }
 
-    public static void clear_box(Gtk.Box box) {
+    public static void clear_box(Gtk.Box? box) {
+        if (box == null) {
+            return;
+        }
+
         Gtk.Widget? child = box.get_first_child();
         while (child != null) {
             Gtk.Widget? next = child.get_next_sibling();
