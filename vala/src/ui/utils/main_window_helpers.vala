@@ -77,19 +77,7 @@ public class MainWindowHelpers : Object {
     }
 
     public static string get_signal_bars(uint8 signal) {
-        if (signal >= 80) {
-            return "||||";
-        }
-        if (signal >= 60) {
-            return "|||.";
-        }
-        if (signal >= 40) {
-            return "||..";
-        }
-        if (signal >= 20) {
-            return "|...";
-        }
-        return "....";
+        return WifiSignalLevels.get_bars(signal);
     }
 
     public static bool icon_exists(string icon_name) {
@@ -103,19 +91,7 @@ public class MainWindowHelpers : Object {
     }
 
     public static string get_secured_signal_icon_name(uint8 signal) {
-        if (signal >= 80) {
-            return "network-wireless-signal-excellent-secure-symbolic";
-        }
-        if (signal >= 60) {
-            return "network-wireless-signal-good-secure-symbolic";
-        }
-        if (signal >= 40) {
-            return "network-wireless-signal-ok-secure-symbolic";
-        }
-        if (signal >= 20) {
-            return "network-wireless-signal-weak-secure-symbolic";
-        }
-        return "network-wireless-signal-none-secure-symbolic";
+        return WifiSignalLevels.get_secured_icon_name(signal);
     }
 
     public static string resolve_wifi_row_icon_name(WifiNetwork net) {

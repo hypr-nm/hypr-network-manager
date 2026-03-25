@@ -17,37 +17,13 @@ public class WifiNetwork : Object {
 
     public string signal_label {
         owned get {
-            if (signal >= 80) {
-                return "Excellent";
-            }
-            if (signal >= 60) {
-                return "Good";
-            }
-            if (signal >= 40) {
-                return "Fair";
-            }
-            if (signal >= 20) {
-                return "Weak";
-            }
-            return "Very Weak";
+            return WifiSignalLevels.get_label(signal);
         }
     }
 
     public string signal_icon_name {
         owned get {
-            if (signal >= 80) {
-                return "network-wireless-signal-excellent-symbolic";
-            }
-            if (signal >= 60) {
-                return "network-wireless-signal-good-symbolic";
-            }
-            if (signal >= 40) {
-                return "network-wireless-signal-ok-symbolic";
-            }
-            if (signal >= 20) {
-                return "network-wireless-signal-weak-symbolic";
-            }
-            return "network-wireless-signal-none-symbolic";
+            return WifiSignalLevels.get_icon_name(signal);
         }
     }
 }

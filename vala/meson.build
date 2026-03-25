@@ -9,6 +9,7 @@ executable(
     'src/constants.vala',
     'src/models/config.vala',
     'src/models/wifi_network.vala',
+    'src/models/wifi_signal_levels.vala',
     'src/models/network_ip_settings.vala',
     'src/models/network_device.vala',
     'src/models/vpn_connection.vala',
