@@ -58,8 +58,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Entry wifi_edit_ipv4_dns_entry;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
-    private Gtk.ListBox ethernet_listbox;
-    private Gtk.Stack ethernet_stack;
+    private MainWindowEthernetController ethernet_controller;
     private Gtk.ListBox vpn_listbox;
     private Gtk.Stack vpn_stack;
     private HashTable<string, bool> pending_wifi_connect;
@@ -116,6 +115,18 @@ public class MainWindow : Gtk.ApplicationWindow {
         set_opacity(1.0);
         add_css_class("nm-window");
         nm = new NetworkManagerClientVala(debug_enabled);
+        ethernet_controller = new MainWindowEthernetController(
+            nm,
+            (message) => {
+                show_error(message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action(request_wifi_scan);
+            },
+            (enabled) => {
+                set_popup_text_input_mode(enabled);
+            }
+        );
         pending_wifi_connect = new HashTable<string, bool>(str_hash, str_equal);
         pending_wifi_seen_connecting = new HashTable<string, bool>(str_hash, str_equal);
         active_wifi_connections = new HashTable<string, bool>(str_hash, str_equal);
@@ -559,13 +570,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_ethernet_section() {
-        MainWindowEthernetController.refresh(
-            ethernet_listbox,
-            ethernet_stack,
-            nm,
-            on_network_section_error,
-            on_network_section_refresh_after_action
-        );
+        ethernet_controller.refresh();
     }
 
     private void refresh_vpn_section() {
@@ -707,13 +712,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var eth_tab = new Gtk.Label("Ethernet");
         eth_tab.add_css_class("nm-tab-label");
         notebook.append_page(
-            MainWindowEthernetController.build_page(
-                out ethernet_listbox,
-                out ethernet_stack,
-                () => {
-                    refresh_ethernet_section();
-                }
-            ),
+            ethernet_controller.build_page(),
             eth_tab
         );
 

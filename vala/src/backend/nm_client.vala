@@ -168,13 +168,17 @@ public class NetworkManagerClientVala : Object {
         NmClientUtils.fill_configured_ipv4_from_settings(all_settings, out_ip);
     }
 
-    private void fill_runtime_ipv4_for_wifi(WifiNetwork network, NetworkIpSettings out_ip) {
-        if (!network.connected) {
+    private void fill_runtime_ipv4_for_device(
+        string device_path,
+        bool device_connected,
+        NetworkIpSettings out_ip
+    ) {
+        if (!device_connected) {
             return;
         }
 
         try {
-            string active_conn_path = get_prop(network.device_path, NM_DEVICE_IFACE, "ActiveConnection").get_string();
+            string active_conn_path = get_prop(device_path, NM_DEVICE_IFACE, "ActiveConnection").get_string();
             if (active_conn_path == "/") {
                 return;
             }
@@ -212,6 +216,10 @@ public class NetworkManagerClientVala : Object {
         } catch (Error e) {
             debug_log("could not read runtime IPv4 details: " + e.message);
         }
+    }
+
+    private void fill_runtime_ipv4_for_wifi(WifiNetwork network, NetworkIpSettings out_ip) {
+        fill_runtime_ipv4_for_device(network.device_path, network.connected, out_ip);
     }
 
     public bool get_wifi_network_ip_settings(
@@ -333,6 +341,140 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
+    public bool get_ethernet_device_ip_settings(
+        NetworkDevice device,
+        out NetworkIpSettings ip_settings,
+        out string error_message
+    ) {
+        error_message = "";
+        ip_settings = new NetworkIpSettings();
+
+        if (device.connection.strip() != "") {
+            try {
+                string? conn_path = find_connection_by_name(device.connection);
+                if (conn_path != null) {
+                    var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                    var settings_res = conn.call_sync(
+                        "GetSettings",
+                        null,
+                        DBusCallFlags.NONE,
+                        -1,
+                        null
+                    );
+                    var all_settings = settings_res.get_child_value(0);
+                    fill_configured_ipv4_from_settings(all_settings, ip_settings);
+                }
+            } catch (Error e) {
+                error_message = e.message;
+            }
+        }
+
+        fill_runtime_ipv4_for_device(device.device_path, device.is_connected, ip_settings);
+        return true;
+    }
+
+    public bool update_ethernet_device_settings(
+        NetworkDevice device,
+        string ipv4_method,
+        string ipv4_address,
+        uint32 ipv4_prefix,
+        bool gateway_auto,
+        string ipv4_gateway,
+        bool dns_auto,
+        string[] ipv4_dns_servers,
+        out string error_message
+    ) {
+        error_message = "";
+
+        if (device.connection.strip() == "") {
+            error_message = "No Ethernet profile is available for this interface.";
+            return false;
+        }
+
+        try {
+            string? conn_path = find_connection_by_name(device.connection);
+            if (conn_path == null) {
+                error_message = "No saved Ethernet profile found.";
+                return false;
+            }
+
+            string method = normalize_ipv4_method(ipv4_method);
+            string address = ipv4_address.strip();
+            string gateway = ipv4_gateway.strip();
+
+            if (!gateway_auto && gateway == "") {
+                error_message = "Manual gateway requires a gateway address.";
+                return false;
+            }
+
+            if (!dns_auto && ipv4_dns_servers.length == 0) {
+                error_message = "Manual DNS requires at least one DNS server.";
+                return false;
+            }
+
+            if (method == "manual") {
+                if (address == "") {
+                    error_message = "Manual IPv4 requires an address.";
+                    return false;
+                }
+                if (ipv4_prefix == 0 || ipv4_prefix > 32) {
+                    error_message = "Manual IPv4 prefix must be between 1 and 32.";
+                    return false;
+                }
+            }
+
+            var conn = make_proxy(conn_path, NM_CONN_IFACE);
+            var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, -1, null);
+            var all_settings = settings_res.get_child_value(0);
+
+            Variant updated_ipv4;
+            if (!NmWifiSettingsBuilder.build_updated_ipv4_section(
+                all_settings,
+                method,
+                address,
+                ipv4_prefix,
+                gateway_auto,
+                gateway,
+                dns_auto,
+                ipv4_dns_servers,
+                out updated_ipv4,
+                out error_message
+            )) {
+                return false;
+            }
+
+            Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings(
+                all_settings,
+                updated_ipv4,
+                false,
+                ""
+            );
+
+            conn.call_sync(
+                "Update",
+                new Variant("(@a{sa{sv}})", updated_settings),
+                DBusCallFlags.NONE,
+                -1,
+                null
+            );
+            return true;
+        } catch (Error e) {
+            error_message = e.message;
+            return false;
+        }
+    }
+
+    public bool connect_ethernet_device(NetworkDevice device, out string error_message) {
+        error_message = "";
+
+        if (device.connection.strip() == "") {
+            error_message = "No saved Ethernet profile available for this interface.";
+            return false;
+        }
+
+        return activate_connection(device.connection, out error_message);
+    }
+
     public bool is_networking_enabled(out string error_message) {
         error_message = "";
 
@@ -372,6 +514,49 @@ public class NetworkManagerClientVala : Object {
                         conn_name = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Id").get_string();
                     } catch (Error e) {
                         debug_log("Could not read active connection id: " + e.message);
+                    }
+                }
+
+                if (conn_name == "" && dev_type == NM_DEVICE_TYPE_ETHERNET) {
+                    try {
+                        Variant available_connections = get_prop(
+                            dev_path,
+                            NM_DEVICE_IFACE,
+                            "AvailableConnections"
+                        );
+                        for (int j = 0; j < available_connections.n_children(); j++) {
+                            string conn_path = available_connections.get_child_value(j).get_string();
+                            var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                            var settings_res = conn.call_sync(
+                                "GetSettings",
+                                null,
+                                DBusCallFlags.NONE,
+                                -1,
+                                null
+                            );
+                            var all_settings = settings_res.get_child_value(0);
+
+                            Variant? conn_group = all_settings.lookup_value(
+                                "connection",
+                                new VariantType("a{sv}")
+                            );
+                            if (conn_group == null) {
+                                continue;
+                            }
+
+                            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+                            if (type_v == null || type_v.get_string() != "802-3-ethernet") {
+                                continue;
+                            }
+
+                            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+                            if (id_v != null && id_v.get_string() != "") {
+                                conn_name = id_v.get_string();
+                                break;
+                            }
+                        }
+                    } catch (Error e) {
+                        debug_log("Could not read available Ethernet profiles: " + e.message);
                     }
                 }
 

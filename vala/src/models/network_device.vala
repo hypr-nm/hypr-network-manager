@@ -23,12 +23,42 @@ public class NetworkDevice : Object {
         }
     }
 
+    public bool is_connecting {
+        get {
+            return state >= 40 && state < NM_DEVICE_STATE_ACTIVATED;
+        }
+    }
+
     public string state_label {
         owned get {
-            if (state == NM_DEVICE_STATE_ACTIVATED) {
+            switch (state) {
+            case 10:
+                return "Unknown";
+            case 20:
+                return "Unavailable";
+            case 30:
+                return "Disconnected";
+            case 40:
+                return "Preparing";
+            case 50:
+                return "Configuring";
+            case 60:
+                return "Auth required";
+            case 70:
+                return "IP configuring";
+            case 80:
+                return "IP checking";
+            case 90:
+                return "Secondaries";
+            case 100:
                 return "Connected";
+            case 110:
+                return "Disconnecting";
+            case 120:
+                return "Failed";
+            default:
+                return "State %u".printf(state);
             }
-            return "Disconnected";
         }
     }
 }
