@@ -438,76 +438,66 @@ public class MainWindowEthernetController : Object {
         ethernet_details_ip_rows.append(MainWindowHelpers.build_details_row("Loading", "Reading IP settings..."));
 
         nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
-            try {
-                var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
-                if (!is_ui_epoch_valid(epoch)) {
-                    return;
-                }
-
-                if (selected_ethernet_device == null
-                    || (selected_ethernet_device.device_path != dev.device_path
-                        && selected_ethernet_device.name != dev.name)) {
-                    return;
-                }
-
-                MainWindowHelpers.clear_box(ethernet_details_ip_rows);
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured IPv4 Method",
-                        MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
-                    )
-                );
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured IPv4 Address",
-                        MainWindowHelpers.format_ip_with_prefix(
-                            ip_settings.configured_address,
-                            ip_settings.configured_prefix
-                        )
-                    )
-                );
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured Gateway",
-                        ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
-                    )
-                );
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Configured DNS",
-                        ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
-                    )
-                );
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Current IPv4 Address",
-                        MainWindowHelpers.format_ip_with_prefix(
-                            ip_settings.current_address,
-                            ip_settings.current_prefix
-                        )
-                    )
-                );
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Current Gateway",
-                        ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
-                    )
-                );
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row(
-                        "Current DNS",
-                        ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
-                    )
-                );
-            } catch (Error e) {
-                if (!is_ui_epoch_valid(epoch)) {
-                    return;
-                }
-                MainWindowHelpers.clear_box(ethernet_details_ip_rows);
-                ethernet_details_ip_rows.append(
-                    MainWindowHelpers.build_details_row("IP", "Failed to load: " + e.message)
-                );
+            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
             }
+
+            if (selected_ethernet_device == null
+                || (selected_ethernet_device.device_path != dev.device_path
+                    && selected_ethernet_device.name != dev.name)) {
+                return;
+            }
+
+            MainWindowHelpers.clear_box(ethernet_details_ip_rows);
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured IPv4 Method",
+                    MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured IPv4 Address",
+                    MainWindowHelpers.format_ip_with_prefix(
+                        ip_settings.configured_address,
+                        ip_settings.configured_prefix
+                    )
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured Gateway",
+                    ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured DNS",
+                    ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Current IPv4 Address",
+                    MainWindowHelpers.format_ip_with_prefix(
+                        ip_settings.current_address,
+                        ip_settings.current_prefix
+                    )
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Current Gateway",
+                    ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Current DNS",
+                    ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
+                )
+            );
         });
 
         if (pending) {
@@ -548,38 +538,31 @@ public class MainWindowEthernetController : Object {
         on_set_popup_text_input_mode(true);
 
         nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
-            try {
-                var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
-                if (!is_ui_epoch_valid(epoch)) {
-                    return;
-                }
-
-                if (selected_ethernet_device == null
-                    || (selected_ethernet_device.device_path != dev.device_path
-                        && selected_ethernet_device.name != dev.name)) {
-                    return;
-                }
-
-                ethernet_edit_ipv4_method_dropdown.set_selected(
-                    MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
-                );
-                ethernet_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
-                ethernet_edit_ipv4_prefix_entry.set_text(
-                    ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
-                );
-                ethernet_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
-                ethernet_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
-                ethernet_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
-                ethernet_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
-
-                sync_edit_gateway_dns_sensitivity();
-                ethernet_edit_ipv4_address_entry.grab_focus();
-            } catch (Error e) {
-                if (!is_ui_epoch_valid(epoch)) {
-                    return;
-                }
-                on_error("Could not load Ethernet IP settings: " + e.message);
+            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
             }
+
+            if (selected_ethernet_device == null
+                || (selected_ethernet_device.device_path != dev.device_path
+                    && selected_ethernet_device.name != dev.name)) {
+                return;
+            }
+
+            ethernet_edit_ipv4_method_dropdown.set_selected(
+                MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
+            );
+            ethernet_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
+            ethernet_edit_ipv4_prefix_entry.set_text(
+                ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
+            );
+            ethernet_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
+            ethernet_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
+            ethernet_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
+            ethernet_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
+
+            sync_edit_gateway_dns_sensitivity();
+            ethernet_edit_ipv4_address_entry.grab_focus();
         });
     }
 
