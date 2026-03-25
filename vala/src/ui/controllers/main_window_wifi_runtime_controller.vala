@@ -109,9 +109,9 @@ public class MainWindowWifiRuntimeController : Object {
         var request_cancellable = new Cancellable();
         wifi_refresh_cancellable = request_cancellable;
 
-        nm.get_wifi_refresh_data_async.begin(request_cancellable, (obj, res) => {
+        nm.get_wifi_refresh_data.begin(request_cancellable, (obj, res) => {
             try {
-                var refresh_data = nm.get_wifi_refresh_data_async.end(res);
+                var refresh_data = nm.get_wifi_refresh_data.end(res);
                 if (wifi_refresh_cancellable != request_cancellable) {
                     return;
                 }
@@ -298,9 +298,9 @@ public class MainWindowWifiRuntimeController : Object {
         uint epoch = capture_ui_epoch();
 
         if (request_wifi_scan) {
-            nm.scan_wifi_async.begin(null, (obj, res) => {
+            nm.scan_wifi.begin(null, (obj, res) => {
                 try {
-                    nm.scan_wifi_async.end(res);
+                    nm.scan_wifi.end(res);
                 } catch (Error e) {
                     string message = e.message;
                     dispatch_ui(() => {
@@ -324,9 +324,9 @@ public class MainWindowWifiRuntimeController : Object {
             }
 
             if (request_wifi_scan) {
-                nm.scan_wifi_async.begin(null, (obj, res) => {
+                nm.scan_wifi.begin(null, (obj, res) => {
                     try {
-                        nm.scan_wifi_async.end(res);
+                        nm.scan_wifi.end(res);
                     } catch (Error e) {
                         string message = e.message;
                         dispatch_ui(() => {
@@ -454,9 +454,9 @@ public class MainWindowWifiRuntimeController : Object {
         uint epoch = capture_ui_epoch();
         bool enabled = wifi_switch.get_active();
 
-        nm.set_wifi_enabled_async.begin(enabled, null, (obj, res) => {
+        nm.set_wifi_enabled.begin(enabled, null, (obj, res) => {
             try {
-                nm.set_wifi_enabled_async.end(res);
+            nm.set_wifi_enabled.end(res);
                 dispatch_ui(() => {
                         on_refresh_after_action(enabled);
                     }, epoch);
@@ -485,9 +485,9 @@ public class MainWindowWifiRuntimeController : Object {
         uint epoch = capture_ui_epoch();
         bool enabled = networking_switch.get_active();
 
-        nm.set_networking_enabled_async.begin(enabled, null, (obj, res) => {
+        nm.set_networking_enabled.begin(enabled, null, (obj, res) => {
             try {
-                nm.set_networking_enabled_async.end(res);
+            nm.set_networking_enabled.end(res);
                 dispatch_ui(() => {
                         on_refresh_after_action(enabled);
                     }, epoch);

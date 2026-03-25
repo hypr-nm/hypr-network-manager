@@ -378,7 +378,22 @@ public class MainWindowWifiDetailsEditController : Object {
 
             if (net.connected) {
                 string disconnect_error;
-                if (!nm.disconnect_wifi(net, out disconnect_error)) {
+                string? device_interface = null;
+                foreach (var dev in nm.get_devices()) {
+                    if (dev.device_path == net.device_path && dev.name.strip() != "") {
+                        device_interface = dev.name;
+                        break;
+                    }
+                }
+
+                if (device_interface == null) {
+                    dispatch_ui(() => {
+                        on_error("Disconnect before reconnect failed: device interface not found.");
+                    }, epoch);
+                    return;
+                }
+
+                if (!nm.disconnect_device(device_interface, out disconnect_error)) {
                     dispatch_ui(() => {
                         on_error("Disconnect before reconnect failed: " + disconnect_error);
                     }, epoch);

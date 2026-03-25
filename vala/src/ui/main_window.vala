@@ -149,16 +149,15 @@ public class MainWindow : Gtk.ApplicationWindow {
         configure_key_handling();
         refresh_all();
         periodic_refresh_source_id = Timeout.add_seconds(refresh_interval_seconds, () => {
-            MainWindowAsyncExecutor.run(() => {
-                string error_message;
-                if (!nm.scan_wifi(out error_message)) {
+            nm.scan_wifi.begin(null, (obj, res) => {
+                try {
+                    nm.scan_wifi.end(res);
+                } catch (Error e) {
+                    string message = e.message;
                     MainWindowAsyncExecutor.dispatch(() => {
-                        debug_log("Could not request periodic Wi-Fi scan: " + error_message);
+                        debug_log("Could not request periodic Wi-Fi scan: " + message);
                     });
                 }
-            },
-            (message) => {
-                debug_log("Could not spawn periodic Wi-Fi scan thread: " + message);
             });
             refresh_all();
             return true;
@@ -530,18 +529,14 @@ public class MainWindow : Gtk.ApplicationWindow {
             (wifi_net) => {
                 pending_wifi_connect.remove(wifi_net.ssid);
                 pending_wifi_seen_connecting.remove(wifi_net.ssid);
-                MainWindowAsyncExecutor.run(() => {
-                    string error_message;
-                    bool ok = nm.disconnect_wifi(wifi_net, out error_message);
-                    MainWindowAsyncExecutor.dispatch(() => {
-                        if (!ok) {
-                            show_error("Disconnect failed: " + error_message);
-                        }
+                nm.disconnect_wifi.begin(wifi_net, null, (obj, res) => {
+                    try {
+                        nm.disconnect_wifi.end(res);
                         refresh_after_action(false);
-                    });
-                },
-                (message) => {
-                    show_error("Disconnect failed: " + message);
+                    } catch (Error e) {
+                        show_error("Disconnect failed: " + e.message);
+                        refresh_after_action(false);
+                    }
                 });
             },
             (wifi_net, password) => {
