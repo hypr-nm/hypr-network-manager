@@ -3,9 +3,9 @@ using Gtk;
 
 public class MainWindowEthernetController : Object {
     private NetworkManagerClientVala nm;
-    private MainWindowErrorCallback on_error;
-    private MainWindowRefreshActionCallback on_refresh_after_action;
-    private MainWindowBoolCallback on_set_popup_text_input_mode;
+    private owned MainWindowErrorCallback on_error;
+    private owned MainWindowRefreshActionCallback on_refresh_after_action;
+    private owned MainWindowBoolCallback on_set_popup_text_input_mode;
 
     private Gtk.ListBox ethernet_listbox;
     private Gtk.Stack ethernet_stack;
@@ -34,14 +34,14 @@ public class MainWindowEthernetController : Object {
 
     public MainWindowEthernetController(
         NetworkManagerClientVala nm,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action,
-        MainWindowBoolCallback on_set_popup_text_input_mode
+        owned MainWindowErrorCallback on_error,
+        owned MainWindowRefreshActionCallback on_refresh_after_action,
+        owned MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
         this.nm = nm;
-        this.on_error = on_error;
-        this.on_refresh_after_action = on_refresh_after_action;
-        this.on_set_popup_text_input_mode = on_set_popup_text_input_mode;
+        this.on_error = (owned) on_error;
+        this.on_refresh_after_action = (owned) on_refresh_after_action;
+        this.on_set_popup_text_input_mode = (owned) on_set_popup_text_input_mode;
         pending_ethernet_action = new HashTable<string, bool>(str_hash, str_equal);
         pending_ethernet_target_connected = new HashTable<string, bool>(str_hash, str_equal);
     }
@@ -275,8 +275,12 @@ public class MainWindowEthernetController : Object {
     }
 
     private void sync_edit_gateway_dns_sensitivity() {
-        ethernet_edit_ipv4_gateway_entry.set_sensitive(!ethernet_edit_gateway_auto_switch.get_active());
-        ethernet_edit_ipv4_dns_entry.set_sensitive(!ethernet_edit_dns_auto_switch.get_active());
+        if (ethernet_edit_ipv4_gateway_entry != null && ethernet_edit_gateway_auto_switch != null) {
+            ethernet_edit_ipv4_gateway_entry.set_sensitive(!ethernet_edit_gateway_auto_switch.get_active());
+        }
+        if (ethernet_edit_ipv4_dns_entry != null && ethernet_edit_dns_auto_switch != null) {
+            ethernet_edit_ipv4_dns_entry.set_sensitive(!ethernet_edit_dns_auto_switch.get_active());
+        }
     }
 
     private void track_pending_action(NetworkDevice dev, bool target_connected) {

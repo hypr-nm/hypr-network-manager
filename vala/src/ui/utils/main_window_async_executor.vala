@@ -1,7 +1,7 @@
 using GLib;
 
 public class MainWindowAsyncExecutor : Object {
-    public static void dispatch(MainWindowActionCallback action) {
+    public static void dispatch(owned MainWindowActionCallback action) {
         Idle.add(() => {
             action();
             return false;
@@ -9,17 +9,17 @@ public class MainWindowAsyncExecutor : Object {
     }
 
     public static bool run(
-        MainWindowActionCallback worker,
+        owned MainWindowActionCallback worker,
         MainWindowErrorCallback? on_spawn_error = null,
         string spawn_error_prefix = "Async task failed"
     ) {
         try {
-            new Thread<void>.try("hyp-nm-ui", () => {
+            new Thread<int>.try("hyp-nm-ui", () => {
                 worker();
-                return;
+                return 0;
             });
             return true;
-        } catch (ThreadError e) {
+        } catch (Error e) {
             if (on_spawn_error != null) {
                 string message = e.message;
                 dispatch(() => {
