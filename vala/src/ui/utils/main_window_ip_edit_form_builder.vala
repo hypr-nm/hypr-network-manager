@@ -25,14 +25,93 @@ public class MainWindowIpEditFormBuilder : Object {
         }
     }
 
-    private static Gtk.Expander build_expander(string title, bool with_extra_classes, string css_class) {
-        var expander = new Gtk.Expander(title);
-        expander.set_expanded(true);
-        if (with_extra_classes) {
-            expander.add_css_class("nm-edit-section-expander");
-            expander.add_css_class(css_class);
+    private static void set_collapsible_state(
+        Gtk.Box container,
+        Gtk.Button toggle_button,
+        Gtk.Revealer content_revealer,
+        bool expanded
+    ) {
+        content_revealer.set_reveal_child(expanded);
+        if (expanded) {
+            container.add_css_class("is-expanded");
+            container.remove_css_class("is-collapsed");
+            toggle_button.set_tooltip_text("Collapse section");
+        } else {
+            container.add_css_class("is-collapsed");
+            container.remove_css_class("is-expanded");
+            toggle_button.set_tooltip_text("Expand section");
         }
-        return expander;
+    }
+
+    private static Gtk.Box build_collapsible_section(
+        string title,
+        bool with_extra_classes,
+        string css_class,
+        out Gtk.Box content_box
+    ) {
+        var container = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
+        container.add_css_class("nm-edit-collapsible");
+        if (with_extra_classes) {
+            container.add_css_class(css_class);
+        }
+
+        var toggle_button = new Gtk.Button();
+        toggle_button.set_has_frame(false);
+        toggle_button.set_halign(Gtk.Align.FILL);
+        toggle_button.set_hexpand(true);
+        toggle_button.add_css_class("nm-edit-section-toggle");
+        if (with_extra_classes) {
+            toggle_button.add_css_class(css_class + "-toggle");
+        }
+
+        var toggle_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        toggle_row.set_halign(Gtk.Align.FILL);
+        toggle_row.set_hexpand(true);
+        toggle_row.add_css_class("nm-edit-section-toggle-row");
+
+        var toggle_icon = new Gtk.Image.from_icon_name("pan-down-symbolic");
+        toggle_icon.add_css_class("nm-edit-section-toggle-icon");
+        if (with_extra_classes) {
+            toggle_icon.add_css_class(css_class + "-toggle-icon");
+        }
+        toggle_row.append(toggle_icon);
+
+        var toggle_label = new Gtk.Label(title);
+        toggle_label.set_xalign(0.0f);
+        toggle_label.set_hexpand(true);
+        toggle_label.add_css_class("nm-edit-section-toggle-label");
+        if (with_extra_classes) {
+            toggle_label.add_css_class(css_class + "-toggle-label");
+        }
+        toggle_row.append(toggle_label);
+
+        toggle_button.set_child(toggle_row);
+        container.append(toggle_button);
+
+        content_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        content_box.add_css_class("nm-edit-section-content");
+        if (with_extra_classes) {
+            content_box.add_css_class(css_class + "-content");
+        }
+
+        var content_revealer = new Gtk.Revealer();
+        content_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN);
+        content_revealer.set_transition_duration(220);
+        content_revealer.set_child(content_box);
+        content_revealer.add_css_class("nm-edit-section-revealer");
+        if (with_extra_classes) {
+            content_revealer.add_css_class(css_class + "-revealer");
+        }
+        container.append(content_revealer);
+
+        set_collapsible_state(container, toggle_button, content_revealer, true);
+
+        toggle_button.clicked.connect(() => {
+            bool expanded = !content_revealer.get_reveal_child();
+            set_collapsible_state(container, toggle_button, content_revealer, expanded);
+        });
+
+        return container;
     }
 
     public static void append_ipv4_section(
@@ -47,15 +126,19 @@ public class MainWindowIpEditFormBuilder : Object {
         MainWindowActionCallback on_sync_sensitivity,
         bool with_extra_classes
     ) {
-        var expander = build_expander("IPv4 Settings", with_extra_classes, "nm-edit-ipv4-expander");
-        form.append(expander);
+        Gtk.Box section;
+        var collapsible = build_collapsible_section(
+            "IPv4 Settings",
+            with_extra_classes,
+            "nm-edit-ipv4-section",
+            out section
+        );
+        form.append(collapsible);
 
-        var section = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
         if (with_extra_classes) {
             section.add_css_class("nm-edit-ip-section");
             section.add_css_class("nm-edit-ipv4-section");
         }
-        expander.set_child(section);
 
         section.append(build_label(
             "IPv4 Method",
@@ -80,7 +163,14 @@ public class MainWindowIpEditFormBuilder : Object {
             manual_fields.add_css_class("nm-edit-ip-advanced");
             manual_fields.add_css_class("nm-edit-ipv4-manual");
         }
-        section.append(manual_fields);
+
+        var manual_revealer = new Gtk.Revealer();
+        manual_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN);
+        manual_revealer.set_transition_duration(180);
+        manual_revealer.add_css_class("nm-edit-ip-subsection-revealer");
+        manual_revealer.add_css_class("nm-edit-ipv4-manual-revealer");
+        manual_revealer.set_child(manual_fields);
+        section.append(manual_revealer);
 
         manual_fields.append(build_label(
             "IPv4 Address",
@@ -123,7 +213,14 @@ public class MainWindowIpEditFormBuilder : Object {
             override_fields.add_css_class("nm-edit-ip-advanced");
             override_fields.add_css_class("nm-edit-ipv4-overrides");
         }
-        section.append(override_fields);
+
+        var override_revealer = new Gtk.Revealer();
+        override_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN);
+        override_revealer.set_transition_duration(180);
+        override_revealer.add_css_class("nm-edit-ip-subsection-revealer");
+        override_revealer.add_css_class("nm-edit-ipv4-overrides-revealer");
+        override_revealer.set_child(override_fields);
+        section.append(override_revealer);
 
         override_fields.append(build_label(
             "Gateway",
@@ -237,8 +334,8 @@ public class MainWindowIpEditFormBuilder : Object {
             bool is_manual = selected == 1;
             bool is_disabled = selected == 2;
 
-            manual_fields.set_visible(is_manual);
-            override_fields.set_visible(is_auto || is_manual);
+            manual_revealer.set_reveal_child(is_manual);
+            override_revealer.set_reveal_child(is_auto || is_manual);
 
             if (is_disabled) {
                 if (!local_gateway_auto_switch.get_active()) {
@@ -270,15 +367,19 @@ public class MainWindowIpEditFormBuilder : Object {
         MainWindowActionCallback on_sync_sensitivity,
         bool with_extra_classes
     ) {
-        var expander = build_expander("IPv6 Settings", with_extra_classes, "nm-edit-ipv6-expander");
-        form.append(expander);
+        Gtk.Box section;
+        var collapsible = build_collapsible_section(
+            "IPv6 Settings",
+            with_extra_classes,
+            "nm-edit-ipv6-section",
+            out section
+        );
+        form.append(collapsible);
 
-        var section = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
         if (with_extra_classes) {
             section.add_css_class("nm-edit-ip-section");
             section.add_css_class("nm-edit-ipv6-section");
         }
-        expander.set_child(section);
 
         section.append(build_label(
             "IPv6 Method",
@@ -304,7 +405,14 @@ public class MainWindowIpEditFormBuilder : Object {
             manual_fields.add_css_class("nm-edit-ip-advanced");
             manual_fields.add_css_class("nm-edit-ipv6-manual");
         }
-        section.append(manual_fields);
+
+        var manual_revealer = new Gtk.Revealer();
+        manual_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN);
+        manual_revealer.set_transition_duration(180);
+        manual_revealer.add_css_class("nm-edit-ip-subsection-revealer");
+        manual_revealer.add_css_class("nm-edit-ipv6-manual-revealer");
+        manual_revealer.set_child(manual_fields);
+        section.append(manual_revealer);
 
         manual_fields.append(build_label(
             "IPv6 Address",
@@ -347,7 +455,14 @@ public class MainWindowIpEditFormBuilder : Object {
             override_fields.add_css_class("nm-edit-ip-advanced");
             override_fields.add_css_class("nm-edit-ipv6-overrides");
         }
-        section.append(override_fields);
+
+        var override_revealer = new Gtk.Revealer();
+        override_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN);
+        override_revealer.set_transition_duration(180);
+        override_revealer.add_css_class("nm-edit-ip-subsection-revealer");
+        override_revealer.add_css_class("nm-edit-ipv6-overrides-revealer");
+        override_revealer.set_child(override_fields);
+        section.append(override_revealer);
 
         override_fields.append(build_label(
             "IPv6 Gateway",
@@ -461,8 +576,8 @@ public class MainWindowIpEditFormBuilder : Object {
             bool is_manual = selected == 1;
             bool is_disabled_or_ignore = selected == 2 || selected == 3;
 
-            manual_fields.set_visible(is_manual);
-            override_fields.set_visible(is_auto || is_manual);
+            manual_revealer.set_reveal_child(is_manual);
+            override_revealer.set_reveal_child(is_auto || is_manual);
 
             if (is_disabled_or_ignore) {
                 if (!local_ipv6_gateway_auto_switch.get_active()) {
