@@ -228,20 +228,37 @@ public class NmWifiSettingsBuilder : Object {
             : new VariantBuilder(new VariantType("a{sv}")).end();
         var ipv6_dict = new VariantDict(base_ipv6);
 
+        // Always drop legacy/stale route and address keys before rebuilding IPv6.
+        // NM can prefer legacy keys in some versions, which can break manual mode
+        // if old values are empty or inconsistent with address-data.
+        ipv6_dict.remove("addresses");
+        ipv6_dict.remove("route-data");
+        ipv6_dict.remove("routes");
+
         ipv6_dict.insert_value("method", new Variant.string(method));
         ipv6_dict.insert_value("ignore-auto-routes", new Variant.boolean(!gateway_auto));
         ipv6_dict.insert_value("ignore-auto-dns", new Variant.boolean(!dns_auto));
 
         if (method == "manual") {
+            if (address.strip() == "") {
+                error_message = "Manual IPv6 requires an address.";
+                updated_ipv6 = new VariantBuilder(new VariantType("a{sv}")).end();
+                return false;
+            }
+            if (ipv6_prefix == 0 || ipv6_prefix > 128) {
+                error_message = "Manual IPv6 prefix must be between 1 and 128.";
+                updated_ipv6 = new VariantBuilder(new VariantType("a{sv}")).end();
+                return false;
+            }
+
             var addresses = new VariantBuilder(new VariantType("aa{sv}"));
             var addr_entry = new VariantBuilder(new VariantType("a{sv}"));
-            addr_entry.add("{sv}", "address", new Variant.string(address));
+            addr_entry.add("{sv}", "address", new Variant.string(address.strip()));
             addr_entry.add("{sv}", "prefix", new Variant.uint32(ipv6_prefix));
             addresses.add_value(addr_entry.end());
             ipv6_dict.insert_value("address-data", addresses.end());
         } else {
             ipv6_dict.remove("address-data");
-            ipv6_dict.remove("addresses");
         }
 
         if (!gateway_auto) {
@@ -250,7 +267,7 @@ public class NmWifiSettingsBuilder : Object {
                 updated_ipv6 = new VariantBuilder(new VariantType("a{sv}")).end();
                 return false;
             }
-            ipv6_dict.insert_value("gateway", new Variant.string(gateway));
+            ipv6_dict.insert_value("gateway", new Variant.string(gateway.strip()));
         } else {
             ipv6_dict.remove("gateway");
         }
