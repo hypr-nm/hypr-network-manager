@@ -53,6 +53,43 @@ public class NmWifiSettingsBuilder : Object {
         return true;
     }
 
+    private static void apply_manual_dns_ipv6(
+        VariantDict ipv6_dict,
+        Variant? existing_ipv6,
+        string[] ipv6_dns_servers
+    ) {
+        Variant? existing_dns_data = existing_ipv6 != null
+            ? existing_ipv6.lookup_value("dns-data", null)
+            : null;
+        bool dns_data_uses_dict_items = existing_dns_data != null
+            && existing_dns_data.is_of_type(new VariantType("aa{sv}"));
+
+        var dns_data_strings_builder = new VariantBuilder(new VariantType("as"));
+        var dns_data_dict_builder = new VariantBuilder(new VariantType("aa{sv}"));
+
+        foreach (string dns in ipv6_dns_servers) {
+            string dns_ip = dns.strip();
+            if (dns_ip == "") {
+                continue;
+            }
+
+            if (dns_data_uses_dict_items) {
+                var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
+                dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
+                dns_data_dict_builder.add_value(dns_data_item.end());
+            } else {
+                dns_data_strings_builder.add("s", dns_ip);
+            }
+        }
+
+        if (dns_data_uses_dict_items) {
+            ipv6_dict.insert_value("dns-data", dns_data_dict_builder.end());
+        } else {
+            ipv6_dict.insert_value("dns-data", dns_data_strings_builder.end());
+        }
+        ipv6_dict.remove("dns");
+    }
+
     private static void apply_gateway_route_override(
         VariantDict ipv4_dict,
         string gateway,
@@ -171,9 +208,68 @@ public class NmWifiSettingsBuilder : Object {
         return true;
     }
 
+    public static bool build_updated_ipv6_section(
+        Variant all_settings,
+        string method,
+        string address,
+        uint32 ipv6_prefix,
+        bool gateway_auto,
+        string gateway,
+        bool dns_auto,
+        string[] ipv6_dns_servers,
+        out Variant updated_ipv6,
+        out string error_message
+    ) {
+        error_message = "";
+
+        Variant? existing_ipv6 = all_settings.lookup_value("ipv6", new VariantType("a{sv}"));
+        Variant base_ipv6 = existing_ipv6 != null
+            ? existing_ipv6
+            : new VariantBuilder(new VariantType("a{sv}")).end();
+        var ipv6_dict = new VariantDict(base_ipv6);
+
+        ipv6_dict.insert_value("method", new Variant.string(method));
+        ipv6_dict.insert_value("ignore-auto-routes", new Variant.boolean(!gateway_auto));
+        ipv6_dict.insert_value("ignore-auto-dns", new Variant.boolean(!dns_auto));
+
+        if (method == "manual") {
+            var addresses = new VariantBuilder(new VariantType("aa{sv}"));
+            var addr_entry = new VariantBuilder(new VariantType("a{sv}"));
+            addr_entry.add("{sv}", "address", new Variant.string(address));
+            addr_entry.add("{sv}", "prefix", new Variant.uint32(ipv6_prefix));
+            addresses.add_value(addr_entry.end());
+            ipv6_dict.insert_value("address-data", addresses.end());
+        } else {
+            ipv6_dict.remove("address-data");
+            ipv6_dict.remove("addresses");
+        }
+
+        if (!gateway_auto) {
+            if (method == "disabled" || method == "ignore") {
+                error_message = "Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore.";
+                updated_ipv6 = new VariantBuilder(new VariantType("a{sv}")).end();
+                return false;
+            }
+            ipv6_dict.insert_value("gateway", new Variant.string(gateway));
+        } else {
+            ipv6_dict.remove("gateway");
+        }
+
+        if (!dns_auto) {
+            apply_manual_dns_ipv6(ipv6_dict, existing_ipv6, ipv6_dns_servers);
+        } else {
+            ipv6_dict.remove("dns-data");
+            ipv6_dict.remove("dns");
+        }
+
+        updated_ipv6 = ipv6_dict.end();
+        return true;
+    }
+
     public static Variant build_updated_connection_settings(
         Variant all_settings,
         Variant updated_ipv4,
+        Variant updated_ipv6,
         bool network_is_secured,
         string password
     ) {
@@ -194,6 +290,7 @@ public class NmWifiSettingsBuilder : Object {
         var top_builder = new VariantBuilder(new VariantType("a{sa{sv}}"));
         bool has_ipv4 = false;
         bool has_sec = false;
+        bool has_ipv6 = false;
 
         for (int i = 0; i < all_settings.n_children(); i++) {
             Variant entry = all_settings.get_child_value(i);
@@ -203,6 +300,12 @@ public class NmWifiSettingsBuilder : Object {
             if (section_name == "ipv4") {
                 top_builder.add("{s@a{sv}}", "ipv4", updated_ipv4);
                 has_ipv4 = true;
+                continue;
+            }
+
+            if (section_name == "ipv6") {
+                top_builder.add("{s@a{sv}}", "ipv6", updated_ipv6);
+                has_ipv6 = true;
                 continue;
             }
 
@@ -217,6 +320,9 @@ public class NmWifiSettingsBuilder : Object {
 
         if (!has_ipv4) {
             top_builder.add("{s@a{sv}}", "ipv4", updated_ipv4);
+        }
+        if (!has_ipv6) {
+            top_builder.add("{s@a{sv}}", "ipv6", updated_ipv6);
         }
         if (updated_sec != null && !has_sec) {
             top_builder.add("{s@a{sv}}", "802-11-wireless-security", updated_sec);

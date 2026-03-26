@@ -504,6 +504,13 @@ public class NetworkManagerClientVala : Object {
         string ipv4_gateway,
         bool dns_auto,
         string[] ipv4_dns_servers,
+        string ipv6_method,
+        string ipv6_address,
+        uint32 ipv6_prefix,
+        bool ipv6_gateway_auto,
+        string ipv6_gateway,
+        bool ipv6_dns_auto,
+        string[] ipv6_dns_servers,
         Cancellable? cancellable = null
     ) throws Error {
         return yield wifi_client.update_network_settings(
@@ -516,6 +523,13 @@ public class NetworkManagerClientVala : Object {
             ipv4_gateway,
             dns_auto,
             ipv4_dns_servers,
+            ipv6_method,
+            ipv6_address,
+            ipv6_prefix,
+            ipv6_gateway_auto,
+            ipv6_gateway,
+            ipv6_dns_auto,
+            ipv6_dns_servers,
             cancellable
         );
     }
@@ -550,6 +564,13 @@ public class NetworkManagerClientVala : Object {
         string ipv4_gateway,
         bool dns_auto,
         string[] ipv4_dns_servers,
+        string ipv6_method,
+        string ipv6_address,
+        uint32 ipv6_prefix,
+        bool ipv6_gateway_auto,
+        string ipv6_gateway,
+        bool ipv6_dns_auto,
+        string[] ipv6_dns_servers,
         Cancellable? cancellable = null
     ) throws Error {
         return yield ethernet_client.update_device_settings(
@@ -561,6 +582,13 @@ public class NetworkManagerClientVala : Object {
             ipv4_gateway,
             dns_auto,
             ipv4_dns_servers,
+            ipv6_method,
+            ipv6_address,
+            ipv6_prefix,
+            ipv6_gateway_auto,
+            ipv6_gateway,
+            ipv6_dns_auto,
+            ipv6_dns_servers,
             cancellable
         );
     }

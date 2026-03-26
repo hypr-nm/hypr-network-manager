@@ -272,6 +272,16 @@ public class NmClientUtils : Object {
             out_ip.ipv6_method = normalize_ipv6_method(method_v.get_string());
         }
 
+        Variant? ignore_routes_v = ipv6_group.lookup_value("ignore-auto-routes", new VariantType("b"));
+        if (ignore_routes_v != null) {
+            out_ip.ipv6_gateway_auto = !ignore_routes_v.get_boolean();
+        }
+
+        Variant? ignore_dns_v = ipv6_group.lookup_value("ignore-auto-dns", new VariantType("b"));
+        if (ignore_dns_v != null) {
+            out_ip.ipv6_dns_auto = !ignore_dns_v.get_boolean();
+        }
+
         Variant? gateway_v = ipv6_group.lookup_value("gateway", new VariantType("s"));
         if (gateway_v != null) {
             out_ip.configured_ipv6_gateway = gateway_v.get_string();

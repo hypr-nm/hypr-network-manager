@@ -171,6 +171,13 @@ public class NmEthernetClient : Object {
         string ipv4_gateway,
         bool dns_auto,
         string[] ipv4_dns_servers,
+        string ipv6_method,
+        string ipv6_address,
+        uint32 ipv6_prefix,
+        bool ipv6_gateway_auto,
+        string ipv6_gateway,
+        bool ipv6_dns_auto,
+        string[] ipv6_dns_servers,
         Cancellable? cancellable = null
     ) throws Error {
         if (device.connection.strip() == "") {
@@ -187,6 +194,9 @@ public class NmEthernetClient : Object {
         string method = NetworkManagerClientVala.normalize_ipv4_method(ipv4_method);
         string address = ipv4_address.strip();
         string gateway = ipv4_gateway.strip();
+        string method6 = NetworkManagerClientVala.normalize_ipv6_method(ipv6_method);
+        string address6 = ipv6_address.strip();
+        string gateway6 = ipv6_gateway.strip();
 
         if (!gateway_auto && gateway == "") {
             throw new IOError.FAILED("Manual gateway requires a gateway address.");
@@ -206,11 +216,32 @@ public class NmEthernetClient : Object {
             }
         }
 
+        if (!ipv6_gateway_auto && gateway6 == "") {
+            throw new IOError.FAILED("Manual IPv6 gateway requires a gateway address.");
+        }
+        if ((method6 == "disabled" || method6 == "ignore") && !ipv6_gateway_auto) {
+            throw new IOError.FAILED(
+                "Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore."
+            );
+        }
+        if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
+            throw new IOError.FAILED("Manual IPv6 DNS requires at least one DNS server.");
+        }
+        if (method6 == "manual") {
+            if (address6 == "") {
+                throw new IOError.FAILED("Manual IPv6 requires an address.");
+            }
+            if (ipv6_prefix == 0 || ipv6_prefix > 128) {
+                throw new IOError.FAILED("Manual IPv6 prefix must be between 1 and 128.");
+            }
+        }
+
         var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
         var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
         var all_settings = settings_res.get_child_value(0);
 
         Variant updated_ipv4;
+        Variant updated_ipv6;
         string builder_error = "";
         if (!NmWifiSettingsBuilder.build_updated_ipv4_section(
             all_settings,
@@ -227,9 +258,25 @@ public class NmEthernetClient : Object {
             throw new IOError.FAILED(builder_error);
         }
 
+        if (!NmWifiSettingsBuilder.build_updated_ipv6_section(
+            all_settings,
+            method6,
+            address6,
+            ipv6_prefix,
+            ipv6_gateway_auto,
+            gateway6,
+            ipv6_dns_auto,
+            ipv6_dns_servers,
+            out updated_ipv6,
+            out builder_error
+        )) {
+            throw new IOError.FAILED(builder_error);
+        }
+
         Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings(
             all_settings,
             updated_ipv4,
+            updated_ipv6,
             false,
             ""
         );
