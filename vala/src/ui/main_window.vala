@@ -12,7 +12,7 @@ using GtkLayerShell;
 
 public class MainWindow : Gtk.ApplicationWindow {
     private const int MIN_WINDOW_WIDTH = 480;
-    private const int MIN_WINDOW_HEIGHT = 560;
+    private const int MIN_WINDOW_HEIGHT = 680;
 
     private bool debug_enabled;
     private int window_width;
@@ -358,10 +358,12 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void sync_wifi_edit_gateway_dns_sensitivity() {
-        if (wifi_edit_ipv4_gateway_entry == null
+        if (wifi_edit_ipv4_method_dropdown == null
+            || wifi_edit_ipv4_gateway_entry == null
             || wifi_edit_gateway_auto_switch == null
             || wifi_edit_ipv4_dns_entry == null
             || wifi_edit_dns_auto_switch == null
+            || wifi_edit_ipv6_method_dropdown == null
             || wifi_edit_ipv6_gateway_entry == null
             || wifi_edit_ipv6_gateway_auto_switch == null
             || wifi_edit_ipv6_dns_entry == null
@@ -370,10 +372,12 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
 
         wifi_controller.sync_edit_gateway_dns_sensitivity(
+            wifi_edit_ipv4_method_dropdown,
             wifi_edit_ipv4_gateway_entry,
             wifi_edit_gateway_auto_switch,
             wifi_edit_ipv4_dns_entry,
             wifi_edit_dns_auto_switch,
+            wifi_edit_ipv6_method_dropdown,
             wifi_edit_ipv6_gateway_entry,
             wifi_edit_ipv6_gateway_auto_switch,
             wifi_edit_ipv6_dns_entry,
