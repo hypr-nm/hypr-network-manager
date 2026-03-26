@@ -13,6 +13,7 @@ public class AppConfig : Object {
     public int margin_left = 8;
     public string layer = "overlay";
     public int scan_interval = 30;
+    public int pending_wifi_connect_timeout_ms = 45000;
     public bool close_on_connect = true;
     public bool show_bssid = false;
     public bool show_frequency = true;
@@ -207,6 +208,14 @@ public class AppConfig : Object {
             int? cfg_scan_interval = extract_json_int(obj, "scan_interval");
             if (cfg_scan_interval != null && cfg_scan_interval > 0) {
                 cfg.scan_interval = cfg_scan_interval;
+            }
+
+            int? cfg_pending_wifi_connect_timeout_ms = extract_json_int(
+                obj,
+                "pending_wifi_connect_timeout_ms"
+            );
+            if (cfg_pending_wifi_connect_timeout_ms != null && cfg_pending_wifi_connect_timeout_ms > 0) {
+                cfg.pending_wifi_connect_timeout_ms = cfg_pending_wifi_connect_timeout_ms;
             }
 
             bool? cfg_close_on_connect = extract_json_bool(obj, "close_on_connect");

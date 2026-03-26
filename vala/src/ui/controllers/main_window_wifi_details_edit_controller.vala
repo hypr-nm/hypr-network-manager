@@ -2,6 +2,9 @@ using GLib;
 using Gtk;
 
 public class MainWindowWifiDetailsEditController : Object {
+    private const uint WIFI_RECONNECT_CHECK_INTERVAL_MS = 300;
+    private const uint WIFI_RECONNECT_MAX_WAIT_MS = 10000;
+
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
@@ -46,6 +49,132 @@ public class MainWindowWifiDetailsEditController : Object {
             Source.remove(source_id);
         }
         timeout_source_ids = {};
+    }
+
+    private void track_timeout_source(uint source_id) {
+        if (source_id == 0) {
+            return;
+        }
+        timeout_source_ids += source_id;
+    }
+
+    private void untrack_timeout_source(uint source_id) {
+        if (source_id == 0 || timeout_source_ids.length == 0) {
+            return;
+        }
+
+        uint[] remaining = {};
+        foreach (uint id in timeout_source_ids) {
+            if (id != source_id) {
+                remaining += id;
+            }
+        }
+        timeout_source_ids = remaining;
+    }
+
+    private bool is_wifi_device_fully_disconnected(NetworkDevice dev) {
+        if (dev.is_connected) {
+            return false;
+        }
+
+        bool is_connecting = dev.state >= 40 && dev.state < NM_DEVICE_STATE_ACTIVATED;
+        return !is_connecting;
+    }
+
+    private void reconnect_after_disconnect_with_retry(
+        NetworkManagerClientVala nm,
+        WifiNetwork net,
+        HashTable<string, bool> pending_wifi_connect,
+        HashTable<string, bool> pending_wifi_seen_connecting,
+        MainWindowErrorCallback on_error,
+        MainWindowRefreshActionCallback on_refresh_after_action,
+        MainWindowActionCallback on_open_details,
+        MainWindowActionCallback disable_popup_text_input,
+        uint epoch,
+        uint waited_ms
+    ) {
+        if (!is_ui_epoch_valid(epoch)) {
+            return;
+        }
+
+        nm.get_devices.begin(null, (obj, res) => {
+            if (!is_ui_epoch_valid(epoch)) {
+                return;
+            }
+
+            bool ready_to_reconnect = true;
+            try {
+                var devices = nm.get_devices.end(res);
+                foreach (var dev in devices) {
+                    if (!dev.is_wifi || dev.device_path != net.device_path) {
+                        continue;
+                    }
+
+                    ready_to_reconnect = is_wifi_device_fully_disconnected(dev);
+                    break;
+                }
+            } catch (Error e) {
+                // Treat transient D-Bus/read errors as not-ready and retry until timeout.
+                ready_to_reconnect = false;
+            }
+
+            if (ready_to_reconnect) {
+                nm.connect_wifi.begin(net, null, null, (obj2, res2) => {
+                    try {
+                        nm.connect_wifi.end(res2);
+                        if (!is_ui_epoch_valid(epoch)) {
+                            return;
+                        }
+                        on_refresh_after_action(true);
+                        on_open_details();
+                        disable_popup_text_input();
+                    } catch (Error e) {
+                        if (!is_ui_epoch_valid(epoch)) {
+                            return;
+                        }
+                        pending_wifi_connect.remove(net.ssid);
+                        pending_wifi_seen_connecting.remove(net.ssid);
+                        on_error("Reconnect after edit failed: " + e.message);
+                        on_refresh_after_action(true);
+                        on_open_details();
+                        disable_popup_text_input();
+                    }
+                });
+                return;
+            }
+
+            if (waited_ms >= WIFI_RECONNECT_MAX_WAIT_MS) {
+                pending_wifi_connect.remove(net.ssid);
+                pending_wifi_seen_connecting.remove(net.ssid);
+                on_error(
+                    "Reconnect after edit timed out while waiting for disconnect to complete."
+                );
+                on_refresh_after_action(true);
+                on_open_details();
+                disable_popup_text_input();
+                return;
+            }
+
+            uint next_waited_ms = waited_ms + WIFI_RECONNECT_CHECK_INTERVAL_MS;
+            uint timeout_id = 0;
+            timeout_id = Timeout.add(WIFI_RECONNECT_CHECK_INTERVAL_MS, () => {
+                untrack_timeout_source(timeout_id);
+                reconnect_after_disconnect_with_retry(
+                    nm,
+                    net,
+                    pending_wifi_connect,
+                    pending_wifi_seen_connecting,
+                    on_error,
+                    on_refresh_after_action,
+                    on_open_details,
+                    disable_popup_text_input,
+                    epoch,
+                    next_waited_ms
+                );
+                return false;
+            });
+            track_timeout_source(timeout_id);
+        });
     }
 
     public void populate_wifi_details(
@@ -373,27 +502,18 @@ public class MainWindowWifiDetailsEditController : Object {
                     pending_wifi_connect.insert(net.ssid, true);
                     pending_wifi_seen_connecting.remove(net.ssid);
 
-                    nm.connect_wifi.begin(net, null, null, (obj3, res3) => {
-                        try {
-                            nm.connect_wifi.end(res3);
-                            if (!is_ui_epoch_valid(epoch)) {
-                                return;
-                            }
-                            on_refresh_after_action(true);
-                            on_open_details();
-                            disable_popup_text_input();
-                        } catch (Error e) {
-                            if (!is_ui_epoch_valid(epoch)) {
-                                return;
-                            }
-                            pending_wifi_connect.remove(net.ssid);
-                            pending_wifi_seen_connecting.remove(net.ssid);
-                            on_error("Reconnect after edit failed: " + e.message);
-                            on_refresh_after_action(true);
-                            on_open_details();
-                            disable_popup_text_input();
-                        }
-                    });
+                    reconnect_after_disconnect_with_retry(
+                        nm,
+                        net,
+                        pending_wifi_connect,
+                        pending_wifi_seen_connecting,
+                        on_error,
+                        on_refresh_after_action,
+                        on_open_details,
+                        disable_popup_text_input,
+                        epoch,
+                        0
+                    );
                 });
             }
         );

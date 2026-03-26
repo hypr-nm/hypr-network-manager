@@ -27,6 +27,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private int shell_margin_left;
     private string shell_layer;
     private uint refresh_interval_seconds;
+    private uint pending_wifi_connect_timeout_ms;
     private bool close_on_connect;
     private bool show_bssid;
     private bool show_frequency;
@@ -92,6 +93,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         this.shell_margin_left = config.margin_left;
         this.shell_layer = config.layer;
         this.refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval : 30);
+        this.pending_wifi_connect_timeout_ms = (uint) (
+            config.pending_wifi_connect_timeout_ms > 0 ? config.pending_wifi_connect_timeout_ms : 45000
+        );
         this.close_on_connect = config.close_on_connect;
         this.show_bssid = config.show_bssid;
         this.show_frequency = config.show_frequency;
@@ -599,6 +603,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             active_wifi_connections,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
+            pending_wifi_connect_timeout_ms,
             close_on_connect,
             () => {
                 this.close();

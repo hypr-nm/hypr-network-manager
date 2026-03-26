@@ -222,6 +222,7 @@ public class MainWindowWifiRuntimeController : Object {
         HashTable<string, bool> active_wifi_connections,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
+        uint pending_wifi_connect_timeout_ms,
         bool close_on_connect,
         MainWindowActionCallback on_close_window,
         MainWindowRefreshActionCallback on_refresh_after_action,
@@ -250,8 +251,11 @@ public class MainWindowWifiRuntimeController : Object {
                 on_refresh_after_action(true);
 
                 string pending_ssid = net.ssid;
+                uint effective_timeout_ms = pending_wifi_connect_timeout_ms >= 1000
+                    ? pending_wifi_connect_timeout_ms
+                    : 1000;
                 uint timeout_id = 0;
-                timeout_id = Timeout.add(20000, () => {
+                timeout_id = Timeout.add(effective_timeout_ms, () => {
                     untrack_timeout_source(timeout_id);
                     if (!is_ui_epoch_valid(epoch)) {
                         return false;
