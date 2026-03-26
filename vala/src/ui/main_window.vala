@@ -620,15 +620,15 @@ public class MainWindow : Gtk.ApplicationWindow {
         form.append(security_label);
 
         var security_list = new Gtk.StringList(null);
-        security_list.append("Open");
-        security_list.append("WPA/WPA2 Personal");
-        security_list.append("WPA3 Personal");
-        security_list.append("WPA2/WPA3 Personal");
-        security_list.append("WEP (Legacy)");
+        foreach (string label in HiddenWifiSecurityModeUtils.get_dropdown_labels()) {
+            security_list.append(label);
+        }
         wifi_add_security_dropdown = new Gtk.DropDown(security_list, null);
         wifi_add_security_dropdown.add_css_class("nm-edit-field-control");
         wifi_add_security_dropdown.add_css_class("nm-edit-dropdown");
-        wifi_add_security_dropdown.set_selected(1);
+        wifi_add_security_dropdown.set_selected(
+            HiddenWifiSecurityModeUtils.to_dropdown_index(HiddenWifiSecurityMode.WPA_PSK)
+        );
         wifi_add_security_dropdown.notify["selected"].connect(() => {
             wifi_controller.sync_add_network_sensitivity(
                 wifi_add_security_dropdown,

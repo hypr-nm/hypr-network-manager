@@ -691,7 +691,7 @@ public class NmWifiClient : Object {
 
     public async bool connect_hidden_network(
         string ssid,
-        string security_mode,
+        HiddenWifiSecurityMode security_mode,
         string password,
         Cancellable? cancellable = null
     ) throws Error {
@@ -700,22 +700,7 @@ public class NmWifiClient : Object {
             throw new IOError.FAILED("SSID is required.");
         }
 
-        string normalized_security = security_mode.strip().down();
-        if (normalized_security == "") {
-            normalized_security = "wpa-psk";
-        }
-
-        bool use_open = normalized_security == "open";
-        bool use_wpa2 = normalized_security == "wpa-psk";
-        bool use_wpa3 = normalized_security == "sae";
-        bool use_wpa2_wpa3 = normalized_security == "wpa-psk-sae";
-        bool use_wep = normalized_security == "wep";
-
-        if (!use_open && !use_wpa2 && !use_wpa3 && !use_wpa2_wpa3 && !use_wep) {
-            throw new IOError.FAILED("Unsupported hidden network security mode.");
-        }
-
-        if (!use_open && password.strip() == "") {
+        if (HiddenWifiSecurityModeUtils.requires_password(security_mode) && password.strip() == "") {
             throw new IOError.FAILED("Password is required for the selected security mode.");
         }
 
@@ -736,24 +721,22 @@ public class NmWifiClient : Object {
         wifi_section.add("{sv}", "hidden", new Variant.boolean(true));
         conn.add("{s@a{sv}}", "802-11-wireless", wifi_section.end());
 
-        if (!use_open) {
+        if (security_mode != HiddenWifiSecurityMode.OPEN) {
             var sec = new VariantBuilder(new VariantType("a{sv}"));
 
-            if (use_wpa2) {
-                sec.add("{sv}", "key-mgmt", new Variant.string("wpa-psk"));
-                sec.add("{sv}", "psk", new Variant.string(password));
-            } else if (use_wpa3) {
-                sec.add("{sv}", "key-mgmt", new Variant.string("sae"));
-                sec.add("{sv}", "psk", new Variant.string(password));
-            } else if (use_wpa2_wpa3) {
-                // WPA2/WPA3 transition mode generally negotiates via WPA-PSK config.
-                sec.add("{sv}", "key-mgmt", new Variant.string("wpa-psk"));
-                sec.add("{sv}", "psk", new Variant.string(password));
-            } else if (use_wep) {
-                sec.add("{sv}", "key-mgmt", new Variant.string("none"));
+            sec.add(
+                "{sv}",
+                "key-mgmt",
+                new Variant.string(HiddenWifiSecurityModeUtils.to_nm_key_mgmt(security_mode))
+            );
+
+            if (security_mode == HiddenWifiSecurityMode.WEP) {
                 sec.add("{sv}", "wep-key0", new Variant.string(password));
                 sec.add("{sv}", "wep-key-type", new Variant.uint32(1));
                 sec.add("{sv}", "auth-alg", new Variant.string("open"));
+            } else {
+                // WPA2/WPA3 transition mode generally negotiates via WPA-PSK config.
+                sec.add("{sv}", "psk", new Variant.string(password));
             }
 
             conn.add("{s@a{sv}}", "802-11-wireless-security", sec.end());

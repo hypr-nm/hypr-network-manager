@@ -805,7 +805,7 @@ public class NetworkManagerClientVala : Object {
 
     public async bool connect_hidden_wifi(
         string ssid,
-        string security_mode,
+        HiddenWifiSecurityMode security_mode,
         string password,
         Cancellable? cancellable = null
     ) throws Error {

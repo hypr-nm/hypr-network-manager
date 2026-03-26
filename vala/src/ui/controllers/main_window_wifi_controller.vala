@@ -69,27 +69,13 @@ public class MainWindowWifiController : Object {
             return;
         }
 
-        bool secured = wifi_add_security_dropdown.get_selected() != 0;
+        HiddenWifiSecurityMode mode = HiddenWifiSecurityModeUtils.from_dropdown_index(
+            wifi_add_security_dropdown.get_selected()
+        );
+        bool secured = HiddenWifiSecurityModeUtils.requires_password(mode);
         wifi_add_password_entry.set_sensitive(secured);
         if (!secured) {
             wifi_add_password_entry.set_text("");
-        }
-    }
-
-    private string get_hidden_security_mode(Gtk.DropDown wifi_add_security_dropdown) {
-        switch (wifi_add_security_dropdown.get_selected()) {
-        case 0:
-            return "open";
-        case 1:
-            return "wpa-psk";
-        case 2:
-            return "sae";
-        case 3:
-            return "wpa-psk-sae";
-        case 4:
-            return "wep";
-        default:
-            return "wpa-psk";
         }
     }
 
@@ -101,7 +87,9 @@ public class MainWindowWifiController : Object {
         MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
         wifi_add_ssid_entry.set_text("");
-        wifi_add_security_dropdown.set_selected(1);
+        wifi_add_security_dropdown.set_selected(
+            HiddenWifiSecurityModeUtils.to_dropdown_index(HiddenWifiSecurityMode.WPA_PSK)
+        );
         wifi_add_password_entry.set_text("");
         sync_add_network_sensitivity(wifi_add_security_dropdown, wifi_add_password_entry);
 
@@ -121,7 +109,9 @@ public class MainWindowWifiController : Object {
         MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
         string ssid = wifi_add_ssid_entry.get_text().strip();
-        string security_mode = get_hidden_security_mode(wifi_add_security_dropdown);
+        HiddenWifiSecurityMode security_mode = HiddenWifiSecurityModeUtils.from_dropdown_index(
+            wifi_add_security_dropdown.get_selected()
+        );
         string password = wifi_add_password_entry.get_text().strip();
 
         if (ssid == "") {
@@ -129,7 +119,7 @@ public class MainWindowWifiController : Object {
             return;
         }
 
-        if (security_mode != "open" && password == "") {
+        if (HiddenWifiSecurityModeUtils.requires_password(security_mode) && password == "") {
             on_error("Password is required for the selected security mode.");
             return;
         }
