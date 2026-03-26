@@ -103,6 +103,44 @@ public class NmClientUtils : Object {
             return join_string_variant_list(dns_variant);
         }
 
+        if (dns_variant.is_of_type(new VariantType("aay"))) {
+            var out = new StringBuilder();
+            for (int i = 0; i < dns_variant.n_children(); i++) {
+                Variant addr_bytes_v = dns_variant.get_child_value(i);
+                Bytes? bytes = addr_bytes_v.get_data_as_bytes();
+                if (bytes == null) {
+                    continue;
+                }
+
+                unowned uint8[] raw = bytes.get_data();
+                if (raw.length == 16) {
+                    // Format as full IPv6 groups (no compression needed for display/edit prefill).
+                    string addr =
+                        "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x"
+                            .printf(
+                                raw[0], raw[1], raw[2], raw[3],
+                                raw[4], raw[5], raw[6], raw[7],
+                                raw[8], raw[9], raw[10], raw[11],
+                                raw[12], raw[13], raw[14], raw[15]
+                            );
+                    if (out.len > 0) {
+                        out.append(", ");
+                    }
+                    out.append(addr);
+                    continue;
+                }
+
+                if (raw.length == 4) {
+                    string addr = "%u.%u.%u.%u".printf(raw[0], raw[1], raw[2], raw[3]);
+                    if (out.len > 0) {
+                        out.append(", ");
+                    }
+                    out.append(addr);
+                }
+            }
+            return out.str;
+        }
+
         if (dns_variant.is_of_type(new VariantType("aa{sv}"))) {
             var out = new StringBuilder();
             for (int i = 0; i < dns_variant.n_children(); i++) {
@@ -290,6 +328,13 @@ public class NmClientUtils : Object {
         Variant? dns_data_v = ipv6_group.lookup_value("dns-data", null);
         if (dns_data_v != null) {
             out_ip.configured_ipv6_dns = extract_dns_list_string(dns_data_v);
+        }
+
+        if (out_ip.configured_ipv6_dns.strip() == "") {
+            Variant? dns_v = ipv6_group.lookup_value("dns", null);
+            if (dns_v != null) {
+                out_ip.configured_ipv6_dns = extract_dns_list_string(dns_v);
+            }
         }
 
         Variant? address_data_v = ipv6_group.lookup_value("address-data", new VariantType("aa{sv}"));

@@ -340,12 +340,6 @@ public class MainWindowWifiDetailsEditController : Object {
             );
             wifi_details_ip_rows.append(
                 MainWindowHelpers.build_details_row(
-                    "Configured IPv6 DNS",
-                    ip_settings.configured_ipv6_dns.strip() != "" ? ip_settings.configured_ipv6_dns : "n/a"
-                )
-            );
-            wifi_details_ip_rows.append(
-                MainWindowHelpers.build_details_row(
                     "Current IPv6 Address",
                     MainWindowHelpers.format_ip_with_prefix(
                         ip_settings.current_ipv6_address,
@@ -357,12 +351,6 @@ public class MainWindowWifiDetailsEditController : Object {
                 MainWindowHelpers.build_details_row(
                     "Current IPv6 Gateway",
                     ip_settings.current_ipv6_gateway.strip() != "" ? ip_settings.current_ipv6_gateway : "n/a"
-                )
-            );
-            wifi_details_ip_rows.append(
-                MainWindowHelpers.build_details_row(
-                    "Current IPv6 DNS",
-                    ip_settings.current_ipv6_dns.strip() != "" ? ip_settings.current_ipv6_dns : "n/a"
                 )
             );
         });
@@ -386,8 +374,6 @@ public class MainWindowWifiDetailsEditController : Object {
         Gtk.Entry wifi_edit_ipv6_prefix_entry,
         Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
         Gtk.Entry wifi_edit_ipv6_gateway_entry,
-        Gtk.Switch wifi_edit_ipv6_dns_auto_switch,
-        Gtk.Entry wifi_edit_ipv6_dns_entry,
         Gtk.Stack wifi_stack,
         MainWindowActionCallback sync_sensitivity,
         MainWindowActionCallback enable_popup_text_input,
@@ -424,8 +410,6 @@ public class MainWindowWifiDetailsEditController : Object {
         wifi_edit_ipv6_prefix_entry.set_text("");
         wifi_edit_ipv6_gateway_auto_switch.set_active(true);
         wifi_edit_ipv6_gateway_entry.set_text("");
-        wifi_edit_ipv6_dns_auto_switch.set_active(true);
-        wifi_edit_ipv6_dns_entry.set_text("");
         sync_sensitivity();
 
         nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
@@ -459,8 +443,6 @@ public class MainWindowWifiDetailsEditController : Object {
             );
             wifi_edit_ipv6_gateway_auto_switch.set_active(ip_settings.ipv6_gateway_auto);
             wifi_edit_ipv6_gateway_entry.set_text(ip_settings.configured_ipv6_gateway);
-            wifi_edit_ipv6_dns_auto_switch.set_active(ip_settings.ipv6_dns_auto);
-            wifi_edit_ipv6_dns_entry.set_text(ip_settings.configured_ipv6_dns);
             sync_sensitivity();
         });
     }
@@ -480,8 +462,6 @@ public class MainWindowWifiDetailsEditController : Object {
         Gtk.Entry wifi_edit_ipv6_address_entry,
         Gtk.Entry wifi_edit_ipv6_gateway_entry,
         Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
-        Gtk.Switch wifi_edit_ipv6_dns_auto_switch,
-        Gtk.Entry wifi_edit_ipv6_dns_entry,
         Gtk.Entry wifi_edit_ipv6_prefix_entry,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
@@ -503,8 +483,6 @@ public class MainWindowWifiDetailsEditController : Object {
         string ipv6_address = wifi_edit_ipv6_address_entry.get_text().strip();
         bool ipv6_gateway_auto = wifi_edit_ipv6_gateway_auto_switch.get_active();
         string ipv6_gateway = wifi_edit_ipv6_gateway_entry.get_text().strip();
-        bool ipv6_dns_auto = wifi_edit_ipv6_dns_auto_switch.get_active();
-        string dns6_csv = wifi_edit_ipv6_dns_entry.get_text().strip();
 
         if (method == "disabled") {
             gateway_auto = true;
@@ -513,7 +491,6 @@ public class MainWindowWifiDetailsEditController : Object {
 
         if (method6 == "disabled" || method6 == "ignore") {
             ipv6_gateway_auto = true;
-            ipv6_dns_auto = true;
         }
 
         uint32 ipv4_prefix;
@@ -586,12 +563,6 @@ public class MainWindowWifiDetailsEditController : Object {
             return false;
         }
 
-        string[] dns6_servers = MainWindowWifiEditUtils.parse_dns_csv(dns6_csv);
-        if (!ipv6_dns_auto && dns6_servers.length == 0) {
-            on_error("Manual IPv6 DNS is enabled; provide at least one DNS server.");
-            return false;
-        }
-
         nm.update_wifi_network_settings.begin(
             net,
             password,
@@ -607,8 +578,8 @@ public class MainWindowWifiDetailsEditController : Object {
             ipv6_prefix,
             ipv6_gateway_auto,
             ipv6_gateway,
-            ipv6_dns_auto,
-            dns6_servers,
+            true,
+            {},
             null,
             (obj, res) => {
                 try {

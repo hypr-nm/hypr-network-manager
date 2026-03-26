@@ -28,9 +28,7 @@ public class MainWindowWifiController : Object {
         Gtk.Switch? wifi_edit_dns_auto_switch,
         Gtk.DropDown? wifi_edit_ipv6_method_dropdown,
         Gtk.Entry? wifi_edit_ipv6_gateway_entry,
-        Gtk.Switch? wifi_edit_ipv6_gateway_auto_switch,
-        Gtk.Entry? wifi_edit_ipv6_dns_entry,
-        Gtk.Switch? wifi_edit_ipv6_dns_auto_switch
+        Gtk.Switch? wifi_edit_ipv6_gateway_auto_switch
     ) {
         if (wifi_edit_ipv4_method_dropdown != null && wifi_edit_ipv4_method_dropdown.get_selected() == 2) {
             if (wifi_edit_gateway_auto_switch != null) {
@@ -44,12 +42,9 @@ public class MainWindowWifiController : Object {
         if (wifi_edit_ipv6_method_dropdown != null) {
             uint selected = wifi_edit_ipv6_method_dropdown.get_selected();
             if (selected == 2 || selected == 3) {
-            if (wifi_edit_ipv6_gateway_auto_switch != null) {
-                wifi_edit_ipv6_gateway_auto_switch.set_active(true);
-            }
-            if (wifi_edit_ipv6_dns_auto_switch != null) {
-                wifi_edit_ipv6_dns_auto_switch.set_active(true);
-            }
+                if (wifi_edit_ipv6_gateway_auto_switch != null) {
+                    wifi_edit_ipv6_gateway_auto_switch.set_active(true);
+                }
             }
         }
 
@@ -63,10 +58,6 @@ public class MainWindowWifiController : Object {
 
         if (wifi_edit_ipv6_gateway_entry != null && wifi_edit_ipv6_gateway_auto_switch != null) {
             wifi_edit_ipv6_gateway_entry.set_sensitive(!wifi_edit_ipv6_gateway_auto_switch.get_active());
-        }
-
-        if (wifi_edit_ipv6_dns_entry != null && wifi_edit_ipv6_dns_auto_switch != null) {
-            wifi_edit_ipv6_dns_entry.set_sensitive(!wifi_edit_ipv6_dns_auto_switch.get_active());
         }
     }
 
@@ -128,8 +119,6 @@ public class MainWindowWifiController : Object {
         Gtk.Entry wifi_edit_ipv6_prefix_entry,
         Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
         Gtk.Entry wifi_edit_ipv6_gateway_entry,
-        Gtk.Switch wifi_edit_ipv6_dns_auto_switch,
-        Gtk.Entry wifi_edit_ipv6_dns_entry,
         Gtk.Stack wifi_stack,
         MainWindowActionCallback on_sync_gateway_dns_sensitivity,
         MainWindowActionCallback on_set_popup_text_input_mode,
@@ -158,8 +147,6 @@ public class MainWindowWifiController : Object {
             wifi_edit_ipv6_prefix_entry,
             wifi_edit_ipv6_gateway_auto_switch,
             wifi_edit_ipv6_gateway_entry,
-            wifi_edit_ipv6_dns_auto_switch,
-            wifi_edit_ipv6_dns_entry,
             wifi_stack,
             on_sync_gateway_dns_sensitivity,
             on_set_popup_text_input_mode,
@@ -182,8 +169,6 @@ public class MainWindowWifiController : Object {
         Gtk.Entry wifi_edit_ipv6_address_entry,
         Gtk.Entry wifi_edit_ipv6_gateway_entry,
         Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
-        Gtk.Switch wifi_edit_ipv6_dns_auto_switch,
-        Gtk.Entry wifi_edit_ipv6_dns_entry,
         Gtk.Entry wifi_edit_ipv6_prefix_entry,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
@@ -212,8 +197,6 @@ public class MainWindowWifiController : Object {
             wifi_edit_ipv6_address_entry,
             wifi_edit_ipv6_gateway_entry,
             wifi_edit_ipv6_gateway_auto_switch,
-            wifi_edit_ipv6_dns_auto_switch,
-            wifi_edit_ipv6_dns_entry,
             wifi_edit_ipv6_prefix_entry,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
@@ -266,8 +249,6 @@ public class MainWindowWifiController : Object {
         out Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
         out Gtk.Entry wifi_edit_ipv6_prefix_entry,
         out Gtk.Entry wifi_edit_ipv6_gateway_entry,
-        out Gtk.Switch wifi_edit_ipv6_dns_auto_switch,
-        out Gtk.Entry wifi_edit_ipv6_dns_entry,
         MainWindowActionCallback on_back,
         MainWindowActionCallback on_apply,
         MainWindowActionCallback on_sync_gateway_dns_sensitivity
@@ -288,8 +269,6 @@ public class MainWindowWifiController : Object {
             out wifi_edit_ipv6_gateway_auto_switch,
             out wifi_edit_ipv6_prefix_entry,
             out wifi_edit_ipv6_gateway_entry,
-            out wifi_edit_ipv6_dns_auto_switch,
-            out wifi_edit_ipv6_dns_entry,
             on_back,
             on_apply,
             on_sync_gateway_dns_sensitivity

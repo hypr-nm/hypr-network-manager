@@ -53,19 +53,17 @@ public class NmWifiSettingsBuilder : Object {
         return true;
     }
 
-    private static void apply_manual_dns_ipv6(
+    private static bool apply_manual_dns_ipv6(
         VariantDict ipv6_dict,
         Variant? existing_ipv6,
-        string[] ipv6_dns_servers
+        string[] ipv6_dns_servers,
+        out string error_message
     ) {
-        Variant? existing_dns_data = existing_ipv6 != null
-            ? existing_ipv6.lookup_value("dns-data", null)
-            : null;
-        bool dns_data_uses_dict_items = existing_dns_data != null
-            && existing_dns_data.is_of_type(new VariantType("aa{sv}"));
+        error_message = "";
 
-        var dns_data_strings_builder = new VariantBuilder(new VariantType("as"));
-        var dns_data_dict_builder = new VariantBuilder(new VariantType("aa{sv}"));
+        // Follow NM legacy IPv6 DNS representation (`dns` as `aay`) for
+        // maximum compatibility across NM versions and backends.
+        var dns_builder = new VariantBuilder(new VariantType("aay"));
 
         foreach (string dns in ipv6_dns_servers) {
             string dns_ip = dns.strip();
@@ -73,21 +71,28 @@ public class NmWifiSettingsBuilder : Object {
                 continue;
             }
 
-            if (dns_data_uses_dict_items) {
-                var dns_data_item = new VariantBuilder(new VariantType("a{sv}"));
-                dns_data_item.add("{sv}", "address", new Variant.string(dns_ip));
-                dns_data_dict_builder.add_value(dns_data_item.end());
-            } else {
-                dns_data_strings_builder.add("s", dns_ip);
+            var parsed = new InetAddress.from_string(dns_ip);
+            if (parsed == null || parsed.get_family() != SocketFamily.IPV6) {
+                error_message = "Invalid DNS server IPv6 address: " + dns_ip;
+                return false;
             }
+
+            unowned uint8[] bytes = parsed.to_bytes();
+            if (bytes.length != 16) {
+                error_message = "Invalid DNS server IPv6 address length: " + dns_ip;
+                return false;
+            }
+
+            var addr_builder = new VariantBuilder(new VariantType("ay"));
+            foreach (uint8 b in bytes) {
+                addr_builder.add("y", b);
+            }
+            dns_builder.add_value(addr_builder.end());
         }
 
-        if (dns_data_uses_dict_items) {
-            ipv6_dict.insert_value("dns-data", dns_data_dict_builder.end());
-        } else {
-            ipv6_dict.insert_value("dns-data", dns_data_strings_builder.end());
-        }
-        ipv6_dict.remove("dns");
+        ipv6_dict.insert_value("dns", dns_builder.end());
+        ipv6_dict.remove("dns-data");
+        return true;
     }
 
     private static void apply_gateway_route_override(
@@ -273,7 +278,15 @@ public class NmWifiSettingsBuilder : Object {
         }
 
         if (!dns_auto) {
-            apply_manual_dns_ipv6(ipv6_dict, existing_ipv6, ipv6_dns_servers);
+            if (!apply_manual_dns_ipv6(
+                ipv6_dict,
+                existing_ipv6,
+                ipv6_dns_servers,
+                out error_message
+            )) {
+                updated_ipv6 = new VariantBuilder(new VariantType("a{sv}")).end();
+                return false;
+            }
         } else {
             ipv6_dict.remove("dns-data");
             ipv6_dict.remove("dns");

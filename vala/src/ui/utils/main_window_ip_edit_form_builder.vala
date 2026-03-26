@@ -362,8 +362,6 @@ public class MainWindowIpEditFormBuilder : Object {
         out Gtk.Entry ipv6_prefix_entry,
         out Gtk.Switch ipv6_gateway_auto_switch,
         out Gtk.Entry ipv6_gateway_entry,
-        out Gtk.Switch ipv6_dns_auto_switch,
-        out Gtk.Entry ipv6_dns_entry,
         MainWindowActionCallback on_sync_sensitivity,
         bool with_extra_classes
     ) {
@@ -515,60 +513,8 @@ public class MainWindowIpEditFormBuilder : Object {
         }
         override_fields.append(ipv6_gateway_entry);
 
-        override_fields.append(build_label(
-            "IPv6 DNS Servers (comma-separated)",
-            with_extra_classes,
-            with_extra_classes ? "nm-edit-ipv6-dns-label" : null
-        ));
-
-        var dns_mode_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        dns_mode_row.set_halign(Gtk.Align.FILL);
-        dns_mode_row.set_hexpand(true);
-        if (with_extra_classes) {
-            dns_mode_row.add_css_class("nm-edit-mode-row");
-            dns_mode_row.add_css_class("nm-edit-ipv6-dns-mode-row");
-        }
-
-        var dns_mode_label = new Gtk.Label("Automatic IPv6 DNS");
-        dns_mode_label.set_xalign(0.0f);
-        dns_mode_label.set_hexpand(true);
-        dns_mode_label.set_valign(Gtk.Align.CENTER);
-        if (with_extra_classes) {
-            dns_mode_label.add_css_class("nm-edit-mode-label");
-            dns_mode_label.add_css_class("nm-edit-ipv6-dns-mode-label");
-        }
-        dns_mode_row.append(dns_mode_label);
-
-        ipv6_dns_auto_switch = new Gtk.Switch();
-        ipv6_dns_auto_switch.set_valign(Gtk.Align.CENTER);
-        ipv6_dns_auto_switch.set_active(true);
-        if (with_extra_classes) {
-            ipv6_dns_auto_switch.add_css_class("nm-switch");
-            ipv6_dns_auto_switch.add_css_class("nm-edit-field-control");
-            ipv6_dns_auto_switch.add_css_class("nm-edit-mode-switch");
-            ipv6_dns_auto_switch.add_css_class("nm-edit-ipv6-dns-mode-switch");
-        }
-        ipv6_dns_auto_switch.notify["active"].connect(() => {
-            on_sync_sensitivity();
-        });
-        dns_mode_row.append(ipv6_dns_auto_switch);
-        override_fields.append(dns_mode_row);
-
-        ipv6_dns_entry = new Gtk.Entry();
-        ipv6_dns_entry.set_placeholder_text("2606:4700:4700::1111, 2001:4860:4860::8888");
-        apply_control_classes(
-            ipv6_dns_entry,
-            with_extra_classes,
-            with_extra_classes ? "nm-edit-ipv6-dns-entry" : null
-        );
-        if (with_extra_classes) {
-            ipv6_dns_entry.add_css_class("nm-edit-field-entry");
-        }
-        override_fields.append(ipv6_dns_entry);
-
         Gtk.DropDown local_ipv6_method_dropdown = ipv6_method_dropdown;
         Gtk.Switch local_ipv6_gateway_auto_switch = ipv6_gateway_auto_switch;
-        Gtk.Switch local_ipv6_dns_auto_switch = ipv6_dns_auto_switch;
 
         MainWindowActionCallback sync_compact_visibility = () => {
             uint selected = local_ipv6_method_dropdown.get_selected();
@@ -582,9 +528,6 @@ public class MainWindowIpEditFormBuilder : Object {
             if (is_disabled_or_ignore) {
                 if (!local_ipv6_gateway_auto_switch.get_active()) {
                     local_ipv6_gateway_auto_switch.set_active(true);
-                }
-                if (!local_ipv6_dns_auto_switch.get_active()) {
-                    local_ipv6_dns_auto_switch.set_active(true);
                 }
             }
             on_sync_sensitivity();

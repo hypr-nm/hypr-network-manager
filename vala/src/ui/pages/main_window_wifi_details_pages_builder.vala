@@ -111,8 +111,6 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         out Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
         out Gtk.Entry wifi_edit_ipv6_prefix_entry,
         out Gtk.Entry wifi_edit_ipv6_gateway_entry,
-        out Gtk.Switch wifi_edit_ipv6_dns_auto_switch,
-        out Gtk.Entry wifi_edit_ipv6_dns_entry,
         MainWindowActionCallback on_back,
         MainWindowActionCallback on_apply,
         MainWindowActionCallback on_sync_sensitivity
@@ -191,8 +189,6 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
             out wifi_edit_ipv6_prefix_entry,
             out wifi_edit_ipv6_gateway_auto_switch,
             out wifi_edit_ipv6_gateway_entry,
-            out wifi_edit_ipv6_dns_auto_switch,
-            out wifi_edit_ipv6_dns_entry,
             on_sync_sensitivity,
             true
         );
