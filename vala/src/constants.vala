@@ -7,6 +7,7 @@ const string NM_WIRELESS_IFACE = "org.freedesktop.NetworkManager.Device.Wireless
 const string NM_AP_IFACE = "org.freedesktop.NetworkManager.AccessPoint";
 const string NM_ACTIVE_CONN_IFACE = "org.freedesktop.NetworkManager.Connection.Active";
 const string NM_IP4_CONFIG_IFACE = "org.freedesktop.NetworkManager.IP4Config";
+const string NM_IP6_CONFIG_IFACE = "org.freedesktop.NetworkManager.IP6Config";
 const string NM_SETTINGS_PATH = "/org/freedesktop/NetworkManager/Settings";
 const string NM_SETTINGS_IFACE = "org.freedesktop.NetworkManager.Settings";
 const string NM_CONN_IFACE = "org.freedesktop.NetworkManager.Settings.Connection";

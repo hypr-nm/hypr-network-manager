@@ -141,12 +141,19 @@ public class NmEthernetClient : Object {
                 var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
                 var all_settings = settings_res.get_child_value(0);
                 NetworkManagerClientVala.fill_configured_ipv4_from_settings(all_settings, ip_settings);
+                NetworkManagerClientVala.fill_configured_ipv6_from_settings(all_settings, ip_settings);
             } catch (Error e) {
                 core.debug_log("could not read saved ethernet ipv4 settings: " + e.message);
             }
         }
 
         yield core.fill_runtime_ipv4_for_device_dbus(
+            device.device_path,
+            device.is_connected,
+            ip_settings,
+            cancellable
+        );
+        yield core.fill_runtime_ipv6_for_device_dbus(
             device.device_path,
             device.is_connected,
             ip_settings,

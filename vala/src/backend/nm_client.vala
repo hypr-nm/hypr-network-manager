@@ -319,12 +319,20 @@ public class NetworkManagerClientVala : Object {
         return NmClientUtils.normalize_ipv4_method(value);
     }
 
+    internal static string normalize_ipv6_method(string value) {
+        return NmClientUtils.normalize_ipv6_method(value);
+    }
+
     private static string extract_dns_list_string(Variant dns_variant) {
         return NmClientUtils.extract_dns_list_string(dns_variant);
     }
 
     internal static void fill_configured_ipv4_from_settings(Variant all_settings, NetworkIpSettings out_ip) {
         NmClientUtils.fill_configured_ipv4_from_settings(all_settings, out_ip);
+    }
+
+    internal static void fill_configured_ipv6_from_settings(Variant all_settings, NetworkIpSettings out_ip) {
+        NmClientUtils.fill_configured_ipv6_from_settings(all_settings, out_ip);
     }
 
     internal async void fill_runtime_ipv4_for_device_dbus(
@@ -400,6 +408,82 @@ public class NetworkManagerClientVala : Object {
             }
         } catch (Error e) {
             debug_log("could not read runtime IPv4 details: " + e.message);
+        }
+    }
+
+    internal async void fill_runtime_ipv6_for_device_dbus(
+        string device_path,
+        bool device_connected,
+        NetworkIpSettings out_ip,
+        Cancellable? cancellable = null
+    ) {
+        if (!device_connected) {
+            return;
+        }
+
+        try {
+            string active_conn_path = (yield get_prop_dbus(
+                device_path,
+                NM_DEVICE_IFACE,
+                "ActiveConnection",
+                cancellable
+            )).get_string();
+            if (active_conn_path == "/") {
+                return;
+            }
+
+            string ip6_config_path = (yield get_prop_dbus(
+                active_conn_path,
+                NM_ACTIVE_CONN_IFACE,
+                "Ip6Config",
+                cancellable
+            )).get_string();
+            if (ip6_config_path == "/") {
+                return;
+            }
+
+            Variant address_data = yield get_prop_dbus(
+                ip6_config_path,
+                NM_IP6_CONFIG_IFACE,
+                "AddressData",
+                cancellable
+            );
+            if (address_data.n_children() > 0) {
+                Variant first_addr = address_data.get_child_value(0);
+                Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
+                Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
+                if (addr_v != null) {
+                    out_ip.current_ipv6_address = addr_v.get_string();
+                }
+                if (prefix_v != null) {
+                    out_ip.current_ipv6_prefix = prefix_v.get_uint32();
+                }
+            }
+
+            try {
+                out_ip.current_ipv6_gateway = (yield get_prop_dbus(
+                    ip6_config_path,
+                    NM_IP6_CONFIG_IFACE,
+                    "Gateway",
+                    cancellable
+                )).get_string();
+            } catch (Error gateway_err) {
+                debug_log("could not read runtime IPv6 gateway: " + gateway_err.message);
+            }
+
+            try {
+                Variant dns_data = yield get_prop_dbus(
+                    ip6_config_path,
+                    NM_IP6_CONFIG_IFACE,
+                    "NameserverData",
+                    cancellable
+                );
+                out_ip.current_ipv6_dns = extract_dns_list_string(dns_data);
+            } catch (Error dns_err) {
+                debug_log("could not read runtime IPv6 DNS: " + dns_err.message);
+            }
+        } catch (Error e) {
+            debug_log("could not read runtime IPv6 details: " + e.message);
         }
     }
 

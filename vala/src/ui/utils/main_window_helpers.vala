@@ -167,6 +167,26 @@ public class MainWindowHelpers : Object {
         }
     }
 
+    public static string get_ipv6_method_label(string method) {
+        switch (method.strip().down()) {
+        case "manual":
+            return "Manual";
+        case "disabled":
+            return "Disabled";
+        case "ignore":
+            return "Ignore";
+        case "dhcp":
+            return "DHCPv6";
+        case "link-local":
+            return "Link-local";
+        case "shared":
+            return "Shared";
+        case "auto":
+        default:
+            return "Automatic";
+        }
+    }
+
     public static uint get_ipv4_method_dropdown_index(string method) {
         switch (method.strip().down()) {
         case "manual":

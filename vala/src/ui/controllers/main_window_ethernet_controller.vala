@@ -498,6 +498,56 @@ public class MainWindowEthernetController : Object {
                     ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
                 )
             );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured IPv6 Method",
+                    MainWindowHelpers.get_ipv6_method_label(ip_settings.ipv6_method)
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured IPv6 Address",
+                    MainWindowHelpers.format_ip_with_prefix(
+                        ip_settings.configured_ipv6_address,
+                        ip_settings.configured_ipv6_prefix
+                    )
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured IPv6 Gateway",
+                    ip_settings.configured_ipv6_gateway.strip() != ""
+                        ? ip_settings.configured_ipv6_gateway
+                        : "n/a"
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Configured IPv6 DNS",
+                    ip_settings.configured_ipv6_dns.strip() != "" ? ip_settings.configured_ipv6_dns : "n/a"
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Current IPv6 Address",
+                    MainWindowHelpers.format_ip_with_prefix(
+                        ip_settings.current_ipv6_address,
+                        ip_settings.current_ipv6_prefix
+                    )
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Current IPv6 Gateway",
+                    ip_settings.current_ipv6_gateway.strip() != "" ? ip_settings.current_ipv6_gateway : "n/a"
+                )
+            );
+            ethernet_details_ip_rows.append(
+                MainWindowHelpers.build_details_row(
+                    "Current IPv6 DNS",
+                    ip_settings.current_ipv6_dns.strip() != "" ? ip_settings.current_ipv6_dns : "n/a"
+                )
+            );
         });
 
         if (pending) {

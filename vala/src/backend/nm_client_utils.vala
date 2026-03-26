@@ -62,6 +62,22 @@ public class NmClientUtils : Object {
         }
     }
 
+    public static string normalize_ipv6_method(string value) {
+        string method = value.strip().down();
+        switch (method) {
+        case "manual":
+        case "disabled":
+        case "ignore":
+        case "dhcp":
+        case "link-local":
+        case "shared":
+        case "auto":
+            return method;
+        default:
+            return "auto";
+        }
+    }
+
     public static string join_string_variant_list(Variant list_variant) {
         var out = new StringBuilder();
         for (int i = 0; i < list_variant.n_children(); i++) {
@@ -238,6 +254,47 @@ public class NmClientUtils : Object {
         }
         if (prefix_v != null) {
             out_ip.configured_prefix = prefix_v.get_uint32();
+        }
+    }
+
+    public static void fill_configured_ipv6_from_settings(
+        Variant all_settings,
+        NetworkIpSettings out_ip
+    ) {
+        Variant? ipv6_group = all_settings.lookup_value("ipv6", new VariantType("a{sv}"));
+        if (ipv6_group == null) {
+            out_ip.ipv6_method = "auto";
+            return;
+        }
+
+        Variant? method_v = ipv6_group.lookup_value("method", new VariantType("s"));
+        if (method_v != null) {
+            out_ip.ipv6_method = normalize_ipv6_method(method_v.get_string());
+        }
+
+        Variant? gateway_v = ipv6_group.lookup_value("gateway", new VariantType("s"));
+        if (gateway_v != null) {
+            out_ip.configured_ipv6_gateway = gateway_v.get_string();
+        }
+
+        Variant? dns_data_v = ipv6_group.lookup_value("dns-data", null);
+        if (dns_data_v != null) {
+            out_ip.configured_ipv6_dns = extract_dns_list_string(dns_data_v);
+        }
+
+        Variant? address_data_v = ipv6_group.lookup_value("address-data", new VariantType("aa{sv}"));
+        if (address_data_v == null || address_data_v.n_children() == 0) {
+            return;
+        }
+
+        Variant first_addr = address_data_v.get_child_value(0);
+        Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
+        Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
+        if (addr_v != null) {
+            out_ip.configured_ipv6_address = addr_v.get_string();
+        }
+        if (prefix_v != null) {
+            out_ip.configured_ipv6_prefix = prefix_v.get_uint32();
         }
     }
 
