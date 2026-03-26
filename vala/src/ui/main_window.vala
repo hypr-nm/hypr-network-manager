@@ -487,6 +487,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             out wifi_details_forget_button,
             out wifi_details_edit_button,
             () => {
+                selected_wifi_network = null;
                 set_popup_text_input_mode(false);
                 wifi_stack.set_visible_child_name("list");
             },

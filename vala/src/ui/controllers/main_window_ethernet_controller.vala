@@ -198,6 +198,9 @@ public class MainWindowEthernetController : Object {
         nav_row.add_css_class("nm-details-nav-row");
 
         var back_btn = MainWindowHelpers.build_back_button(() => {
+            // Cancel pending UI updates from async edit/apply operations.
+            invalidate_ui_state();
+            selected_ethernet_device = null;
             on_set_popup_text_input_mode(false);
             ethernet_stack.set_visible_child_name("list");
         });
