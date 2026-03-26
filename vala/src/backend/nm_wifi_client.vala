@@ -106,7 +106,6 @@ public class NmWifiClient : Object {
 
     private async List<WifiNetwork> get_networks_dbus(Cancellable? cancellable = null) throws Error {
         var networks = new List<WifiNetwork>();
-        var by_ssid = new HashTable<string, WifiNetwork>(str_hash, str_equal);
         var saved_profile_index = yield build_saved_profile_index_dbus(cancellable);
 
         var nm = core.make_proxy(NM_PATH, NM_IFACE);
@@ -155,39 +154,6 @@ public class NmWifiClient : Object {
                 bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
                 bool is_connected = (ap_path == active_ap_path);
 
-                WifiNetwork? existing = by_ssid.get(ssid);
-                if (existing != null) {
-                    bool prefer_candidate = false;
-
-                    if (is_connected && !existing.connected) {
-                        prefer_candidate = true;
-                    } else if (is_connected == existing.connected && signal > existing.signal) {
-                        prefer_candidate = true;
-                    }
-
-                    if (!prefer_candidate) {
-                        continue;
-                    }
-
-                    existing.signal = signal;
-                    existing.connected = is_connected;
-                    existing.is_secured = is_secured;
-                    existing.saved = saved_profile_index.saved_ssids.contains(ssid);
-                    existing.saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
-                        ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
-                        : "";
-                    existing.device_path = dev_path;
-                    existing.ap_path = ap_path;
-                    existing.bssid = bssid;
-                    existing.frequency_mhz = frequency;
-                    existing.max_bitrate_kbps = max_bitrate;
-                    existing.mode = mode;
-                    existing.flags = flags;
-                    existing.wpa_flags = wpa_flags;
-                    existing.rsn_flags = rsn_flags;
-                    continue;
-                }
-
                 var network = new WifiNetwork() {
                     ssid = ssid,
                     saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
@@ -207,7 +173,6 @@ public class NmWifiClient : Object {
                     wpa_flags = wpa_flags,
                     rsn_flags = rsn_flags
                 };
-                by_ssid.insert(ssid, network);
                 networks.append(network);
             }
         }
@@ -478,7 +443,6 @@ public class NmWifiClient : Object {
 
     public List<WifiNetwork> get_networks() {
         var networks = new List<WifiNetwork>();
-        var by_ssid = new HashTable<string, WifiNetwork>(str_hash, str_equal);
         var saved_profile_index = build_saved_profile_index();
 
         try {
@@ -518,39 +482,6 @@ public class NmWifiClient : Object {
                     bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
                     bool is_connected = (ap_path == active_ap_path);
 
-                    WifiNetwork? existing = by_ssid.get(ssid);
-                    if (existing != null) {
-                        bool prefer_candidate = false;
-
-                        if (is_connected && !existing.connected) {
-                            prefer_candidate = true;
-                        } else if (is_connected == existing.connected && signal > existing.signal) {
-                            prefer_candidate = true;
-                        }
-
-                        if (!prefer_candidate) {
-                            continue;
-                        }
-
-                        existing.signal = signal;
-                        existing.connected = is_connected;
-                        existing.is_secured = is_secured;
-                        existing.saved = saved_profile_index.saved_ssids.contains(ssid);
-                        existing.saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
-                            ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
-                            : "";
-                        existing.device_path = dev_path;
-                        existing.ap_path = ap_path;
-                        existing.bssid = bssid;
-                        existing.frequency_mhz = frequency;
-                        existing.max_bitrate_kbps = max_bitrate;
-                        existing.mode = mode;
-                        existing.flags = flags;
-                        existing.wpa_flags = wpa_flags;
-                        existing.rsn_flags = rsn_flags;
-                        continue;
-                    }
-
                     var network = new WifiNetwork() {
                         ssid = ssid,
                         saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
@@ -570,7 +501,6 @@ public class NmWifiClient : Object {
                         wpa_flags = wpa_flags,
                         rsn_flags = rsn_flags
                     };
-                    by_ssid.insert(ssid, network);
                     networks.append(network);
                 }
             }
