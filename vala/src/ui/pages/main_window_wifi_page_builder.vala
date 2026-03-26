@@ -7,7 +7,9 @@ public class MainWindowWifiPageBuilder : Object {
         out Gtk.Stack wifi_stack,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
+        Gtk.Widget add_page,
         MainWindowActionCallback on_refresh,
+        MainWindowActionCallback on_add_network,
         MainWindowActionCallback on_switch_changed
     ) {
         var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
@@ -26,6 +28,19 @@ public class MainWindowWifiPageBuilder : Object {
         title.set_hexpand(true);
         title.add_css_class("nm-section-title");
         toolbar.append(title);
+
+        var add_btn = new Gtk.Button();
+        add_btn.add_css_class("nm-button");
+        add_btn.add_css_class("nm-icon-button");
+        var add_icon = new Gtk.Image.from_icon_name("list-add-symbolic");
+        add_icon.add_css_class("nm-toolbar-icon");
+        add_icon.add_css_class("nm-wifi-add-icon");
+        add_btn.set_child(add_icon);
+        add_btn.set_tooltip_text("Add Hidden Network");
+        add_btn.clicked.connect(() => {
+            on_add_network();
+        });
+        toolbar.append(add_btn);
 
         var refresh_btn = new Gtk.Button();
         refresh_btn.add_css_class("nm-button");
@@ -80,6 +95,7 @@ public class MainWindowWifiPageBuilder : Object {
         wifi_stack.add_named(wifi_placeholder, "empty");
         wifi_stack.add_named(details_page, "details");
         wifi_stack.add_named(edit_page, "edit");
+        wifi_stack.add_named(add_page, "add");
         wifi_stack.set_visible_child_name("empty");
 
         page.append(wifi_stack);

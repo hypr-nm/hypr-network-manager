@@ -62,6 +62,9 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Switch wifi_edit_ipv6_gateway_auto_switch;
     private Gtk.Entry wifi_edit_ipv6_prefix_entry;
     private Gtk.Entry wifi_edit_ipv6_gateway_entry;
+    private Gtk.Entry wifi_add_ssid_entry;
+    private Gtk.DropDown wifi_add_security_dropdown;
+    private Gtk.Entry wifi_add_password_entry;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
     private MainWindowWifiController wifi_controller;
@@ -288,10 +291,12 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         bool keep_input_for_wifi_edit = wifi_stack != null
             && wifi_stack.get_visible_child_name() == "edit";
+        bool keep_input_for_wifi_add = wifi_stack != null
+            && wifi_stack.get_visible_child_name() == "add";
         bool keep_input_for_inline_prompt = active_wifi_password_revealer != null
             && active_wifi_password_revealer.get_reveal_child();
 
-        if (keep_input_for_wifi_edit || keep_input_for_inline_prompt) {
+        if (keep_input_for_wifi_edit || keep_input_for_wifi_add || keep_input_for_inline_prompt) {
             GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
             return;
         }
@@ -342,13 +347,71 @@ public class MainWindow : Gtk.ApplicationWindow {
             out wifi_stack,
             build_wifi_details_page(),
             build_wifi_edit_page(),
+            build_wifi_add_page(),
             () => {
                 refresh_wifi();
+            },
+            () => {
+                open_wifi_add();
             },
             () => {
                 on_wifi_switch_changed();
             }
         );
+    }
+
+    private void sync_wifi_add_sensitivity() {
+        if (wifi_add_security_dropdown == null || wifi_add_password_entry == null) {
+            return;
+        }
+
+        bool secured = wifi_add_security_dropdown.get_selected() == 1;
+        wifi_add_password_entry.set_sensitive(secured);
+        if (!secured) {
+            wifi_add_password_entry.set_text("");
+        }
+    }
+
+    private void open_wifi_add() {
+        if (wifi_stack == null) {
+            return;
+        }
+
+        wifi_add_ssid_entry.set_text("");
+        wifi_add_security_dropdown.set_selected(1);
+        wifi_add_password_entry.set_text("");
+        sync_wifi_add_sensitivity();
+
+        wifi_stack.set_visible_child_name("add");
+        set_popup_text_input_mode(true);
+        wifi_add_ssid_entry.grab_focus();
+    }
+
+    private void apply_wifi_add() {
+        string ssid = wifi_add_ssid_entry.get_text().strip();
+        bool is_secured = wifi_add_security_dropdown.get_selected() == 1;
+        string password = wifi_add_password_entry.get_text().strip();
+
+        if (ssid == "") {
+            show_error("SSID is required.");
+            return;
+        }
+
+        if (is_secured && password == "") {
+            show_error("Password is required for secured hidden networks.");
+            return;
+        }
+
+        nm.connect_hidden_wifi.begin(ssid, is_secured, password, null, (obj, res) => {
+            try {
+                nm.connect_hidden_wifi.end(res);
+                refresh_after_action(true);
+                wifi_stack.set_visible_child_name("list");
+                set_popup_text_input_mode(false);
+            } catch (Error e) {
+                show_error("Add hidden network failed: " + e.message);
+            }
+        });
     }
 
     private string resolve_wifi_row_icon_name(WifiNetwork net) {
@@ -547,6 +610,108 @@ public class MainWindow : Gtk.ApplicationWindow {
                 sync_wifi_edit_gateway_dns_sensitivity();
             }
         );
+    }
+
+    private Gtk.Widget build_wifi_add_page() {
+        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
+        page.set_margin_start(12);
+        page.set_margin_end(12);
+        page.set_margin_top(12);
+        page.set_margin_bottom(12);
+        page.add_css_class("nm-page");
+        page.add_css_class("nm-page-wifi-add");
+        page.add_css_class("nm-page-network-edit");
+
+        var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        var back_btn = MainWindowHelpers.build_back_button(() => {
+            set_popup_text_input_mode(false);
+            wifi_stack.set_visible_child_name("list");
+        });
+        header.append(back_btn);
+
+        var title = new Gtk.Label("Add Hidden Network");
+        title.set_xalign(0.0f);
+        title.set_hexpand(true);
+        title.add_css_class("nm-section-title");
+        header.append(title);
+        page.append(header);
+
+        var form = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        form.add_css_class("nm-edit-form");
+        form.add_css_class("nm-edit-network-form");
+
+        var note = new Gtk.Label("Manually add a hidden Wi-Fi network.");
+        note.set_xalign(0.0f);
+        note.set_wrap(true);
+        note.add_css_class("nm-sub-label");
+        note.add_css_class("nm-edit-note");
+        form.append(note);
+
+        var ssid_label = new Gtk.Label("SSID");
+        ssid_label.set_xalign(0.0f);
+        ssid_label.add_css_class("nm-form-label");
+        ssid_label.add_css_class("nm-edit-field-label");
+        form.append(ssid_label);
+
+        wifi_add_ssid_entry = new Gtk.Entry();
+        wifi_add_ssid_entry.set_placeholder_text("Network name");
+        wifi_add_ssid_entry.add_css_class("nm-edit-field-control");
+        wifi_add_ssid_entry.add_css_class("nm-edit-field-entry");
+        form.append(wifi_add_ssid_entry);
+
+        var security_label = new Gtk.Label("Security");
+        security_label.set_xalign(0.0f);
+        security_label.add_css_class("nm-form-label");
+        security_label.add_css_class("nm-edit-field-label");
+        form.append(security_label);
+
+        var security_list = new Gtk.StringList(null);
+        security_list.append("Open");
+        security_list.append("WPA/WPA2 Personal");
+        wifi_add_security_dropdown = new Gtk.DropDown(security_list, null);
+        wifi_add_security_dropdown.add_css_class("nm-edit-field-control");
+        wifi_add_security_dropdown.add_css_class("nm-edit-dropdown");
+        wifi_add_security_dropdown.set_selected(1);
+        wifi_add_security_dropdown.notify["selected"].connect(() => {
+            sync_wifi_add_sensitivity();
+        });
+        form.append(wifi_add_security_dropdown);
+
+        var password_label = new Gtk.Label("Password");
+        password_label.set_xalign(0.0f);
+        password_label.add_css_class("nm-form-label");
+        password_label.add_css_class("nm-edit-field-label");
+        form.append(password_label);
+
+        wifi_add_password_entry = new Gtk.Entry();
+        wifi_add_password_entry.set_visibility(false);
+        wifi_add_password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
+        wifi_add_password_entry.set_placeholder_text("Network password");
+        wifi_add_password_entry.add_css_class("nm-password-entry");
+        wifi_add_password_entry.add_css_class("nm-edit-field-control");
+        wifi_add_password_entry.add_css_class("nm-edit-field-entry");
+        wifi_add_password_entry.activate.connect(() => {
+            apply_wifi_add();
+        });
+        form.append(wifi_add_password_entry);
+
+        sync_wifi_add_sensitivity();
+
+        var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        actions.add_css_class("nm-edit-actions");
+
+        var save_btn = new Gtk.Button.with_label("Connect");
+        save_btn.add_css_class("nm-button");
+        save_btn.add_css_class("suggested-action");
+        save_btn.clicked.connect(() => {
+            apply_wifi_add();
+        });
+        actions.append(save_btn);
+
+        form.append(actions);
+
+        page.append(form);
+        return page;
     }
 
     private Gtk.ListBoxRow build_wifi_row(WifiNetwork net) {

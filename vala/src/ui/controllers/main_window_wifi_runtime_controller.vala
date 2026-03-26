@@ -168,7 +168,7 @@ public class MainWindowWifiRuntimeController : Object {
                     wifi_listbox.append(on_build_wifi_row(net));
                 }
 
-                if (current_view == "details" || current_view == "edit") {
+                if (current_view == "details" || current_view == "edit" || current_view == "add") {
                     // Avoid touching ref parameters from async callbacks.
                     wifi_stack.set_visible_child_name(current_view);
                 } else {

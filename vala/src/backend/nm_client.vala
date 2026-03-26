@@ -803,6 +803,15 @@ public class NetworkManagerClientVala : Object {
         return yield wifi_client.connect_with_password(network, password, cancellable);
     }
 
+    public async bool connect_hidden_wifi(
+        string ssid,
+        bool is_secured,
+        string password,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield wifi_client.connect_hidden_network(ssid, is_secured, password, cancellable);
+    }
+
     public async bool disconnect_wifi(WifiNetwork network, Cancellable? cancellable = null) throws Error {
         return yield wifi_client.disconnect(network, cancellable);
     }

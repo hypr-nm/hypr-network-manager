@@ -663,6 +663,80 @@ public class NmWifiClient : Object {
         return true;
     }
 
+    private async string resolve_wifi_device_path_for_hidden_connect(
+        Cancellable? cancellable = null
+    ) throws Error {
+        string fallback_path = "";
+        var devices = yield core.get_devices_dbus(cancellable);
+        foreach (var dev in devices) {
+            if (!dev.is_wifi) {
+                continue;
+            }
+
+            if (fallback_path == "") {
+                fallback_path = dev.device_path;
+            }
+
+            if (dev.is_connected) {
+                return dev.device_path;
+            }
+        }
+
+        if (fallback_path != "") {
+            return fallback_path;
+        }
+
+        throw new IOError.NOT_FOUND("No Wi-Fi device available for hidden network connection.");
+    }
+
+    public async bool connect_hidden_network(
+        string ssid,
+        bool is_secured,
+        string password,
+        Cancellable? cancellable = null
+    ) throws Error {
+        string hidden_ssid = ssid.strip();
+        if (hidden_ssid == "") {
+            throw new IOError.FAILED("SSID is required.");
+        }
+
+        if (is_secured && password.strip() == "") {
+            throw new IOError.FAILED("Password is required for secured hidden networks.");
+        }
+
+        string device_path = yield resolve_wifi_device_path_for_hidden_connect(cancellable);
+        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+
+        var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
+
+        var conn_section = new VariantBuilder(new VariantType("a{sv}"));
+        conn_section.add("{sv}", "id", new Variant.string(hidden_ssid));
+        conn_section.add("{sv}", "type", new Variant.string("802-11-wireless"));
+        conn_section.add("{sv}", "uuid", new Variant.string(Uuid.string_random()));
+        conn_section.add("{sv}", "autoconnect", new Variant.boolean(true));
+        conn.add("{s@a{sv}}", "connection", conn_section.end());
+
+        var wifi_section = new VariantBuilder(new VariantType("a{sv}"));
+        wifi_section.add("{sv}", "ssid", NmClientUtils.make_ssid_variant(hidden_ssid));
+        wifi_section.add("{sv}", "hidden", new Variant.boolean(true));
+        conn.add("{s@a{sv}}", "802-11-wireless", wifi_section.end());
+
+        if (is_secured) {
+            var sec = new VariantBuilder(new VariantType("a{sv}"));
+            sec.add("{sv}", "key-mgmt", new Variant.string("wpa-psk"));
+            sec.add("{sv}", "psk", new Variant.string(password));
+            conn.add("{s@a{sv}}", "802-11-wireless-security", sec.end());
+        }
+
+        yield core.call_dbus(
+            nm,
+            "AddAndActivateConnection",
+            new Variant("(@a{sa{sv}}oo)", conn.end(), device_path, "/"),
+            cancellable
+        );
+        return true;
+    }
+
     public new async bool disconnect(WifiNetwork network, Cancellable? cancellable = null) throws Error {
         var dev = core.make_proxy(network.device_path, NM_DEVICE_IFACE);
         yield core.call_dbus(dev, "Disconnect", null, cancellable);
