@@ -632,6 +632,23 @@ public class NmWifiClient : Object {
             throw new IOError.FAILED("Password is required for secured networks.");
         }
 
+        string password_clean = password.strip();
+        if (network.is_secured && password_clean.char_count() < HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH) {
+            throw new IOError.FAILED(
+                "Password must be at least %d characters for secured networks.".printf(
+                    HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH
+                )
+            );
+        }
+
+        uint32 key_mgmt_flags = network.wpa_flags | network.rsn_flags;
+        bool supports_sae = (key_mgmt_flags & NM_80211_AP_SEC_KEY_MGMT_SAE) != 0;
+        bool supports_psk = (key_mgmt_flags & NM_80211_AP_SEC_KEY_MGMT_PSK) != 0;
+        string key_mgmt = "wpa-psk";
+        if (supports_sae && !supports_psk) {
+            key_mgmt = "sae";
+        }
+
         var nm = core.make_proxy(NM_PATH, NM_IFACE);
 
         var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
@@ -649,8 +666,8 @@ public class NmWifiClient : Object {
 
         if (network.is_secured) {
             var sec = new VariantBuilder(new VariantType("a{sv}"));
-            sec.add("{sv}", "key-mgmt", new Variant.string("wpa-psk"));
-            sec.add("{sv}", "psk", new Variant.string(password));
+            sec.add("{sv}", "key-mgmt", new Variant.string(key_mgmt));
+            sec.add("{sv}", "psk", new Variant.string(password_clean));
             conn.add("{s@a{sv}}", "802-11-wireless-security", sec.end());
         }
 
