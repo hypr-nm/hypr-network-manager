@@ -150,9 +150,6 @@ public class MainWindowEthernetController : Object {
         toolbar.append(refresh_btn);
 
         page.append(toolbar);
-        var toolbar_sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
-        toolbar_sep.add_css_class("nm-separator");
-        page.append(toolbar_sep);
 
         var scroll = new Gtk.ScrolledWindow();
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
