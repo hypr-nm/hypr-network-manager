@@ -3,6 +3,8 @@ public class NetworkIpSettings : Object {
     public string ipv6_method { get; set; default = "auto"; }
     public bool gateway_auto { get; set; default = true; }
     public bool dns_auto { get; set; default = true; }
+    public bool ipv6_gateway_auto { get; set; default = true; }
+    public bool ipv6_dns_auto { get; set; default = true; }
     public string configured_address { get; set; default = ""; }
     public uint32 configured_prefix { get; set; default = 0; }
     public string configured_gateway { get; set; default = ""; }
