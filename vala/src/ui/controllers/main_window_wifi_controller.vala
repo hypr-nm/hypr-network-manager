@@ -61,6 +61,91 @@ public class MainWindowWifiController : Object {
         }
     }
 
+    public void sync_add_network_sensitivity(
+        Gtk.DropDown? wifi_add_security_dropdown,
+        Gtk.Entry? wifi_add_password_entry
+    ) {
+        if (wifi_add_security_dropdown == null || wifi_add_password_entry == null) {
+            return;
+        }
+
+        bool secured = wifi_add_security_dropdown.get_selected() != 0;
+        wifi_add_password_entry.set_sensitive(secured);
+        if (!secured) {
+            wifi_add_password_entry.set_text("");
+        }
+    }
+
+    private string get_hidden_security_mode(Gtk.DropDown wifi_add_security_dropdown) {
+        switch (wifi_add_security_dropdown.get_selected()) {
+        case 0:
+            return "open";
+        case 1:
+            return "wpa-psk";
+        case 2:
+            return "sae";
+        case 3:
+            return "wpa-psk-sae";
+        case 4:
+            return "wep";
+        default:
+            return "wpa-psk";
+        }
+    }
+
+    public void open_add_network(
+        Gtk.Stack wifi_stack,
+        Gtk.Entry wifi_add_ssid_entry,
+        Gtk.DropDown wifi_add_security_dropdown,
+        Gtk.Entry wifi_add_password_entry,
+        MainWindowBoolCallback on_set_popup_text_input_mode
+    ) {
+        wifi_add_ssid_entry.set_text("");
+        wifi_add_security_dropdown.set_selected(1);
+        wifi_add_password_entry.set_text("");
+        sync_add_network_sensitivity(wifi_add_security_dropdown, wifi_add_password_entry);
+
+        wifi_stack.set_visible_child_name("add");
+        on_set_popup_text_input_mode(true);
+        wifi_add_ssid_entry.grab_focus();
+    }
+
+    public void apply_add_network(
+        NetworkManagerClientVala nm,
+        Gtk.Stack wifi_stack,
+        Gtk.Entry wifi_add_ssid_entry,
+        Gtk.DropDown wifi_add_security_dropdown,
+        Gtk.Entry wifi_add_password_entry,
+        MainWindowErrorCallback on_error,
+        MainWindowRefreshActionCallback on_refresh_after_action,
+        MainWindowBoolCallback on_set_popup_text_input_mode
+    ) {
+        string ssid = wifi_add_ssid_entry.get_text().strip();
+        string security_mode = get_hidden_security_mode(wifi_add_security_dropdown);
+        string password = wifi_add_password_entry.get_text().strip();
+
+        if (ssid == "") {
+            on_error("SSID is required.");
+            return;
+        }
+
+        if (security_mode != "open" && password == "") {
+            on_error("Password is required for the selected security mode.");
+            return;
+        }
+
+        nm.connect_hidden_wifi.begin(ssid, security_mode, password, null, (obj, res) => {
+            try {
+                nm.connect_hidden_wifi.end(res);
+                on_refresh_after_action(true);
+                wifi_stack.set_visible_child_name("list");
+                on_set_popup_text_input_mode(false);
+            } catch (Error e) {
+                on_error("Add hidden network failed: " + e.message);
+            }
+        });
+    }
+
     public void populate_details(
         NetworkManagerClientVala nm,
         WifiNetwork net,

@@ -805,11 +805,11 @@ public class NetworkManagerClientVala : Object {
 
     public async bool connect_hidden_wifi(
         string ssid,
-        bool is_secured,
+        string security_mode,
         string password,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.connect_hidden_network(ssid, is_secured, password, cancellable);
+        return yield wifi_client.connect_hidden_network(ssid, security_mode, password, cancellable);
     }
 
     public async bool disconnect_wifi(WifiNetwork network, Cancellable? cancellable = null) throws Error {
