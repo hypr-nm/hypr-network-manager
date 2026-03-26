@@ -401,7 +401,7 @@ public class MainWindowWifiDetailsEditController : Object {
         if (net.is_secured) {
             wifi_edit_note.set_text(
                 "Leave password empty to keep current credentials.\n"
-                + "IPv4 settings can be changed below (DHCP or manual)."
+                + "IPv4 and IPv6 settings can be changed below (auto/manual/disabled)."
             );
         } else {
             wifi_edit_note.set_text("Open network. Password is not required.");
@@ -505,6 +505,16 @@ public class MainWindowWifiDetailsEditController : Object {
         string ipv6_gateway = wifi_edit_ipv6_gateway_entry.get_text().strip();
         bool ipv6_dns_auto = wifi_edit_ipv6_dns_auto_switch.get_active();
         string dns6_csv = wifi_edit_ipv6_dns_entry.get_text().strip();
+
+        if (method == "disabled") {
+            gateway_auto = true;
+            dns_auto = true;
+        }
+
+        if (method6 == "disabled" || method6 == "ignore") {
+            ipv6_gateway_auto = true;
+            ipv6_dns_auto = true;
+        }
 
         uint32 ipv4_prefix;
         string prefix_error;

@@ -212,7 +212,14 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         actions.append(save_btn);
 
         form.append(actions);
-        page.append(form);
+
+        var scroll = new Gtk.ScrolledWindow();
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class("nm-scroll");
+        scroll.set_vexpand(true);
+        scroll.set_child(form);
+
+        page.append(scroll);
         return page;
     }
 }

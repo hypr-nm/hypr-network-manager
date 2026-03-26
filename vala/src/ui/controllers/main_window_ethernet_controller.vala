@@ -356,11 +356,45 @@ public class MainWindowEthernetController : Object {
         actions.append(save_btn);
 
         form.append(actions);
-        page.append(form);
+
+        var scroll = new Gtk.ScrolledWindow();
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class("nm-scroll");
+        scroll.set_vexpand(true);
+        scroll.set_child(form);
+
+        page.append(scroll);
         return page;
     }
 
     private void sync_edit_gateway_dns_sensitivity() {
+        if (ethernet_edit_ipv4_method_dropdown != null) {
+            bool ipv4_manual = ethernet_edit_ipv4_method_dropdown.get_selected() == 1;
+            bool ipv4_disabled = ethernet_edit_ipv4_method_dropdown.get_selected() == 2;
+            if (!ipv4_manual && ipv4_disabled) {
+                if (ethernet_edit_gateway_auto_switch != null) {
+                    ethernet_edit_gateway_auto_switch.set_active(true);
+                }
+                if (ethernet_edit_dns_auto_switch != null) {
+                    ethernet_edit_dns_auto_switch.set_active(true);
+                }
+            }
+        }
+
+        if (ethernet_edit_ipv6_method_dropdown != null) {
+            bool ipv6_manual = ethernet_edit_ipv6_method_dropdown.get_selected() == 1;
+            uint selected = ethernet_edit_ipv6_method_dropdown.get_selected();
+            bool ipv6_disabled_or_ignore = selected == 2 || selected == 3;
+            if (!ipv6_manual && ipv6_disabled_or_ignore) {
+                if (ethernet_edit_ipv6_gateway_auto_switch != null) {
+                    ethernet_edit_ipv6_gateway_auto_switch.set_active(true);
+                }
+                if (ethernet_edit_ipv6_dns_auto_switch != null) {
+                    ethernet_edit_ipv6_dns_auto_switch.set_active(true);
+                }
+            }
+        }
+
         if (ethernet_edit_ipv4_gateway_entry != null && ethernet_edit_gateway_auto_switch != null) {
             ethernet_edit_ipv4_gateway_entry.set_sensitive(!ethernet_edit_gateway_auto_switch.get_active());
         }
@@ -610,7 +644,7 @@ public class MainWindowEthernetController : Object {
         selected_ethernet_device = dev;
         uint epoch = capture_ui_epoch();
         ethernet_edit_title.set_text("Edit: %s".printf(dev.name));
-        ethernet_edit_note.set_text("Update IPv4 settings for profile: %s".printf(dev.connection));
+        ethernet_edit_note.set_text("Update IPv4 and IPv6 settings for profile: %s".printf(dev.connection));
 
         ethernet_stack.set_visible_child_name("edit");
         on_set_popup_text_input_mode(true);
@@ -678,6 +712,16 @@ public class MainWindowEthernetController : Object {
         string ipv6_gateway = ethernet_edit_ipv6_gateway_entry.get_text().strip();
         bool ipv6_dns_auto = ethernet_edit_ipv6_dns_auto_switch.get_active();
         string dns6_csv = ethernet_edit_ipv6_dns_entry.get_text().strip();
+
+        if (method == "disabled") {
+            gateway_auto = true;
+            dns_auto = true;
+        }
+
+        if (method6 == "disabled" || method6 == "ignore") {
+            ipv6_gateway_auto = true;
+            ipv6_dns_auto = true;
+        }
 
         uint32 ipv4_prefix;
         string prefix_error;
