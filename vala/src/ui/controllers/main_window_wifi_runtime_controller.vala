@@ -117,24 +117,25 @@ public class MainWindowWifiRuntimeController : Object {
                 string? primary_connected_ssid = null;
 
                 active_wifi_connections.remove_all();
-                foreach (var dev in devices) {
-                    if (!dev.is_wifi || !dev.is_connected || dev.connection == "") {
+                foreach (var net in networks) {
+                    if (!net.connected) {
                         continue;
                     }
-                    active_wifi_connections.insert(dev.connection, true);
+                    active_wifi_connections.insert(net.network_key, true);
                     if (primary_connected_ssid == null) {
-                        primary_connected_ssid = dev.connection;
+                        primary_connected_ssid = net.ssid;
                     }
                 }
 
                 foreach (var net in networks) {
-                    if (!pending_wifi_connect.contains(net.ssid)) {
+                    string net_key = net.network_key;
+                    if (!pending_wifi_connect.contains(net_key)) {
                         continue;
                     }
 
-                    if (active_wifi_connections.contains(net.ssid)) {
-                        pending_wifi_connect.remove(net.ssid);
-                        pending_wifi_seen_connecting.remove(net.ssid);
+                    if (active_wifi_connections.contains(net_key)) {
+                        pending_wifi_connect.remove(net_key);
+                        pending_wifi_seen_connecting.remove(net_key);
                         continue;
                     }
 
@@ -153,13 +154,13 @@ public class MainWindowWifiRuntimeController : Object {
                     bool is_connecting_state = matched_device.state >= 40
                         && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
                     if (is_connecting_state) {
-                        pending_wifi_seen_connecting.insert(net.ssid, true);
+                        pending_wifi_seen_connecting.insert(net_key, true);
                         continue;
                     }
 
-                    if (pending_wifi_seen_connecting.contains(net.ssid)) {
-                        pending_wifi_connect.remove(net.ssid);
-                        pending_wifi_seen_connecting.remove(net.ssid);
+                    if (pending_wifi_seen_connecting.contains(net_key)) {
+                        pending_wifi_connect.remove(net_key);
+                        pending_wifi_seen_connecting.remove(net_key);
                     }
                 }
 
@@ -231,9 +232,10 @@ public class MainWindowWifiRuntimeController : Object {
     ) {
         uint epoch = capture_ui_epoch();
 
-        if (!active_wifi_connections.contains(net.ssid)) {
-            pending_wifi_connect.insert(net.ssid, true);
-            pending_wifi_seen_connecting.remove(net.ssid);
+        string net_key = net.network_key;
+        if (!active_wifi_connections.contains(net_key)) {
+            pending_wifi_connect.insert(net_key, true);
+            pending_wifi_seen_connecting.remove(net_key);
         }
 
         nm.connect_wifi.begin(net, password, null, (obj, res) => {
@@ -250,7 +252,7 @@ public class MainWindowWifiRuntimeController : Object {
 
                 on_refresh_after_action(true);
 
-                string pending_ssid = net.ssid;
+                string pending_ssid = net_key;
                 uint effective_timeout_ms = pending_wifi_connect_timeout_ms >= 1000
                     ? pending_wifi_connect_timeout_ms
                     : 1000;
@@ -273,8 +275,8 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid(epoch)) {
                     return;
                 }
-                pending_wifi_connect.remove(net.ssid);
-                pending_wifi_seen_connecting.remove(net.ssid);
+                pending_wifi_connect.remove(net_key);
+                pending_wifi_seen_connecting.remove(net_key);
                 on_error("Connect failed: " + e.message);
             }
         });

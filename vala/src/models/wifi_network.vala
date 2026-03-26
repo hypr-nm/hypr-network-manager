@@ -15,6 +15,23 @@ public class WifiNetwork : Object {
     public uint32 wpa_flags { get; construct set; }
     public uint32 rsn_flags { get; construct set; }
 
+    public string network_key {
+        owned get {
+            string bssid_key = bssid.strip().down();
+            if (bssid_key != "") {
+                return bssid_key;
+            }
+
+            // Fallback only for malformed/empty BSSID cases.
+            string ap = ap_path.strip();
+            if (ap != "") {
+                return ap;
+            }
+
+            return ssid;
+        }
+    }
+
     public string signal_label {
         owned get {
             return WifiSignalLevels.get_label(signal);

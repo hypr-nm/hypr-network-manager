@@ -130,6 +130,25 @@ public class NmWifiClient : Object {
                 "ActiveAccessPoint",
                 cancellable
             )).get_string();
+            string active_conn_uuid = "";
+            try {
+                string active_conn_path = (yield core.get_prop_dbus(
+                    dev_path,
+                    NM_DEVICE_IFACE,
+                    "ActiveConnection",
+                    cancellable
+                )).get_string();
+                if (active_conn_path != "/") {
+                    active_conn_uuid = (yield core.get_prop_dbus(
+                        active_conn_path,
+                        NM_ACTIVE_CONN_IFACE,
+                        "Uuid",
+                        cancellable
+                    )).get_string();
+                }
+            } catch (Error e) {
+                core.debug_log("could not read active wifi connection uuid: " + e.message);
+            }
 
             var wifi = core.make_proxy(dev_path, NM_WIRELESS_IFACE);
             var aps_res = yield core.call_dbus(wifi, "GetAccessPoints", null, cancellable);
@@ -153,16 +172,22 @@ public class NmWifiClient : Object {
                 uint32 mode = (yield core.get_prop_dbus(ap_path, NM_AP_IFACE, "Mode", cancellable)).get_uint32();
                 bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
                 bool is_connected = (ap_path == active_ap_path);
+                string profile_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
+                    ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
+                    : "";
+                if (is_connected && active_conn_uuid != "") {
+                    profile_uuid = active_conn_uuid;
+                }
+                bool is_saved_profile = saved_profile_index.saved_ssids.contains(ssid)
+                    || profile_uuid != "";
 
                 var network = new WifiNetwork() {
                     ssid = ssid,
-                    saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
-                        ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
-                        : "",
+                    saved_connection_uuid = profile_uuid,
                     signal = signal,
                     connected = is_connected,
                     is_secured = is_secured,
-                    saved = saved_profile_index.saved_ssids.contains(ssid),
+                    saved = is_saved_profile,
                     device_path = dev_path,
                     ap_path = ap_path,
                     bssid = bssid,
@@ -278,6 +303,12 @@ public class NmWifiClient : Object {
 
         if (network.saved) {
             try {
+                if (network.saved_connection_uuid.strip() == "") {
+                    throw new IOError.FAILED(
+                        "Cannot uniquely identify saved profile for this network."
+                    );
+                }
+
                 string conn_path = yield resolve_connection_path(
                     network,
                     "Multiple saved profiles share this SSID. Select a specific profile by UUID.",
@@ -329,6 +360,10 @@ public class NmWifiClient : Object {
         string[] ipv6_dns_servers,
         Cancellable? cancellable = null
     ) throws Error {
+        if (network.saved_connection_uuid.strip() == "") {
+            throw new IOError.FAILED("Cannot uniquely identify saved profile for this network.");
+        }
+
         string conn_path = yield resolve_connection_path(
             network,
             "Multiple saved profiles share this SSID. Refusing ambiguous update.",
@@ -458,6 +493,23 @@ public class NmWifiClient : Object {
                 }
 
                 string active_ap_path = core.get_prop(dev_path, NM_WIRELESS_IFACE, "ActiveAccessPoint").get_string();
+                string active_conn_uuid = "";
+                try {
+                    string active_conn_path = core.get_prop(
+                        dev_path,
+                        NM_DEVICE_IFACE,
+                        "ActiveConnection"
+                    ).get_string();
+                    if (active_conn_path != "/") {
+                        active_conn_uuid = core.get_prop(
+                            active_conn_path,
+                            NM_ACTIVE_CONN_IFACE,
+                            "Uuid"
+                        ).get_string();
+                    }
+                } catch (Error e) {
+                    core.debug_log("could not read active wifi connection uuid: " + e.message);
+                }
 
                 var wifi = core.make_proxy(dev_path, NM_WIRELESS_IFACE);
                 var aps_res = wifi.call_sync("GetAccessPoints", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
@@ -481,16 +533,22 @@ public class NmWifiClient : Object {
                     uint32 mode = core.get_prop(ap_path, NM_AP_IFACE, "Mode").get_uint32();
                     bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
                     bool is_connected = (ap_path == active_ap_path);
+                    string profile_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
+                        ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
+                        : "";
+                    if (is_connected && active_conn_uuid != "") {
+                        profile_uuid = active_conn_uuid;
+                    }
+                    bool is_saved_profile = saved_profile_index.saved_ssids.contains(ssid)
+                        || profile_uuid != "";
 
                     var network = new WifiNetwork() {
                         ssid = ssid,
-                        saved_connection_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
-                            ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
-                            : "",
+                        saved_connection_uuid = profile_uuid,
                         signal = signal,
                         connected = is_connected,
                         is_secured = is_secured,
-                        saved = saved_profile_index.saved_ssids.contains(ssid),
+                        saved = is_saved_profile,
                         device_path = dev_path,
                         ap_path = ap_path,
                         bssid = bssid,
@@ -520,6 +578,10 @@ public class NmWifiClient : Object {
     }
 
     public async bool connect_saved(WifiNetwork network, Cancellable? cancellable = null) throws Error {
+        if (network.saved_connection_uuid.strip() == "") {
+            throw new IOError.FAILED("Cannot uniquely identify saved profile for this network.");
+        }
+
         string conn_path = yield resolve_connection_path(
             network,
             "Multiple saved profiles share this SSID. Refusing ambiguous connect.",

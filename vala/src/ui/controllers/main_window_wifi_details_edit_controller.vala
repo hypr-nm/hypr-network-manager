@@ -93,6 +93,8 @@ public class MainWindowWifiDetailsEditController : Object {
         uint epoch,
         uint waited_ms
     ) {
+        string net_key = net.network_key;
+
         if (!is_ui_epoch_valid(epoch)) {
             return;
         }
@@ -132,8 +134,8 @@ public class MainWindowWifiDetailsEditController : Object {
                         if (!is_ui_epoch_valid(epoch)) {
                             return;
                         }
-                        pending_wifi_connect.remove(net.ssid);
-                        pending_wifi_seen_connecting.remove(net.ssid);
+                        pending_wifi_connect.remove(net_key);
+                        pending_wifi_seen_connecting.remove(net_key);
                         on_error("Reconnect after edit failed: " + e.message);
                         on_refresh_after_action(true);
                         on_open_details();
@@ -144,8 +146,8 @@ public class MainWindowWifiDetailsEditController : Object {
             }
 
             if (waited_ms >= WIFI_RECONNECT_MAX_WAIT_MS) {
-                pending_wifi_connect.remove(net.ssid);
-                pending_wifi_seen_connecting.remove(net.ssid);
+                pending_wifi_connect.remove(net_key);
+                pending_wifi_seen_connecting.remove(net_key);
                 on_error(
                     "Reconnect after edit timed out while waiting for disconnect to complete."
                 );
@@ -193,7 +195,7 @@ public class MainWindowWifiDetailsEditController : Object {
         uint epoch = capture_ui_epoch();
 
         wifi_details_title.set_text(net.ssid);
-        bool is_connected_now = active_wifi_connections.contains(net.ssid);
+        bool is_connected_now = active_wifi_connections.contains(net.network_key);
         bool can_manage_saved_profile = net.saved;
         wifi_details_action_row.set_visible(can_manage_saved_profile);
         wifi_details_forget_button.set_visible(can_manage_saved_profile);
@@ -471,6 +473,7 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowActionCallback disable_popup_text_input
     ) {
         uint epoch = capture_ui_epoch();
+        string net_key = net.network_key;
         string password = wifi_edit_password_entry.get_text().strip();
 
         string method = MainWindowWifiEditUtils.get_selected_ipv4_method(wifi_edit_ipv4_method_dropdown);
@@ -613,8 +616,8 @@ public class MainWindowWifiDetailsEditController : Object {
                         return;
                     }
 
-                    pending_wifi_connect.insert(net.ssid, true);
-                    pending_wifi_seen_connecting.remove(net.ssid);
+                    pending_wifi_connect.insert(net_key, true);
+                    pending_wifi_seen_connecting.remove(net_key);
 
                     reconnect_after_disconnect_with_retry(
                         nm,

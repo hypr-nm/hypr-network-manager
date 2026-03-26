@@ -513,8 +513,15 @@ public class MainWindow : Gtk.ApplicationWindow {
                     return;
                 }
 
-                string ssid = selected_wifi_network.ssid;
-                nm.forget_network.begin(ssid, null, (obj, res) => {
+                string profile_id = selected_wifi_network.saved_connection_uuid.strip();
+                if (profile_id == "") {
+                    show_error(
+                        "Cannot uniquely identify the saved profile for this network."
+                    );
+                    return;
+                }
+
+                nm.forget_network.begin(profile_id, null, (obj, res) => {
                     try {
                         nm.forget_network.end(res);
                         refresh_after_action(true);
@@ -724,8 +731,9 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.ListBoxRow build_wifi_row(WifiNetwork net) {
-        bool is_connected_now = active_wifi_connections.contains(net.ssid);
-        bool is_connecting = pending_wifi_connect.contains(net.ssid);
+        string net_key = net.network_key;
+        bool is_connected_now = active_wifi_connections.contains(net_key);
+        bool is_connecting = pending_wifi_connect.contains(net_key);
 
         return wifi_controller.build_row(
             net,
@@ -739,7 +747,15 @@ public class MainWindow : Gtk.ApplicationWindow {
                 open_wifi_details(wifi_net);
             },
             (wifi_net) => {
-                nm.forget_network.begin(wifi_net.ssid, null, (obj, res) => {
+                string profile_id = wifi_net.saved_connection_uuid.strip();
+                if (profile_id == "") {
+                    show_error(
+                        "Cannot uniquely identify the saved profile for this network."
+                    );
+                    return;
+                }
+
+                nm.forget_network.begin(profile_id, null, (obj, res) => {
                     try {
                         nm.forget_network.end(res);
                         refresh_after_action(true);
@@ -749,8 +765,9 @@ public class MainWindow : Gtk.ApplicationWindow {
                 });
             },
             (wifi_net) => {
-                pending_wifi_connect.remove(wifi_net.ssid);
-                pending_wifi_seen_connecting.remove(wifi_net.ssid);
+                string wifi_key = wifi_net.network_key;
+                pending_wifi_connect.remove(wifi_key);
+                pending_wifi_seen_connecting.remove(wifi_key);
                 nm.disconnect_wifi.begin(wifi_net, null, (obj, res) => {
                     try {
                         nm.disconnect_wifi.end(res);
