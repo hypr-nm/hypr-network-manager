@@ -25,6 +25,16 @@ public class MainWindowIpEditFormBuilder : Object {
         }
     }
 
+    private static Gtk.Expander build_expander(string title, bool with_extra_classes, string css_class) {
+        var expander = new Gtk.Expander(title);
+        expander.set_expanded(true);
+        if (with_extra_classes) {
+            expander.add_css_class("nm-edit-section-expander");
+            expander.add_css_class(css_class);
+        }
+        return expander;
+    }
+
     public static void append_ipv4_section(
         Gtk.Box form,
         out Gtk.DropDown ipv4_method_dropdown,
@@ -37,7 +47,17 @@ public class MainWindowIpEditFormBuilder : Object {
         MainWindowActionCallback on_sync_sensitivity,
         bool with_extra_classes
     ) {
-        form.append(build_label(
+        var expander = build_expander("IPv4 Settings", with_extra_classes, "nm-edit-ipv4-expander");
+        form.append(expander);
+
+        var section = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        if (with_extra_classes) {
+            section.add_css_class("nm-edit-ip-section");
+            section.add_css_class("nm-edit-ipv4-section");
+        }
+        expander.set_child(section);
+
+        section.append(build_label(
             "IPv4 Method",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv4-method-label" : null
@@ -53,9 +73,16 @@ public class MainWindowIpEditFormBuilder : Object {
             ipv4_method_dropdown.add_css_class("nm-edit-dropdown");
             ipv4_method_dropdown.add_css_class("nm-edit-ipv4-method-dropdown");
         }
-        form.append(ipv4_method_dropdown);
+        section.append(ipv4_method_dropdown);
 
-        form.append(build_label(
+        var manual_fields = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        if (with_extra_classes) {
+            manual_fields.add_css_class("nm-edit-ip-advanced");
+            manual_fields.add_css_class("nm-edit-ipv4-manual");
+        }
+        section.append(manual_fields);
+
+        manual_fields.append(build_label(
             "IPv4 Address",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv4-address-label" : null
@@ -71,9 +98,9 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv4_address_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv4_address_entry);
+        manual_fields.append(ipv4_address_entry);
 
-        form.append(build_label(
+        manual_fields.append(build_label(
             "Prefix (CIDR)",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv4-prefix-label" : null
@@ -89,9 +116,16 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv4_prefix_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv4_prefix_entry);
+        manual_fields.append(ipv4_prefix_entry);
 
-        form.append(build_label(
+        var override_fields = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        if (with_extra_classes) {
+            override_fields.add_css_class("nm-edit-ip-advanced");
+            override_fields.add_css_class("nm-edit-ipv4-overrides");
+        }
+        section.append(override_fields);
+
+        override_fields.append(build_label(
             "Gateway",
             with_extra_classes,
             with_extra_classes ? "nm-edit-gateway-label" : null
@@ -128,7 +162,7 @@ public class MainWindowIpEditFormBuilder : Object {
             on_sync_sensitivity();
         });
         gateway_mode_row.append(gateway_auto_switch);
-        form.append(gateway_mode_row);
+        override_fields.append(gateway_mode_row);
 
         ipv4_gateway_entry = new Gtk.Entry();
         ipv4_gateway_entry.set_placeholder_text("192.168.1.1");
@@ -140,9 +174,9 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv4_gateway_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv4_gateway_entry);
+        override_fields.append(ipv4_gateway_entry);
 
-        form.append(build_label(
+        override_fields.append(build_label(
             "DNS Servers (comma-separated)",
             with_extra_classes,
             with_extra_classes ? "nm-edit-dns-label" : null
@@ -179,7 +213,7 @@ public class MainWindowIpEditFormBuilder : Object {
             on_sync_sensitivity();
         });
         dns_mode_row.append(dns_auto_switch);
-        form.append(dns_mode_row);
+        override_fields.append(dns_mode_row);
 
         ipv4_dns_entry = new Gtk.Entry();
         ipv4_dns_entry.set_placeholder_text("1.1.1.1, 8.8.8.8");
@@ -191,9 +225,37 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv4_dns_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv4_dns_entry);
+        override_fields.append(ipv4_dns_entry);
 
-        on_sync_sensitivity();
+        Gtk.DropDown local_ipv4_method_dropdown = ipv4_method_dropdown;
+        Gtk.Switch local_gateway_auto_switch = gateway_auto_switch;
+        Gtk.Switch local_dns_auto_switch = dns_auto_switch;
+
+        MainWindowActionCallback sync_compact_visibility = () => {
+            uint selected = local_ipv4_method_dropdown.get_selected();
+            bool is_auto = selected == 0;
+            bool is_manual = selected == 1;
+            bool is_disabled = selected == 2;
+
+            manual_fields.set_visible(is_manual);
+            override_fields.set_visible(is_auto || is_manual);
+
+            if (is_disabled) {
+                if (!local_gateway_auto_switch.get_active()) {
+                    local_gateway_auto_switch.set_active(true);
+                }
+                if (!local_dns_auto_switch.get_active()) {
+                    local_dns_auto_switch.set_active(true);
+                }
+            }
+            on_sync_sensitivity();
+        };
+
+        local_ipv4_method_dropdown.notify["selected"].connect(() => {
+            sync_compact_visibility();
+        });
+
+        sync_compact_visibility();
     }
 
     public static void append_ipv6_section(
@@ -208,7 +270,17 @@ public class MainWindowIpEditFormBuilder : Object {
         MainWindowActionCallback on_sync_sensitivity,
         bool with_extra_classes
     ) {
-        form.append(build_label(
+        var expander = build_expander("IPv6 Settings", with_extra_classes, "nm-edit-ipv6-expander");
+        form.append(expander);
+
+        var section = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        if (with_extra_classes) {
+            section.add_css_class("nm-edit-ip-section");
+            section.add_css_class("nm-edit-ipv6-section");
+        }
+        expander.set_child(section);
+
+        section.append(build_label(
             "IPv6 Method",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv6-method-label" : null
@@ -225,9 +297,16 @@ public class MainWindowIpEditFormBuilder : Object {
             ipv6_method_dropdown.add_css_class("nm-edit-dropdown");
             ipv6_method_dropdown.add_css_class("nm-edit-ipv6-method-dropdown");
         }
-        form.append(ipv6_method_dropdown);
+        section.append(ipv6_method_dropdown);
 
-        form.append(build_label(
+        var manual_fields = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        if (with_extra_classes) {
+            manual_fields.add_css_class("nm-edit-ip-advanced");
+            manual_fields.add_css_class("nm-edit-ipv6-manual");
+        }
+        section.append(manual_fields);
+
+        manual_fields.append(build_label(
             "IPv6 Address",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv6-address-label" : null
@@ -243,9 +322,9 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv6_address_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv6_address_entry);
+        manual_fields.append(ipv6_address_entry);
 
-        form.append(build_label(
+        manual_fields.append(build_label(
             "IPv6 Prefix (CIDR)",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv6-prefix-label" : null
@@ -261,9 +340,16 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv6_prefix_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv6_prefix_entry);
+        manual_fields.append(ipv6_prefix_entry);
 
-        form.append(build_label(
+        var override_fields = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
+        if (with_extra_classes) {
+            override_fields.add_css_class("nm-edit-ip-advanced");
+            override_fields.add_css_class("nm-edit-ipv6-overrides");
+        }
+        section.append(override_fields);
+
+        override_fields.append(build_label(
             "IPv6 Gateway",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv6-gateway-label" : null
@@ -300,7 +386,7 @@ public class MainWindowIpEditFormBuilder : Object {
             on_sync_sensitivity();
         });
         gateway_mode_row.append(ipv6_gateway_auto_switch);
-        form.append(gateway_mode_row);
+        override_fields.append(gateway_mode_row);
 
         ipv6_gateway_entry = new Gtk.Entry();
         ipv6_gateway_entry.set_placeholder_text("fe80::1");
@@ -312,9 +398,9 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv6_gateway_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv6_gateway_entry);
+        override_fields.append(ipv6_gateway_entry);
 
-        form.append(build_label(
+        override_fields.append(build_label(
             "IPv6 DNS Servers (comma-separated)",
             with_extra_classes,
             with_extra_classes ? "nm-edit-ipv6-dns-label" : null
@@ -351,7 +437,7 @@ public class MainWindowIpEditFormBuilder : Object {
             on_sync_sensitivity();
         });
         dns_mode_row.append(ipv6_dns_auto_switch);
-        form.append(dns_mode_row);
+        override_fields.append(dns_mode_row);
 
         ipv6_dns_entry = new Gtk.Entry();
         ipv6_dns_entry.set_placeholder_text("2606:4700:4700::1111, 2001:4860:4860::8888");
@@ -363,8 +449,36 @@ public class MainWindowIpEditFormBuilder : Object {
         if (with_extra_classes) {
             ipv6_dns_entry.add_css_class("nm-edit-field-entry");
         }
-        form.append(ipv6_dns_entry);
+        override_fields.append(ipv6_dns_entry);
 
-        on_sync_sensitivity();
+        Gtk.DropDown local_ipv6_method_dropdown = ipv6_method_dropdown;
+        Gtk.Switch local_ipv6_gateway_auto_switch = ipv6_gateway_auto_switch;
+        Gtk.Switch local_ipv6_dns_auto_switch = ipv6_dns_auto_switch;
+
+        MainWindowActionCallback sync_compact_visibility = () => {
+            uint selected = local_ipv6_method_dropdown.get_selected();
+            bool is_auto = selected == 0;
+            bool is_manual = selected == 1;
+            bool is_disabled_or_ignore = selected == 2 || selected == 3;
+
+            manual_fields.set_visible(is_manual);
+            override_fields.set_visible(is_auto || is_manual);
+
+            if (is_disabled_or_ignore) {
+                if (!local_ipv6_gateway_auto_switch.get_active()) {
+                    local_ipv6_gateway_auto_switch.set_active(true);
+                }
+                if (!local_ipv6_dns_auto_switch.get_active()) {
+                    local_ipv6_dns_auto_switch.set_active(true);
+                }
+            }
+            on_sync_sensitivity();
+        };
+
+        local_ipv6_method_dropdown.notify["selected"].connect(() => {
+            sync_compact_visibility();
+        });
+
+        sync_compact_visibility();
     }
 }
