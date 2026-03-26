@@ -112,7 +112,9 @@ public class MainWindowWifiRowBuilder : Object {
         prompt_entry.set_hexpand(true);
         prompt_entry.set_visibility(false);
         prompt_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
-        prompt_entry.set_placeholder_text("Wi-Fi password");
+        prompt_entry.set_placeholder_text(
+            "Wi-Fi password (min %d chars)".printf(HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
+        );
         prompt_entry.add_css_class("nm-password-entry");
         prompt_entry.add_css_class("nm-inline-password-entry");
 
@@ -124,6 +126,13 @@ public class MainWindowWifiRowBuilder : Object {
         prompt_connect.add_css_class("nm-button");
         prompt_connect.add_css_class("suggested-action");
         prompt_connect.add_css_class("nm-inline-password-connect");
+        prompt_connect.set_sensitive(false);
+
+        prompt_entry.changed.connect(() => {
+            prompt_connect.set_sensitive(
+                HiddenWifiSecurityModeUtils.is_password_valid(prompt_entry.get_text())
+            );
+        });
 
         var prompt_actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
         prompt_actions.add_css_class("nm-inline-password-actions");
@@ -149,11 +158,17 @@ public class MainWindowWifiRowBuilder : Object {
         });
 
         prompt_connect.clicked.connect(() => {
+            if (!prompt_connect.get_sensitive()) {
+                return;
+            }
             on_hide_password_prompt(prompt_revealer, prompt_entry, prompt_entry.get_text());
             on_connect(net, prompt_entry.get_text());
         });
 
         prompt_entry.activate.connect(() => {
+            if (!prompt_connect.get_sensitive()) {
+                return;
+            }
             on_hide_password_prompt(prompt_revealer, prompt_entry, prompt_entry.get_text());
             on_connect(net, prompt_entry.get_text());
         });

@@ -629,10 +629,16 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_add_security_dropdown.set_selected(
             HiddenWifiSecurityModeUtils.to_dropdown_index(HiddenWifiSecurityMode.WPA_PSK)
         );
+
+        var save_btn = new Gtk.Button.with_label("Connect");
+        save_btn.add_css_class("nm-button");
+        save_btn.add_css_class("suggested-action");
+
         wifi_add_security_dropdown.notify["selected"].connect(() => {
             wifi_controller.sync_add_network_sensitivity(
                 wifi_add_security_dropdown,
-                wifi_add_password_entry
+                wifi_add_password_entry,
+                save_btn
             );
         });
         form.append(wifi_add_security_dropdown);
@@ -646,11 +652,23 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_add_password_entry = new Gtk.Entry();
         wifi_add_password_entry.set_visibility(false);
         wifi_add_password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
-        wifi_add_password_entry.set_placeholder_text("Network password");
+        wifi_add_password_entry.set_placeholder_text(
+            "Network password (min %d chars)".printf(HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
+        );
         wifi_add_password_entry.add_css_class("nm-password-entry");
         wifi_add_password_entry.add_css_class("nm-edit-field-control");
         wifi_add_password_entry.add_css_class("nm-edit-field-entry");
+        wifi_add_password_entry.changed.connect(() => {
+            wifi_controller.sync_add_network_sensitivity(
+                wifi_add_security_dropdown,
+                wifi_add_password_entry,
+                save_btn
+            );
+        });
         wifi_add_password_entry.activate.connect(() => {
+            if (!save_btn.get_sensitive()) {
+                return;
+            }
             wifi_controller.apply_add_network(
                 nm,
                 wifi_stack,
@@ -672,15 +690,13 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         wifi_controller.sync_add_network_sensitivity(
             wifi_add_security_dropdown,
-            wifi_add_password_entry
+            wifi_add_password_entry,
+            save_btn
         );
 
         var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
         actions.add_css_class("nm-edit-actions");
 
-        var save_btn = new Gtk.Button.with_label("Connect");
-        save_btn.add_css_class("nm-button");
-        save_btn.add_css_class("suggested-action");
         save_btn.clicked.connect(() => {
             wifi_controller.apply_add_network(
                 nm,

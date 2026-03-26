@@ -63,7 +63,8 @@ public class MainWindowWifiController : Object {
 
     public void sync_add_network_sensitivity(
         Gtk.DropDown? wifi_add_security_dropdown,
-        Gtk.Entry? wifi_add_password_entry
+        Gtk.Entry? wifi_add_password_entry,
+        Gtk.Button? wifi_add_connect_button = null
     ) {
         if (wifi_add_security_dropdown == null || wifi_add_password_entry == null) {
             return;
@@ -76,6 +77,14 @@ public class MainWindowWifiController : Object {
         wifi_add_password_entry.set_sensitive(secured);
         if (!secured) {
             wifi_add_password_entry.set_text("");
+        }
+
+        if (wifi_add_connect_button != null) {
+            bool can_connect = HiddenWifiSecurityModeUtils.is_password_valid_for_mode(
+                mode,
+                wifi_add_password_entry.get_text()
+            );
+            wifi_add_connect_button.set_sensitive(can_connect);
         }
     }
 
@@ -91,7 +100,10 @@ public class MainWindowWifiController : Object {
             HiddenWifiSecurityModeUtils.to_dropdown_index(HiddenWifiSecurityMode.WPA_PSK)
         );
         wifi_add_password_entry.set_text("");
-        sync_add_network_sensitivity(wifi_add_security_dropdown, wifi_add_password_entry);
+        sync_add_network_sensitivity(
+            wifi_add_security_dropdown,
+            wifi_add_password_entry
+        );
 
         wifi_stack.set_visible_child_name("add");
         on_set_popup_text_input_mode(true);
@@ -119,8 +131,12 @@ public class MainWindowWifiController : Object {
             return;
         }
 
-        if (HiddenWifiSecurityModeUtils.requires_password(security_mode) && password == "") {
-            on_error("Password is required for the selected security mode.");
+        if (!HiddenWifiSecurityModeUtils.is_password_valid_for_mode(security_mode, password)) {
+            on_error(
+                "Password must be at least %d characters for the selected security mode.".printf(
+                    HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH
+                )
+            );
             return;
         }
 

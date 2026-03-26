@@ -7,6 +7,8 @@ public enum HiddenWifiSecurityMode {
 }
 
 public class HiddenWifiSecurityModeUtils : Object {
+    public const int MIN_PASSWORD_LENGTH = 8;
+
     public static HiddenWifiSecurityMode[] get_dropdown_modes() {
         return {
             HiddenWifiSecurityMode.OPEN,
@@ -62,6 +64,17 @@ public class HiddenWifiSecurityModeUtils : Object {
 
     public static bool requires_password(HiddenWifiSecurityMode mode) {
         return mode != HiddenWifiSecurityMode.OPEN;
+    }
+
+    public static bool is_password_valid(string password) {
+        return password.strip().char_count() >= MIN_PASSWORD_LENGTH;
+    }
+
+    public static bool is_password_valid_for_mode(HiddenWifiSecurityMode mode, string password) {
+        if (!requires_password(mode)) {
+            return true;
+        }
+        return is_password_valid(password);
     }
 
     public static string to_nm_key_mgmt(HiddenWifiSecurityMode mode) {
