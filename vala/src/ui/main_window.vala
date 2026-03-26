@@ -57,6 +57,13 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Switch wifi_edit_dns_auto_switch;
     private Gtk.Entry wifi_edit_ipv4_gateway_entry;
     private Gtk.Entry wifi_edit_ipv4_dns_entry;
+    private Gtk.DropDown wifi_edit_ipv6_method_dropdown;
+    private Gtk.Entry wifi_edit_ipv6_address_entry;
+    private Gtk.Switch wifi_edit_ipv6_gateway_auto_switch;
+    private Gtk.Entry wifi_edit_ipv6_prefix_entry;
+    private Gtk.Switch wifi_edit_ipv6_dns_auto_switch;
+    private Gtk.Entry wifi_edit_ipv6_gateway_entry;
+    private Gtk.Entry wifi_edit_ipv6_dns_entry;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
     private MainWindowWifiController wifi_controller;
@@ -354,7 +361,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         if (wifi_edit_ipv4_gateway_entry == null
             || wifi_edit_gateway_auto_switch == null
             || wifi_edit_ipv4_dns_entry == null
-            || wifi_edit_dns_auto_switch == null) {
+            || wifi_edit_dns_auto_switch == null
+            || wifi_edit_ipv6_gateway_entry == null
+            || wifi_edit_ipv6_gateway_auto_switch == null
+            || wifi_edit_ipv6_dns_entry == null
+            || wifi_edit_ipv6_dns_auto_switch == null) {
             return;
         }
 
@@ -362,7 +373,11 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_edit_ipv4_gateway_entry,
             wifi_edit_gateway_auto_switch,
             wifi_edit_ipv4_dns_entry,
-            wifi_edit_dns_auto_switch
+            wifi_edit_dns_auto_switch,
+            wifi_edit_ipv6_gateway_entry,
+            wifi_edit_ipv6_gateway_auto_switch,
+            wifi_edit_ipv6_dns_entry,
+            wifi_edit_ipv6_dns_auto_switch
         );
     }
 
@@ -410,6 +425,13 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_edit_ipv4_gateway_entry,
             wifi_edit_dns_auto_switch,
             wifi_edit_ipv4_dns_entry,
+            wifi_edit_ipv6_method_dropdown,
+            wifi_edit_ipv6_address_entry,
+            wifi_edit_ipv6_prefix_entry,
+            wifi_edit_ipv6_gateway_auto_switch,
+            wifi_edit_ipv6_gateway_entry,
+            wifi_edit_ipv6_dns_auto_switch,
+            wifi_edit_ipv6_dns_entry,
             wifi_stack,
             () => {
                 sync_wifi_edit_gateway_dns_sensitivity();
@@ -435,6 +457,13 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_edit_dns_auto_switch,
             wifi_edit_ipv4_dns_entry,
             wifi_edit_ipv4_prefix_entry,
+            wifi_edit_ipv6_method_dropdown,
+            wifi_edit_ipv6_address_entry,
+            wifi_edit_ipv6_gateway_entry,
+            wifi_edit_ipv6_gateway_auto_switch,
+            wifi_edit_ipv6_dns_auto_switch,
+            wifi_edit_ipv6_dns_entry,
+            wifi_edit_ipv6_prefix_entry,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
             (message) => {
@@ -503,6 +532,13 @@ public class MainWindow : Gtk.ApplicationWindow {
             out wifi_edit_ipv4_gateway_entry,
             out wifi_edit_dns_auto_switch,
             out wifi_edit_ipv4_dns_entry,
+            out wifi_edit_ipv6_method_dropdown,
+            out wifi_edit_ipv6_address_entry,
+            out wifi_edit_ipv6_gateway_auto_switch,
+            out wifi_edit_ipv6_prefix_entry,
+            out wifi_edit_ipv6_gateway_entry,
+            out wifi_edit_ipv6_dns_auto_switch,
+            out wifi_edit_ipv6_dns_entry,
             () => {
                 set_popup_text_input_mode(false);
                 if (selected_wifi_network != null) {

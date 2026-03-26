@@ -106,6 +106,13 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         out Gtk.Entry wifi_edit_ipv4_gateway_entry,
         out Gtk.Switch wifi_edit_dns_auto_switch,
         out Gtk.Entry wifi_edit_ipv4_dns_entry,
+        out Gtk.DropDown wifi_edit_ipv6_method_dropdown,
+        out Gtk.Entry wifi_edit_ipv6_address_entry,
+        out Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
+        out Gtk.Entry wifi_edit_ipv6_prefix_entry,
+        out Gtk.Entry wifi_edit_ipv6_gateway_entry,
+        out Gtk.Switch wifi_edit_ipv6_dns_auto_switch,
+        out Gtk.Entry wifi_edit_ipv6_dns_entry,
         MainWindowActionCallback on_back,
         MainWindowActionCallback on_apply,
         MainWindowActionCallback on_sync_sensitivity
@@ -173,6 +180,19 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
             out wifi_edit_ipv4_gateway_entry,
             out wifi_edit_dns_auto_switch,
             out wifi_edit_ipv4_dns_entry,
+            on_sync_sensitivity,
+            true
+        );
+
+        MainWindowIpEditFormBuilder.append_ipv6_section(
+            form,
+            out wifi_edit_ipv6_method_dropdown,
+            out wifi_edit_ipv6_address_entry,
+            out wifi_edit_ipv6_prefix_entry,
+            out wifi_edit_ipv6_gateway_auto_switch,
+            out wifi_edit_ipv6_gateway_entry,
+            out wifi_edit_ipv6_dns_auto_switch,
+            out wifi_edit_ipv6_dns_entry,
             on_sync_sensitivity,
             true
         );

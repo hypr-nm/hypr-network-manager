@@ -199,6 +199,20 @@ public class MainWindowHelpers : Object {
         }
     }
 
+    public static uint get_ipv6_method_dropdown_index(string method) {
+        switch (method.strip().down()) {
+        case "manual":
+            return 1;
+        case "disabled":
+            return 2;
+        case "ignore":
+            return 3;
+        case "auto":
+        default:
+            return 0;
+        }
+    }
+
     public static string format_ip_with_prefix(string address, uint32 prefix) {
         string ip = address.strip();
         if (ip == "") {
