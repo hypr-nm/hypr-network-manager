@@ -229,79 +229,87 @@ public class NetworkManagerClientVala : Object {
 
         for (int i = 0; i < devices.n_children(); i++) {
             string dev_path = devices.get_child_value(i).get_string();
-            string iface = (yield get_prop_dbus(dev_path, NM_DEVICE_IFACE, "Interface", cancellable)).get_string();
-            if (iface == "" || iface == "lo") {
-                continue;
-            }
-
-            uint32 dev_type = (yield get_prop_dbus(dev_path, NM_DEVICE_IFACE, "DeviceType", cancellable)).get_uint32();
-            uint32 state = (yield get_prop_dbus(dev_path, NM_DEVICE_IFACE, "State", cancellable)).get_uint32();
-
-            string conn_name = "";
-            string conn_uuid = "";
-            string ac_path = (yield get_prop_dbus(
-                dev_path,
-                NM_DEVICE_IFACE,
-                "ActiveConnection",
-                cancellable
-            )).get_string();
-            if (ac_path != "/") {
-                try {
-                    conn_name = (yield get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Id", cancellable)).get_string();
-                    conn_uuid = (yield get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Uuid", cancellable)).get_string();
-                } catch (Error e) {
-                    debug_log("Could not read active connection id: " + e.message);
+            try {
+                string iface = (yield get_prop_dbus(dev_path, NM_DEVICE_IFACE, "Interface", cancellable)).get_string();
+                if (iface == "" || iface == "lo") {
+                    continue;
                 }
-            }
 
-            if (conn_name == "" && dev_type == NM_DEVICE_TYPE_ETHERNET) {
-                try {
-                    Variant available_connections = yield get_prop_dbus(
-                        dev_path,
-                        NM_DEVICE_IFACE,
-                        "AvailableConnections",
-                        cancellable
-                    );
-                    for (int j = 0; j < available_connections.n_children(); j++) {
-                        string conn_path = available_connections.get_child_value(j).get_string();
-                        var conn = yield make_proxy(conn_path, NM_CONN_IFACE, cancellable);
-                        var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
-                        var all_settings = settings_res.get_child_value(0);
+                uint32 dev_type = (yield get_prop_dbus(dev_path, NM_DEVICE_IFACE, "DeviceType", cancellable)).get_uint32();
+                uint32 state = (yield get_prop_dbus(dev_path, NM_DEVICE_IFACE, "State", cancellable)).get_uint32();
 
-                        Variant? conn_group = all_settings.lookup_value(
-                            "connection",
-                            new VariantType("a{sv}")
-                        );
-                        if (conn_group == null) {
-                            continue;
-                        }
-
-                        Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-                        if (type_v == null || type_v.get_string() != "802-3-ethernet") {
-                            continue;
-                        }
-
-                        Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-                        Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
-                        if (id_v != null && id_v.get_string() != "") {
-                            conn_name = id_v.get_string();
-                            conn_uuid = uuid_v != null ? uuid_v.get_string() : "";
-                            break;
-                        }
+                string conn_name = "";
+                string conn_uuid = "";
+                string ac_path = (yield get_prop_dbus(
+                    dev_path,
+                    NM_DEVICE_IFACE,
+                    "ActiveConnection",
+                    cancellable
+                )).get_string();
+                if (ac_path != "/") {
+                    try {
+                        conn_name = (yield get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Id", cancellable)).get_string();
+                        conn_uuid = (yield get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Uuid", cancellable)).get_string();
+                    } catch (Error e) {
+                        debug_log("Could not read active connection id for " + dev_path + ": " + e.message);
                     }
-                } catch (Error e) {
-                    debug_log("Could not read available Ethernet profiles: " + e.message);
                 }
-            }
 
-            devices_out.append(new NetworkDevice() {
-                name = iface,
-                device_path = dev_path,
-                device_type = dev_type,
-                state = state,
-                connection = conn_name,
-                connection_uuid = conn_uuid
-            });
+                if (conn_name == "" && dev_type == NM_DEVICE_TYPE_ETHERNET) {
+                    try {
+                        Variant available_connections = yield get_prop_dbus(
+                            dev_path,
+                            NM_DEVICE_IFACE,
+                            "AvailableConnections",
+                            cancellable
+                        );
+                        for (int j = 0; j < available_connections.n_children(); j++) {
+                            string conn_path = available_connections.get_child_value(j).get_string();
+                            try {
+                                var conn = yield make_proxy(conn_path, NM_CONN_IFACE, cancellable);
+                                var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
+                                var all_settings = settings_res.get_child_value(0);
+
+                                Variant? conn_group = all_settings.lookup_value(
+                                    "connection",
+                                    new VariantType("a{sv}")
+                                );
+                                if (conn_group == null) {
+                                    continue;
+                                }
+
+                                Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+                                if (type_v == null || type_v.get_string() != "802-3-ethernet") {
+                                    continue;
+                                }
+
+                                Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+                                Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+                                if (id_v != null && id_v.get_string() != "") {
+                                    conn_name = id_v.get_string();
+                                    conn_uuid = uuid_v != null ? uuid_v.get_string() : "";
+                                    break;
+                                }
+                            } catch (Error e) {
+                                debug_log("Skipping stale connection object " + conn_path + ": " + e.message);
+                            }
+                        }
+                    } catch (Error e) {
+                        debug_log("Could not read available Ethernet profiles for " + dev_path + ": " + e.message);
+                    }
+                }
+
+                devices_out.append(new NetworkDevice() {
+                    name = iface,
+                    device_path = dev_path,
+                    device_type = dev_type,
+                    state = state,
+                    connection = conn_name,
+                    connection_uuid = conn_uuid
+                });
+            } catch (Error e) {
+                debug_log("Skipping transient device object " + dev_path + ": " + e.message);
+            }
         }
 
         return devices_out;
