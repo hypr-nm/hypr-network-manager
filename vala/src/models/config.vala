@@ -19,24 +19,146 @@ public class AppConfig : Object {
     public bool show_frequency = true;
     public bool show_band = false;
 
-    private static string? extract_json_string(Json.Object obj, string key) {
+    private static string describe_json_node_type(Json.Node? node) {
+        if (node == null) {
+            return "missing";
+        }
+
+        switch (node.get_node_type()) {
+        case Json.NodeType.ARRAY:
+            return "array";
+        case Json.NodeType.OBJECT:
+            return "object";
+        case Json.NodeType.NULL:
+            return "null";
+        case Json.NodeType.VALUE:
+            Type value_type = node.get_value_type();
+            if (value_type == typeof(string)) {
+                return "string";
+            }
+            if (value_type == typeof(bool)) {
+                return "boolean";
+            }
+            if (value_type == typeof(int)
+                || value_type == typeof(int64)
+                || value_type == typeof(uint)
+                || value_type == typeof(uint64)
+                || value_type == typeof(long)
+                || value_type == typeof(ulong)
+                || value_type == typeof(double)
+                || value_type == typeof(float)) {
+                return "number";
+            }
+            return value_type.name();
+        default:
+            return "unknown";
+        }
+    }
+
+    private static void warn_invalid_config_type(
+        bool debug_enabled,
+        string config_path,
+        string key,
+        string expected_type,
+        Json.Node? node
+    ) {
+        if (!debug_enabled) {
+            return;
+        }
+
+        stderr.printf(
+            "[hypr-nm] ignoring config key '%s' in %s: expected %s, got %s\n",
+            key,
+            config_path,
+            expected_type,
+            describe_json_node_type(node)
+        );
+    }
+
+    private static string? extract_json_string(
+        Json.Object obj,
+        string key,
+        bool debug_enabled,
+        string config_path
+    ) {
         if (!obj.has_member(key)) {
             return null;
         }
+
+        Json.Node? node = obj.get_member(key);
+        if (node == null
+            || node.get_node_type() != Json.NodeType.VALUE
+            || node.get_value_type() != typeof(string)) {
+            warn_invalid_config_type(debug_enabled, config_path, key, "string", node);
+            return null;
+        }
+
         return obj.get_string_member(key);
     }
 
-    private static int? extract_json_int(Json.Object obj, string key) {
+    private static int? extract_json_int(
+        Json.Object obj,
+        string key,
+        bool debug_enabled,
+        string config_path
+    ) {
         if (!obj.has_member(key)) {
             return null;
         }
-        return (int) obj.get_int_member(key);
+
+        Json.Node? node = obj.get_member(key);
+        if (node == null || node.get_node_type() != Json.NodeType.VALUE) {
+            warn_invalid_config_type(debug_enabled, config_path, key, "integer", node);
+            return null;
+        }
+
+        Type value_type = node.get_value_type();
+        bool is_integral = value_type == typeof(int)
+            || value_type == typeof(int64)
+            || value_type == typeof(uint)
+            || value_type == typeof(uint64)
+            || value_type == typeof(long)
+            || value_type == typeof(ulong);
+        bool is_float = value_type == typeof(double) || value_type == typeof(float);
+
+        if (is_integral) {
+            return (int) obj.get_int_member(key);
+        }
+
+        if (is_float) {
+            double value = obj.get_double_member(key);
+            int64 whole = (int64) value;
+            if ((double) whole != value
+                || value < (double) int.MIN
+                || value > (double) int.MAX) {
+                warn_invalid_config_type(debug_enabled, config_path, key, "integer", node);
+                return null;
+            }
+            return (int) value;
+        }
+
+        warn_invalid_config_type(debug_enabled, config_path, key, "integer", node);
+        return null;
     }
 
-    private static bool? extract_json_bool(Json.Object obj, string key) {
+    private static bool? extract_json_bool(
+        Json.Object obj,
+        string key,
+        bool debug_enabled,
+        string config_path
+    ) {
         if (!obj.has_member(key)) {
             return null;
         }
+
+        Json.Node? node = obj.get_member(key);
+        if (node == null
+            || node.get_node_type() != Json.NodeType.VALUE
+            || node.get_value_type() != typeof(bool)) {
+            warn_invalid_config_type(debug_enabled, config_path, key, "boolean", node);
+            return null;
+        }
+
         return obj.get_boolean_member(key);
     }
 
@@ -157,23 +279,33 @@ public class AppConfig : Object {
 
             Json.Object obj = root.get_object();
 
-            int? cfg_width = extract_json_int(obj, "window_width");
+            int? cfg_width = extract_json_int(obj, "window_width", debug_enabled, effective_config_path);
             if (cfg_width != null && cfg_width > 0) {
                 cfg.window_width = cfg_width;
             }
 
-            int? cfg_height = extract_json_int(obj, "window_height");
+            int? cfg_height = extract_json_int(obj, "window_height", debug_enabled, effective_config_path);
             if (cfg_height != null && cfg_height > 0) {
                 cfg.window_height = cfg_height;
             }
 
-            string? cfg_layer = extract_json_string(obj, "layer_shell_layer");
+            string? cfg_layer = extract_json_string(
+                obj,
+                "layer_shell_layer",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_layer != null) {
                 cfg.layer = cfg_layer;
             }
 
             string position = "top-right";
-            string? cfg_position = extract_json_string(obj, "position");
+            string? cfg_position = extract_json_string(
+                obj,
+                "position",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_position != null) {
                 position = cfg_position;
             }
@@ -188,52 +320,99 @@ public class AppConfig : Object {
             cfg.anchor_bottom = pos_bottom;
             cfg.anchor_left = pos_left;
 
-            int? cfg_margin_top = extract_json_int(obj, "layer_shell_margin_top");
+            int? cfg_margin_top = extract_json_int(
+                obj,
+                "layer_shell_margin_top",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_margin_top != null) {
                 cfg.margin_top = cfg_margin_top;
             }
-            int? cfg_margin_right = extract_json_int(obj, "layer_shell_margin_right");
+            int? cfg_margin_right = extract_json_int(
+                obj,
+                "layer_shell_margin_right",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_margin_right != null) {
                 cfg.margin_right = cfg_margin_right;
             }
-            int? cfg_margin_bottom = extract_json_int(obj, "layer_shell_margin_bottom");
+            int? cfg_margin_bottom = extract_json_int(
+                obj,
+                "layer_shell_margin_bottom",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_margin_bottom != null) {
                 cfg.margin_bottom = cfg_margin_bottom;
             }
-            int? cfg_margin_left = extract_json_int(obj, "layer_shell_margin_left");
+            int? cfg_margin_left = extract_json_int(
+                obj,
+                "layer_shell_margin_left",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_margin_left != null) {
                 cfg.margin_left = cfg_margin_left;
             }
 
-            int? cfg_scan_interval = extract_json_int(obj, "scan_interval");
+            int? cfg_scan_interval = extract_json_int(
+                obj,
+                "scan_interval",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_scan_interval != null && cfg_scan_interval > 0) {
                 cfg.scan_interval = cfg_scan_interval;
             }
 
             int? cfg_pending_wifi_connect_timeout_ms = extract_json_int(
                 obj,
-                "pending_wifi_connect_timeout_ms"
+                "pending_wifi_connect_timeout_ms",
+                debug_enabled,
+                effective_config_path
             );
             if (cfg_pending_wifi_connect_timeout_ms != null && cfg_pending_wifi_connect_timeout_ms > 0) {
                 cfg.pending_wifi_connect_timeout_ms = cfg_pending_wifi_connect_timeout_ms;
             }
 
-            bool? cfg_close_on_connect = extract_json_bool(obj, "close_on_connect");
+            bool? cfg_close_on_connect = extract_json_bool(
+                obj,
+                "close_on_connect",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_close_on_connect != null) {
                 cfg.close_on_connect = cfg_close_on_connect;
             }
 
-            bool? cfg_show_bssid = extract_json_bool(obj, "show_bssid");
+            bool? cfg_show_bssid = extract_json_bool(
+                obj,
+                "show_bssid",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_show_bssid != null) {
                 cfg.show_bssid = cfg_show_bssid;
             }
 
-            bool? cfg_show_frequency = extract_json_bool(obj, "show_frequency");
+            bool? cfg_show_frequency = extract_json_bool(
+                obj,
+                "show_frequency",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_show_frequency != null) {
                 cfg.show_frequency = cfg_show_frequency;
             }
 
-            bool? cfg_show_band = extract_json_bool(obj, "show_band");
+            bool? cfg_show_band = extract_json_bool(
+                obj,
+                "show_band",
+                debug_enabled,
+                effective_config_path
+            );
             if (cfg_show_band != null) {
                 cfg.show_band = cfg_show_band;
             }
