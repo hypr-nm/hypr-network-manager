@@ -103,40 +103,18 @@ public class NmWifiClient : Object {
         }
     }
 
-    private WifiSavedProfileIndex build_saved_profile_index() {
-        var index = new WifiSavedProfileIndex();
-
-        try {
-            var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var conns = list_res.get_child_value(0);
-
-            for (int i = 0; i < conns.n_children(); i++) {
-                string conn_path = conns.get_child_value(i).get_string();
-                var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                var all_settings = settings_res.get_child_value(0);
-                index_saved_profile(index, all_settings);
-            }
-        } catch (Error e) {
-            core.debug_log("could not build wifi saved profile index: " + e.message);
-        }
-
-        return index;
-    }
-
     private async WifiSavedProfileIndex build_saved_profile_index_dbus(
         Cancellable? cancellable = null
     ) throws Error {
         var index = new WifiSavedProfileIndex();
 
-        var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var settings = yield core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
         var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
         var conns = list_res.get_child_value(0);
 
         for (int i = 0; i < conns.n_children(); i++) {
             string conn_path = conns.get_child_value(i).get_string();
-            var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
+            var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
             var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
             var all_settings = settings_res.get_child_value(0);
             index_saved_profile(index, all_settings);
@@ -150,7 +128,7 @@ public class NmWifiClient : Object {
         var network_map = new HashTable<string, WifiNetwork>(str_hash, str_equal);
         var saved_profile_index = yield build_saved_profile_index_dbus(cancellable);
 
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
         var devices_res = yield core.call_dbus(nm, "GetDevices", null, cancellable);
         var devices = devices_res.get_child_value(0);
 
@@ -172,7 +150,7 @@ public class NmWifiClient : Object {
                 "ActiveAccessPoint",
                 cancellable
             )).get_string();
-            var wifi = core.make_proxy(dev_path, NM_WIRELESS_IFACE);
+            var wifi = yield core.make_proxy(dev_path, NM_WIRELESS_IFACE, cancellable);
             var aps_res = yield core.call_dbus(wifi, "GetAccessPoints", null, cancellable);
             var aps = aps_res.get_child_value(0);
 
@@ -268,13 +246,13 @@ public class NmWifiClient : Object {
             )
         );
 
-        var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var settings = yield core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
         var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
         var conns = list_res.get_child_value(0);
 
         for (int i = 0; i < conns.n_children(); i++) {
             string candidate_path = conns.get_child_value(i).get_string();
-            var conn = core.make_proxy(candidate_path, NM_CONN_IFACE);
+            var conn = yield core.make_proxy(candidate_path, NM_CONN_IFACE, cancellable);
             var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
             var all_settings = settings_res.get_child_value(0);
 
@@ -379,7 +357,7 @@ public class NmWifiClient : Object {
                     cancellable
                 );
 
-                var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
+                var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
                 var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
                 var all_settings = settings_res.get_child_value(0);
                 NetworkManagerClientVala.fill_configured_ipv4_from_settings(all_settings, ip_settings);
@@ -479,7 +457,7 @@ public class NmWifiClient : Object {
             }
         }
 
-        var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
+        var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
         var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
         var all_settings = settings_res.get_child_value(0);
 
@@ -533,106 +511,6 @@ public class NmWifiClient : Object {
         return true;
     }
 
-    public List<WifiNetwork> get_networks() {
-        var networks = new List<WifiNetwork>();
-        var network_map = new HashTable<string, WifiNetwork>(str_hash, str_equal);
-        var saved_profile_index = build_saved_profile_index();
-
-        try {
-            var nm = core.make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var devices = devices_res.get_child_value(0);
-
-            for (int i = 0; i < devices.n_children(); i++) {
-                string dev_path = devices.get_child_value(i).get_string();
-                uint32 dev_type = core.get_prop(dev_path, NM_DEVICE_IFACE, "DeviceType").get_uint32();
-                if (dev_type != NM_DEVICE_TYPE_WIFI) {
-                    continue;
-                }
-
-                string active_ap_path = core.get_prop(dev_path, NM_WIRELESS_IFACE, "ActiveAccessPoint").get_string();
-                var wifi = core.make_proxy(dev_path, NM_WIRELESS_IFACE);
-                var aps_res = wifi.call_sync("GetAccessPoints", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                var aps = aps_res.get_child_value(0);
-
-                for (int j = 0; j < aps.n_children(); j++) {
-                    string ap_path = aps.get_child_value(j).get_string();
-
-                    string ssid = decode_ssid(core.get_prop(ap_path, NM_AP_IFACE, "Ssid"));
-                    if (ssid == "") {
-                        ssid = core.get_prop(ap_path, NM_AP_IFACE, "HwAddress").get_string();
-                    }
-
-                    uint8 signal = core.get_prop(ap_path, NM_AP_IFACE, "Strength").get_byte();
-                    uint32 flags = core.get_prop(ap_path, NM_AP_IFACE, "Flags").get_uint32();
-                    uint32 wpa_flags = core.get_prop(ap_path, NM_AP_IFACE, "WpaFlags").get_uint32();
-                    uint32 rsn_flags = core.get_prop(ap_path, NM_AP_IFACE, "RsnFlags").get_uint32();
-                    string bssid = core.get_prop(ap_path, NM_AP_IFACE, "HwAddress").get_string();
-                    uint32 frequency = core.get_prop(ap_path, NM_AP_IFACE, "Frequency").get_uint32();
-                    uint32 max_bitrate = core.get_prop(ap_path, NM_AP_IFACE, "MaxBitrate").get_uint32();
-                    uint32 mode = core.get_prop(ap_path, NM_AP_IFACE, "Mode").get_uint32();
-                    bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
-                    bool is_connected = (ap_path == active_ap_path);
-
-                    string network_key = ssid + ":" + (is_secured ? "secured" : "open");
-
-                string profile_uuid = "";
-                if (saved_profile_index.unique_saved_network_key_uuids.contains(network_key)) {
-                    profile_uuid = saved_profile_index.unique_saved_network_key_uuids.get(network_key);
-                }
-                
-                string normalized_bssid = normalize_bssid(bssid);
-                bool is_saved_profile = false;
-                
-                if (saved_profile_index.generic_saved_network_keys.contains(network_key)) {
-                    is_saved_profile = true;
-                } else if (normalized_bssid != "" && saved_profile_index.bssid_locked_profiles.contains(normalized_bssid)) {
-                    is_saved_profile = true;
-                }
-
-                    var network = new WifiNetwork() {
-                        ssid = ssid,
-                        saved_connection_uuid = profile_uuid,
-                        signal = signal,
-                        connected = is_connected,
-                        is_secured = is_secured,
-                        saved = is_saved_profile,
-                        device_path = dev_path,
-                        ap_path = ap_path,
-                        bssid = bssid,
-                        frequency_mhz = frequency,
-                        max_bitrate_kbps = max_bitrate,
-                        mode = mode,
-                        flags = flags,
-                        wpa_flags = wpa_flags,
-                        rsn_flags = rsn_flags
-                    };
-
-                    WifiNetwork? existing = network_map.get(network_key);
-                    if (existing == null || is_connected || (!existing.connected && signal > existing.signal)) {
-                        network_map.insert(network_key, network);
-                    }
-                }
-            }
-        } catch (Error e) {
-            core.debug_log("get_wifi_networks failed: " + e.message);
-        }
-
-        network_map.foreach((key, net) => {
-            networks.append(net);
-        });
-
-        networks.sort((a, b) => {
-            if (a.connected != b.connected) {
-                return a.connected ? -1 : 1;
-            }
-            return (int) b.signal - (int) a.signal;
-        });
-
-        core.debug_log("discovered %u wifi networks".printf(networks.length()));
-        return (owned) networks;
-    }
-
     public async bool connect_saved(WifiNetwork network, Cancellable? cancellable = null) throws Error {
         core.debug_log(
             "connect_saved: ssid='%s' uuid='%s' bssid='%s' device='%s' ap='%s'".printf(
@@ -657,7 +535,7 @@ public class NmWifiClient : Object {
             }
 
             core.debug_log("connect_saved: activating conn_path='" + conn_path + "'");
-            var nm = core.make_proxy(NM_PATH, NM_IFACE);
+            var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
             yield core.call_dbus(
                 nm,
                 "ActivateConnection",
@@ -742,7 +620,7 @@ public class NmWifiClient : Object {
             key_mgmt = "sae";
         }
 
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
 
         var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
 
@@ -822,7 +700,7 @@ public class NmWifiClient : Object {
         }
 
         string device_path = yield resolve_wifi_device_path_for_hidden_connect(cancellable);
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
 
         var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
 
@@ -869,7 +747,7 @@ public class NmWifiClient : Object {
     }
 
     public new async bool disconnect(WifiNetwork network, Cancellable? cancellable = null) throws Error {
-        var dev = core.make_proxy(network.device_path, NM_DEVICE_IFACE);
+        var dev = yield core.make_proxy(network.device_path, NM_DEVICE_IFACE, cancellable);
         yield core.call_dbus(dev, "Disconnect", null, cancellable);
         return true;
     }
@@ -886,13 +764,13 @@ public class NmWifiClient : Object {
 
         string? conn_path = null;
 
-        var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var settings = yield core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
         var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
         var conns = list_res.get_child_value(0);
 
         for (int i = 0; i < conns.n_children(); i++) {
             string candidate_path = conns.get_child_value(i).get_string();
-            var conn = core.make_proxy(candidate_path, NM_CONN_IFACE);
+            var conn = yield core.make_proxy(candidate_path, NM_CONN_IFACE, cancellable);
             var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
             var all_settings = settings_res.get_child_value(0);
 
@@ -912,14 +790,14 @@ public class NmWifiClient : Object {
             throw new IOError.NOT_FOUND("Saved connection profile not found.");
         }
 
-        var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
+        var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
         yield core.call_dbus(conn, "Delete", null, cancellable);
         
         return true;
     }
 
     public async bool scan(Cancellable? cancellable = null) throws Error {
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
         var devices_res = yield core.call_dbus(nm, "GetDevices", null, cancellable);
         var devices = devices_res.get_child_value(0);
 
@@ -936,7 +814,7 @@ public class NmWifiClient : Object {
                 continue;
             }
 
-            var wifi = core.make_proxy(dev_path, NM_WIRELESS_IFACE);
+            var wifi = yield core.make_proxy(dev_path, NM_WIRELESS_IFACE, cancellable);
             var options = new VariantBuilder(new VariantType("a{sv}"));
             yield core.call_dbus(
                 wifi,

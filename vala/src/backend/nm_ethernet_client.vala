@@ -17,13 +17,13 @@ public class NmEthernetClient : Object {
         string? name_match = null;
         bool name_ambiguous = false;
 
-        var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var settings = yield core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
         var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
         var conns = list_res.get_child_value(0);
 
         for (int i = 0; i < conns.n_children(); i++) {
             string candidate_path = conns.get_child_value(i).get_string();
-            var conn = core.make_proxy(candidate_path, NM_CONN_IFACE);
+            var conn = yield core.make_proxy(candidate_path, NM_CONN_IFACE, cancellable);
             var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
             var all_settings = settings_res.get_child_value(0);
 
@@ -85,7 +85,7 @@ public class NmEthernetClient : Object {
             cancellable
         );
 
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
         yield core.call_dbus(
             nm,
             "ActivateConnection",
@@ -99,7 +99,7 @@ public class NmEthernetClient : Object {
         string interface_name,
         Cancellable? cancellable = null
     ) throws Error {
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
         var devices_res = yield core.call_dbus(nm, "GetDevices", null, cancellable);
         var devices = devices_res.get_child_value(0);
 
@@ -115,7 +115,7 @@ public class NmEthernetClient : Object {
                 continue;
             }
 
-            var dev = core.make_proxy(dev_path, NM_DEVICE_IFACE);
+            var dev = yield core.make_proxy(dev_path, NM_DEVICE_IFACE, cancellable);
             yield core.call_dbus(dev, "Disconnect", null, cancellable);
             return true;
         }
@@ -137,7 +137,7 @@ public class NmEthernetClient : Object {
                     "No saved Ethernet profile found.",
                     cancellable
                 );
-                var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
+                var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
                 var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
                 var all_settings = settings_res.get_child_value(0);
                 NetworkManagerClientVala.fill_configured_ipv4_from_settings(all_settings, ip_settings);
@@ -236,7 +236,7 @@ public class NmEthernetClient : Object {
             }
         }
 
-        var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
+        var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
         var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
         var all_settings = settings_res.get_child_value(0);
 

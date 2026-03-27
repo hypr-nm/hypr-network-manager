@@ -228,18 +228,25 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void configure_nm_signal_refresh() {
-        string error_message;
-        nm_events_subscription_enabled = nm.subscribe_network_events(out error_message);
-        if (!nm_events_subscription_enabled) {
-            debug_log("Could not subscribe to NM D-Bus signals, using polling fallback: " + error_message);
-            return;
-        }
+        nm.subscribe_network_events_dbus.begin(null, (obj, res) => {
+            try {
+                nm_events_subscription_enabled = nm.subscribe_network_events_dbus.end(res);
+            } catch (Error e) {
+                nm_events_subscription_enabled = false;
+                debug_log("Could not subscribe to NM D-Bus signals, using polling fallback: " + e.message);
+                return;
+            }
+            if (!nm_events_subscription_enabled) {
+                debug_log("Could not subscribe to NM D-Bus signals, using polling fallback");
+                return;
+            }
 
-        nm_events_changed_handler_id = nm.network_events_changed.connect(() => {
-            schedule_signal_refresh();
+            nm_events_changed_handler_id = nm.network_events_changed.connect(() => {
+                schedule_signal_refresh();
+            });
+
+            debug_log("NetworkManager D-Bus signal refresh enabled");
         });
-
-        debug_log("NetworkManager D-Bus signal refresh enabled");
     }
 
     private bool key_press_event_cb(uint keyval, uint keycode, Gdk.ModifierType state) {

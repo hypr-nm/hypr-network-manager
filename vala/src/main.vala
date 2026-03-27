@@ -26,17 +26,37 @@ int main(string[] args) {
 
     if (status) {
         var nm = new NetworkManagerClientVala(debug_enabled);
-        stdout.printf("%s\n", nm.get_status_json());
+        string status_json = "";
+        var loop = new MainLoop();
+        nm.get_status_json_dbus.begin(null, (obj, res) => {
+            status_json = nm.get_status_json_dbus.end(res);
+            loop.quit();
+        });
+        loop.run();
+        stdout.printf("%s\n", status_json);
         return 0;
     }
 
     if (toggle_wifi) {
         var nm = new NetworkManagerClientVala(debug_enabled);
-        bool enabled_after_toggle;
-        string err;
-        if (!nm.toggle_wifi(out enabled_after_toggle, out err)) {
-            stderr.printf("toggle-wifi failed: %s\n", err);
-            return 1;
+        bool enabled_after_toggle = false;
+        int toggle_exit_code = 0;
+        string toggle_error = "";
+        var loop = new MainLoop();
+        nm.toggle_wifi_dbus.begin(null, (obj, res) => {
+            try {
+                enabled_after_toggle = nm.toggle_wifi_dbus.end(res);
+            } catch (Error e) {
+                toggle_exit_code = 1;
+                toggle_error = e.message;
+            }
+            loop.quit();
+        });
+        loop.run();
+
+        if (toggle_exit_code != 0) {
+            stderr.printf("toggle-wifi failed: %s\n", toggle_error);
+            return toggle_exit_code;
         }
         stdout.printf("Wi-Fi %s\n", enabled_after_toggle ? "enabled" : "disabled");
         return 0;

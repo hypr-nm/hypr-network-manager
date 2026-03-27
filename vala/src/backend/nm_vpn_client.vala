@@ -7,55 +7,49 @@ public class NmVpnClient : Object {
         this.core = core;
     }
 
-    private string? find_connection_by_name(string name, out bool ambiguous) {
-        ambiguous = false;
+    private async string resolve_connection_by_name(
+        string name,
+        Cancellable? cancellable = null
+    ) throws Error {
         string? match = null;
 
-        try {
-            var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
-            var list_res = settings.call_sync("ListConnections", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var conns = list_res.get_child_value(0);
+        var settings = yield core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
+        var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
+        var conns = list_res.get_child_value(0);
 
-            for (int i = 0; i < conns.n_children(); i++) {
-                string conn_path = conns.get_child_value(i).get_string();
-                var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
-                var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-                var all_settings = settings_res.get_child_value(0);
+        for (int i = 0; i < conns.n_children(); i++) {
+            string conn_path = conns.get_child_value(i).get_string();
+            var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
+            var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
+            var all_settings = settings_res.get_child_value(0);
 
-                Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
-                if (conn_group == null) {
-                    continue;
-                }
-
-                Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-                if (id_v != null && id_v.get_string() == name) {
-                    if (match != null) {
-                        ambiguous = true;
-                        return null;
-                    }
-                    match = conn_path;
-                }
+            Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
+            if (conn_group == null) {
+                continue;
             }
-        } catch (Error e) {
-            core.debug_log("could not resolve connection by name: " + e.message);
+
+            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+            if (id_v != null && id_v.get_string() == name) {
+                if (match != null) {
+                    throw new IOError.FAILED(
+                        "Multiple connections share this name. Use UUID to activate a specific profile."
+                    );
+                }
+                match = conn_path;
+            }
+        }
+
+        if (match == null) {
+            throw new IOError.NOT_FOUND("Connection not found.");
         }
 
         return match;
     }
 
-    public async bool connect(string name, Cancellable? cancellable = null) throws Error {
-        bool ambiguous = false;
-        string? conn_path = find_connection_by_name(name, out ambiguous);
-        if (ambiguous) {
-            throw new IOError.FAILED(
-                "Multiple connections share this name. Use UUID to activate a specific profile."
-            );
-        }
-        if (conn_path == null) {
-            throw new IOError.NOT_FOUND("Connection not found.");
-        }
+    public new async bool connect(string name, Cancellable? cancellable = null) throws Error {
+        string conn_path = yield resolve_connection_by_name(name, cancellable);
 
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
         yield core.call_dbus(
             nm,
             "ActivateConnection",
@@ -65,8 +59,8 @@ public class NmVpnClient : Object {
         return true;
     }
 
-    public async bool disconnect(string name, Cancellable? cancellable = null) throws Error {
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
+    public new async bool disconnect(string name, Cancellable? cancellable = null) throws Error {
+        var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
         Variant active_conns = yield core.get_prop_dbus(NM_PATH, NM_IFACE, "ActiveConnections", cancellable);
         for (int i = 0; i < active_conns.n_children(); i++) {
             string ac_path = active_conns.get_child_value(i).get_string();
@@ -102,13 +96,13 @@ public class NmVpnClient : Object {
             }
         }
 
-        var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
+        var settings = yield core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
         var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
         var conns = list_res.get_child_value(0);
 
         for (int i = 0; i < conns.n_children(); i++) {
             string conn_path = conns.get_child_value(i).get_string();
-            var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
+            var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
             var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
             var all_settings = settings_res.get_child_value(0);
 

@@ -7,9 +7,9 @@ public class MainWindowEthernetController : Object {
     private uint[] timeout_source_ids = {};
 
     private NetworkManagerClientVala nm;
-    private owned MainWindowErrorCallback on_error;
-    private owned MainWindowRefreshActionCallback on_refresh_after_action;
-    private owned MainWindowBoolCallback on_set_popup_text_input_mode;
+    private MainWindowErrorCallback on_error;
+    private MainWindowRefreshActionCallback on_refresh_after_action;
+    private MainWindowBoolCallback on_set_popup_text_input_mode;
 
     private Gtk.ListBox ethernet_listbox;
     private Gtk.Stack ethernet_stack;

@@ -65,13 +65,16 @@ public class NetworkManagerClientVala : Object {
         network_events_changed();
     }
 
-    private void subscribe_device_signals(string device_path) {
+    private async void subscribe_device_signals_dbus(
+        string device_path,
+        Cancellable? cancellable = null
+    ) {
         if (nm_subscribed_device_paths.contains(device_path)) {
             return;
         }
 
         try {
-            var dev_proxy = make_proxy(device_path, NM_DEVICE_IFACE);
+            var dev_proxy = yield make_proxy(device_path, NM_DEVICE_IFACE, cancellable);
             ulong state_handler_id = dev_proxy.g_signal.connect((sender_name, signal_name, parameters) => {
                 if (signal_name == "StateChanged") {
                     emit_nm_change_event("Device.StateChanged (" + device_path + ")");
@@ -79,9 +82,14 @@ public class NetworkManagerClientVala : Object {
             });
             add_nm_signal_subscription(dev_proxy, state_handler_id);
 
-            uint32 dev_type = get_prop(device_path, NM_DEVICE_IFACE, "DeviceType").get_uint32();
+            uint32 dev_type = (yield get_prop_dbus(
+                device_path,
+                NM_DEVICE_IFACE,
+                "DeviceType",
+                cancellable
+            )).get_uint32();
             if (dev_type == NM_DEVICE_TYPE_WIFI) {
-                var wireless_proxy = make_proxy(device_path, NM_WIRELESS_IFACE);
+                var wireless_proxy = yield make_proxy(device_path, NM_WIRELESS_IFACE, cancellable);
                 ulong wifi_handler_id = wireless_proxy.g_signal.connect((sender_name, signal_name, parameters) => {
                     if (signal_name == "AccessPointAdded" || signal_name == "AccessPointRemoved") {
                         emit_nm_change_event("Wireless." + signal_name + " (" + device_path + ")");
@@ -104,27 +112,20 @@ public class NetworkManagerClientVala : Object {
         nm_subscribed_device_paths.remove_all();
     }
 
-    internal DBusProxy make_proxy(string object_path, string iface) throws Error {
-        return new DBusProxy.for_bus_sync(
+    internal async DBusProxy make_proxy(
+        string object_path,
+        string iface,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield new DBusProxy.for_bus(
             BusType.SYSTEM,
             DBusProxyFlags.NONE,
             null,
             NM_SERVICE,
             object_path,
             iface,
-            null
+            cancellable
         );
-    }
-
-    internal Variant get_prop(string object_path, string iface, string prop) throws Error {
-        var proxy = make_proxy(object_path, DBUS_PROPS_IFACE);
-        var result = proxy.call_sync(
-            "Get",
-            new Variant("(ss)", iface, prop),
-            DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-        );
-        var boxed = result.get_child_value(0);
-        return boxed.get_variant();
     }
 
     internal async Variant call_dbus(
@@ -148,7 +149,7 @@ public class NetworkManagerClientVala : Object {
         string prop,
         Cancellable? cancellable = null
     ) throws Error {
-        var proxy = make_proxy(object_path, DBUS_PROPS_IFACE);
+        var proxy = yield make_proxy(object_path, DBUS_PROPS_IFACE, cancellable);
         var result = yield call_dbus(
             proxy,
             "Get",
@@ -159,15 +160,13 @@ public class NetworkManagerClientVala : Object {
         return boxed.get_variant();
     }
 
-    public bool subscribe_network_events(out string error_message) {
-        error_message = "";
-
+    public async bool subscribe_network_events_dbus(Cancellable? cancellable = null) throws Error {
         if (nm_signals_active) {
             return true;
         }
 
         try {
-            var nm_proxy = make_proxy(NM_PATH, NM_IFACE);
+            var nm_proxy = yield make_proxy(NM_PATH, NM_IFACE, cancellable);
             ulong nm_handler_id = nm_proxy.g_signal.connect((sender_name, signal_name, parameters) => {
                 if (signal_name == "StateChanged") {
                     emit_nm_change_event("NetworkManager.StateChanged");
@@ -181,7 +180,7 @@ public class NetworkManagerClientVala : Object {
                     }
 
                     if (device_path != null && device_path != "") {
-                        subscribe_device_signals(device_path);
+                        subscribe_device_signals_dbus.begin(device_path, null);
                     }
 
                     emit_nm_change_event("NetworkManager.DeviceAdded");
@@ -195,10 +194,10 @@ public class NetworkManagerClientVala : Object {
             });
             add_nm_signal_subscription(nm_proxy, nm_handler_id);
 
-            var devices_res = nm_proxy.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
+            var devices_res = yield call_dbus(nm_proxy, "GetDevices", null, cancellable);
             var devices = devices_res.get_child_value(0);
             for (int i = 0; i < devices.n_children(); i++) {
-                subscribe_device_signals(devices.get_child_value(i).get_string());
+                yield subscribe_device_signals_dbus(devices.get_child_value(i).get_string(), cancellable);
             }
 
             nm_signals_active = true;
@@ -207,8 +206,7 @@ public class NetworkManagerClientVala : Object {
         } catch (Error e) {
             clear_nm_signal_subscriptions();
             nm_signals_active = false;
-            error_message = e.message;
-            return false;
+            throw e;
         }
     }
 
@@ -225,7 +223,7 @@ public class NetworkManagerClientVala : Object {
     internal async List<NetworkDevice> get_devices_dbus(Cancellable? cancellable = null) throws Error {
         var devices_out = new List<NetworkDevice>();
 
-        var nm = make_proxy(NM_PATH, NM_IFACE);
+        var nm = yield make_proxy(NM_PATH, NM_IFACE, cancellable);
         var devices_res = yield call_dbus(nm, "GetDevices", null, cancellable);
         var devices = devices_res.get_child_value(0);
 
@@ -266,7 +264,7 @@ public class NetworkManagerClientVala : Object {
                     );
                     for (int j = 0; j < available_connections.n_children(); j++) {
                         string conn_path = available_connections.get_child_value(j).get_string();
-                        var conn = make_proxy(conn_path, NM_CONN_IFACE);
+                        var conn = yield make_proxy(conn_path, NM_CONN_IFACE, cancellable);
                         var settings_res = yield call_dbus(conn, "GetSettings", null, cancellable);
                         var all_settings = settings_res.get_child_value(0);
 
@@ -595,121 +593,6 @@ public class NetworkManagerClientVala : Object {
         return yield get_devices_dbus(cancellable);
     }
 
-    private List<NetworkDevice> get_devices_sync() {
-        var devices_out = new List<NetworkDevice>();
-
-        try {
-            var nm = make_proxy(NM_PATH, NM_IFACE);
-            var devices_res = nm.call_sync("GetDevices", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
-            var devices = devices_res.get_child_value(0);
-
-            for (int i = 0; i < devices.n_children(); i++) {
-                string dev_path = devices.get_child_value(i).get_string();
-                string iface = get_prop(dev_path, NM_DEVICE_IFACE, "Interface").get_string();
-                if (iface == "" || iface == "lo") {
-                    continue;
-                }
-
-                uint32 dev_type = get_prop(dev_path, NM_DEVICE_IFACE, "DeviceType").get_uint32();
-                uint32 state = get_prop(dev_path, NM_DEVICE_IFACE, "State").get_uint32();
-
-                string conn_name = "";
-                string conn_uuid = "";
-                string ac_path = get_prop(dev_path, NM_DEVICE_IFACE, "ActiveConnection").get_string();
-                if (ac_path != "/") {
-                    try {
-                        conn_name = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Id").get_string();
-                        conn_uuid = get_prop(ac_path, NM_ACTIVE_CONN_IFACE, "Uuid").get_string();
-                    } catch (Error e) {
-                        debug_log("Could not read active connection id: " + e.message);
-                    }
-                }
-
-                if (conn_name == "" && dev_type == NM_DEVICE_TYPE_ETHERNET) {
-                    try {
-                        Variant available_connections = get_prop(
-                            dev_path,
-                            NM_DEVICE_IFACE,
-                            "AvailableConnections"
-                        );
-                        for (int j = 0; j < available_connections.n_children(); j++) {
-                            string conn_path = available_connections.get_child_value(j).get_string();
-                            var conn = make_proxy(conn_path, NM_CONN_IFACE);
-                            var settings_res = conn.call_sync(
-                                "GetSettings",
-                                null,
-                                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-                            );
-                            var all_settings = settings_res.get_child_value(0);
-
-                            Variant? conn_group = all_settings.lookup_value(
-                                "connection",
-                                new VariantType("a{sv}")
-                            );
-                            if (conn_group == null) {
-                                continue;
-                            }
-
-                            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-                            if (type_v == null || type_v.get_string() != "802-3-ethernet") {
-                                continue;
-                            }
-
-                            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-                            Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
-                            if (id_v != null && id_v.get_string() != "") {
-                                conn_name = id_v.get_string();
-                                conn_uuid = uuid_v != null ? uuid_v.get_string() : "";
-                                break;
-                            }
-                        }
-                    } catch (Error e) {
-                        debug_log("Could not read available Ethernet profiles: " + e.message);
-                    }
-                }
-
-                devices_out.append(new NetworkDevice() {
-                    name = iface,
-                    device_path = dev_path,
-                    device_type = dev_type,
-                    state = state,
-                    connection = conn_name,
-                    connection_uuid = conn_uuid
-                });
-            }
-        } catch (Error e) {
-            debug_log("get_devices failed: " + e.message);
-        }
-
-        return devices_out;
-    }
-
-    public bool get_wifi_enabled(out bool enabled, out string error_message) {
-        enabled = false;
-        error_message = "";
-
-        try {
-            enabled = get_prop(NM_PATH, NM_IFACE, "WirelessEnabled").get_boolean();
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
-    public bool get_networking_enabled(out bool enabled, out string error_message) {
-        enabled = false;
-        error_message = "";
-
-        try {
-            enabled = get_prop(NM_PATH, NM_IFACE, "NetworkingEnabled").get_boolean();
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
     public async bool get_wifi_enabled_dbus(Cancellable? cancellable = null) throws Error {
         return (yield get_prop_dbus(NM_PATH, NM_IFACE, "WirelessEnabled", cancellable)).get_boolean();
     }
@@ -718,28 +601,12 @@ public class NetworkManagerClientVala : Object {
         return (yield get_prop_dbus(NM_PATH, NM_IFACE, "NetworkingEnabled", cancellable)).get_boolean();
     }
 
-    private bool set_nm_bool_property(string prop_name, bool value, out string error_message) {
-        error_message = "";
-        try {
-            var proxy = make_proxy(NM_PATH, DBUS_PROPS_IFACE);
-            proxy.call_sync(
-                "Set",
-                new Variant("(ssv)", NM_IFACE, prop_name, new Variant.boolean(value)),
-                DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null
-            );
-            return true;
-        } catch (Error e) {
-            error_message = e.message;
-            return false;
-        }
-    }
-
     private async bool set_nm_bool_property_dbus(
         string prop_name,
         bool value,
         Cancellable? cancellable = null
     ) throws Error {
-        var proxy = make_proxy(NM_PATH, DBUS_PROPS_IFACE);
+        var proxy = yield make_proxy(NM_PATH, DBUS_PROPS_IFACE, cancellable);
         yield call_dbus(
             proxy,
             "Set",
@@ -755,7 +622,7 @@ public class NetworkManagerClientVala : Object {
 
     public async bool set_networking_enabled(bool enabled, Cancellable? cancellable = null) throws Error {
         try {
-            var nm = make_proxy(NM_PATH, NM_IFACE);
+            var nm = yield make_proxy(NM_PATH, NM_IFACE, cancellable);
             yield call_dbus(
                 nm,
                 "Enable",
@@ -769,24 +636,11 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
-    public bool toggle_wifi(out bool enabled_after_toggle, out string error_message) {
-        enabled_after_toggle = false;
-        error_message = "";
-
-        bool current;
-        if (!get_wifi_enabled(out current, out error_message)) {
-            return false;
-        }
-
-        enabled_after_toggle = !current;
-        if (!set_nm_bool_property("WirelessEnabled", enabled_after_toggle, out error_message)) {
-            return false;
-        }
-        return true;
-    }
-
-    public List<WifiNetwork> get_wifi_networks() {
-        return wifi_client.get_networks();
+    public async bool toggle_wifi_dbus(Cancellable? cancellable = null) throws Error {
+        bool current = yield get_wifi_enabled_dbus(cancellable);
+        bool enabled_after_toggle = !current;
+        yield set_nm_bool_property_dbus("WirelessEnabled", enabled_after_toggle, cancellable);
+        return enabled_after_toggle;
     }
 
     public async bool connect_saved_wifi(WifiNetwork network, Cancellable? cancellable = null) throws Error {
@@ -846,18 +700,30 @@ public class NetworkManagerClientVala : Object {
         return yield wifi_client.scan(cancellable);
     }
 
-    public string get_status_json() {
-        bool networking_on;
-        bool wifi_on;
-        string error_message;
-        if (!get_networking_enabled(out networking_on, out error_message)) {
-            networking_on = false;
+    public async string get_status_json_dbus(Cancellable? cancellable = null) {
+        bool networking_on = false;
+        bool wifi_on = false;
+        try {
+            networking_on = yield get_networking_enabled_dbus(cancellable);
+        } catch (Error e) {
+            debug_log("could not read NetworkingEnabled for status: " + e.message);
         }
-        if (!get_wifi_enabled(out wifi_on, out error_message)) {
-            wifi_on = false;
+        try {
+            wifi_on = yield get_wifi_enabled_dbus(cancellable);
+        } catch (Error e) {
+            debug_log("could not read WirelessEnabled for status: " + e.message);
         }
 
-        var devices = get_devices_sync();
+        NetworkDevice[] devices = {};
+        WifiNetwork[] wifi_nets = {};
+        try {
+            var refresh_data = yield get_wifi_refresh_data(cancellable);
+            devices = refresh_data.devices;
+            wifi_nets = refresh_data.networks;
+        } catch (Error e) {
+            debug_log("could not read status device/network data: " + e.message);
+        }
+
         NetworkDevice? active_wifi = null;
         NetworkDevice? active_eth = null;
         foreach (var dev in devices) {
@@ -870,7 +736,6 @@ public class NetworkManagerClientVala : Object {
 
         uint signal = 100;
         if (active_wifi != null) {
-            var wifi_nets = get_wifi_networks();
             foreach (var net in wifi_nets) {
                 if (net.connected) {
                     signal = net.signal;
