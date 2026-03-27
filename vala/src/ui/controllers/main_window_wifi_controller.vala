@@ -348,14 +348,12 @@ public class MainWindowWifiController : Object {
         NetworkManagerClientVala nm,
         Gtk.Switch wifi_switch,
         Gtk.Switch networking_switch,
-        ref bool updating_switches,
         MainWindowLogCallback on_log
     ) {
         runtime_controller.refresh_switch_states(
             nm,
             wifi_switch,
             networking_switch,
-            ref updating_switches,
             on_log
         );
     }
@@ -363,7 +361,6 @@ public class MainWindowWifiController : Object {
     public void on_wifi_switch_changed(
         NetworkManagerClientVala nm,
         Gtk.Switch wifi_switch,
-        bool updating_switches,
         MainWindowErrorCallback on_error,
         MainWindowActionCallback on_refresh_switch_states,
         MainWindowRefreshActionCallback on_refresh_after_action
@@ -371,7 +368,6 @@ public class MainWindowWifiController : Object {
         runtime_controller.on_wifi_switch_changed(
             nm,
             wifi_switch,
-            updating_switches,
             on_error,
             on_refresh_switch_states,
             on_refresh_after_action
@@ -381,7 +377,6 @@ public class MainWindowWifiController : Object {
     public void on_networking_switch_changed(
         NetworkManagerClientVala nm,
         Gtk.Switch networking_switch,
-        bool updating_switches,
         MainWindowErrorCallback on_error,
         MainWindowActionCallback on_refresh_switch_states,
         MainWindowRefreshActionCallback on_refresh_after_action
@@ -389,7 +384,6 @@ public class MainWindowWifiController : Object {
         runtime_controller.on_networking_switch_changed(
             nm,
             networking_switch,
-            updating_switches,
             on_error,
             on_refresh_switch_states,
             on_refresh_after_action

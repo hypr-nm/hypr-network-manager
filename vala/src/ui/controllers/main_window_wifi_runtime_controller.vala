@@ -1,5 +1,7 @@
 public class MainWindowWifiRuntimeController : Object {
     private bool is_disposed = false;
+    private bool updating_switches = false;
+    private uint switch_refresh_epoch = 1;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
     private Cancellable? wifi_refresh_cancellable = null;
@@ -44,9 +46,18 @@ public class MainWindowWifiRuntimeController : Object {
         if (ui_epoch == 0) {
             ui_epoch = 1;
         }
+        switch_refresh_epoch++;
+        if (switch_refresh_epoch == 0) {
+            switch_refresh_epoch = 1;
+        }
+        updating_switches = false;
         cancel_all_timeout_sources();
         wifi_row_order = {};
         wifi_row_signatures.remove_all();
+    }
+
+    public bool is_updating_switches() {
+        return updating_switches;
     }
 
     private void track_timeout_source(uint source_id) {
@@ -610,34 +621,50 @@ public class MainWindowWifiRuntimeController : Object {
         NetworkManagerClientVala nm,
         Gtk.Switch wifi_switch,
         Gtk.Switch networking_switch,
-        ref bool updating_switches,
         MainWindowLogCallback on_log
     ) {
-        bool wifi_enabled;
-        bool net_enabled;
-        string error_message;
-
+        uint epoch = capture_ui_epoch();
+        uint refresh_epoch = switch_refresh_epoch + 1;
+        if (refresh_epoch == 0) {
+            refresh_epoch = 1;
+        }
+        switch_refresh_epoch = refresh_epoch;
         updating_switches = true;
 
-        if (nm.get_wifi_enabled(out wifi_enabled, out error_message)) {
-            wifi_switch.set_active(wifi_enabled);
-        } else {
-            on_log("Could not read WirelessEnabled: " + error_message);
-        }
+        nm.get_wifi_enabled_dbus.begin(null, (obj, wifi_res) => {
+            try {
+                bool wifi_enabled = nm.get_wifi_enabled_dbus.end(wifi_res);
+                if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
+                    wifi_switch.set_active(wifi_enabled);
+                }
+            } catch (Error e) {
+                if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
+                    on_log("Could not read WirelessEnabled: " + e.message);
+                }
+            }
 
-        if (nm.get_networking_enabled(out net_enabled, out error_message)) {
-            networking_switch.set_active(net_enabled);
-        } else {
-            on_log("Could not read NetworkingEnabled: " + error_message);
-        }
-
-        updating_switches = false;
+            nm.get_networking_enabled_dbus.begin(null, (obj2, net_res) => {
+                try {
+                    bool net_enabled = nm.get_networking_enabled_dbus.end(net_res);
+                    if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
+                        networking_switch.set_active(net_enabled);
+                    }
+                } catch (Error e) {
+                    if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
+                        on_log("Could not read NetworkingEnabled: " + e.message);
+                    }
+                } finally {
+                    if (switch_refresh_epoch == refresh_epoch) {
+                        updating_switches = false;
+                    }
+                }
+            });
+        });
     }
 
     public void on_wifi_switch_changed(
         NetworkManagerClientVala nm,
         Gtk.Switch wifi_switch,
-        bool updating_switches,
         MainWindowErrorCallback on_error,
         MainWindowActionCallback on_refresh_switch_states,
         MainWindowRefreshActionCallback on_refresh_after_action
@@ -670,7 +697,6 @@ public class MainWindowWifiRuntimeController : Object {
     public void on_networking_switch_changed(
         NetworkManagerClientVala nm,
         Gtk.Switch networking_switch,
-        bool updating_switches,
         MainWindowErrorCallback on_error,
         MainWindowActionCallback on_refresh_switch_states,
         MainWindowRefreshActionCallback on_refresh_after_action

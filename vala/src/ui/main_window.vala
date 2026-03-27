@@ -56,7 +56,6 @@ public class MainWindow : Gtk.ApplicationWindow {
     private HashTable<string, bool> pending_wifi_connect;
     private HashTable<string, bool> pending_wifi_seen_connecting;
     private HashTable<string, bool> active_wifi_connections;
-    private bool updating_switches = false;
     private Gtk.EventControllerKey key_controller;
     private uint periodic_refresh_source_id = 0;
     private uint signal_refresh_source_id = 0;
@@ -871,7 +870,6 @@ public class MainWindow : Gtk.ApplicationWindow {
             nm,
             wifi_switch,
             networking_switch,
-            ref updating_switches,
             (message) => {
                 debug_log(message);
             }
@@ -882,7 +880,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller.on_wifi_switch_changed(
             nm,
             wifi_switch,
-            updating_switches,
             (message) => {
                 show_error(message);
             },
@@ -899,7 +896,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller.on_networking_switch_changed(
             nm,
             networking_switch,
-            updating_switches,
             (message) => {
                 show_error(message);
             },
