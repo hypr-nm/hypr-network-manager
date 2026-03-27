@@ -17,18 +17,7 @@ public class WifiNetwork : Object {
 
     public string network_key {
         owned get {
-            string bssid_key = bssid.strip().down();
-            if (bssid_key != "") {
-                return bssid_key;
-            }
-
-            // Fallback only for malformed/empty BSSID cases.
-            string ap = ap_path.strip();
-            if (ap != "") {
-                return ap;
-            }
-
-            return ssid;
+            return ssid + ":" + (is_secured ? "secured" : "open");
         }
     }
 
