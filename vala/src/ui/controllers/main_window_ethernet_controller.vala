@@ -15,27 +15,8 @@ public class MainWindowEthernetController : Object {
     private Gtk.Stack ethernet_stack;
     private NetworkDevice? selected_ethernet_device = null;
 
-    private Gtk.Label ethernet_details_title;
-    private Gtk.Box ethernet_details_basic_rows;
-    private Gtk.Box ethernet_details_advanced_rows;
-    private Gtk.Box ethernet_details_ip_rows;
-    private Gtk.Button ethernet_details_primary_button;
-    private Gtk.Button ethernet_details_edit_button;
-
-    private Gtk.Label ethernet_edit_title;
-    private Gtk.Label ethernet_edit_note;
-    private Gtk.DropDown ethernet_edit_ipv4_method_dropdown;
-    private Gtk.Entry ethernet_edit_ipv4_address_entry;
-    private Gtk.Entry ethernet_edit_ipv4_prefix_entry;
-    private Gtk.Switch ethernet_edit_gateway_auto_switch;
-    private Gtk.Entry ethernet_edit_ipv4_gateway_entry;
-    private Gtk.Switch ethernet_edit_dns_auto_switch;
-    private Gtk.Entry ethernet_edit_ipv4_dns_entry;
-    private Gtk.DropDown ethernet_edit_ipv6_method_dropdown;
-    private Gtk.Entry ethernet_edit_ipv6_address_entry;
-    private Gtk.Entry ethernet_edit_ipv6_prefix_entry;
-    private Gtk.Switch ethernet_edit_ipv6_gateway_auto_switch;
-    private Gtk.Entry ethernet_edit_ipv6_gateway_entry;
+    private MainWindowEthernetDetailsPage ethernet_details_page;
+    private MainWindowEthernetEditPage ethernet_edit_page;
 
     private HashTable<string, bool> pending_ethernet_action;
     private HashTable<string, bool> pending_ethernet_target_connected;
@@ -114,112 +95,82 @@ public class MainWindowEthernetController : Object {
         timeout_source_ids = {};
     }
 
-    public Gtk.Widget build_page() {
-        var details_page = new MainWindowEthernetDetailsPage();
-        var edit_page = new MainWindowEthernetEditPage();
+    public void configure_page(MainWindowEthernetViewContext view_context) {
+        ethernet_listbox = view_context.listbox;
+        ethernet_stack = view_context.stack;
+        ethernet_details_page = view_context.details_page;
+        ethernet_edit_page = view_context.edit_page;
+    }
 
-        ethernet_details_title = details_page.details_title;
-        ethernet_details_basic_rows = details_page.basic_rows;
-        ethernet_details_advanced_rows = details_page.advanced_rows;
-        ethernet_details_ip_rows = details_page.ip_rows;
-        ethernet_details_primary_button = details_page.primary_button;
-        ethernet_details_edit_button = details_page.edit_button;
+    public void on_details_back_requested() {
+        invalidate_ui_state();
+        selected_ethernet_device = null;
+        on_set_popup_text_input_mode(false);
+        ethernet_stack.set_visible_child_name("list");
+    }
 
-        ethernet_edit_title = edit_page.edit_title;
-        ethernet_edit_note = edit_page.note_label;
-        ethernet_edit_ipv4_method_dropdown = edit_page.ipv4_method_dropdown;
-        ethernet_edit_ipv4_address_entry = edit_page.ipv4_address_entry;
-        ethernet_edit_ipv4_prefix_entry = edit_page.ipv4_prefix_entry;
-        ethernet_edit_gateway_auto_switch = edit_page.gateway_auto_switch;
-        ethernet_edit_ipv4_gateway_entry = edit_page.ipv4_gateway_entry;
-        ethernet_edit_dns_auto_switch = edit_page.dns_auto_switch;
-        ethernet_edit_ipv4_dns_entry = edit_page.ipv4_dns_entry;
-        ethernet_edit_ipv6_method_dropdown = edit_page.ipv6_method_dropdown;
-        ethernet_edit_ipv6_address_entry = edit_page.ipv6_address_entry;
-        ethernet_edit_ipv6_prefix_entry = edit_page.ipv6_prefix_entry;
-        ethernet_edit_ipv6_gateway_auto_switch = edit_page.ipv6_gateway_auto_switch;
-        ethernet_edit_ipv6_gateway_entry = edit_page.ipv6_gateway_entry;
+    public void on_details_primary_requested() {
+        if (selected_ethernet_device != null) {
+            trigger_toggle(selected_ethernet_device);
+        }
+    }
 
-        details_page.back.connect(() => {
-            invalidate_ui_state();
-            selected_ethernet_device = null;
-            on_set_popup_text_input_mode(false);
+    public void on_details_edit_requested() {
+        if (selected_ethernet_device != null) {
+            open_edit(selected_ethernet_device);
+        }
+    }
+
+    public void on_edit_back_requested() {
+        on_set_popup_text_input_mode(false);
+        if (selected_ethernet_device != null) {
+            open_details(selected_ethernet_device);
+        } else {
             ethernet_stack.set_visible_child_name("list");
-        });
+        }
+    }
 
-        details_page.primary_action.connect(() => {
-            if (selected_ethernet_device != null) {
-                trigger_toggle(selected_ethernet_device);
-            }
-        });
+    public void on_edit_apply_requested() {
+        apply_edit();
+    }
 
-        details_page.edit.connect(() => {
-            if (selected_ethernet_device != null) {
-                open_edit(selected_ethernet_device);
-            }
-        });
-
-        edit_page.back.connect(() => {
-            on_set_popup_text_input_mode(false);
-            if (selected_ethernet_device != null) {
-                open_details(selected_ethernet_device);
-            } else {
-                ethernet_stack.set_visible_child_name("list");
-            }
-        });
-
-        edit_page.apply.connect(() => {
-            apply_edit();
-        });
-
-        edit_page.sync_sensitivity.connect(() => {
-            sync_edit_gateway_dns_sensitivity();
-        });
-
-        return MainWindowEthernetPageBuilder.build_page(
-            out ethernet_listbox,
-            out ethernet_stack,
-            details_page,
-            edit_page,
-            () => {
-                refresh();
-            }
-        );
+    public void on_edit_sync_sensitivity_requested() {
+        sync_edit_gateway_dns_sensitivity();
     }
 
     private void sync_edit_gateway_dns_sensitivity() {
-        if (ethernet_edit_ipv4_method_dropdown != null) {
-            bool ipv4_manual = ethernet_edit_ipv4_method_dropdown.get_selected() == 1;
-            bool ipv4_disabled = ethernet_edit_ipv4_method_dropdown.get_selected() == 2;
+        if (ethernet_edit_page.ipv4_method_dropdown != null) {
+            bool ipv4_manual = ethernet_edit_page.ipv4_method_dropdown.get_selected() == 1;
+            bool ipv4_disabled = ethernet_edit_page.ipv4_method_dropdown.get_selected() == 2;
             if (!ipv4_manual && ipv4_disabled) {
-                if (ethernet_edit_gateway_auto_switch != null) {
-                    ethernet_edit_gateway_auto_switch.set_active(true);
+                if (ethernet_edit_page.gateway_auto_switch != null) {
+                    ethernet_edit_page.gateway_auto_switch.set_active(true);
                 }
-                if (ethernet_edit_dns_auto_switch != null) {
-                    ethernet_edit_dns_auto_switch.set_active(true);
+                if (ethernet_edit_page.dns_auto_switch != null) {
+                    ethernet_edit_page.dns_auto_switch.set_active(true);
                 }
             }
         }
 
-        if (ethernet_edit_ipv6_method_dropdown != null) {
-            bool ipv6_manual = ethernet_edit_ipv6_method_dropdown.get_selected() == 1;
-            uint selected = ethernet_edit_ipv6_method_dropdown.get_selected();
+        if (ethernet_edit_page.ipv6_method_dropdown != null) {
+            bool ipv6_manual = ethernet_edit_page.ipv6_method_dropdown.get_selected() == 1;
+            uint selected = ethernet_edit_page.ipv6_method_dropdown.get_selected();
             bool ipv6_disabled_or_ignore = selected == 2 || selected == 3;
             if (!ipv6_manual && ipv6_disabled_or_ignore) {
-                if (ethernet_edit_ipv6_gateway_auto_switch != null) {
-                    ethernet_edit_ipv6_gateway_auto_switch.set_active(true);
+                if (ethernet_edit_page.ipv6_gateway_auto_switch != null) {
+                    ethernet_edit_page.ipv6_gateway_auto_switch.set_active(true);
                 }
             }
         }
 
-        if (ethernet_edit_ipv4_gateway_entry != null && ethernet_edit_gateway_auto_switch != null) {
-            ethernet_edit_ipv4_gateway_entry.set_sensitive(!ethernet_edit_gateway_auto_switch.get_active());
+        if (ethernet_edit_page.ipv4_gateway_entry != null && ethernet_edit_page.gateway_auto_switch != null) {
+            ethernet_edit_page.ipv4_gateway_entry.set_sensitive(!ethernet_edit_page.gateway_auto_switch.get_active());
         }
-        if (ethernet_edit_ipv4_dns_entry != null && ethernet_edit_dns_auto_switch != null) {
-            ethernet_edit_ipv4_dns_entry.set_sensitive(!ethernet_edit_dns_auto_switch.get_active());
+        if (ethernet_edit_page.ipv4_dns_entry != null && ethernet_edit_page.dns_auto_switch != null) {
+            ethernet_edit_page.ipv4_dns_entry.set_sensitive(!ethernet_edit_page.dns_auto_switch.get_active());
         }
-        if (ethernet_edit_ipv6_gateway_entry != null && ethernet_edit_ipv6_gateway_auto_switch != null) {
-            ethernet_edit_ipv6_gateway_entry.set_sensitive(!ethernet_edit_ipv6_gateway_auto_switch.get_active());
+        if (ethernet_edit_page.ipv6_gateway_entry != null && ethernet_edit_page.ipv6_gateway_auto_switch != null) {
+            ethernet_edit_page.ipv6_gateway_entry.set_sensitive(!ethernet_edit_page.ipv6_gateway_auto_switch.get_active());
         }
     }
 
@@ -287,31 +238,31 @@ public class MainWindowEthernetController : Object {
 
     private void populate_details(NetworkDevice dev) {
         uint epoch = capture_ui_epoch();
-        ethernet_details_title.set_text(dev.name);
+        ethernet_details_page.details_title.set_text(dev.name);
 
-        MainWindowHelpers.clear_box(ethernet_details_basic_rows);
-        MainWindowHelpers.clear_box(ethernet_details_advanced_rows);
-        MainWindowHelpers.clear_box(ethernet_details_ip_rows);
+        MainWindowHelpers.clear_box(ethernet_details_page.basic_rows);
+        MainWindowHelpers.clear_box(ethernet_details_page.advanced_rows);
+        MainWindowHelpers.clear_box(ethernet_details_page.ip_rows);
 
         string profile_name = dev.connection.strip() != "" ? dev.connection : "n/a";
         bool has_profile = dev.connection.strip() != "";
         bool pending = pending_ethernet_action.contains(dev.name);
 
-        ethernet_details_basic_rows.append(MainWindowHelpers.build_details_row("Interface", dev.name));
-        ethernet_details_basic_rows.append(MainWindowHelpers.build_details_row("Profile", profile_name));
-        ethernet_details_basic_rows.append(MainWindowHelpers.build_details_row("State", dev.state_label));
-        ethernet_details_basic_rows.append(
+        ethernet_details_page.basic_rows.append(MainWindowHelpers.build_details_row("Interface", dev.name));
+        ethernet_details_page.basic_rows.append(MainWindowHelpers.build_details_row("Profile", profile_name));
+        ethernet_details_page.basic_rows.append(MainWindowHelpers.build_details_row("State", dev.state_label));
+        ethernet_details_page.basic_rows.append(
             MainWindowHelpers.build_details_row("Connected", dev.is_connected ? "Yes" : "No")
         );
 
-        ethernet_details_advanced_rows.append(
+        ethernet_details_page.advanced_rows.append(
             MainWindowHelpers.build_details_row("Device Path", dev.device_path)
         );
-        ethernet_details_advanced_rows.append(
+        ethernet_details_page.advanced_rows.append(
             MainWindowHelpers.build_details_row("State Code", "%u".printf(dev.state))
         );
 
-        ethernet_details_ip_rows.append(MainWindowHelpers.build_details_row("Loading", "Reading IP settings..."));
+        ethernet_details_page.ip_rows.append(MainWindowHelpers.build_details_row("Loading", "Reading IP settings..."));
 
         nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
             var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
@@ -325,14 +276,14 @@ public class MainWindowEthernetController : Object {
                 return;
             }
 
-            MainWindowHelpers.clear_box(ethernet_details_ip_rows);
-            ethernet_details_ip_rows.append(
+            MainWindowHelpers.clear_box(ethernet_details_page.ip_rows);
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv4 Method",
                     MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv4 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -341,19 +292,19 @@ public class MainWindowEthernetController : Object {
                     )
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured Gateway",
                     ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured DNS",
                     ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current IPv4 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -362,25 +313,25 @@ public class MainWindowEthernetController : Object {
                     )
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current Gateway",
                     ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current DNS",
                     ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv6 Method",
                     MainWindowHelpers.get_ipv6_method_label(ip_settings.ipv6_method)
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv6 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -389,7 +340,7 @@ public class MainWindowEthernetController : Object {
                     )
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv6 Gateway",
                     ip_settings.configured_ipv6_gateway.strip() != ""
@@ -397,7 +348,7 @@ public class MainWindowEthernetController : Object {
                         : "n/a"
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current IPv6 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -406,7 +357,7 @@ public class MainWindowEthernetController : Object {
                     )
                 )
             );
-            ethernet_details_ip_rows.append(
+            ethernet_details_page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current IPv6 Gateway",
                     ip_settings.current_ipv6_gateway.strip() != "" ? ip_settings.current_ipv6_gateway : "n/a"
@@ -415,20 +366,20 @@ public class MainWindowEthernetController : Object {
         });
 
         if (pending) {
-            ethernet_details_primary_button.set_label("Updating...");
-            ethernet_details_primary_button.set_sensitive(false);
+            ethernet_details_page.primary_button.set_label("Updating...");
+            ethernet_details_page.primary_button.set_sensitive(false);
         } else if (dev.is_connected) {
-            ethernet_details_primary_button.set_label("Disconnect");
-            ethernet_details_primary_button.set_sensitive(true);
+            ethernet_details_page.primary_button.set_label("Disconnect");
+            ethernet_details_page.primary_button.set_sensitive(true);
         } else if (has_profile) {
-            ethernet_details_primary_button.set_label("Connect");
-            ethernet_details_primary_button.set_sensitive(true);
+            ethernet_details_page.primary_button.set_label("Connect");
+            ethernet_details_page.primary_button.set_sensitive(true);
         } else {
-            ethernet_details_primary_button.set_label("No Profile");
-            ethernet_details_primary_button.set_sensitive(false);
+            ethernet_details_page.primary_button.set_label("No Profile");
+            ethernet_details_page.primary_button.set_sensitive(false);
         }
 
-        ethernet_details_edit_button.set_sensitive(has_profile && !pending);
+        ethernet_details_page.edit_button.set_sensitive(has_profile && !pending);
     }
 
     private void open_details(NetworkDevice dev) {
@@ -445,8 +396,8 @@ public class MainWindowEthernetController : Object {
 
         selected_ethernet_device = dev;
         uint epoch = capture_ui_epoch();
-        ethernet_edit_title.set_text("Edit: %s".printf(dev.name));
-        ethernet_edit_note.set_text("Update IPv4 and IPv6 settings for profile: %s".printf(dev.connection));
+        ethernet_edit_page.edit_title.set_text("Edit: %s".printf(dev.name));
+        ethernet_edit_page.note_label.set_text("Update IPv4 and IPv6 settings for profile: %s".printf(dev.connection));
 
         ethernet_stack.set_visible_child_name("edit");
         on_set_popup_text_input_mode(true);
@@ -463,29 +414,29 @@ public class MainWindowEthernetController : Object {
                 return;
             }
 
-            ethernet_edit_ipv4_method_dropdown.set_selected(
+            ethernet_edit_page.ipv4_method_dropdown.set_selected(
                 MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
             );
-            ethernet_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
-            ethernet_edit_ipv4_prefix_entry.set_text(
+            ethernet_edit_page.ipv4_address_entry.set_text(ip_settings.configured_address);
+            ethernet_edit_page.ipv4_prefix_entry.set_text(
                 ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
             );
-            ethernet_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
-            ethernet_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
-            ethernet_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
-            ethernet_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
-            ethernet_edit_ipv6_method_dropdown.set_selected(
+            ethernet_edit_page.gateway_auto_switch.set_active(ip_settings.gateway_auto);
+            ethernet_edit_page.ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
+            ethernet_edit_page.dns_auto_switch.set_active(ip_settings.dns_auto);
+            ethernet_edit_page.ipv4_dns_entry.set_text(ip_settings.configured_dns);
+            ethernet_edit_page.ipv6_method_dropdown.set_selected(
                 MainWindowHelpers.get_ipv6_method_dropdown_index(ip_settings.ipv6_method)
             );
-            ethernet_edit_ipv6_address_entry.set_text(ip_settings.configured_ipv6_address);
-            ethernet_edit_ipv6_prefix_entry.set_text(
+            ethernet_edit_page.ipv6_address_entry.set_text(ip_settings.configured_ipv6_address);
+            ethernet_edit_page.ipv6_prefix_entry.set_text(
                 ip_settings.configured_ipv6_prefix > 0 ? "%u".printf(ip_settings.configured_ipv6_prefix) : ""
             );
-            ethernet_edit_ipv6_gateway_auto_switch.set_active(ip_settings.ipv6_gateway_auto);
-            ethernet_edit_ipv6_gateway_entry.set_text(ip_settings.configured_ipv6_gateway);
+            ethernet_edit_page.ipv6_gateway_auto_switch.set_active(ip_settings.ipv6_gateway_auto);
+            ethernet_edit_page.ipv6_gateway_entry.set_text(ip_settings.configured_ipv6_gateway);
 
             sync_edit_gateway_dns_sensitivity();
-            ethernet_edit_ipv4_address_entry.grab_focus();
+            ethernet_edit_page.ipv4_address_entry.grab_focus();
         });
     }
 
@@ -497,19 +448,19 @@ public class MainWindowEthernetController : Object {
         uint epoch = capture_ui_epoch();
         NetworkDevice dev = selected_ethernet_device;
         string method = MainWindowWifiEditUtils.get_selected_ipv4_method(
-            ethernet_edit_ipv4_method_dropdown
+            ethernet_edit_page.ipv4_method_dropdown
         );
-        string ipv4_address = ethernet_edit_ipv4_address_entry.get_text().strip();
-        bool gateway_auto = ethernet_edit_gateway_auto_switch.get_active();
-        string ipv4_gateway = ethernet_edit_ipv4_gateway_entry.get_text().strip();
-        bool dns_auto = ethernet_edit_dns_auto_switch.get_active();
-        string dns_csv = ethernet_edit_ipv4_dns_entry.get_text().strip();
+        string ipv4_address = ethernet_edit_page.ipv4_address_entry.get_text().strip();
+        bool gateway_auto = ethernet_edit_page.gateway_auto_switch.get_active();
+        string ipv4_gateway = ethernet_edit_page.ipv4_gateway_entry.get_text().strip();
+        bool dns_auto = ethernet_edit_page.dns_auto_switch.get_active();
+        string dns_csv = ethernet_edit_page.ipv4_dns_entry.get_text().strip();
         string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method(
-            ethernet_edit_ipv6_method_dropdown
+            ethernet_edit_page.ipv6_method_dropdown
         );
-        string ipv6_address = ethernet_edit_ipv6_address_entry.get_text().strip();
-        bool ipv6_gateway_auto = ethernet_edit_ipv6_gateway_auto_switch.get_active();
-        string ipv6_gateway = ethernet_edit_ipv6_gateway_entry.get_text().strip();
+        string ipv6_address = ethernet_edit_page.ipv6_address_entry.get_text().strip();
+        bool ipv6_gateway_auto = ethernet_edit_page.ipv6_gateway_auto_switch.get_active();
+        string ipv6_gateway = ethernet_edit_page.ipv6_gateway_entry.get_text().strip();
 
         if (method == "disabled") {
             gateway_auto = true;
@@ -523,7 +474,7 @@ public class MainWindowEthernetController : Object {
         uint32 ipv4_prefix;
         string prefix_error;
         if (!MainWindowWifiEditUtils.try_parse_prefix(
-            ethernet_edit_ipv4_prefix_entry.get_text(),
+            ethernet_edit_page.ipv4_prefix_entry.get_text(),
             out ipv4_prefix,
             out prefix_error
         )) {
@@ -534,7 +485,7 @@ public class MainWindowEthernetController : Object {
         uint32 ipv6_prefix;
         string prefix6_error;
         if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix(
-            ethernet_edit_ipv6_prefix_entry.get_text(),
+            ethernet_edit_page.ipv6_prefix_entry.get_text(),
             out ipv6_prefix,
             out prefix6_error
         )) {

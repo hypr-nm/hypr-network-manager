@@ -1,5 +1,27 @@
 using Gtk;
 
+public class MainWindowEthernetViewContext : Object {
+    public Gtk.Widget page { get; private set; }
+    public Gtk.ListBox listbox { get; private set; }
+    public Gtk.Stack stack { get; private set; }
+    public MainWindowEthernetDetailsPage details_page { get; private set; }
+    public MainWindowEthernetEditPage edit_page { get; private set; }
+
+    public MainWindowEthernetViewContext(
+        Gtk.Widget page,
+        Gtk.ListBox listbox,
+        Gtk.Stack stack,
+        MainWindowEthernetDetailsPage details_page,
+        MainWindowEthernetEditPage edit_page
+    ) {
+        this.page = page;
+        this.listbox = listbox;
+        this.stack = stack;
+        this.details_page = details_page;
+        this.edit_page = edit_page;
+    }
+}
+
 public class MainWindowEthernetDetailsPage : Gtk.Box {
     public Gtk.Label details_title { get; private set; }
     public Gtk.Box basic_rows { get; private set; }

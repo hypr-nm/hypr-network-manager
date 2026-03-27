@@ -350,7 +350,52 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_ethernet_page() {
-        return ethernet_controller.build_page();
+        var ethernet_details_page = new MainWindowEthernetDetailsPage();
+        var ethernet_edit_page = new MainWindowEthernetEditPage();
+
+        ethernet_details_page.back.connect(() => {
+            ethernet_controller.on_details_back_requested();
+        });
+        ethernet_details_page.primary_action.connect(() => {
+            ethernet_controller.on_details_primary_requested();
+        });
+        ethernet_details_page.edit.connect(() => {
+            ethernet_controller.on_details_edit_requested();
+        });
+
+        ethernet_edit_page.back.connect(() => {
+            ethernet_controller.on_edit_back_requested();
+        });
+        ethernet_edit_page.apply.connect(() => {
+            ethernet_controller.on_edit_apply_requested();
+        });
+        ethernet_edit_page.sync_sensitivity.connect(() => {
+            ethernet_controller.on_edit_sync_sensitivity_requested();
+        });
+
+        Gtk.ListBox ethernet_listbox;
+        Gtk.Stack ethernet_stack;
+        var page = MainWindowEthernetPageBuilder.build_page(
+            out ethernet_listbox,
+            out ethernet_stack,
+            ethernet_details_page,
+            ethernet_edit_page,
+            () => {
+                refresh_ethernet_section();
+            }
+        );
+
+        var ethernet_view_context = new MainWindowEthernetViewContext(
+            page,
+            ethernet_listbox,
+            ethernet_stack,
+            ethernet_details_page,
+            ethernet_edit_page
+        );
+
+        ethernet_controller.configure_page(ethernet_view_context);
+
+        return ethernet_view_context.page;
     }
 
     private string resolve_wifi_row_icon_name(WifiNetwork net) {
