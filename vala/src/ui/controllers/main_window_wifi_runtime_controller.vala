@@ -284,11 +284,27 @@ public class MainWindowWifiRuntimeController : Object {
 
                 string? primary_connected_ssid = null;
 
+                var wifi_device_states = new HashTable<string, uint>(str_hash, str_equal);
+                foreach (var dev in devices) {
+                    if (!dev.is_wifi) {
+                        continue;
+                    }
+                    wifi_device_states.insert(dev.device_path, dev.state);
+                }
+
                 active_wifi_connections.remove_all();
                 foreach (var net in networks) {
                     if (!net.connected) {
                         continue;
                     }
+
+                    uint? device_state = wifi_device_states.lookup(net.device_path);
+                    bool is_fully_activated = device_state != null
+                        && device_state == NM_DEVICE_STATE_ACTIVATED;
+                    if (!is_fully_activated) {
+                        continue;
+                    }
+
                     active_wifi_connections.insert(net.network_key, true);
                     if (primary_connected_ssid == null) {
                         primary_connected_ssid = net.ssid;
@@ -323,6 +339,14 @@ public class MainWindowWifiRuntimeController : Object {
                         && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
                     if (is_connecting_state) {
                         pending_wifi_seen_connecting.insert(net_key, true);
+                        continue;
+                    }
+
+                    bool activated_on_other_network = matched_device.state == NM_DEVICE_STATE_ACTIVATED
+                        && !active_wifi_connections.contains(net_key);
+                    if (activated_on_other_network || matched_device.state == NM_DEVICE_STATE_FAILED) {
+                        pending_wifi_connect.remove(net_key);
+                        pending_wifi_seen_connecting.remove(net_key);
                         continue;
                     }
 
