@@ -131,7 +131,7 @@ nm_detect_pkg_manager() {
 }
 
 _nm_install_deps_pacman() {
-  nm_run_with_privilege pacman -Syu --needed --noconfirm \
+  nm_run_with_privilege pacman -S --needed --noconfirm \
     vala meson ninja pkgconf gtk4 gtk4-layer-shell json-glib networkmanager
 }
 
