@@ -710,6 +710,14 @@ public class NetworkManagerClientVala : Object {
         }
     }
 
+    public async bool get_wifi_enabled_dbus(Cancellable? cancellable = null) throws Error {
+        return (yield get_prop_dbus(NM_PATH, NM_IFACE, "WirelessEnabled", cancellable)).get_boolean();
+    }
+
+    public async bool get_networking_enabled_dbus(Cancellable? cancellable = null) throws Error {
+        return (yield get_prop_dbus(NM_PATH, NM_IFACE, "NetworkingEnabled", cancellable)).get_boolean();
+    }
+
     private bool set_nm_bool_property(string prop_name, bool value, out string error_message) {
         error_message = "";
         try {
