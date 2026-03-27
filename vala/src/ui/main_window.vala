@@ -67,6 +67,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Entry wifi_add_password_entry;
     private Gtk.Revealer? active_wifi_password_revealer = null;
     private Gtk.Entry? active_wifi_password_entry = null;
+    private string? active_wifi_password_row_id = null;
     private MainWindowWifiController wifi_controller;
     private MainWindowEthernetController ethernet_controller;
     private MainWindowVpnController vpn_controller;
@@ -495,6 +496,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_wifi_details_page() {
+        var nm_client = nm;
         return wifi_controller.build_details_page(
             out wifi_details_title,
             out wifi_details_basic_rows,
@@ -516,9 +518,9 @@ public class MainWindow : Gtk.ApplicationWindow {
                 string profile_uuid = selected_wifi_network.saved_connection_uuid.strip();
                 string network_key = selected_wifi_network.network_key;
 
-                nm.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
+                nm_client.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
                     try {
-                        nm.forget_network.end(res);
+                        nm_client.forget_network.end(res);
                         refresh_after_action(true);
                         wifi_stack.set_visible_child_name("list");
                     } catch (Error e) {
@@ -726,6 +728,13 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.ListBoxRow build_wifi_row(WifiNetwork net) {
+        var nm_client = nm;
+        var wifi_controller_ref = wifi_controller;
+        var active_connections_ref = active_wifi_connections;
+        var pending_connect_ref = pending_wifi_connect;
+        var pending_seen_connecting_ref = pending_wifi_seen_connecting;
+        uint pending_timeout_ms = pending_wifi_connect_timeout_ms;
+        bool should_close_on_connect = close_on_connect;
         string net_key = net.network_key;
         bool is_connected_now = active_wifi_connections.contains(net_key);
         bool is_connecting = pending_wifi_connect.contains(net_key);
@@ -745,9 +754,9 @@ public class MainWindow : Gtk.ApplicationWindow {
                 string profile_uuid = wifi_net.saved_connection_uuid.strip();
                 string network_key = wifi_net.network_key;
 
-                nm.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
+                nm_client.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
                     try {
-                        nm.forget_network.end(res);
+                        nm_client.forget_network.end(res);
                         refresh_after_action(true);
                     } catch (Error e) {
                         show_error("Forget failed: " + e.message);
@@ -758,9 +767,9 @@ public class MainWindow : Gtk.ApplicationWindow {
                 string wifi_key = wifi_net.network_key;
                 pending_wifi_connect.remove(wifi_key);
                 pending_wifi_seen_connecting.remove(wifi_key);
-                nm.disconnect_wifi.begin(wifi_net, null, (obj, res) => {
+                nm_client.disconnect_wifi.begin(wifi_net, null, (obj, res) => {
                     try {
-                        nm.disconnect_wifi.end(res);
+                        nm_client.disconnect_wifi.end(res);
                         refresh_after_action(false);
                     } catch (Error e) {
                         show_error("Disconnect failed: " + e.message);
@@ -769,9 +778,31 @@ public class MainWindow : Gtk.ApplicationWindow {
                 });
             },
             (wifi_net, password) => {
-                connect_wifi_with_optional_password(wifi_net, password);
+                wifi_controller_ref.connect_with_optional_password(
+                    nm_client,
+                    wifi_net,
+                    password,
+                    active_connections_ref,
+                    pending_connect_ref,
+                    pending_seen_connecting_ref,
+                    pending_timeout_ms,
+                    should_close_on_connect,
+                    () => {
+                        this.close();
+                    },
+                    (request_wifi_scan) => {
+                        refresh_after_action(request_wifi_scan);
+                    },
+                    () => {
+                        refresh_wifi();
+                    },
+                    (message) => {
+                        show_error(message);
+                    }
+                );
             },
             (revealer, entry) => {
+                active_wifi_password_row_id = get_wifi_row_id(net);
                 show_wifi_password_prompt(revealer, entry);
             },
             (revealer, entry, value) => {
@@ -780,7 +811,14 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
     }
 
+    private string get_wifi_row_id(WifiNetwork net) {
+        return "%s|%s".printf(net.device_path, net.ap_path);
+    }
+
     private void refresh_wifi() {
+        bool has_active_prompt_open = active_wifi_password_revealer != null
+            && active_wifi_password_revealer.get_reveal_child();
+
         wifi_controller.refresh(
             nm,
             wifi_stack,
@@ -790,6 +828,8 @@ public class MainWindow : Gtk.ApplicationWindow {
             active_wifi_connections,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
+            active_wifi_password_row_id,
+            has_active_prompt_open,
             () => {
                 hide_active_wifi_password_prompt();
             },
@@ -926,6 +966,10 @@ public class MainWindow : Gtk.ApplicationWindow {
                 set_popup_text_input_mode(enabled);
             }
         );
+
+        if (active_wifi_password_revealer == null) {
+            active_wifi_password_row_id = null;
+        }
     }
 
     private void hide_active_wifi_password_prompt() {
@@ -936,6 +980,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 set_popup_text_input_mode(enabled);
             }
         );
+        active_wifi_password_row_id = null;
     }
 
     private void show_error(string message) {

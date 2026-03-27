@@ -7,12 +7,12 @@ public class MainWindowWifiRowBuilder : Object {
         bool show_band,
         bool show_bssid,
         string signal_icon_name,
-        MainWindowWifiNetworkCallback on_open_details,
-        MainWindowWifiNetworkCallback on_forget_saved_network,
-        MainWindowWifiNetworkCallback on_disconnect,
-        MainWindowWifiNetworkPasswordCallback on_connect,
-        MainWindowPasswordPromptShowCallback on_show_password_prompt,
-        MainWindowPasswordPromptHideCallback on_hide_password_prompt
+        owned MainWindowWifiNetworkCallback on_open_details,
+        owned MainWindowWifiNetworkCallback on_forget_saved_network,
+        owned MainWindowWifiNetworkCallback on_disconnect,
+        owned MainWindowWifiNetworkPasswordCallback on_connect,
+        owned MainWindowPasswordPromptShowCallback on_show_password_prompt,
+        owned MainWindowPasswordPromptHideCallback on_hide_password_prompt
     ) {
         var row = new Gtk.ListBoxRow();
         row.add_css_class("nm-wifi-row");

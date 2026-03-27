@@ -9,9 +9,9 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         out Gtk.Box wifi_details_action_row,
         out Gtk.Button wifi_details_forget_button,
         out Gtk.Button wifi_details_edit_button,
-        MainWindowActionCallback on_back,
-        MainWindowActionCallback on_forget,
-        MainWindowActionCallback on_edit
+        owned MainWindowActionCallback on_back,
+        owned MainWindowActionCallback on_forget,
+        owned MainWindowActionCallback on_edit
     ) {
         var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
         page.set_margin_start(12);

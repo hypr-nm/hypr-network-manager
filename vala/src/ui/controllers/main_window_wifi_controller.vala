@@ -306,9 +306,9 @@ public class MainWindowWifiController : Object {
         out Gtk.Box wifi_details_action_row,
         out Gtk.Button wifi_details_forget_button,
         out Gtk.Button wifi_details_edit_button,
-        MainWindowActionCallback on_back,
-        MainWindowActionCallback on_forget,
-        MainWindowActionCallback on_edit
+        owned MainWindowActionCallback on_back,
+        owned MainWindowActionCallback on_forget,
+        owned MainWindowActionCallback on_edit
     ) {
         return MainWindowWifiDetailsPagesBuilder.build_details_page(
             out wifi_details_title,
@@ -318,9 +318,9 @@ public class MainWindowWifiController : Object {
             out wifi_details_action_row,
             out wifi_details_forget_button,
             out wifi_details_edit_button,
-            on_back,
-            on_forget,
-            on_edit
+            (owned) on_back,
+            (owned) on_forget,
+            (owned) on_edit
         );
     }
 
@@ -374,12 +374,12 @@ public class MainWindowWifiController : Object {
         bool show_band,
         bool show_bssid,
         string wifi_row_icon_name,
-        MainWindowWifiNetworkCallback on_open_details,
-        MainWindowWifiNetworkCallback on_forget_saved_network,
-        MainWindowWifiNetworkCallback on_disconnect,
-        MainWindowWifiNetworkPasswordCallback on_connect,
-        MainWindowPasswordPromptShowCallback on_show_password_prompt,
-        MainWindowPasswordPromptHideCallback on_hide_password_prompt
+        owned MainWindowWifiNetworkCallback on_open_details,
+        owned MainWindowWifiNetworkCallback on_forget_saved_network,
+        owned MainWindowWifiNetworkCallback on_disconnect,
+        owned MainWindowWifiNetworkPasswordCallback on_connect,
+        owned MainWindowPasswordPromptShowCallback on_show_password_prompt,
+        owned MainWindowPasswordPromptHideCallback on_hide_password_prompt
     ) {
         return MainWindowWifiRowBuilder.build_row(
             net,
@@ -389,12 +389,12 @@ public class MainWindowWifiController : Object {
             show_band,
             show_bssid,
             wifi_row_icon_name,
-            on_open_details,
-            on_forget_saved_network,
-            on_disconnect,
-            on_connect,
-            on_show_password_prompt,
-            on_hide_password_prompt
+            (owned) on_open_details,
+            (owned) on_forget_saved_network,
+            (owned) on_disconnect,
+            (owned) on_connect,
+            (owned) on_show_password_prompt,
+            (owned) on_hide_password_prompt
         );
     }
 
@@ -407,10 +407,12 @@ public class MainWindowWifiController : Object {
         HashTable<string, bool> active_wifi_connections,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
-        MainWindowActionCallback on_hide_active_wifi_password_prompt,
-        MainWindowActionCallback on_refresh_switch_states,
-        MainWindowWifiRowBuildCallback on_build_wifi_row,
-        MainWindowLogCallback on_log
+        string? active_wifi_password_row_id,
+        bool has_active_wifi_password_prompt,
+        owned MainWindowActionCallback on_hide_active_wifi_password_prompt,
+        owned MainWindowActionCallback on_refresh_switch_states,
+        owned MainWindowWifiRowBuildCallback on_build_wifi_row,
+        owned MainWindowLogCallback on_log
     ) {
         runtime_controller.refresh_wifi(
             nm,
@@ -421,10 +423,12 @@ public class MainWindowWifiController : Object {
             active_wifi_connections,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
-            on_hide_active_wifi_password_prompt,
-            on_refresh_switch_states,
-            on_build_wifi_row,
-            on_log
+            active_wifi_password_row_id,
+            has_active_wifi_password_prompt,
+            (owned) on_hide_active_wifi_password_prompt,
+            (owned) on_refresh_switch_states,
+            (owned) on_build_wifi_row,
+            (owned) on_log
         );
     }
 
