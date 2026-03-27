@@ -11,16 +11,14 @@ public class WifiRefreshData : Object {
 }
 
 public class WifiSavedProfileIndex : Object {
-    public HashTable<string, bool> saved_ssids;
-    public HashTable<string, string> unique_saved_ssid_uuids;
-    public HashTable<string, string> ssid_to_conn_path;
-    public HashTable<string, bool> ambiguous_ssids;
+    public HashTable<string, bool> generic_saved_network_keys;
+    public HashTable<string, bool> bssid_locked_profiles;
+    public HashTable<string, string> unique_saved_network_key_uuids;
 
     public WifiSavedProfileIndex() {
-        saved_ssids = new HashTable<string, bool>(str_hash, str_equal);
-        unique_saved_ssid_uuids = new HashTable<string, string>(str_hash, str_equal);
-        ssid_to_conn_path = new HashTable<string, string>(str_hash, str_equal);
-        ambiguous_ssids = new HashTable<string, bool>(str_hash, str_equal);
+        generic_saved_network_keys = new HashTable<string, bool>(str_hash, str_equal);
+        bssid_locked_profiles = new HashTable<string, bool>(str_hash, str_equal);
+        unique_saved_network_key_uuids = new HashTable<string, string>(str_hash, str_equal);
     }
 }
 
@@ -816,8 +814,12 @@ public class NetworkManagerClientVala : Object {
         return yield wifi_client.disconnect(network, cancellable);
     }
 
-    public async bool forget_network(string ssid_or_name, Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.forget_network(ssid_or_name, cancellable);
+    public async bool forget_network(
+        string profile_uuid,
+        string network_key,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield wifi_client.forget_network(profile_uuid, network_key, cancellable);
     }
 
     public async bool connect_vpn(string name, Cancellable? cancellable = null) throws Error {

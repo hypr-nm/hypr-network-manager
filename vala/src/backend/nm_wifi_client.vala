@@ -11,9 +11,49 @@ public class NmWifiClient : Object {
         return NmClientUtils.decode_ssid(value);
     }
 
+    private static string normalize_bssid(string bssid) {
+        return bssid.strip().down();
+    }
+
+    private static bool looks_like_bssid(string value) {
+        string normalized = normalize_bssid(value);
+        if (normalized.length != 17) {
+            return false;
+        }
+
+        for (int i = 0; i < normalized.length; i++) {
+            char c = normalized[i];
+            if (i == 2 || i == 5 || i == 8 || i == 11 || i == 14) {
+                if (c != ':') {
+                    return false;
+                }
+                continue;
+            }
+
+            bool is_digit = c >= '0' && c <= '9';
+            bool is_hex_alpha = c >= 'a' && c <= 'f';
+            if (!is_digit && !is_hex_alpha) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string extract_profile_bssid_key(Variant wifi_group) {
+        Variant? bssid_v = wifi_group.lookup_value("bssid", new VariantType("s"));
+        if (bssid_v != null) {
+            string bssid = normalize_bssid(bssid_v.get_string());
+            if (looks_like_bssid(bssid)) {
+                return bssid;
+            }
+        }
+
+        return "";
+    }
+
     private void index_saved_profile(
         WifiSavedProfileIndex index,
-        string conn_path,
         Variant all_settings
     ) {
         Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
@@ -23,43 +63,49 @@ public class NmWifiClient : Object {
         }
 
         Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
+        if (type_v == null || type_v.get_string() != "802-11-wireless") {
+            return;
+        }
+
         Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-        if (type_v == null || type_v.get_string() != "802-11-wireless" || ssid_v == null) {
+        if (ssid_v == null) {
+            core.debug_log("index_saved_profile: no ssid found for profile");
             return;
         }
-
         string ssid = decode_ssid(ssid_v);
-        if (ssid == "") {
+
+        Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+        if (id_v == null || id_v.get_string() != ssid) {
+            core.debug_log("index_saved_profile: ignoring profile because id != ssid");
             return;
         }
 
-        index.saved_ssids.insert(ssid, true);
+        Variant? security_group = all_settings.lookup_value("802-11-wireless-security", new VariantType("a{sv}"));
+        bool is_secured = (security_group != null);
+        string network_key = ssid + ":" + (is_secured ? "secured" : "open");
+
+        Variant? bssid_v = wifi_group.lookup_value("bssid", new VariantType("s"));
+        string profile_bssid = "";
+        if (bssid_v != null) {
+            profile_bssid = normalize_bssid(bssid_v.get_string());
+        }
+
+        if (profile_bssid != "") {
+            // Profile is explicitly locked to a BSSID
+            index.bssid_locked_profiles.insert(profile_bssid, true);
+        } else {
+            // Profile matches ANY BSSID with this SSID
+            index.generic_saved_network_keys.insert(network_key, true);
+        }
+
+        core.debug_log("index_saved_profile: indexed profile with network_key='%s' (bssid_locked='%s')".printf(network_key, profile_bssid));
 
         Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
         if (uuid_v != null) {
-            if (index.ambiguous_ssids.contains(ssid)) {
-                // Already ambiguous for UUID/path matching; keep suppressed.
-            } else if (index.unique_saved_ssid_uuids.contains(ssid)) {
-                index.unique_saved_ssid_uuids.remove(ssid);
-                index.ambiguous_ssids.insert(ssid, true);
-            } else {
-                index.unique_saved_ssid_uuids.insert(ssid, uuid_v.get_string());
+            if (!index.unique_saved_network_key_uuids.contains(network_key)) {
+                index.unique_saved_network_key_uuids.insert(network_key, uuid_v.get_string());
             }
         }
-
-        if (index.ambiguous_ssids.contains(ssid)) {
-            index.ssid_to_conn_path.remove(ssid);
-            return;
-        }
-
-        if (index.ssid_to_conn_path.contains(ssid)) {
-            index.ssid_to_conn_path.remove(ssid);
-            index.ambiguous_ssids.insert(ssid, true);
-            index.unique_saved_ssid_uuids.remove(ssid);
-            return;
-        }
-
-        index.ssid_to_conn_path.insert(ssid, conn_path);
     }
 
     private WifiSavedProfileIndex build_saved_profile_index() {
@@ -75,7 +121,7 @@ public class NmWifiClient : Object {
                 var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
                 var settings_res = conn.call_sync("GetSettings", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var all_settings = settings_res.get_child_value(0);
-                index_saved_profile(index, conn_path, all_settings);
+                index_saved_profile(index, all_settings);
             }
         } catch (Error e) {
             core.debug_log("could not build wifi saved profile index: " + e.message);
@@ -98,7 +144,7 @@ public class NmWifiClient : Object {
             var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
             var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
             var all_settings = settings_res.get_child_value(0);
-            index_saved_profile(index, conn_path, all_settings);
+            index_saved_profile(index, all_settings);
         }
 
         return index;
@@ -106,6 +152,7 @@ public class NmWifiClient : Object {
 
     private async List<WifiNetwork> get_networks_dbus(Cancellable? cancellable = null) throws Error {
         var networks = new List<WifiNetwork>();
+        var network_map = new HashTable<string, WifiNetwork>(str_hash, str_equal);
         var saved_profile_index = yield build_saved_profile_index_dbus(cancellable);
 
         var nm = core.make_proxy(NM_PATH, NM_IFACE);
@@ -130,26 +177,6 @@ public class NmWifiClient : Object {
                 "ActiveAccessPoint",
                 cancellable
             )).get_string();
-            string active_conn_uuid = "";
-            try {
-                string active_conn_path = (yield core.get_prop_dbus(
-                    dev_path,
-                    NM_DEVICE_IFACE,
-                    "ActiveConnection",
-                    cancellable
-                )).get_string();
-                if (active_conn_path != "/") {
-                    active_conn_uuid = (yield core.get_prop_dbus(
-                        active_conn_path,
-                        NM_ACTIVE_CONN_IFACE,
-                        "Uuid",
-                        cancellable
-                    )).get_string();
-                }
-            } catch (Error e) {
-                core.debug_log("could not read active wifi connection uuid: " + e.message);
-            }
-
             var wifi = core.make_proxy(dev_path, NM_WIRELESS_IFACE);
             var aps_res = yield core.call_dbus(wifi, "GetAccessPoints", null, cancellable);
             var aps = aps_res.get_child_value(0);
@@ -172,14 +199,22 @@ public class NmWifiClient : Object {
                 uint32 mode = (yield core.get_prop_dbus(ap_path, NM_AP_IFACE, "Mode", cancellable)).get_uint32();
                 bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
                 bool is_connected = (ap_path == active_ap_path);
-                string profile_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
-                    ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
-                    : "";
-                if (is_connected && active_conn_uuid != "") {
-                    profile_uuid = active_conn_uuid;
+                
+                string network_key = ssid + ":" + (is_secured ? "secured" : "open");
+                
+                string profile_uuid = "";
+                if (saved_profile_index.unique_saved_network_key_uuids.contains(network_key)) {
+                    profile_uuid = saved_profile_index.unique_saved_network_key_uuids.get(network_key);
                 }
-                bool is_saved_profile = saved_profile_index.saved_ssids.contains(ssid)
-                    || profile_uuid != "";
+                
+                string normalized_bssid = normalize_bssid(bssid);
+                bool is_saved_profile = false;
+                
+                if (saved_profile_index.generic_saved_network_keys.contains(network_key)) {
+                    is_saved_profile = true;
+                } else if (normalized_bssid != "" && saved_profile_index.bssid_locked_profiles.contains(normalized_bssid)) {
+                    is_saved_profile = true;
+                }
 
                 var network = new WifiNetwork() {
                     ssid = ssid,
@@ -198,9 +233,17 @@ public class NmWifiClient : Object {
                     wpa_flags = wpa_flags,
                     rsn_flags = rsn_flags
                 };
-                networks.append(network);
+
+                WifiNetwork? existing = network_map.get(network_key);
+                if (existing == null || is_connected || (!existing.connected && signal > existing.signal)) {
+                    network_map.insert(network_key, network);
+                }
             }
         }
+        
+        network_map.foreach((key, net) => {
+            networks.append(net);
+        });
 
         networks.sort((a, b) => {
             if (a.connected != b.connected) {
@@ -209,18 +252,26 @@ public class NmWifiClient : Object {
             return (int) b.signal - (int) a.signal;
         });
 
-        return networks;
+        return (owned) networks;
     }
 
     private async string resolve_connection_path(
         WifiNetwork network,
-        string ambiguous_message,
-        string not_found_message,
         Cancellable? cancellable = null
     ) throws Error {
-        string? uuid_match = null;
-        string? ssid_match = null;
-        bool ssid_ambiguous = false;
+        string? best_match = null;
+        string? generic_match = null;
+        string? fallback_match = null;
+        bool exact_bssid_match = false;
+        string required_uuid = network.saved_connection_uuid.strip();
+
+        core.debug_log(
+            "resolve_connection_path: finding profile for ssid='%s' bssid='%s' uuid='%s'".printf(
+                network.ssid,
+                network.bssid,
+                required_uuid
+            )
+        );
 
         var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
         var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
@@ -234,48 +285,73 @@ public class NmWifiClient : Object {
 
             Variant? conn_group = all_settings.lookup_value("connection", new VariantType("a{sv}"));
             Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
-            if (conn_group == null || wifi_group == null) {
-                continue;
-            }
+            if (conn_group == null || wifi_group == null) continue;
 
-            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-            if (type_v == null || type_v.get_string() != "802-11-wireless") {
+            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
+            if (id_v == null || id_v.get_string() != network.ssid) {
                 continue;
-            }
-
-            if (network.saved_connection_uuid.strip() != "") {
-                Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
-                if (uuid_v != null && uuid_v.get_string() == network.saved_connection_uuid) {
-                    uuid_match = candidate_path;
-                    break;
-                }
             }
 
             Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-            if (ssid_v == null || decode_ssid(ssid_v) != network.ssid) {
-                continue;
+            if (ssid_v == null) continue;
+            
+            string ssid = decode_ssid(ssid_v);
+            Variant? security_group = all_settings.lookup_value("802-11-wireless-security", new VariantType("a{sv}"));
+            bool is_secured = (security_group != null);
+            
+            string candidate_key = ssid + ":" + (is_secured ? "secured" : "open");
+            if (candidate_key != network.network_key) continue;
+
+            // We have a matching SSID + Security. Check BSSID.
+            string profile_bssid = "";
+            Variant? bssid_v = wifi_group.lookup_value("bssid", new VariantType("s"));
+            if (bssid_v != null) {
+                profile_bssid = normalize_bssid(bssid_v.get_string());
             }
 
-            if (ssid_match != null) {
-                ssid_ambiguous = true;
+            string network_bssid = normalize_bssid(network.bssid);
+            bool is_uuid_match = false;
+            
+            Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
+            if (uuid_v != null && required_uuid != "" && uuid_v.get_string() == required_uuid) {
+                is_uuid_match = true;
+            }
+
+            if (profile_bssid != "") {
+                if (profile_bssid == network_bssid) {
+                    best_match = candidate_path;
+                    exact_bssid_match = true;
+                }
             } else {
-                ssid_match = candidate_path;
+                if (is_uuid_match) {
+                    generic_match = candidate_path;
+                } else if (generic_match == null) {
+                    fallback_match = candidate_path;
+                }
             }
         }
 
-        if (uuid_match != null) {
-            return uuid_match;
+        string? final_match = null;
+        if (exact_bssid_match && best_match != null) {
+            final_match = best_match;
+        } else if (generic_match != null) {
+            final_match = generic_match;
+        } else if (fallback_match != null) {
+            final_match = fallback_match;
+        } else if (best_match != null) {
+            // Could be a case where we found a BSSID match but didn't mark exact_bssid_match? 
+            // The logic above sets both simultaneously, but just in case.
+            final_match = best_match;
         }
 
-        if (ssid_ambiguous) {
-            throw new IOError.FAILED(ambiguous_message);
+        if (final_match == null) {
+            throw new IOError.NOT_FOUND("No saved connection found for this network.");
         }
 
-        if (ssid_match == null) {
-            throw new IOError.NOT_FOUND(not_found_message);
-        }
-
-        return ssid_match;
+        core.debug_log(
+            "resolve_connection_path: matched conn_path='%s'".printf(final_match)
+        );
+        return final_match;
     }
 
     public async WifiRefreshData get_refresh_data(Cancellable? cancellable = null) throws Error {
@@ -303,16 +379,8 @@ public class NmWifiClient : Object {
 
         if (network.saved) {
             try {
-                if (network.saved_connection_uuid.strip() == "") {
-                    throw new IOError.FAILED(
-                        "Cannot uniquely identify saved profile for this network."
-                    );
-                }
-
                 string conn_path = yield resolve_connection_path(
                     network,
-                    "Multiple saved profiles share this SSID. Select a specific profile by UUID.",
-                    "Saved connection not found.",
                     cancellable
                 );
 
@@ -360,14 +428,8 @@ public class NmWifiClient : Object {
         string[] ipv6_dns_servers,
         Cancellable? cancellable = null
     ) throws Error {
-        if (network.saved_connection_uuid.strip() == "") {
-            throw new IOError.FAILED("Cannot uniquely identify saved profile for this network.");
-        }
-
         string conn_path = yield resolve_connection_path(
             network,
-            "Multiple saved profiles share this SSID. Refusing ambiguous update.",
-            "No saved connection found for this network.",
             cancellable
         );
 
@@ -478,6 +540,7 @@ public class NmWifiClient : Object {
 
     public List<WifiNetwork> get_networks() {
         var networks = new List<WifiNetwork>();
+        var network_map = new HashTable<string, WifiNetwork>(str_hash, str_equal);
         var saved_profile_index = build_saved_profile_index();
 
         try {
@@ -493,24 +556,6 @@ public class NmWifiClient : Object {
                 }
 
                 string active_ap_path = core.get_prop(dev_path, NM_WIRELESS_IFACE, "ActiveAccessPoint").get_string();
-                string active_conn_uuid = "";
-                try {
-                    string active_conn_path = core.get_prop(
-                        dev_path,
-                        NM_DEVICE_IFACE,
-                        "ActiveConnection"
-                    ).get_string();
-                    if (active_conn_path != "/") {
-                        active_conn_uuid = core.get_prop(
-                            active_conn_path,
-                            NM_ACTIVE_CONN_IFACE,
-                            "Uuid"
-                        ).get_string();
-                    }
-                } catch (Error e) {
-                    core.debug_log("could not read active wifi connection uuid: " + e.message);
-                }
-
                 var wifi = core.make_proxy(dev_path, NM_WIRELESS_IFACE);
                 var aps_res = wifi.call_sync("GetAccessPoints", null, DBusCallFlags.NONE, NM_DBUS_TIMEOUT_MS, null);
                 var aps = aps_res.get_child_value(0);
@@ -533,14 +578,22 @@ public class NmWifiClient : Object {
                     uint32 mode = core.get_prop(ap_path, NM_AP_IFACE, "Mode").get_uint32();
                     bool is_secured = ((flags & 0x1) != 0) || wpa_flags != 0 || rsn_flags != 0;
                     bool is_connected = (ap_path == active_ap_path);
-                    string profile_uuid = saved_profile_index.unique_saved_ssid_uuids.contains(ssid)
-                        ? saved_profile_index.unique_saved_ssid_uuids.get(ssid)
-                        : "";
-                    if (is_connected && active_conn_uuid != "") {
-                        profile_uuid = active_conn_uuid;
-                    }
-                    bool is_saved_profile = saved_profile_index.saved_ssids.contains(ssid)
-                        || profile_uuid != "";
+
+                    string network_key = ssid + ":" + (is_secured ? "secured" : "open");
+
+                string profile_uuid = "";
+                if (saved_profile_index.unique_saved_network_key_uuids.contains(network_key)) {
+                    profile_uuid = saved_profile_index.unique_saved_network_key_uuids.get(network_key);
+                }
+                
+                string normalized_bssid = normalize_bssid(bssid);
+                bool is_saved_profile = false;
+                
+                if (saved_profile_index.generic_saved_network_keys.contains(network_key)) {
+                    is_saved_profile = true;
+                } else if (normalized_bssid != "" && saved_profile_index.bssid_locked_profiles.contains(normalized_bssid)) {
+                    is_saved_profile = true;
+                }
 
                     var network = new WifiNetwork() {
                         ssid = ssid,
@@ -559,12 +612,20 @@ public class NmWifiClient : Object {
                         wpa_flags = wpa_flags,
                         rsn_flags = rsn_flags
                     };
-                    networks.append(network);
+
+                    WifiNetwork? existing = network_map.get(network_key);
+                    if (existing == null || is_connected || (!existing.connected && signal > existing.signal)) {
+                        network_map.insert(network_key, network);
+                    }
                 }
             }
         } catch (Error e) {
             core.debug_log("get_wifi_networks failed: " + e.message);
         }
+
+        network_map.foreach((key, net) => {
+            networks.append(net);
+        });
 
         networks.sort((a, b) => {
             if (a.connected != b.connected) {
@@ -574,29 +635,46 @@ public class NmWifiClient : Object {
         });
 
         core.debug_log("discovered %u wifi networks".printf(networks.length()));
-        return networks;
+        return (owned) networks;
     }
 
     public async bool connect_saved(WifiNetwork network, Cancellable? cancellable = null) throws Error {
-        if (network.saved_connection_uuid.strip() == "") {
-            throw new IOError.FAILED("Cannot uniquely identify saved profile for this network.");
+        core.debug_log(
+            "connect_saved: ssid='%s' uuid='%s' bssid='%s' device='%s' ap='%s'".printf(
+                network.ssid,
+                network.saved_connection_uuid.strip(),
+                normalize_bssid(network.bssid),
+                network.device_path,
+                network.ap_path
+            )
+        );
+        try {
+            string conn_path = "/";
+            // If we have an exact UUID, we could resolve it. 
+            // But telling NM to activate "/" for a specific AP allows NM to pick 
+            // the best existing connection for that AP natively.
+            // However, we can also try to resolve it explicitly:
+            try {
+                conn_path = yield resolve_connection_path(network, cancellable);
+            } catch (Error resolve_err) {
+                core.debug_log("connect_saved: resolve_connection_path didn't find a perfect match, relying on NM default AP activation");
+                conn_path = "/";
+            }
+
+            core.debug_log("connect_saved: activating conn_path='" + conn_path + "'");
+            var nm = core.make_proxy(NM_PATH, NM_IFACE);
+            yield core.call_dbus(
+                nm,
+                "ActivateConnection",
+                new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
+                cancellable
+            );
+            core.debug_log("connect_saved: activation request sent successfully");
+            return true;
+        } catch (Error e) {
+            core.debug_log("connect_saved failed: " + e.message);
+            throw e;
         }
-
-        string conn_path = yield resolve_connection_path(
-            network,
-            "Multiple saved profiles share this SSID. Refusing ambiguous connect.",
-            "No saved profile found for SSID.",
-            cancellable
-        );
-
-        var nm = core.make_proxy(NM_PATH, NM_IFACE);
-        yield core.call_dbus(
-            nm,
-            "ActivateConnection",
-            new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
-            cancellable
-        );
-        return true;
     }
 
     public new async bool connect(
@@ -604,15 +682,35 @@ public class NmWifiClient : Object {
         string? password,
         Cancellable? cancellable = null
     ) throws Error {
-        if (network.saved) {
-            return yield connect_saved(network, cancellable);
-        }
+        bool has_saved_uuid = network.saved_connection_uuid.strip() != "";
+        bool can_use_saved_profile = network.saved;
+        core.debug_log(
+            "connect: ssid='%s' saved=%s uuid_present=%s secured=%s bssid='%s'".printf(
+                network.ssid,
+                network.saved ? "true" : "false",
+                has_saved_uuid ? "true" : "false",
+                network.is_secured ? "true" : "false",
+                normalize_bssid(network.bssid)
+            )
+        );
+        try {
+            if (can_use_saved_profile) {
+                try {
+                    return yield connect_saved(network, cancellable);
+                } catch (Error saved_err) {
+                    core.debug_log("connect_saved failed: %s. Falling back to connect_with_password.".printf(saved_err.message));
+                }
+            }
 
-        if (password == null) {
-            password = "";
-        }
+            if (password == null) {
+                password = "";
+            }
 
-        return yield connect_with_password(network, password, cancellable);
+            return yield connect_with_password(network, password, cancellable);
+        } catch (Error e) {
+            core.debug_log("connect failed: " + e.message);
+            throw e;
+        }
     }
 
     public async bool connect_with_password(
@@ -620,6 +718,14 @@ public class NmWifiClient : Object {
         string password,
         Cancellable? cancellable = null
     ) throws Error {
+        core.debug_log(
+            "connect_with_password: ssid='%s' secured=%s bssid='%s' password_len=%u".printf(
+                network.ssid,
+                network.is_secured ? "true" : "false",
+                normalize_bssid(network.bssid),
+                (uint) password.strip().char_count()
+            )
+        );
         if (network.is_secured && password.strip() == "") {
             throw new IOError.FAILED("Password is required for secured networks.");
         }
@@ -646,7 +752,8 @@ public class NmWifiClient : Object {
         var conn = new VariantBuilder(new VariantType("a{sa{sv}}"));
 
         var conn_section = new VariantBuilder(new VariantType("a{sv}"));
-        conn_section.add("{sv}", "id", new Variant.string(network.ssid));
+        string connection_id = network.ssid;
+        conn_section.add("{sv}", "id", new Variant.string(connection_id));
         conn_section.add("{sv}", "type", new Variant.string("802-11-wireless"));
         conn_section.add("{sv}", "uuid", new Variant.string(Uuid.string_random()));
         conn_section.add("{sv}", "autoconnect", new Variant.boolean(true));
@@ -663,13 +770,19 @@ public class NmWifiClient : Object {
             conn.add("{s@a{sv}}", "802-11-wireless-security", sec.end());
         }
 
-        yield core.call_dbus(
-            nm,
-            "AddAndActivateConnection",
-            new Variant("(@a{sa{sv}}oo)", conn.end(), network.device_path, network.ap_path),
-            cancellable
-        );
-        return true;
+        try {
+            yield core.call_dbus(
+                nm,
+                "AddAndActivateConnection",
+                new Variant("(@a{sa{sv}}oo)", conn.end(), network.device_path, network.ap_path),
+                cancellable
+            );
+            core.debug_log("connect_with_password: AddAndActivateConnection request sent successfully");
+            return true;
+        } catch (Error e) {
+            core.debug_log("connect_with_password failed: " + e.message);
+            throw e;
+        }
     }
 
     private async string resolve_wifi_device_path_for_hidden_connect(
@@ -766,12 +879,17 @@ public class NmWifiClient : Object {
         return true;
     }
 
-    public async bool forget_network(string ssid_or_name, Cancellable? cancellable = null) throws Error {
+    public async bool forget_network(
+        string profile_uuid,
+        string network_key,
+        Cancellable? cancellable = null
+    ) throws Error {
+        string uuid = profile_uuid.strip();
+        if (uuid == "") {
+            throw new IOError.FAILED("Missing saved profile UUID. Cannot forget network.");
+        }
+
         string? conn_path = null;
-        string? ssid_match = null;
-        string? name_match = null;
-        bool ssid_ambiguous = false;
-        bool name_ambiguous = false;
 
         var settings = core.make_proxy(NM_SETTINGS_PATH, NM_SETTINGS_IFACE);
         var list_res = yield core.call_dbus(settings, "ListConnections", null, cancellable);
@@ -789,60 +907,19 @@ public class NmWifiClient : Object {
             }
 
             Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
-            if (uuid_v != null && uuid_v.get_string() == ssid_or_name) {
+            if (uuid_v != null && uuid_v.get_string() == uuid) {
                 conn_path = candidate_path;
                 break;
             }
-
-            Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-            if (id_v != null && id_v.get_string() == ssid_or_name) {
-                if (name_match != null) {
-                    name_ambiguous = true;
-                } else {
-                    name_match = candidate_path;
-                }
-            }
-
-            Variant? type_v = conn_group.lookup_value("type", new VariantType("s"));
-            if (type_v == null || type_v.get_string() != "802-11-wireless") {
-                continue;
-            }
-
-            Variant? wifi_group = all_settings.lookup_value("802-11-wireless", new VariantType("a{sv}"));
-            if (wifi_group == null) {
-                continue;
-            }
-
-            Variant? ssid_v = wifi_group.lookup_value("ssid", new VariantType("ay"));
-            if (ssid_v == null || decode_ssid(ssid_v) != ssid_or_name) {
-                continue;
-            }
-
-            if (ssid_match != null) {
-                ssid_ambiguous = true;
-            } else {
-                ssid_match = candidate_path;
-            }
         }
 
         if (conn_path == null) {
-            conn_path = ssid_match != null && !ssid_ambiguous ? ssid_match : null;
-        }
-        if (conn_path == null) {
-            conn_path = name_match != null && !name_ambiguous ? name_match : null;
-        }
-
-        if (conn_path == null) {
-            if (ssid_ambiguous || name_ambiguous) {
-                throw new IOError.FAILED(
-                    "Multiple profiles match this identifier. Use UUID to avoid ambiguity."
-                );
-            }
-            throw new IOError.NOT_FOUND("No saved connection found.");
+            throw new IOError.NOT_FOUND("Saved connection profile not found.");
         }
 
         var conn = core.make_proxy(conn_path, NM_CONN_IFACE);
         yield core.call_dbus(conn, "Delete", null, cancellable);
+        
         return true;
     }
 
