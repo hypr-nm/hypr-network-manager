@@ -183,65 +183,59 @@ public class MainWindowWifiDetailsEditController : Object {
         NetworkManagerClientVala nm,
         WifiNetwork net,
         HashTable<string, bool> active_wifi_connections,
-        Gtk.Label wifi_details_title,
-        Gtk.Box wifi_details_basic_rows,
-        Gtk.Box wifi_details_advanced_rows,
-        Gtk.Box wifi_details_ip_rows,
-        Gtk.Box wifi_details_action_row,
-        Gtk.Button wifi_details_forget_button,
-        Gtk.Button wifi_details_edit_button,
+        MainWindowWifiDetailsPage page,
         MainWindowLogCallback log_debug
     ) {
         uint epoch = capture_ui_epoch();
 
-        wifi_details_title.set_text(net.ssid);
+        page.details_title.set_text(net.ssid);
         bool is_connected_now = active_wifi_connections.contains(net.network_key);
         bool can_manage_saved_profile = net.saved;
-        wifi_details_action_row.set_visible(can_manage_saved_profile);
-        wifi_details_forget_button.set_visible(can_manage_saved_profile);
-        wifi_details_edit_button.set_visible(can_manage_saved_profile);
+        page.action_row.set_visible(can_manage_saved_profile);
+        page.forget_button.set_visible(can_manage_saved_profile);
+        page.edit_button.set_visible(can_manage_saved_profile);
 
-        MainWindowHelpers.clear_box(wifi_details_basic_rows);
-        MainWindowHelpers.clear_box(wifi_details_advanced_rows);
-        MainWindowHelpers.clear_box(wifi_details_ip_rows);
+        MainWindowHelpers.clear_box(page.basic_rows);
+        MainWindowHelpers.clear_box(page.advanced_rows);
+        MainWindowHelpers.clear_box(page.ip_rows);
 
-        wifi_details_basic_rows.append(
+        page.basic_rows.append(
             MainWindowHelpers.build_details_row(
                 "Connection Status",
                 is_connected_now ? "Connected" : "Not connected"
             )
         );
-        wifi_details_basic_rows.append(
+        page.basic_rows.append(
             MainWindowHelpers.build_details_row("Signal Strength", "%u%%".printf(net.signal))
         );
-        wifi_details_basic_rows.append(
+        page.basic_rows.append(
             MainWindowHelpers.build_details_row("Bars", MainWindowHelpers.get_signal_bars(net.signal))
         );
-        wifi_details_basic_rows.append(
+        page.basic_rows.append(
             MainWindowHelpers.build_details_row("Security", net.is_secured ? "Secured" : "Open")
         );
-        wifi_details_basic_rows.append(
+        page.basic_rows.append(
             MainWindowHelpers.build_details_row("Saved Profile", net.saved ? "Yes" : "No")
         );
 
         string band = MainWindowHelpers.get_band_label(net.frequency_mhz);
         int channel = MainWindowHelpers.get_channel_from_frequency(net.frequency_mhz);
-        wifi_details_advanced_rows.append(
+        page.advanced_rows.append(
             MainWindowHelpers.build_details_row(
                 "Frequency",
                 net.frequency_mhz > 0 ? "%.1f GHz".printf((double) net.frequency_mhz / 1000.0) : "n/a"
             )
         );
-        wifi_details_advanced_rows.append(
+        page.advanced_rows.append(
             MainWindowHelpers.build_details_row("Channel", channel > 0 ? "%d".printf(channel) : "n/a")
         );
-        wifi_details_advanced_rows.append(
+        page.advanced_rows.append(
             MainWindowHelpers.build_details_row("Band", band != "" ? band : "n/a")
         );
-        wifi_details_advanced_rows.append(
+        page.advanced_rows.append(
             MainWindowHelpers.build_details_row("BSSID", net.bssid != "" ? net.bssid : "n/a")
         );
-        wifi_details_advanced_rows.append(
+        page.advanced_rows.append(
             MainWindowHelpers.build_details_row(
                 "Max bitrate",
                 net.max_bitrate_kbps > 0
@@ -249,11 +243,11 @@ public class MainWindowWifiDetailsEditController : Object {
                     : "n/a"
             )
         );
-        wifi_details_advanced_rows.append(
+        page.advanced_rows.append(
             MainWindowHelpers.build_details_row("Mode", MainWindowHelpers.get_mode_label(net.mode))
         );
 
-        wifi_details_ip_rows.append(
+        page.ip_rows.append(
             MainWindowHelpers.build_details_row("Loading", "Reading IP settings...")
         );
 
@@ -264,18 +258,18 @@ public class MainWindowWifiDetailsEditController : Object {
                 return;
             }
 
-            if (wifi_details_title.get_text() != net.ssid) {
+            if (page.details_title.get_text() != net.ssid) {
                 return;
             }
 
-            MainWindowHelpers.clear_box(wifi_details_ip_rows);
-            wifi_details_ip_rows.append(
+            MainWindowHelpers.clear_box(page.ip_rows);
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv4 Method",
                     MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv4 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -284,19 +278,19 @@ public class MainWindowWifiDetailsEditController : Object {
                     )
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured Gateway",
                     ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured DNS",
                     ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current IPv4 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -305,25 +299,25 @@ public class MainWindowWifiDetailsEditController : Object {
                     )
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current Gateway",
                     ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current DNS",
                     ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv6 Method",
                     MainWindowHelpers.get_ipv6_method_label(ip_settings.ipv6_method)
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv6 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -332,7 +326,7 @@ public class MainWindowWifiDetailsEditController : Object {
                     )
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Configured IPv6 Gateway",
                     ip_settings.configured_ipv6_gateway.strip() != ""
@@ -340,7 +334,7 @@ public class MainWindowWifiDetailsEditController : Object {
                         : "n/a"
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current IPv6 Address",
                     MainWindowHelpers.format_ip_with_prefix(
@@ -349,7 +343,7 @@ public class MainWindowWifiDetailsEditController : Object {
                     )
                 )
             );
-            wifi_details_ip_rows.append(
+            page.ip_rows.append(
                 MainWindowHelpers.build_details_row(
                     "Current IPv6 Gateway",
                     ip_settings.current_ipv6_gateway.strip() != "" ? ip_settings.current_ipv6_gateway : "n/a"
@@ -361,21 +355,7 @@ public class MainWindowWifiDetailsEditController : Object {
     public void open_wifi_edit(
         NetworkManagerClientVala nm,
         WifiNetwork net,
-        Gtk.Label wifi_edit_title,
-        Gtk.Entry wifi_edit_password_entry,
-        Gtk.Label wifi_edit_note,
-        Gtk.DropDown wifi_edit_ipv4_method_dropdown,
-        Gtk.Entry wifi_edit_ipv4_address_entry,
-        Gtk.Entry wifi_edit_ipv4_prefix_entry,
-        Gtk.Switch wifi_edit_gateway_auto_switch,
-        Gtk.Entry wifi_edit_ipv4_gateway_entry,
-        Gtk.Switch wifi_edit_dns_auto_switch,
-        Gtk.Entry wifi_edit_ipv4_dns_entry,
-        Gtk.DropDown wifi_edit_ipv6_method_dropdown,
-        Gtk.Entry wifi_edit_ipv6_address_entry,
-        Gtk.Entry wifi_edit_ipv6_prefix_entry,
-        Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
-        Gtk.Entry wifi_edit_ipv6_gateway_entry,
+        MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,
         MainWindowActionCallback sync_sensitivity,
         MainWindowActionCallback enable_popup_text_input,
@@ -383,35 +363,35 @@ public class MainWindowWifiDetailsEditController : Object {
     ) {
         uint epoch = capture_ui_epoch();
 
-        wifi_edit_title.set_text("Edit: %s".printf(net.ssid));
-        wifi_edit_password_entry.set_text("");
+        page.edit_title.set_text("Edit: %s".printf(net.ssid));
+        page.password_entry.set_text("");
 
         if (net.is_secured) {
-            wifi_edit_note.set_text(
+            page.note_label.set_text(
                 "Leave password empty to keep current credentials.\n"
                 + "IPv4 and IPv6 settings can be changed below (auto/manual/disabled)."
             );
         } else {
-            wifi_edit_note.set_text("Open network. Password is not required.");
+            page.note_label.set_text("Open network. Password is not required.");
         }
 
         wifi_stack.set_visible_child_name("edit");
         enable_popup_text_input();
-        wifi_edit_password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
-        wifi_edit_password_entry.grab_focus();
+        page.password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
+        page.password_entry.grab_focus();
 
-        wifi_edit_ipv4_method_dropdown.set_selected(0);
-        wifi_edit_ipv4_address_entry.set_text("");
-        wifi_edit_ipv4_prefix_entry.set_text("");
-        wifi_edit_gateway_auto_switch.set_active(true);
-        wifi_edit_ipv4_gateway_entry.set_text("");
-        wifi_edit_dns_auto_switch.set_active(true);
-        wifi_edit_ipv4_dns_entry.set_text("");
-        wifi_edit_ipv6_method_dropdown.set_selected(0);
-        wifi_edit_ipv6_address_entry.set_text("");
-        wifi_edit_ipv6_prefix_entry.set_text("");
-        wifi_edit_ipv6_gateway_auto_switch.set_active(true);
-        wifi_edit_ipv6_gateway_entry.set_text("");
+        page.ipv4_method_dropdown.set_selected(0);
+        page.ipv4_address_entry.set_text("");
+        page.ipv4_prefix_entry.set_text("");
+        page.gateway_auto_switch.set_active(true);
+        page.ipv4_gateway_entry.set_text("");
+        page.dns_auto_switch.set_active(true);
+        page.ipv4_dns_entry.set_text("");
+        page.ipv6_method_dropdown.set_selected(0);
+        page.ipv6_address_entry.set_text("");
+        page.ipv6_prefix_entry.set_text("");
+        page.ipv6_gateway_auto_switch.set_active(true);
+        page.ipv6_gateway_entry.set_text("");
         sync_sensitivity();
 
         nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
@@ -421,30 +401,30 @@ public class MainWindowWifiDetailsEditController : Object {
                 return;
             }
 
-            if (wifi_edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
+            if (page.edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
                 return;
             }
 
-            wifi_edit_ipv4_method_dropdown.set_selected(
+            page.ipv4_method_dropdown.set_selected(
                 MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
             );
-            wifi_edit_ipv4_address_entry.set_text(ip_settings.configured_address);
-            wifi_edit_ipv4_prefix_entry.set_text(
+            page.ipv4_address_entry.set_text(ip_settings.configured_address);
+            page.ipv4_prefix_entry.set_text(
                 ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
             );
-            wifi_edit_gateway_auto_switch.set_active(ip_settings.gateway_auto);
-            wifi_edit_ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
-            wifi_edit_dns_auto_switch.set_active(ip_settings.dns_auto);
-            wifi_edit_ipv4_dns_entry.set_text(ip_settings.configured_dns);
-            wifi_edit_ipv6_method_dropdown.set_selected(
+            page.gateway_auto_switch.set_active(ip_settings.gateway_auto);
+            page.ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
+            page.dns_auto_switch.set_active(ip_settings.dns_auto);
+            page.ipv4_dns_entry.set_text(ip_settings.configured_dns);
+            page.ipv6_method_dropdown.set_selected(
                 MainWindowHelpers.get_ipv6_method_dropdown_index(ip_settings.ipv6_method)
             );
-            wifi_edit_ipv6_address_entry.set_text(ip_settings.configured_ipv6_address);
-            wifi_edit_ipv6_prefix_entry.set_text(
+            page.ipv6_address_entry.set_text(ip_settings.configured_ipv6_address);
+            page.ipv6_prefix_entry.set_text(
                 ip_settings.configured_ipv6_prefix > 0 ? "%u".printf(ip_settings.configured_ipv6_prefix) : ""
             );
-            wifi_edit_ipv6_gateway_auto_switch.set_active(ip_settings.ipv6_gateway_auto);
-            wifi_edit_ipv6_gateway_entry.set_text(ip_settings.configured_ipv6_gateway);
+            page.ipv6_gateway_auto_switch.set_active(ip_settings.ipv6_gateway_auto);
+            page.ipv6_gateway_entry.set_text(ip_settings.configured_ipv6_gateway);
             sync_sensitivity();
         });
     }
@@ -452,19 +432,7 @@ public class MainWindowWifiDetailsEditController : Object {
     public bool apply_wifi_edit(
         NetworkManagerClientVala nm,
         WifiNetwork net,
-        Gtk.Entry wifi_edit_password_entry,
-        Gtk.DropDown wifi_edit_ipv4_method_dropdown,
-        Gtk.Entry wifi_edit_ipv4_address_entry,
-        Gtk.Switch wifi_edit_gateway_auto_switch,
-        Gtk.Entry wifi_edit_ipv4_gateway_entry,
-        Gtk.Switch wifi_edit_dns_auto_switch,
-        Gtk.Entry wifi_edit_ipv4_dns_entry,
-        Gtk.Entry wifi_edit_ipv4_prefix_entry,
-        Gtk.DropDown wifi_edit_ipv6_method_dropdown,
-        Gtk.Entry wifi_edit_ipv6_address_entry,
-        Gtk.Entry wifi_edit_ipv6_gateway_entry,
-        Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
-        Gtk.Entry wifi_edit_ipv6_prefix_entry,
+        MainWindowWifiEditPage page,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
         MainWindowErrorCallback on_error,
@@ -474,18 +442,18 @@ public class MainWindowWifiDetailsEditController : Object {
     ) {
         uint epoch = capture_ui_epoch();
         string net_key = net.network_key;
-        string password = wifi_edit_password_entry.get_text().strip();
+        string password = page.password_entry.get_text().strip();
 
-        string method = MainWindowWifiEditUtils.get_selected_ipv4_method(wifi_edit_ipv4_method_dropdown);
-        string ipv4_address = wifi_edit_ipv4_address_entry.get_text().strip();
-        bool gateway_auto = wifi_edit_gateway_auto_switch.get_active();
-        string ipv4_gateway = wifi_edit_ipv4_gateway_entry.get_text().strip();
-        bool dns_auto = wifi_edit_dns_auto_switch.get_active();
-        string dns_csv = wifi_edit_ipv4_dns_entry.get_text().strip();
-        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method(wifi_edit_ipv6_method_dropdown);
-        string ipv6_address = wifi_edit_ipv6_address_entry.get_text().strip();
-        bool ipv6_gateway_auto = wifi_edit_ipv6_gateway_auto_switch.get_active();
-        string ipv6_gateway = wifi_edit_ipv6_gateway_entry.get_text().strip();
+        string method = MainWindowWifiEditUtils.get_selected_ipv4_method(page.ipv4_method_dropdown);
+        string ipv4_address = page.ipv4_address_entry.get_text().strip();
+        bool gateway_auto = page.gateway_auto_switch.get_active();
+        string ipv4_gateway = page.ipv4_gateway_entry.get_text().strip();
+        bool dns_auto = page.dns_auto_switch.get_active();
+        string dns_csv = page.ipv4_dns_entry.get_text().strip();
+        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method(page.ipv6_method_dropdown);
+        string ipv6_address = page.ipv6_address_entry.get_text().strip();
+        bool ipv6_gateway_auto = page.ipv6_gateway_auto_switch.get_active();
+        string ipv6_gateway = page.ipv6_gateway_entry.get_text().strip();
 
         if (method == "disabled") {
             gateway_auto = true;
@@ -499,7 +467,7 @@ public class MainWindowWifiDetailsEditController : Object {
         uint32 ipv4_prefix;
         string prefix_error;
         if (!MainWindowWifiEditUtils.try_parse_prefix(
-            wifi_edit_ipv4_prefix_entry.get_text(),
+            page.ipv4_prefix_entry.get_text(),
             out ipv4_prefix,
             out prefix_error
         )) {
@@ -510,7 +478,7 @@ public class MainWindowWifiDetailsEditController : Object {
         uint32 ipv6_prefix;
         string prefix6_error;
         if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix(
-            wifi_edit_ipv6_prefix_entry.get_text(),
+            page.ipv6_prefix_entry.get_text(),
             out ipv6_prefix,
             out prefix6_error
         )) {

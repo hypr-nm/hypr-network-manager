@@ -40,28 +40,8 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.ListBox wifi_listbox;
     private Gtk.Stack wifi_stack;
     private WifiNetwork? selected_wifi_network = null;
-    private Gtk.Label wifi_details_title;
-    private Gtk.Box wifi_details_basic_rows;
-    private Gtk.Box wifi_details_advanced_rows;
-    private Gtk.Box wifi_details_ip_rows;
-    private Gtk.Box wifi_details_action_row;
-    private Gtk.Button wifi_details_forget_button;
-    private Gtk.Button wifi_details_edit_button;
-    private Gtk.Label wifi_edit_title;
-    private Gtk.Entry wifi_edit_password_entry;
-    private Gtk.Label wifi_edit_note;
-    private Gtk.DropDown wifi_edit_ipv4_method_dropdown;
-    private Gtk.Entry wifi_edit_ipv4_address_entry;
-    private Gtk.Switch wifi_edit_gateway_auto_switch;
-    private Gtk.Entry wifi_edit_ipv4_prefix_entry;
-    private Gtk.Switch wifi_edit_dns_auto_switch;
-    private Gtk.Entry wifi_edit_ipv4_gateway_entry;
-    private Gtk.Entry wifi_edit_ipv4_dns_entry;
-    private Gtk.DropDown wifi_edit_ipv6_method_dropdown;
-    private Gtk.Entry wifi_edit_ipv6_address_entry;
-    private Gtk.Switch wifi_edit_ipv6_gateway_auto_switch;
-    private Gtk.Entry wifi_edit_ipv6_prefix_entry;
-    private Gtk.Entry wifi_edit_ipv6_gateway_entry;
+    private MainWindowWifiDetailsPage wifi_details_page;
+    private MainWindowWifiEditPage wifi_edit_page;
     private Gtk.Entry wifi_add_ssid_entry;
     private Gtk.DropDown wifi_add_security_dropdown;
     private Gtk.Entry wifi_add_password_entry;
@@ -374,26 +354,16 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void sync_wifi_edit_gateway_dns_sensitivity() {
-        if (wifi_edit_ipv4_method_dropdown == null
-            || wifi_edit_ipv4_gateway_entry == null
-            || wifi_edit_gateway_auto_switch == null
-            || wifi_edit_ipv4_dns_entry == null
-            || wifi_edit_dns_auto_switch == null
-            || wifi_edit_ipv6_method_dropdown == null
-            || wifi_edit_ipv6_gateway_entry == null
-            || wifi_edit_ipv6_gateway_auto_switch == null) {
-            return;
-        }
-
+        if (wifi_edit_page == null) return;
         wifi_controller.sync_edit_gateway_dns_sensitivity(
-            wifi_edit_ipv4_method_dropdown,
-            wifi_edit_ipv4_gateway_entry,
-            wifi_edit_gateway_auto_switch,
-            wifi_edit_ipv4_dns_entry,
-            wifi_edit_dns_auto_switch,
-            wifi_edit_ipv6_method_dropdown,
-            wifi_edit_ipv6_gateway_entry,
-            wifi_edit_ipv6_gateway_auto_switch
+            wifi_edit_page.ipv4_method_dropdown,
+            wifi_edit_page.ipv4_gateway_entry,
+            wifi_edit_page.gateway_auto_switch,
+            wifi_edit_page.ipv4_dns_entry,
+            wifi_edit_page.dns_auto_switch,
+            wifi_edit_page.ipv6_method_dropdown,
+            wifi_edit_page.ipv6_gateway_entry,
+            wifi_edit_page.ipv6_gateway_auto_switch
         );
     }
 
@@ -402,13 +372,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             nm,
             net,
             active_wifi_connections,
-            wifi_details_title,
-            wifi_details_basic_rows,
-            wifi_details_advanced_rows,
-            wifi_details_ip_rows,
-            wifi_details_action_row,
-            wifi_details_forget_button,
-            wifi_details_edit_button,
+            wifi_details_page,
             (message) => {
                 debug_log(message);
             }
@@ -431,21 +395,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             ref selected_wifi_network,
             nm,
             net,
-            wifi_edit_title,
-            wifi_edit_password_entry,
-            wifi_edit_note,
-            wifi_edit_ipv4_method_dropdown,
-            wifi_edit_ipv4_address_entry,
-            wifi_edit_ipv4_prefix_entry,
-            wifi_edit_gateway_auto_switch,
-            wifi_edit_ipv4_gateway_entry,
-            wifi_edit_dns_auto_switch,
-            wifi_edit_ipv4_dns_entry,
-            wifi_edit_ipv6_method_dropdown,
-            wifi_edit_ipv6_address_entry,
-            wifi_edit_ipv6_prefix_entry,
-            wifi_edit_ipv6_gateway_auto_switch,
-            wifi_edit_ipv6_gateway_entry,
+            wifi_edit_page,
             wifi_stack,
             () => {
                 sync_wifi_edit_gateway_dns_sensitivity();
@@ -463,19 +413,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         return wifi_controller.apply_edit(
             ref selected_wifi_network,
             nm,
-            wifi_edit_password_entry,
-            wifi_edit_ipv4_method_dropdown,
-            wifi_edit_ipv4_address_entry,
-            wifi_edit_gateway_auto_switch,
-            wifi_edit_ipv4_gateway_entry,
-            wifi_edit_dns_auto_switch,
-            wifi_edit_ipv4_dns_entry,
-            wifi_edit_ipv4_prefix_entry,
-            wifi_edit_ipv6_method_dropdown,
-            wifi_edit_ipv6_address_entry,
-            wifi_edit_ipv6_gateway_entry,
-            wifi_edit_ipv6_gateway_auto_switch,
-            wifi_edit_ipv6_prefix_entry,
+            wifi_edit_page,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
             (message) => {
@@ -497,77 +435,59 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private Gtk.Widget build_wifi_details_page() {
         var nm_client = nm;
-        return wifi_controller.build_details_page(
-            out wifi_details_title,
-            out wifi_details_basic_rows,
-            out wifi_details_advanced_rows,
-            out wifi_details_ip_rows,
-            out wifi_details_action_row,
-            out wifi_details_forget_button,
-            out wifi_details_edit_button,
-            () => {
-                selected_wifi_network = null;
-                set_popup_text_input_mode(false);
-                wifi_stack.set_visible_child_name("list");
-            },
-            () => {
-                if (selected_wifi_network == null) {
-                    return;
+        wifi_details_page = new MainWindowWifiDetailsPage();
+        
+        wifi_details_page.back.connect(() => {
+            selected_wifi_network = null;
+            set_popup_text_input_mode(false);
+            wifi_stack.set_visible_child_name("list");
+        });
+        
+        wifi_details_page.forget.connect(() => {
+            if (selected_wifi_network == null) return;
+            string profile_uuid = selected_wifi_network.saved_connection_uuid.strip();
+            string network_key = selected_wifi_network.network_key;
+            nm_client.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
+                try {
+                    nm_client.forget_network.end(res);
+                    refresh_after_action(true);
+                    wifi_stack.set_visible_child_name("list");
+                } catch (Error e) {
+                    show_error("Forget failed: " + e.message);
                 }
-
-                string profile_uuid = selected_wifi_network.saved_connection_uuid.strip();
-                string network_key = selected_wifi_network.network_key;
-
-                nm_client.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
-                    try {
-                        nm_client.forget_network.end(res);
-                        refresh_after_action(true);
-                        wifi_stack.set_visible_child_name("list");
-                    } catch (Error e) {
-                        show_error("Forget failed: " + e.message);
-                    }
-                });
-            },
-            () => {
-                if (selected_wifi_network != null) {
-                    open_wifi_edit(selected_wifi_network);
-                }
+            });
+        });
+        
+        wifi_details_page.edit.connect(() => {
+            if (selected_wifi_network != null) {
+                open_wifi_edit(selected_wifi_network);
             }
-        );
+        });
+        
+        return wifi_details_page;
     }
 
     private Gtk.Widget build_wifi_edit_page() {
-        return wifi_controller.build_edit_page(
-            out wifi_edit_title,
-            out wifi_edit_password_entry,
-            out wifi_edit_note,
-            out wifi_edit_ipv4_method_dropdown,
-            out wifi_edit_ipv4_address_entry,
-            out wifi_edit_gateway_auto_switch,
-            out wifi_edit_ipv4_prefix_entry,
-            out wifi_edit_ipv4_gateway_entry,
-            out wifi_edit_dns_auto_switch,
-            out wifi_edit_ipv4_dns_entry,
-            out wifi_edit_ipv6_method_dropdown,
-            out wifi_edit_ipv6_address_entry,
-            out wifi_edit_ipv6_gateway_auto_switch,
-            out wifi_edit_ipv6_prefix_entry,
-            out wifi_edit_ipv6_gateway_entry,
-            () => {
-                set_popup_text_input_mode(false);
-                if (selected_wifi_network != null) {
-                    open_wifi_details(selected_wifi_network);
-                } else {
-                    wifi_stack.set_visible_child_name("list");
-                }
-            },
-            () => {
-                apply_wifi_edit();
-            },
-            () => {
-                sync_wifi_edit_gateway_dns_sensitivity();
+        wifi_edit_page = new MainWindowWifiEditPage();
+
+        wifi_edit_page.back.connect(() => {
+            set_popup_text_input_mode(false);
+            if (selected_wifi_network != null) {
+                open_wifi_details(selected_wifi_network);
+            } else {
+                wifi_stack.set_visible_child_name("list");
             }
-        );
+        });
+
+        wifi_edit_page.apply.connect(() => {
+            apply_wifi_edit();
+        });
+
+        wifi_edit_page.sync_sensitivity.connect(() => {
+            sync_wifi_edit_gateway_dns_sensitivity();
+        });
+
+        return wifi_edit_page;
     }
 
     private Gtk.Widget build_wifi_add_page() {

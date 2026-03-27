@@ -1,36 +1,38 @@
 using Gtk;
 
-public class MainWindowWifiDetailsPagesBuilder : Object {
-    public static Gtk.Widget build_details_page(
-        out Gtk.Label wifi_details_title,
-        out Gtk.Box wifi_details_basic_rows,
-        out Gtk.Box wifi_details_advanced_rows,
-        out Gtk.Box wifi_details_ip_rows,
-        out Gtk.Box wifi_details_action_row,
-        out Gtk.Button wifi_details_forget_button,
-        out Gtk.Button wifi_details_edit_button,
-        owned MainWindowActionCallback on_back,
-        owned MainWindowActionCallback on_forget,
-        owned MainWindowActionCallback on_edit
-    ) {
-        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
-        page.set_margin_start(12);
-        page.set_margin_end(12);
-        page.set_margin_top(12);
-        page.set_margin_bottom(12);
-        page.add_css_class("nm-page");
-        page.add_css_class("nm-page-wifi-details");
-        page.add_css_class("nm-page-network-details");
+public class MainWindowWifiDetailsPage : Gtk.Box {
+    public Gtk.Label details_title { get; private set; }
+    public Gtk.Box basic_rows { get; private set; }
+    public Gtk.Box advanced_rows { get; private set; }
+    public Gtk.Box ip_rows { get; private set; }
+    public Gtk.Box action_row { get; private set; }
+    public Gtk.Button forget_button { get; private set; }
+    public Gtk.Button edit_button { get; private set; }
+
+    public signal void back();
+    public signal void forget();
+    public signal void edit();
+
+    public MainWindowWifiDetailsPage() {
+        Object(orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        
+        this.set_margin_start(12);
+        this.set_margin_end(12);
+        this.set_margin_top(12);
+        this.set_margin_bottom(12);
+        this.add_css_class("nm-page");
+        this.add_css_class("nm-page-wifi-details");
+        this.add_css_class("nm-page-network-details");
 
         var nav_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
         nav_row.add_css_class("nm-details-nav-row");
 
         var back_btn = MainWindowHelpers.build_back_button(() => {
-            on_back();
+            this.back();
         });
         back_btn.set_halign(Gtk.Align.START);
         nav_row.append(back_btn);
-        page.append(nav_row);
+        this.append(nav_row);
 
         var network_header = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
         network_header.set_halign(Gtk.Align.CENTER);
@@ -43,40 +45,40 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         network_icon.add_css_class("nm-details-network-icon");
         network_header.append(network_icon);
 
-        wifi_details_title = new Gtk.Label("Network");
-        wifi_details_title.set_xalign(0.5f);
-        wifi_details_title.set_halign(Gtk.Align.CENTER);
-        wifi_details_title.add_css_class("nm-details-network-title");
-        network_header.append(wifi_details_title);
+        this.details_title = new Gtk.Label("Network");
+        this.details_title.set_xalign(0.5f);
+        this.details_title.set_halign(Gtk.Align.CENTER);
+        this.details_title.add_css_class("nm-details-network-title");
+        network_header.append(this.details_title);
 
-        wifi_details_action_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        wifi_details_action_row.set_halign(Gtk.Align.CENTER);
-        wifi_details_action_row.add_css_class("nm-details-action-row");
+        this.action_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
+        this.action_row.set_halign(Gtk.Align.CENTER);
+        this.action_row.add_css_class("nm-details-action-row");
 
-        wifi_details_forget_button = new Gtk.Button.with_label("Forget");
-        wifi_details_forget_button.add_css_class("nm-button");
-        wifi_details_forget_button.add_css_class("nm-action-button");
-        wifi_details_forget_button.add_css_class("nm-details-action-button");
-        wifi_details_forget_button.clicked.connect(() => {
-            on_forget();
+        this.forget_button = new Gtk.Button.with_label("Forget");
+        this.forget_button.add_css_class("nm-button");
+        this.forget_button.add_css_class("nm-action-button");
+        this.forget_button.add_css_class("nm-details-action-button");
+        this.forget_button.clicked.connect(() => {
+            this.forget();
         });
-        wifi_details_action_row.append(wifi_details_forget_button);
+        this.action_row.append(this.forget_button);
 
-        wifi_details_edit_button = new Gtk.Button.with_label("Edit");
-        wifi_details_edit_button.add_css_class("nm-button");
-        wifi_details_edit_button.add_css_class("nm-action-button");
-        wifi_details_edit_button.add_css_class("nm-details-action-button");
-        wifi_details_edit_button.clicked.connect(() => {
-            on_edit();
+        this.edit_button = new Gtk.Button.with_label("Edit");
+        this.edit_button.add_css_class("nm-button");
+        this.edit_button.add_css_class("nm-action-button");
+        this.edit_button.add_css_class("nm-details-action-button");
+        this.edit_button.clicked.connect(() => {
+            this.edit();
         });
-        wifi_details_action_row.append(wifi_details_edit_button);
+        this.action_row.append(this.edit_button);
 
-        network_header.append(wifi_details_action_row);
-        page.append(network_header);
+        network_header.append(this.action_row);
+        this.append(network_header);
 
         var sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
         sep.add_css_class("nm-separator");
-        page.append(sep);
+        this.append(sep);
 
         var scroll = new Gtk.ScrolledWindow();
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
@@ -86,68 +88,77 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         var body = new Gtk.Box(Gtk.Orientation.VERTICAL, 12);
         body.set_margin_top(4);
         body.set_margin_bottom(4);
-        body.append(MainWindowHelpers.build_details_section("Basic", out wifi_details_basic_rows));
-        body.append(MainWindowHelpers.build_details_section("Advanced", out wifi_details_advanced_rows));
-        body.append(MainWindowHelpers.build_details_section("IP", out wifi_details_ip_rows));
+        
+        Gtk.Box b_rows, a_rows, i_rows;
+        body.append(MainWindowHelpers.build_details_section("Basic", out b_rows));
+        body.append(MainWindowHelpers.build_details_section("Advanced", out a_rows));
+        body.append(MainWindowHelpers.build_details_section("IP", out i_rows));
+        
+        this.basic_rows = b_rows;
+        this.advanced_rows = a_rows;
+        this.ip_rows = i_rows;
 
         scroll.set_child(body);
-        page.append(scroll);
-        return page;
+        this.append(scroll);
     }
+}
 
-    public static Gtk.Widget build_edit_page(
-        out Gtk.Label wifi_edit_title,
-        out Gtk.Entry wifi_edit_password_entry,
-        out Gtk.Label wifi_edit_note,
-        out Gtk.DropDown wifi_edit_ipv4_method_dropdown,
-        out Gtk.Entry wifi_edit_ipv4_address_entry,
-        out Gtk.Switch wifi_edit_gateway_auto_switch,
-        out Gtk.Entry wifi_edit_ipv4_prefix_entry,
-        out Gtk.Entry wifi_edit_ipv4_gateway_entry,
-        out Gtk.Switch wifi_edit_dns_auto_switch,
-        out Gtk.Entry wifi_edit_ipv4_dns_entry,
-        out Gtk.DropDown wifi_edit_ipv6_method_dropdown,
-        out Gtk.Entry wifi_edit_ipv6_address_entry,
-        out Gtk.Switch wifi_edit_ipv6_gateway_auto_switch,
-        out Gtk.Entry wifi_edit_ipv6_prefix_entry,
-        out Gtk.Entry wifi_edit_ipv6_gateway_entry,
-        MainWindowActionCallback on_back,
-        MainWindowActionCallback on_apply,
-        MainWindowActionCallback on_sync_sensitivity
-    ) {
-        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
-        page.set_margin_start(12);
-        page.set_margin_end(12);
-        page.set_margin_top(12);
-        page.set_margin_bottom(12);
-        page.add_css_class("nm-page");
-        page.add_css_class("nm-page-wifi-edit");
-        page.add_css_class("nm-page-network-edit");
+public class MainWindowWifiEditPage : Gtk.Box {
+    public Gtk.Label edit_title { get; private set; }
+    public Gtk.Entry password_entry { get; private set; }
+    public Gtk.Label note_label { get; private set; }
+    public Gtk.DropDown ipv4_method_dropdown { get; private set; }
+    public Gtk.Entry ipv4_address_entry { get; private set; }
+    public Gtk.Switch gateway_auto_switch { get; private set; }
+    public Gtk.Entry ipv4_prefix_entry { get; private set; }
+    public Gtk.Entry ipv4_gateway_entry { get; private set; }
+    public Gtk.Switch dns_auto_switch { get; private set; }
+    public Gtk.Entry ipv4_dns_entry { get; private set; }
+    public Gtk.DropDown ipv6_method_dropdown { get; private set; }
+    public Gtk.Entry ipv6_address_entry { get; private set; }
+    public Gtk.Switch ipv6_gateway_auto_switch { get; private set; }
+    public Gtk.Entry ipv6_prefix_entry { get; private set; }
+    public Gtk.Entry ipv6_gateway_entry { get; private set; }
+
+    public signal void back();
+    public signal void apply();
+    public signal void sync_sensitivity();
+
+    public MainWindowWifiEditPage() {
+        Object(orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        
+        this.set_margin_start(12);
+        this.set_margin_end(12);
+        this.set_margin_top(12);
+        this.set_margin_bottom(12);
+        this.add_css_class("nm-page");
+        this.add_css_class("nm-page-wifi-edit");
+        this.add_css_class("nm-page-network-edit");
 
         var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
         var back_btn = MainWindowHelpers.build_back_button(() => {
-            on_back();
+            this.back();
         });
         header.append(back_btn);
 
-        wifi_edit_title = new Gtk.Label("Edit Network");
-        wifi_edit_title.set_xalign(0.0f);
-        wifi_edit_title.set_hexpand(true);
-        wifi_edit_title.add_css_class("nm-section-title");
-        header.append(wifi_edit_title);
-        page.append(header);
+        this.edit_title = new Gtk.Label("Edit Network");
+        this.edit_title.set_xalign(0.0f);
+        this.edit_title.set_hexpand(true);
+        this.edit_title.add_css_class("nm-section-title");
+        header.append(this.edit_title);
+        this.append(header);
 
         var form = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
         form.add_css_class("nm-edit-form");
         form.add_css_class("nm-edit-wifi-form");
         form.add_css_class("nm-edit-network-form");
 
-        wifi_edit_note = new Gtk.Label("");
-        wifi_edit_note.set_xalign(0.0f);
-        wifi_edit_note.set_wrap(true);
-        wifi_edit_note.add_css_class("nm-sub-label");
-        wifi_edit_note.add_css_class("nm-edit-note");
-        form.append(wifi_edit_note);
+        this.note_label = new Gtk.Label("");
+        this.note_label.set_xalign(0.0f);
+        this.note_label.set_wrap(true);
+        this.note_label.add_css_class("nm-sub-label");
+        this.note_label.add_css_class("nm-edit-note");
+        form.append(this.note_label);
 
         var password_label = new Gtk.Label("Password");
         password_label.set_xalign(0.0f);
@@ -156,44 +167,66 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         password_label.add_css_class("nm-edit-password-label");
         form.append(password_label);
 
-        wifi_edit_password_entry = new Gtk.Entry();
-        wifi_edit_password_entry.set_visibility(false);
-        wifi_edit_password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
-        wifi_edit_password_entry.set_placeholder_text("New password");
-        wifi_edit_password_entry.add_css_class("nm-password-entry");
-        wifi_edit_password_entry.add_css_class("nm-edit-field-control");
-        wifi_edit_password_entry.add_css_class("nm-edit-field-entry");
-        wifi_edit_password_entry.add_css_class("nm-edit-password-entry");
-        wifi_edit_password_entry.activate.connect(() => {
-            on_apply();
+        this.password_entry = new Gtk.Entry();
+        this.password_entry.set_visibility(false);
+        this.password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
+        this.password_entry.set_placeholder_text("New password");
+        this.password_entry.add_css_class("nm-password-entry");
+        this.password_entry.add_css_class("nm-edit-field-control");
+        this.password_entry.add_css_class("nm-edit-field-entry");
+        this.password_entry.add_css_class("nm-edit-password-entry");
+        this.password_entry.activate.connect(() => {
+            this.apply();
         });
-        form.append(wifi_edit_password_entry);
+        form.append(this.password_entry);
+
+        Gtk.DropDown v4_method;
+        Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;
+        Gtk.Switch v4_gw_auto, v4_dns_auto;
 
         MainWindowIpEditFormBuilder.append_ipv4_section(
             form,
-            out wifi_edit_ipv4_method_dropdown,
-            out wifi_edit_ipv4_address_entry,
-            out wifi_edit_ipv4_prefix_entry,
-            out wifi_edit_gateway_auto_switch,
-            out wifi_edit_ipv4_gateway_entry,
-            out wifi_edit_dns_auto_switch,
-            out wifi_edit_ipv4_dns_entry,
-            on_sync_sensitivity,
+            out v4_method,
+            out v4_address,
+            out v4_prefix,
+            out v4_gw_auto,
+            out v4_gw,
+            out v4_dns_auto,
+            out v4_dns,
+            () => this.sync_sensitivity(),
             true
         );
+        
+        this.ipv4_method_dropdown = v4_method;
+        this.ipv4_address_entry = v4_address;
+        this.ipv4_prefix_entry = v4_prefix;
+        this.gateway_auto_switch = v4_gw_auto;
+        this.ipv4_gateway_entry = v4_gw;
+        this.dns_auto_switch = v4_dns_auto;
+        this.ipv4_dns_entry = v4_dns;
+
+        Gtk.DropDown v6_method;
+        Gtk.Entry v6_address, v6_prefix, v6_gw;
+        Gtk.Switch v6_gw_auto;
 
         MainWindowIpEditFormBuilder.append_ipv6_section(
             form,
-            out wifi_edit_ipv6_method_dropdown,
-            out wifi_edit_ipv6_address_entry,
-            out wifi_edit_ipv6_prefix_entry,
-            out wifi_edit_ipv6_gateway_auto_switch,
-            out wifi_edit_ipv6_gateway_entry,
-            on_sync_sensitivity,
+            out v6_method,
+            out v6_address,
+            out v6_prefix,
+            out v6_gw_auto,
+            out v6_gw,
+            () => this.sync_sensitivity(),
             true
         );
+        
+        this.ipv6_method_dropdown = v6_method;
+        this.ipv6_address_entry = v6_address;
+        this.ipv6_prefix_entry = v6_prefix;
+        this.ipv6_gateway_auto_switch = v6_gw_auto;
+        this.ipv6_gateway_entry = v6_gw;
 
-        on_sync_sensitivity();
+        this.sync_sensitivity();
 
         var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
         actions.add_css_class("nm-edit-actions");
@@ -203,7 +236,7 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         save_btn.add_css_class("nm-button");
         save_btn.add_css_class("suggested-action");
         save_btn.clicked.connect(() => {
-            on_apply();
+            this.apply();
         });
         actions.append(save_btn);
 
@@ -215,7 +248,6 @@ public class MainWindowWifiDetailsPagesBuilder : Object {
         scroll.set_vexpand(true);
         scroll.set_child(form);
 
-        page.append(scroll);
-        return page;
+        this.append(scroll);
     }
 }
