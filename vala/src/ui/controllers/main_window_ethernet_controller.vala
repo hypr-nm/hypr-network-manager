@@ -19,7 +19,6 @@ public class MainWindowEthernetController : Object {
     private Gtk.Box ethernet_details_basic_rows;
     private Gtk.Box ethernet_details_advanced_rows;
     private Gtk.Box ethernet_details_ip_rows;
-    private Gtk.Box ethernet_details_action_row;
     private Gtk.Button ethernet_details_primary_button;
     private Gtk.Button ethernet_details_edit_button;
 
@@ -116,176 +115,51 @@ public class MainWindowEthernetController : Object {
     }
 
     public Gtk.Widget build_page() {
-        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
-        page.add_css_class("nm-page");
-        page.add_css_class("nm-page-ethernet");
+        var details_page = new MainWindowEthernetDetailsPage();
+        var edit_page = new MainWindowEthernetEditPage();
 
-        var toolbar = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
-        toolbar.set_margin_start(12);
-        toolbar.set_margin_end(8);
-        toolbar.set_margin_top(8);
-        toolbar.set_margin_bottom(8);
-        toolbar.add_css_class("nm-toolbar");
+        ethernet_details_title = details_page.details_title;
+        ethernet_details_basic_rows = details_page.basic_rows;
+        ethernet_details_advanced_rows = details_page.advanced_rows;
+        ethernet_details_ip_rows = details_page.ip_rows;
+        ethernet_details_primary_button = details_page.primary_button;
+        ethernet_details_edit_button = details_page.edit_button;
 
-        var title = new Gtk.Label("Ethernet");
-        title.set_xalign(0.0f);
-        title.set_hexpand(true);
-        title.add_css_class("nm-section-title");
-        toolbar.append(title);
+        ethernet_edit_title = edit_page.edit_title;
+        ethernet_edit_note = edit_page.note_label;
+        ethernet_edit_ipv4_method_dropdown = edit_page.ipv4_method_dropdown;
+        ethernet_edit_ipv4_address_entry = edit_page.ipv4_address_entry;
+        ethernet_edit_ipv4_prefix_entry = edit_page.ipv4_prefix_entry;
+        ethernet_edit_gateway_auto_switch = edit_page.gateway_auto_switch;
+        ethernet_edit_ipv4_gateway_entry = edit_page.ipv4_gateway_entry;
+        ethernet_edit_dns_auto_switch = edit_page.dns_auto_switch;
+        ethernet_edit_ipv4_dns_entry = edit_page.ipv4_dns_entry;
+        ethernet_edit_ipv6_method_dropdown = edit_page.ipv6_method_dropdown;
+        ethernet_edit_ipv6_address_entry = edit_page.ipv6_address_entry;
+        ethernet_edit_ipv6_prefix_entry = edit_page.ipv6_prefix_entry;
+        ethernet_edit_ipv6_gateway_auto_switch = edit_page.ipv6_gateway_auto_switch;
+        ethernet_edit_ipv6_gateway_entry = edit_page.ipv6_gateway_entry;
 
-        var refresh_btn = new Gtk.Button();
-        refresh_btn.add_css_class("nm-button");
-        refresh_btn.add_css_class("nm-icon-button");
-        var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
-        refresh_icon.set_pixel_size(16);
-        refresh_icon.add_css_class("nm-toolbar-icon");
-        refresh_icon.add_css_class("nm-refresh-icon");
-        refresh_icon.add_css_class("nm-ethernet-refresh-icon");
-        refresh_btn.set_child(refresh_icon);
-        refresh_btn.clicked.connect(() => {
-            refresh();
-        });
-        toolbar.append(refresh_btn);
-
-        page.append(toolbar);
-
-        var scroll = new Gtk.ScrolledWindow();
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class("nm-scroll");
-
-        ethernet_listbox = new Gtk.ListBox();
-        ethernet_listbox.set_selection_mode(Gtk.SelectionMode.NONE);
-        ethernet_listbox.add_css_class("nm-list");
-        scroll.set_child(ethernet_listbox);
-
-        var ethernet_placeholder = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
-        ethernet_placeholder.set_halign(Gtk.Align.CENTER);
-        ethernet_placeholder.set_valign(Gtk.Align.CENTER);
-        ethernet_placeholder.add_css_class("nm-empty-state");
-        var eth_icon = new Gtk.Image.from_icon_name("network-wired-symbolic");
-        eth_icon.set_pixel_size(24);
-        eth_icon.add_css_class("nm-placeholder-icon");
-        eth_icon.add_css_class("nm-ethernet-placeholder-icon");
-        var eth_lbl = new Gtk.Label("No Ethernet devices found");
-        eth_lbl.add_css_class("nm-placeholder-label");
-        ethernet_placeholder.append(eth_icon);
-        ethernet_placeholder.append(eth_lbl);
-
-        ethernet_stack = new Gtk.Stack();
-        ethernet_stack.set_vexpand(true);
-        ethernet_stack.add_css_class("nm-content-stack");
-        ethernet_stack.add_named(scroll, "list");
-        ethernet_stack.add_named(ethernet_placeholder, "empty");
-        ethernet_stack.add_named(build_details_page(), "details");
-        ethernet_stack.add_named(build_edit_page(), "edit");
-        ethernet_stack.set_visible_child_name("empty");
-
-        page.append(ethernet_stack);
-        return page;
-    }
-
-    private Gtk.Widget build_details_page() {
-        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
-        page.set_margin_start(12);
-        page.set_margin_end(12);
-        page.set_margin_top(12);
-        page.set_margin_bottom(12);
-        page.add_css_class("nm-page");
-        page.add_css_class("nm-page-ethernet-details");
-        page.add_css_class("nm-page-network-details");
-
-        var nav_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-        nav_row.add_css_class("nm-details-nav-row");
-
-        var back_btn = MainWindowHelpers.build_back_button(() => {
-            // Cancel pending UI updates from async edit/apply operations.
+        details_page.back.connect(() => {
             invalidate_ui_state();
             selected_ethernet_device = null;
             on_set_popup_text_input_mode(false);
             ethernet_stack.set_visible_child_name("list");
         });
-        nav_row.append(back_btn);
-        page.append(nav_row);
 
-        var header = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
-        header.set_halign(Gtk.Align.CENTER);
-        header.add_css_class("nm-details-header");
-
-        var icon = new Gtk.Image.from_icon_name("network-transmit-receive-symbolic");
-        icon.set_pixel_size(28);
-        icon.add_css_class("nm-signal-icon");
-        icon.add_css_class("nm-ethernet-icon");
-        icon.add_css_class("nm-details-network-icon");
-        header.append(icon);
-
-        ethernet_details_title = new Gtk.Label("Ethernet");
-        ethernet_details_title.set_xalign(0.5f);
-        ethernet_details_title.set_halign(Gtk.Align.CENTER);
-        ethernet_details_title.add_css_class("nm-details-network-title");
-        header.append(ethernet_details_title);
-
-        ethernet_details_action_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        ethernet_details_action_row.set_halign(Gtk.Align.CENTER);
-        ethernet_details_action_row.add_css_class("nm-details-action-row");
-
-        ethernet_details_primary_button = new Gtk.Button.with_label("Connect");
-        ethernet_details_primary_button.add_css_class("nm-button");
-        ethernet_details_primary_button.add_css_class("nm-action-button");
-        ethernet_details_primary_button.add_css_class("nm-details-action-button");
-        ethernet_details_primary_button.clicked.connect(() => {
+        details_page.primary_action.connect(() => {
             if (selected_ethernet_device != null) {
                 trigger_toggle(selected_ethernet_device);
             }
         });
-        ethernet_details_action_row.append(ethernet_details_primary_button);
 
-        ethernet_details_edit_button = new Gtk.Button.with_label("Edit");
-        ethernet_details_edit_button.add_css_class("nm-button");
-        ethernet_details_edit_button.add_css_class("nm-action-button");
-        ethernet_details_edit_button.add_css_class("nm-details-action-button");
-        ethernet_details_edit_button.clicked.connect(() => {
+        details_page.edit.connect(() => {
             if (selected_ethernet_device != null) {
                 open_edit(selected_ethernet_device);
             }
         });
-        ethernet_details_action_row.append(ethernet_details_edit_button);
 
-        header.append(ethernet_details_action_row);
-        page.append(header);
-
-        var sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
-        sep.add_css_class("nm-separator");
-        page.append(sep);
-
-        var scroll = new Gtk.ScrolledWindow();
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class("nm-scroll");
-        scroll.set_vexpand(true);
-
-        var body = new Gtk.Box(Gtk.Orientation.VERTICAL, 12);
-        body.set_margin_top(4);
-        body.set_margin_bottom(4);
-        body.append(MainWindowHelpers.build_details_section("Basic", out ethernet_details_basic_rows));
-        body.append(MainWindowHelpers.build_details_section("Advanced", out ethernet_details_advanced_rows));
-        body.append(MainWindowHelpers.build_details_section("IP", out ethernet_details_ip_rows));
-
-        scroll.set_child(body);
-        page.append(scroll);
-        return page;
-    }
-
-    private Gtk.Widget build_edit_page() {
-        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
-        page.set_margin_start(12);
-        page.set_margin_end(12);
-        page.set_margin_top(12);
-        page.set_margin_bottom(12);
-        page.add_css_class("nm-page");
-        page.add_css_class("nm-page-ethernet-edit");
-        page.add_css_class("nm-page-network-edit");
-
-        var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        var back_btn = MainWindowHelpers.build_back_button(() => {
+        edit_page.back.connect(() => {
             on_set_popup_text_input_mode(false);
             if (selected_ethernet_device != null) {
                 open_details(selected_ethernet_device);
@@ -293,74 +167,24 @@ public class MainWindowEthernetController : Object {
                 ethernet_stack.set_visible_child_name("list");
             }
         });
-        header.append(back_btn);
 
-        ethernet_edit_title = new Gtk.Label("Edit Ethernet");
-        ethernet_edit_title.set_xalign(0.0f);
-        ethernet_edit_title.set_hexpand(true);
-        ethernet_edit_title.add_css_class("nm-section-title");
-        header.append(ethernet_edit_title);
-        page.append(header);
-
-        var form = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
-        form.add_css_class("nm-edit-form");
-        form.add_css_class("nm-edit-ethernet-form");
-        form.add_css_class("nm-edit-network-form");
-
-        ethernet_edit_note = new Gtk.Label("");
-        ethernet_edit_note.set_xalign(0.0f);
-        ethernet_edit_note.set_wrap(true);
-        ethernet_edit_note.add_css_class("nm-sub-label");
-        ethernet_edit_note.add_css_class("nm-edit-note");
-        form.append(ethernet_edit_note);
-
-        MainWindowIpEditFormBuilder.append_ipv4_section(
-            form,
-            out ethernet_edit_ipv4_method_dropdown,
-            out ethernet_edit_ipv4_address_entry,
-            out ethernet_edit_ipv4_prefix_entry,
-            out ethernet_edit_gateway_auto_switch,
-            out ethernet_edit_ipv4_gateway_entry,
-            out ethernet_edit_dns_auto_switch,
-            out ethernet_edit_ipv4_dns_entry,
-            () => {
-                sync_edit_gateway_dns_sensitivity();
-            },
-            true
-        );
-
-        MainWindowIpEditFormBuilder.append_ipv6_section(
-            form,
-            out ethernet_edit_ipv6_method_dropdown,
-            out ethernet_edit_ipv6_address_entry,
-            out ethernet_edit_ipv6_prefix_entry,
-            out ethernet_edit_ipv6_gateway_auto_switch,
-            out ethernet_edit_ipv6_gateway_entry,
-            () => {
-                sync_edit_gateway_dns_sensitivity();
-            },
-            true
-        );
-
-        var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        var save_btn = new Gtk.Button.with_label("Apply");
-        save_btn.add_css_class("nm-button");
-        save_btn.add_css_class("suggested-action");
-        save_btn.clicked.connect(() => {
+        edit_page.apply.connect(() => {
             apply_edit();
         });
-        actions.append(save_btn);
 
-        form.append(actions);
+        edit_page.sync_sensitivity.connect(() => {
+            sync_edit_gateway_dns_sensitivity();
+        });
 
-        var scroll = new Gtk.ScrolledWindow();
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class("nm-scroll");
-        scroll.set_vexpand(true);
-        scroll.set_child(form);
-
-        page.append(scroll);
-        return page;
+        return MainWindowEthernetPageBuilder.build_page(
+            out ethernet_listbox,
+            out ethernet_stack,
+            details_page,
+            edit_page,
+            () => {
+                refresh();
+            }
+        );
     }
 
     private void sync_edit_gateway_dns_sensitivity() {

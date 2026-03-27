@@ -349,6 +349,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
     }
 
+    private Gtk.Widget build_ethernet_page() {
+        return ethernet_controller.build_page();
+    }
+
     private string resolve_wifi_row_icon_name(WifiNetwork net) {
         return MainWindowHelpers.resolve_wifi_row_icon_name(net);
     }
@@ -943,7 +947,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         var eth_tab = new Gtk.Label("Ethernet");
         eth_tab.add_css_class("nm-tab-label");
         notebook.append_page(
-            ethernet_controller.build_page(),
+            build_ethernet_page(),
             eth_tab
         );
 
