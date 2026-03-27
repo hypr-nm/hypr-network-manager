@@ -15,10 +15,19 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
+          # Install standard build tools and existing libraries
           sudo apt-get install -y \
             valac meson ninja-build pkg-config \
-            libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager \
-            shellcheck
+            libgtk-4-dev libjson-glib-dev network-manager \
+            shellcheck gobject-introspection libgirepository1.0-dev
+
+          # Manually build and install gtk4-layer-shell (missing from Ubuntu repos on gh actions)
+          git clone https://github.com/wmww/gtk4-layer-shell
+          cd gtk4-layer-shell
+          meson setup build --prefix=/usr
+          ninja -C build
+          sudo ninja -C build install
+          cd ..
 
       - name: Shell syntax check
         run: |
