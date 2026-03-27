@@ -15,6 +15,7 @@ executable(
     'src/models/network_device.vala',
     'src/models/vpn_connection.vala',
     'src/backend/nm_client_utils.vala',
+    'src/backend/dbus_runner.vala',
     'src/backend/nm_wifi_settings_builder.vala',
     'src/backend/nm_status_formatter.vala',
     'src/backend/nm_ethernet_client.vala',

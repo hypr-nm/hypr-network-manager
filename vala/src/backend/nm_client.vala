@@ -34,6 +34,7 @@ public class NmSignalSubscription : Object {
 
 public class NetworkManagerClientVala : Object {
     private bool debug_enabled;
+    private GlobalDbusRunner dbus_runner;
     private NmWifiClient wifi_client;
     private NmEthernetClient ethernet_client;
     private NmVpnClient vpn_client;
@@ -45,6 +46,7 @@ public class NetworkManagerClientVala : Object {
 
     public NetworkManagerClientVala(bool debug_enabled) {
         this.debug_enabled = debug_enabled;
+        dbus_runner = GlobalDbusRunner.get_default();
         wifi_client = new NmWifiClient(this);
         ethernet_client = new NmEthernetClient(this);
         vpn_client = new NmVpnClient(this);
@@ -134,7 +136,36 @@ public class NetworkManagerClientVala : Object {
         Variant? parameters,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield proxy.call(
+        var result = yield dbus_runner.run_with_proxy(
+            proxy,
+            method,
+            parameters,
+            DBusCallFlags.NONE,
+            NM_DBUS_TIMEOUT_MS,
+            cancellable
+        );
+
+        if (!result.ok || result.value == null) {
+            string message = result.error_message != "" ? result.error_message : "unknown error";
+            throw new IOError.FAILED("D-Bus call '%s' failed: %s".printf(method, message));
+        }
+
+        return result.value;
+    }
+
+    public async DbusRequestResult run_dbus_request(
+        string service,
+        string object_path,
+        string iface,
+        string method,
+        Variant? parameters = null,
+        Cancellable? cancellable = null
+    ) {
+        return yield dbus_runner.run(
+            BusType.SYSTEM,
+            service,
+            object_path,
+            iface,
             method,
             parameters,
             DBusCallFlags.NONE,
