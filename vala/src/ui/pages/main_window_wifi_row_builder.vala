@@ -20,6 +20,8 @@ public class MainWindowWifiRowBuilder : Object {
             row.add_css_class("connected");
         }
 
+        bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip() != "";
+
         var row_root = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
         row_root.add_css_class("nm-row-root");
 
@@ -82,7 +84,7 @@ public class MainWindowWifiRowBuilder : Object {
             on_open_details(net);
         });
 
-        if (net.saved) {
+        if (has_resolvable_saved_profile) {
             var forget = new Gtk.Button.with_label("Forget");
             forget.add_css_class("nm-button");
             forget.add_css_class("nm-action-button");
@@ -179,7 +181,7 @@ public class MainWindowWifiRowBuilder : Object {
                 return;
             }
 
-            if (net.is_secured && !net.saved) {
+            if (net.is_secured && !has_resolvable_saved_profile) {
                 on_show_password_prompt(prompt_revealer, prompt_entry);
             } else {
                 on_connect(net, null);

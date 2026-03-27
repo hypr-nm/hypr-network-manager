@@ -118,6 +118,42 @@ window.nm-window,
   padding-bottom: 2px;
 }
 
+.nm-edit-collapsible {
+  padding: 4px 0;
+}
+
+.nm-edit-section-toggle {
+  padding: 4px 2px;
+  min-height: 26px;
+}
+
+.nm-edit-section-toggle-row {
+  padding: 0;
+}
+
+.nm-edit-section-toggle-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.nm-edit-section-toggle-icon {
+  -gtk-icon-size: 14px;
+  -gtk-icon-source: -gtk-icontheme("pan-end-symbolic");
+}
+
+.nm-edit-collapsible.is-expanded .nm-edit-section-toggle-icon {
+  -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+}
+
+.nm-edit-collapsible.is-expanded > .nm-edit-section-toggle {
+  opacity: 1;
+}
+
+.nm-edit-collapsible.is-collapsed > .nm-edit-section-toggle {
+  opacity: 0.88;
+}
+
 .nm-edit-field-label,
 .nm-edit-mode-label {
   font-size: 12px;

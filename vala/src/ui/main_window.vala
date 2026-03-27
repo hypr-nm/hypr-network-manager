@@ -513,15 +513,10 @@ public class MainWindow : Gtk.ApplicationWindow {
                     return;
                 }
 
-                string profile_id = selected_wifi_network.saved_connection_uuid.strip();
-                if (profile_id == "") {
-                    show_error(
-                        "Cannot uniquely identify the saved profile for this network."
-                    );
-                    return;
-                }
+                string profile_uuid = selected_wifi_network.saved_connection_uuid.strip();
+                string network_key = selected_wifi_network.network_key;
 
-                nm.forget_network.begin(profile_id, null, (obj, res) => {
+                nm.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
                     try {
                         nm.forget_network.end(res);
                         refresh_after_action(true);
@@ -747,15 +742,10 @@ public class MainWindow : Gtk.ApplicationWindow {
                 open_wifi_details(wifi_net);
             },
             (wifi_net) => {
-                string profile_id = wifi_net.saved_connection_uuid.strip();
-                if (profile_id == "") {
-                    show_error(
-                        "Cannot uniquely identify the saved profile for this network."
-                    );
-                    return;
-                }
+                string profile_uuid = wifi_net.saved_connection_uuid.strip();
+                string network_key = wifi_net.network_key;
 
-                nm.forget_network.begin(profile_id, null, (obj, res) => {
+                nm.forget_network.begin(profile_uuid, network_key, null, (obj, res) => {
                     try {
                         nm.forget_network.end(res);
                         refresh_after_action(true);
