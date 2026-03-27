@@ -74,9 +74,8 @@ public class NmWifiClient : Object {
         }
         string ssid = decode_ssid(ssid_v);
 
-        Variant? id_v = conn_group.lookup_value("id", new VariantType("s"));
-        if (id_v == null || id_v.get_string() != ssid) {
-            core.debug_log("index_saved_profile: ignoring profile because id != ssid");
+        if (ssid.strip() == "") {
+            core.debug_log("index_saved_profile: ignoring profile with empty ssid");
             return;
         }
 
@@ -84,11 +83,7 @@ public class NmWifiClient : Object {
         bool is_secured = (security_group != null);
         string network_key = ssid + ":" + (is_secured ? "secured" : "open");
 
-        Variant? bssid_v = wifi_group.lookup_value("bssid", new VariantType("s"));
-        string profile_bssid = "";
-        if (bssid_v != null) {
-            profile_bssid = normalize_bssid(bssid_v.get_string());
-        }
+        string profile_bssid = extract_profile_bssid_key(wifi_group);
 
         if (profile_bssid != "") {
             // Profile is explicitly locked to a BSSID
