@@ -61,6 +61,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private ulong nm_events_changed_handler_id = 0;
     private bool nm_events_subscription_enabled = false;
     private bool layer_shell_active = false;
+    private bool periodic_scan_failure_reported = false;
 
     public MainWindow(
         Gtk.Application app,
@@ -135,9 +136,17 @@ public class MainWindow : Gtk.ApplicationWindow {
             nm.scan_wifi.begin(null, (obj, res) => {
                 try {
                     nm.scan_wifi.end(res);
+                    periodic_scan_failure_reported = false;
                 } catch (Error e) {
                     string message = e.message;
                     debug_log("wifi_scan: periodic request failed error=" + message + "; outcome=continuing");
+                    if (!periodic_scan_failure_reported) {
+                        log_warn(
+                            "gui",
+                            "wifi_scan: periodic request failed; outcome=continuing (additional failures muted until recovery)"
+                        );
+                        periodic_scan_failure_reported = true;
+                    }
                 }
             });
 
