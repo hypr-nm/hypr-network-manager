@@ -1,0 +1,41 @@
+name: Compile test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            valac meson ninja-build pkg-config \
+            libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager \
+            shellcheck
+
+      - name: Shell syntax check
+        run: |
+          bash -n scripts/*.sh scripts/lib/*.sh
+
+      - name: Shell lint (static analysis)
+        run: |
+          shellcheck scripts/*.sh scripts/lib/*.sh
+
+      - name: Configure (release)
+        run: |
+          meson setup builddir-ci --buildtype=release
+
+      - name: Compile
+        run: |
+          meson compile -C builddir-ci
+
+      - name: Test binary
+        run: |
+          ./builddir-ci/vala/hypr-network-manager --help > /dev/null
