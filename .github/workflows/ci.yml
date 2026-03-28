@@ -4,47 +4,80 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build test:
+  build-test:
     runs-on: ubuntu-latest
+
+    env:
+      PREFIX: /home/runner/.local
+      PKG_CONFIG_PATH: /home/runner/.local/lib/pkgconfig
+      LD_LIBRARY_PATH: /home/runner/.local/lib
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Cache compiled gtk4-layer-shell (installed prefix)
+      - name: Cache gtk4-layer-shell
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: ${{ runner.os }}-gtk4-layer-shell-724be167
+
+      # Cache meson build directory
+      - name: Cache build directory
+        uses: actions/cache@v4
+        with:
+          path: builddir-ci
+          key: ${{ runner.os }}-meson-${{ hashFiles('**/meson.build') }}
+
       - name: Install dependencies
         run: |
+          set -euo pipefail
           sudo apt-get update
-          # Install standard build tools and existing libraries
           sudo apt-get install -y \
             valac meson ninja-build pkg-config \
             libgtk-4-dev libjson-glib-dev network-manager \
-            shellcheck gobject-introspection libgirepository1.0-dev
+            git shellcheck
 
-          # Manually build and install gtk4-layer-shell (missing from Ubuntu repos on gh actions)
-          git clone https://github.com/wmww/gtk4-layer-shell
-          cd gtk4-layer-shell
-          meson setup build --prefix=/usr
-          ninja -C build
-          sudo ninja -C build install
-          cd ..
+      - name: Build gtk4-layer-shell (if needed)
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "$PREFIX/lib/pkgconfig/gtk4-layer-shell-0.pc" ]; then
+            git clone https://github.com/wmww/gtk4-layer-shell
+            cd gtk4-layer-shell
+            git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
+
+            meson setup build --prefix=$PREFIX
+            ninja -C build
+            ninja -C build install
+          else
+            echo "gtk4-layer-shell already cached, skipping build"
+          fi
 
       - name: Shell syntax check
-        run: |
-          bash -n scripts/*.sh scripts/lib/*.sh
+        run: bash -n scripts/*.sh scripts/lib/*.sh
 
-      - name: Shell lint (static analysis)
-        run: |
-          shellcheck scripts/*.sh scripts/lib/*.sh
+      - name: Shell lint
+        run: shellcheck scripts/*.sh scripts/lib/*.sh
 
       - name: Configure (release)
         run: |
-          meson setup builddir-ci --buildtype=release
+          set -euo pipefail
+          meson setup builddir-ci --buildtype=release || true
 
       - name: Compile
         run: |
+          set -euo pipefail
           meson compile -C builddir-ci
 
-      - name: Test binary
+      - name: Run binary test
         run: |
+          set -euo pipefail
           ./builddir-ci/vala/hypr-network-manager --help > /dev/null
+
