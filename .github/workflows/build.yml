@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test:
+  build-test-ubuntu-container:
     runs-on: ubuntu-latest
 
     env:
