@@ -265,7 +265,6 @@ public class MainWindowEthernetController : Object {
         ethernet_details_page.ip_rows.append(MainWindowHelpers.build_details_row("Loading", "Reading IP settings..."));
 
         nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
-            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
             if (!is_ui_epoch_valid(epoch)) {
                 return;
             }
@@ -275,6 +274,8 @@ public class MainWindowEthernetController : Object {
                     && selected_ethernet_device.name != dev.name)) {
                 return;
             }
+
+            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
 
             MainWindowHelpers.clear_box(ethernet_details_page.ip_rows);
             ethernet_details_page.ip_rows.append(
@@ -403,7 +404,6 @@ public class MainWindowEthernetController : Object {
         on_set_popup_text_input_mode(true);
 
         nm.get_ethernet_device_ip_settings.begin(dev, null, (obj, res) => {
-            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
             if (!is_ui_epoch_valid(epoch)) {
                 return;
             }
@@ -413,6 +413,8 @@ public class MainWindowEthernetController : Object {
                     && selected_ethernet_device.name != dev.name)) {
                 return;
             }
+
+            var ip_settings = nm.get_ethernet_device_ip_settings.end(res);
 
             ethernet_edit_page.ipv4_method_dropdown.set_selected(
                 MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)

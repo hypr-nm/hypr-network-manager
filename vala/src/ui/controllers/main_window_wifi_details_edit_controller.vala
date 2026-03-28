@@ -252,8 +252,6 @@ public class MainWindowWifiDetailsEditController : Object {
         );
 
         nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
-            var ip_settings = nm.get_wifi_network_ip_settings.end(res);
-
             if (!is_ui_epoch_valid(epoch)) {
                 return;
             }
@@ -261,6 +259,8 @@ public class MainWindowWifiDetailsEditController : Object {
             if (page.details_title.get_text() != net.ssid) {
                 return;
             }
+
+            var ip_settings = nm.get_wifi_network_ip_settings.end(res);
 
             MainWindowHelpers.clear_box(page.ip_rows);
             page.ip_rows.append(
@@ -395,8 +395,6 @@ public class MainWindowWifiDetailsEditController : Object {
         sync_sensitivity();
 
         nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
-            var ip_settings = nm.get_wifi_network_ip_settings.end(res);
-
             if (!is_ui_epoch_valid(epoch)) {
                 return;
             }
@@ -404,6 +402,8 @@ public class MainWindowWifiDetailsEditController : Object {
             if (page.edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
                 return;
             }
+
+            var ip_settings = nm.get_wifi_network_ip_settings.end(res);
 
             page.ipv4_method_dropdown.set_selected(
                 MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
