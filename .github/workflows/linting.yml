@@ -1,0 +1,43 @@
+name: Linting
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: linting-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vala-linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Vala lint
+        uses: elementary/actions/vala-lint@master
+        with:
+          dir: vala/src/
+          fail: true
+
+  shell-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Shell syntax check
+        run: bash -n scripts/*.sh scripts/lib/*.sh
+
+      - name: Shell lint
+        run: shellcheck scripts/*.sh scripts/lib/*.sh

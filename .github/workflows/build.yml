@@ -36,7 +36,7 @@ jobs:
             libwayland-dev wayland-protocols \
             libgtk-4-dev gobject-introspection libgirepository1.0-dev gtk-doc-tools \
             libjson-glib-dev network-manager \
-            git shellcheck
+            git
 
       - name: Build gtk4-layer-shell
         run: |
@@ -62,12 +62,6 @@ jobs:
           pkg-config --modversion gtk4-layer-shell-0
           test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
           test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
-
-      - name: Shell syntax check
-        run: bash -n scripts/*.sh scripts/lib/*.sh
-
-      - name: Shell lint
-        run: shellcheck scripts/*.sh scripts/lib/*.sh
 
       - name: Configure (release)
         run: |
@@ -113,7 +107,7 @@ jobs:
             wayland-devel wayland-protocols-devel \
             gtk4-devel gobject-introspection-devel gobject-introspection gtk-doc \
             json-glib-devel NetworkManager \
-            git ShellCheck
+            git
 
       - name: Build gtk4-layer-shell
         run: |
@@ -139,12 +133,6 @@ jobs:
           pkg-config --modversion gtk4-layer-shell-0
           test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
           test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
-
-      - name: Shell syntax check
-        run: bash -n scripts/*.sh scripts/lib/*.sh
-
-      - name: Shell lint
-        run: shellcheck scripts/*.sh scripts/lib/*.sh
 
       - name: Configure (release)
         run: |
@@ -188,7 +176,7 @@ jobs:
           pacman -S --noconfirm --needed \
             base-devel git meson ninja vala pkgconf python \
             wayland wayland-protocols gtk4 gobject-introspection gtk-doc \
-            json-glib networkmanager shellcheck
+            json-glib networkmanager
 
       - name: Build gtk4-layer-shell
         run: |
@@ -214,12 +202,6 @@ jobs:
           pkg-config --modversion gtk4-layer-shell-0
           test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
           test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
-
-      - name: Shell syntax check
-        run: bash -n scripts/*.sh scripts/lib/*.sh
-
-      - name: Shell lint
-        run: shellcheck scripts/*.sh scripts/lib/*.sh
 
       - name: Configure (release)
         run: |
