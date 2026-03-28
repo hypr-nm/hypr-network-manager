@@ -20,7 +20,7 @@ public class BlankWindow : Gtk.ApplicationWindow {
     private Gtk.GestureClick blank_window_gesture;
     private Gtk.GestureClick window_gesture;
 
-    public BlankWindow(NetworkManagerValaApp app, Gdk.Monitor monitor) {
+    public BlankWindow(NetworkManager app, Gdk.Monitor monitor) {
         Object(application: app, css_name: "blankwindow");
 
         Gdk.Rectangle monitor_geometry = monitor.get_geometry();

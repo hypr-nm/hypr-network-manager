@@ -32,7 +32,7 @@ public class NmSignalSubscription : Object {
     }
 }
 
-public class NetworkManagerClientVala : Object {
+public class NetworkManagerClient : Object {
     private bool debug_enabled;
     private GlobalDbusRunner dbus_runner;
     private NmWifiClient wifi_client;
@@ -44,7 +44,7 @@ public class NetworkManagerClientVala : Object {
 
     public signal void network_events_changed();
 
-    public NetworkManagerClientVala(bool debug_enabled) {
+    public NetworkManagerClient(bool debug_enabled) {
         this.debug_enabled = debug_enabled;
         dbus_runner = GlobalDbusRunner.get_default();
         wifi_client = new NmWifiClient(this);
@@ -802,7 +802,7 @@ public class NetworkManagerClientVala : Object {
         return NmStatusFormatter.build_status_json(text, alt, tooltip, klass);
     }
 
-    ~NetworkManagerClientVala() {
+    ~NetworkManagerClient() {
         unsubscribe_network_events();
     }
 }

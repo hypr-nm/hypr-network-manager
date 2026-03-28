@@ -82,7 +82,7 @@ public class MainWindowWifiDetailsEditController : Object {
     }
 
     private void reconnect_after_disconnect_with_retry(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         WifiNetwork net,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
@@ -180,7 +180,7 @@ public class MainWindowWifiDetailsEditController : Object {
     }
 
     public void populate_wifi_details(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         WifiNetwork net,
         HashTable<string, bool> active_wifi_connections,
         MainWindowWifiDetailsPage page,
@@ -353,7 +353,7 @@ public class MainWindowWifiDetailsEditController : Object {
     }
 
     public void open_wifi_edit(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,
@@ -430,7 +430,7 @@ public class MainWindowWifiDetailsEditController : Object {
     }
 
     public bool apply_wifi_edit(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
         HashTable<string, bool> pending_wifi_connect,

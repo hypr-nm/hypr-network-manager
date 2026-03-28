@@ -25,7 +25,7 @@ int main(string[] args) {
     var config = AppConfig.load(config_path, debug_enabled);
 
     if (status) {
-        var nm = new NetworkManagerClientVala(debug_enabled);
+        var nm = new NetworkManagerClient(debug_enabled);
         string status_json = "";
         var loop = new MainLoop();
         nm.get_status_json_dbus.begin(null, (obj, res) => {
@@ -38,7 +38,7 @@ int main(string[] args) {
     }
 
     if (toggle_wifi) {
-        var nm = new NetworkManagerClientVala(debug_enabled);
+        var nm = new NetworkManagerClient(debug_enabled);
         bool enabled_after_toggle = false;
         int toggle_exit_code = 0;
         string toggle_error = "";
@@ -62,6 +62,6 @@ int main(string[] args) {
         return 0;
     }
 
-    var app = new NetworkManagerValaApp(config, debug_enabled);
+    var app = new NetworkManager(config, debug_enabled);
     return app.run(args);
 }

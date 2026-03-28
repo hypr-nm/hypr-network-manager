@@ -255,7 +255,7 @@ public class MainWindowWifiRuntimeController : Object {
     }
 
     public void refresh_wifi(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         Gtk.Stack wifi_stack,
         Gtk.ListBox wifi_listbox,
         Gtk.Label status_label,
@@ -427,7 +427,7 @@ public class MainWindowWifiRuntimeController : Object {
     }
 
     public void connect_wifi_with_optional_password(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         WifiNetwork net,
         string? password,
         HashTable<string, bool> active_wifi_connections,
@@ -493,7 +493,7 @@ public class MainWindowWifiRuntimeController : Object {
     }
 
     public void refresh_after_action(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         bool request_wifi_scan,
         MainWindowActionCallback on_refresh_all,
         MainWindowLogCallback on_log
@@ -618,7 +618,7 @@ public class MainWindowWifiRuntimeController : Object {
     }
 
     public void refresh_switch_states(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         Gtk.Switch wifi_switch,
         Gtk.Switch networking_switch,
         MainWindowLogCallback on_log
@@ -663,7 +663,7 @@ public class MainWindowWifiRuntimeController : Object {
     }
 
     public void on_wifi_switch_changed(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         Gtk.Switch wifi_switch,
         MainWindowErrorCallback on_error,
         MainWindowActionCallback on_refresh_switch_states,
@@ -695,7 +695,7 @@ public class MainWindowWifiRuntimeController : Object {
     }
 
     public void on_networking_switch_changed(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         Gtk.Switch networking_switch,
         MainWindowErrorCallback on_error,
         MainWindowActionCallback on_refresh_switch_states,

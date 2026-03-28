@@ -6,7 +6,7 @@ public class MainWindowEthernetController : Object {
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
 
-    private NetworkManagerClientVala nm;
+    private NetworkManagerClient nm;
     private MainWindowErrorCallback on_error;
     private MainWindowRefreshActionCallback on_refresh_after_action;
     private MainWindowBoolCallback on_set_popup_text_input_mode;
@@ -22,7 +22,7 @@ public class MainWindowEthernetController : Object {
     private HashTable<string, bool> pending_ethernet_target_connected;
 
     public MainWindowEthernetController(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         owned MainWindowErrorCallback on_error,
         owned MainWindowRefreshActionCallback on_refresh_after_action,
         owned MainWindowBoolCallback on_set_popup_text_input_mode

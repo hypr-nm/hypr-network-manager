@@ -1,9 +1,9 @@
 using GLib;
 
 public class NmVpnClient : Object {
-    private NetworkManagerClientVala core;
+    private NetworkManagerClient core;
 
-    public NmVpnClient(NetworkManagerClientVala core) {
+    public NmVpnClient(NetworkManagerClient core) {
         this.core = core;
     }
 

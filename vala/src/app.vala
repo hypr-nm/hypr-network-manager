@@ -8,13 +8,13 @@ private extern void gtk_style_provider_add_for_display(
     uint priority
 );
 
-public class NetworkManagerValaApp : Gtk.Application {
+public class NetworkManager : Gtk.Application {
     private AppConfig config;
     private bool debug_enabled;
     private MainWindow? window;
     private BlankWindow? dismiss_overlay;
 
-    public NetworkManagerValaApp(AppConfig config, bool debug_enabled) {
+    public NetworkManager(AppConfig config, bool debug_enabled) {
         Object(application_id: "io.github.hypr-network-manager.vala");
         this.config = config;
         this.debug_enabled = debug_enabled;

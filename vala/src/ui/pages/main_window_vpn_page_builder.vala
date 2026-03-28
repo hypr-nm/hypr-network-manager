@@ -5,7 +5,7 @@ public class MainWindowVpnPageBuilder : Object {
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
 
-    private NetworkManagerClientVala nm;
+    private NetworkManagerClient nm;
     private owned MainWindowErrorCallback on_error;
     private owned MainWindowRefreshActionCallback on_refresh_after_action;
 
@@ -13,7 +13,7 @@ public class MainWindowVpnPageBuilder : Object {
     private Gtk.Stack? vpn_stack = null;
 
     public MainWindowVpnPageBuilder(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         owned MainWindowErrorCallback on_error,
         owned MainWindowRefreshActionCallback on_refresh_after_action
     ) {

@@ -1,9 +1,9 @@
 using GLib;
 
 public class NmEthernetClient : Object {
-    private NetworkManagerClientVala core;
+    private NetworkManagerClient core;
 
-    public NmEthernetClient(NetworkManagerClientVala core) {
+    public NmEthernetClient(NetworkManagerClient core) {
         this.core = core;
     }
 
@@ -140,8 +140,8 @@ public class NmEthernetClient : Object {
                 var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
                 var settings_res = yield core.call_dbus(conn, "GetSettings", null, cancellable);
                 var all_settings = settings_res.get_child_value(0);
-                NetworkManagerClientVala.fill_configured_ipv4_from_settings(all_settings, ip_settings);
-                NetworkManagerClientVala.fill_configured_ipv6_from_settings(all_settings, ip_settings);
+                NetworkManagerClient.fill_configured_ipv4_from_settings(all_settings, ip_settings);
+                NetworkManagerClient.fill_configured_ipv6_from_settings(all_settings, ip_settings);
             } catch (Error e) {
                 core.debug_log("could not read saved ethernet ipv4 settings: " + e.message);
             }
@@ -191,10 +191,10 @@ public class NmEthernetClient : Object {
             cancellable
         );
 
-        string method = NetworkManagerClientVala.normalize_ipv4_method(ipv4_method);
+        string method = NetworkManagerClient.normalize_ipv4_method(ipv4_method);
         string address = ipv4_address.strip();
         string gateway = ipv4_gateway.strip();
-        string method6 = NetworkManagerClientVala.normalize_ipv6_method(ipv6_method);
+        string method6 = NetworkManagerClient.normalize_ipv6_method(ipv6_method);
         string address6 = ipv6_address.strip();
         string gateway6 = ipv6_gateway.strip();
 

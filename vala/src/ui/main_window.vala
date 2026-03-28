@@ -32,7 +32,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private bool show_bssid;
     private bool show_frequency;
     private bool show_band;
-    private NetworkManagerClientVala nm;
+    private NetworkManagerClient nm;
     private Gtk.Label status_label;
     private Gtk.Image status_icon;
     private Gtk.Switch networking_switch;
@@ -97,7 +97,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         set_resizable(false);
         set_opacity(1.0);
         add_css_class("nm-window");
-        nm = new NetworkManagerClientVala(debug_enabled);
+        nm = new NetworkManagerClient(debug_enabled);
         wifi_controller = new MainWindowWifiController();
         ethernet_controller = new MainWindowEthernetController(
             nm,
@@ -156,7 +156,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void debug_log(string message) {
         if (debug_enabled) {
-            stderr.printf("[vala-gui] %s\n", message);
+            stderr.printf("[nm-gui] %s\n", message);
         }
     }
 

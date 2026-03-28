@@ -2,7 +2,7 @@ public class MainWindowVpnController : Object {
     private MainWindowVpnPageBuilder page_builder;
 
     public MainWindowVpnController(
-        NetworkManagerClientVala nm,
+        NetworkManagerClient nm,
         owned MainWindowErrorCallback on_error,
         owned MainWindowRefreshActionCallback on_refresh_after_action
     ) {
