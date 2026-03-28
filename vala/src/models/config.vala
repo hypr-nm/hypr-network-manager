@@ -1,6 +1,8 @@
 using GLib;
 
 public class AppConfig : Object {
+    private const int64 MAX_CONFIG_FILE_BYTES = 1024 * 1024;
+
     public int window_width = 480;
     public int window_height = 560;
     public bool anchor_top = true;
@@ -264,7 +266,17 @@ public class AppConfig : Object {
 
         try {
             string content;
-            FileUtils.get_contents(effective_config_path, out content);
+            size_t content_length = 0;
+            FileUtils.get_contents(effective_config_path, out content, out content_length);
+            if ((int64) content_length > MAX_CONFIG_FILE_BYTES) {
+                log_warn(
+                    "config",
+                    "config file too large (" + content_length.to_string()
+                        + " bytes, max " + MAX_CONFIG_FILE_BYTES.to_string()
+                        + "): " + effective_config_path
+                );
+                return cfg;
+            }
 
             var parser = new Json.Parser();
             parser.load_from_data(content, content.length);
