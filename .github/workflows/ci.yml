@@ -14,8 +14,8 @@ jobs:
 
     env:
       PREFIX: /home/runner/.local
-      PKG_CONFIG_PATH: /home/runner/.local/lib/pkgconfig
-      LD_LIBRARY_PATH: /home/runner/.local/lib
+      PKG_CONFIG_PATH: /home/runner/.local/lib/pkgconfig:/home/runner/.local/lib/x86_64-linux-gnu/pkgconfig
+      LD_LIBRARY_PATH: /home/runner/.local/lib:/home/runner/.local/lib/x86_64-linux-gnu
 
     steps:
       - name: Checkout
@@ -50,7 +50,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ ! -f "$PREFIX/lib/pkgconfig/gtk4-layer-shell-0.pc" ]; then
+          if ! pkg-config --exists gtk4-layer-shell-0; then
             git clone https://github.com/wmww/gtk4-layer-shell
             cd gtk4-layer-shell
             git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
@@ -62,6 +62,8 @@ jobs:
             echo "gtk4-layer-shell already cached, skipping build"
           fi
 
+          pkg-config --modversion gtk4-layer-shell-0
+
       - name: Shell syntax check
         run: bash -n scripts/*.sh scripts/lib/*.sh
 
@@ -71,7 +73,7 @@ jobs:
       - name: Configure (release)
         run: |
           set -euo pipefail
-          meson setup builddir-ci --buildtype=release || true
+          meson setup builddir-ci --buildtype=release
 
       - name: Compile
         run: |
@@ -82,4 +84,64 @@ jobs:
         run: |
           set -euo pipefail
           ./builddir-ci/vala/hypr-network-manager --help > /dev/null
+
+  build-test-fedora-container:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+
+    env:
+      PREFIX: /usr/local
+      PKG_CONFIG_PATH: /usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig
+      LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          dnf -y update
+          dnf -y install \
+            meson ninja-build vala pkgconf-pkg-config python3 \
+            wayland-devel wayland-protocols-devel \
+            gtk4-devel gobject-introspection-devel gobject-introspection gtk-doc \
+            json-glib-devel NetworkManager \
+            git ShellCheck
+
+      - name: Build gtk4-layer-shell
+        run: |
+          set -euo pipefail
+
+          git clone https://github.com/wmww/gtk4-layer-shell
+          cd gtk4-layer-shell
+          git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
+
+          meson setup build --prefix=$PREFIX
+          ninja -C build
+          ninja -C build install
+
+          pkg-config --modversion gtk4-layer-shell-0
+
+      - name: Shell syntax check
+        run: bash -n scripts/*.sh scripts/lib/*.sh
+
+      - name: Shell lint
+        run: shellcheck scripts/*.sh scripts/lib/*.sh
+
+      - name: Configure (release)
+        run: |
+          set -euo pipefail
+          meson setup builddir-ci-fedora --buildtype=release
+
+      - name: Compile
+        run: |
+          set -euo pipefail
+          meson compile -C builddir-ci-fedora
+
+      - name: Run binary test
+        run: |
+          set -euo pipefail
+          ./builddir-ci-fedora/vala/hypr-network-manager --help > /dev/null
 
