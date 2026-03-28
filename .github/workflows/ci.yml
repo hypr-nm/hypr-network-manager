@@ -27,13 +27,6 @@ jobs:
           path: .ci-cache/gtk4-layer-shell/ubuntu
           key: ${{ runner.os }}-gtk4-layer-shell-724be167
 
-      # Cache meson build directory
-      - name: Cache build directory
-        uses: actions/cache@v4
-        with:
-          path: builddir-ci
-          key: ${{ runner.os }}-meson-${{ hashFiles('**/meson.build') }}
-
       - name: Install dependencies
         run: |
           set -euo pipefail
