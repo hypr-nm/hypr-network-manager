@@ -40,8 +40,10 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y \
-            valac meson ninja-build pkg-config \
-            libgtk-4-dev libjson-glib-dev network-manager \
+            meson ninja-build valac pkg-config python3 \
+            libwayland-dev wayland-protocols \
+            libgtk-4-dev gobject-introspection libgirepository1.0-dev gtk-doc-tools \
+            libjson-glib-dev network-manager \
             git shellcheck
 
       - name: Build gtk4-layer-shell (if needed)
