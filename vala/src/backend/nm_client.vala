@@ -59,7 +59,7 @@ public class NetworkManagerClient : Object {
     }
 
     private void emit_nm_change_event(string reason) {
-        debug_log("NM signal received: " + reason);
+        debug_log("nm_signal_event: received reason=" + reason);
         network_events_changed();
     }
 
@@ -98,7 +98,12 @@ public class NetworkManagerClient : Object {
 
             nm_subscribed_device_paths.insert(device_path, true);
         } catch (Error e) {
-            debug_log("could not subscribe device signals for " + device_path + ": " + e.message);
+            debug_log(
+                "nm_device_subscribe: failed device="
+                    + redact_object_path(device_path)
+                    + " error=" + e.message
+                    + "; outcome=continuing"
+            );
         }
     }
 
@@ -228,7 +233,7 @@ public class NetworkManagerClient : Object {
             }
 
             nm_signals_active = true;
-            debug_log("subscribed to NetworkManager D-Bus signals");
+            log_info("nm-client", "nm_events_subscribe: enabled");
             return true;
         } catch (Error e) {
             clear_nm_signal_subscriptions();
@@ -244,7 +249,7 @@ public class NetworkManagerClient : Object {
 
         clear_nm_signal_subscriptions();
         nm_signals_active = false;
-        debug_log("unsubscribed from NetworkManager D-Bus signals");
+        log_info("nm-client", "nm_events_subscribe: disabled");
     }
 
     internal async List<NetworkDevice> get_devices_dbus(Cancellable? cancellable = null) throws Error {
@@ -278,7 +283,12 @@ public class NetworkManagerClient : Object {
                         conn_name = (yield get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Id", cancellable)).get_string();
                         conn_uuid = (yield get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Uuid", cancellable)).get_string();
                     } catch (Error e) {
-                        debug_log("Could not read active connection id for " + dev_path + ": " + e.message);
+                        debug_log(
+                            "nm_device_read: failed active-connection lookup device="
+                                + redact_object_path(dev_path)
+                                + " error=" + e.message
+                                + "; outcome=continuing"
+                        );
                     }
                 }
 
@@ -318,11 +328,20 @@ public class NetworkManagerClient : Object {
                                     break;
                                 }
                             } catch (Error e) {
-                                debug_log("Skipping stale connection object " + conn_path + ": " + e.message);
+                                debug_log(
+                                    "nm_profile_read: skipped stale profile path="
+                                        + redact_object_path(conn_path)
+                                        + " error=" + e.message
+                                );
                             }
                         }
                     } catch (Error e) {
-                        debug_log("Could not read available Ethernet profiles for " + dev_path + ": " + e.message);
+                        debug_log(
+                            "nm_profile_list: failed Ethernet profile enumeration device="
+                                + redact_object_path(dev_path)
+                                + " error=" + e.message
+                                + "; outcome=continuing"
+                        );
                     }
                 }
 
@@ -335,7 +354,11 @@ public class NetworkManagerClient : Object {
                     connection_uuid = conn_uuid
                 });
             } catch (Error e) {
-                debug_log("Skipping transient device object " + dev_path + ": " + e.message);
+                debug_log(
+                    "nm_device_read: skipped transient device path="
+                        + redact_object_path(dev_path)
+                        + " error=" + e.message
+                );
             }
         }
 
@@ -423,7 +446,7 @@ public class NetworkManagerClient : Object {
                     cancellable
                 )).get_string();
             } catch (Error gateway_err) {
-                debug_log("could not read runtime IPv4 gateway: " + gateway_err.message);
+                debug_log("ip4_runtime_read: gateway lookup failed error=" + gateway_err.message);
             }
 
             try {
@@ -435,10 +458,10 @@ public class NetworkManagerClient : Object {
                 );
                 out_ip.current_dns = extract_dns_list_string(dns_data);
             } catch (Error dns_err) {
-                debug_log("could not read runtime IPv4 DNS: " + dns_err.message);
+                debug_log("ip4_runtime_read: DNS lookup failed error=" + dns_err.message);
             }
         } catch (Error e) {
-            debug_log("could not read runtime IPv4 details: " + e.message);
+            debug_log("ip4_runtime_read: failed error=" + e.message + "; outcome=continuing");
         }
     }
 
@@ -499,7 +522,7 @@ public class NetworkManagerClient : Object {
                     cancellable
                 )).get_string();
             } catch (Error gateway_err) {
-                debug_log("could not read runtime IPv6 gateway: " + gateway_err.message);
+                debug_log("ip6_runtime_read: gateway lookup failed error=" + gateway_err.message);
             }
 
             try {
@@ -511,10 +534,10 @@ public class NetworkManagerClient : Object {
                 );
                 out_ip.current_ipv6_dns = extract_dns_list_string(dns_data);
             } catch (Error dns_err) {
-                debug_log("could not read runtime IPv6 DNS: " + dns_err.message);
+                debug_log("ip6_runtime_read: DNS lookup failed error=" + dns_err.message);
             }
         } catch (Error e) {
-            debug_log("could not read runtime IPv6 details: " + e.message);
+            debug_log("ip6_runtime_read: failed error=" + e.message + "; outcome=continuing");
         }
     }
 
@@ -666,7 +689,7 @@ public class NetworkManagerClient : Object {
             );
             return true;
         } catch (Error e) {
-            debug_log("Enable() failed, falling back to NetworkingEnabled property: " + e.message);
+            debug_log("networking_toggle: Enable() failed error=" + e.message + "; outcome=property fallback");
             return yield set_nm_bool_property_dbus("NetworkingEnabled", enabled, cancellable);
         }
     }
@@ -741,12 +764,12 @@ public class NetworkManagerClient : Object {
         try {
             networking_on = yield get_networking_enabled_dbus(cancellable);
         } catch (Error e) {
-            debug_log("could not read NetworkingEnabled for status: " + e.message);
+            debug_log("status_read: networking-enabled lookup failed error=" + e.message);
         }
         try {
             wifi_on = yield get_wifi_enabled_dbus(cancellable);
         } catch (Error e) {
-            debug_log("could not read WirelessEnabled for status: " + e.message);
+            debug_log("status_read: wifi-enabled lookup failed error=" + e.message);
         }
 
         NetworkDevice[] devices = {};
@@ -756,7 +779,7 @@ public class NetworkManagerClient : Object {
             devices = refresh_data.devices;
             wifi_nets = refresh_data.networks;
         } catch (Error e) {
-            debug_log("could not read status device/network data: " + e.message);
+            debug_log("status_read: device/network snapshot failed error=" + e.message);
         }
 
         NetworkDevice? active_wifi = null;

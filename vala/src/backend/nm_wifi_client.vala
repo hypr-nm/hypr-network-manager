@@ -93,7 +93,10 @@ public class NmWifiClient : Object {
             index.generic_saved_network_keys.insert(network_key, true);
         }
 
-        core.debug_log("index_saved_profile: indexed profile with network_key='%s' (bssid_locked='%s')".printf(network_key, profile_bssid));
+        core.debug_log(
+            "index_saved_profile: indexed profile with network_key='%s' (bssid_locked='%s')"
+                .printf(redact_network_key(network_key), redact_bssid(profile_bssid))
+        );
 
         Variant? uuid_v = conn_group.lookup_value("uuid", new VariantType("s"));
         if (uuid_v != null) {
@@ -240,9 +243,9 @@ public class NmWifiClient : Object {
 
         core.debug_log(
             "resolve_connection_path: finding profile for ssid='%s' bssid='%s' uuid='%s'".printf(
-                network.ssid,
-                network.bssid,
-                required_uuid
+                redact_ssid(network.ssid),
+                redact_bssid(network.bssid),
+                redact_uuid(required_uuid)
             )
         );
 
@@ -322,7 +325,7 @@ public class NmWifiClient : Object {
         }
 
         core.debug_log(
-            "resolve_connection_path: matched conn_path='%s'".printf(final_match)
+            "resolve_connection_path: matched conn_path='%s'".printf(redact_object_path(final_match))
         );
         return final_match;
     }
@@ -514,11 +517,11 @@ public class NmWifiClient : Object {
     public async bool connect_saved(WifiNetwork network, Cancellable? cancellable = null) throws Error {
         core.debug_log(
             "connect_saved: ssid='%s' uuid='%s' bssid='%s' device='%s' ap='%s'".printf(
-                network.ssid,
-                network.saved_connection_uuid.strip(),
-                normalize_bssid(network.bssid),
-                network.device_path,
-                network.ap_path
+                redact_ssid(network.ssid),
+                redact_uuid(network.saved_connection_uuid.strip()),
+                redact_bssid(normalize_bssid(network.bssid)),
+                redact_object_path(network.device_path),
+                redact_object_path(network.ap_path)
             )
         );
         try {
@@ -530,11 +533,19 @@ public class NmWifiClient : Object {
             try {
                 conn_path = yield resolve_connection_path(network, cancellable);
             } catch (Error resolve_err) {
-                core.debug_log("connect_saved: resolve_connection_path didn't find a perfect match, relying on NM default AP activation");
+                log_warn(
+                    "nm-wifi",
+                    "connect_saved: profile lookup fallback for ssid='%s': %s"
+                        .printf(redact_ssid(network.ssid), resolve_err.message)
+                );
                 conn_path = "/";
             }
 
-            core.debug_log("connect_saved: activating conn_path='" + conn_path + "'");
+            log_info(
+                "nm-wifi",
+                "activating saved network ssid='%s' via conn_path='%s'"
+                    .printf(redact_ssid(network.ssid), redact_object_path(conn_path))
+            );
             var nm = yield core.make_proxy(NM_PATH, NM_IFACE, cancellable);
             yield core.call_dbus(
                 nm,
@@ -542,10 +553,13 @@ public class NmWifiClient : Object {
                 new Variant("(ooo)", conn_path, network.device_path, network.ap_path),
                 cancellable
             );
-            core.debug_log("connect_saved: activation request sent successfully");
+            log_info("nm-wifi", "saved network activation request sent successfully");
             return true;
         } catch (Error e) {
-            core.debug_log("connect_saved failed: " + e.message);
+            log_warn(
+                "nm-wifi",
+                "connect_saved failed for ssid='%s': %s".printf(redact_ssid(network.ssid), e.message)
+            );
             throw e;
         }
     }
@@ -559,11 +573,11 @@ public class NmWifiClient : Object {
         bool can_use_saved_profile = network.saved;
         core.debug_log(
             "connect: ssid='%s' saved=%s uuid_present=%s secured=%s bssid='%s'".printf(
-                network.ssid,
+                redact_ssid(network.ssid),
                 network.saved ? "true" : "false",
                 has_saved_uuid ? "true" : "false",
                 network.is_secured ? "true" : "false",
-                normalize_bssid(network.bssid)
+                redact_bssid(normalize_bssid(network.bssid))
             )
         );
         try {
@@ -571,7 +585,11 @@ public class NmWifiClient : Object {
                 try {
                     return yield connect_saved(network, cancellable);
                 } catch (Error saved_err) {
-                    core.debug_log("connect_saved failed: %s. Falling back to connect_with_password.".printf(saved_err.message));
+                    log_warn(
+                        "nm-wifi",
+                        "saved-profile connect failed for ssid='%s': %s; falling back to password connect"
+                            .printf(redact_ssid(network.ssid), saved_err.message)
+                    );
                 }
             }
 
@@ -581,7 +599,7 @@ public class NmWifiClient : Object {
 
             return yield connect_with_password(network, password, cancellable);
         } catch (Error e) {
-            core.debug_log("connect failed: " + e.message);
+            log_warn("nm-wifi", "connect failed for ssid='%s': %s".printf(redact_ssid(network.ssid), e.message));
             throw e;
         }
     }
@@ -593,9 +611,9 @@ public class NmWifiClient : Object {
     ) throws Error {
         core.debug_log(
             "connect_with_password: ssid='%s' secured=%s bssid='%s' password_len=%u".printf(
-                network.ssid,
+                redact_ssid(network.ssid),
                 network.is_secured ? "true" : "false",
-                normalize_bssid(network.bssid),
+                redact_bssid(normalize_bssid(network.bssid)),
                 (uint) password.strip().char_count()
             )
         );
@@ -650,10 +668,17 @@ public class NmWifiClient : Object {
                 new Variant("(@a{sa{sv}}oo)", conn.end(), network.device_path, network.ap_path),
                 cancellable
             );
-            core.debug_log("connect_with_password: AddAndActivateConnection request sent successfully");
+            log_info(
+                "nm-wifi",
+                "password-based connect request sent for ssid='%s'"
+                    .printf(redact_ssid(network.ssid))
+            );
             return true;
         } catch (Error e) {
-            core.debug_log("connect_with_password failed: " + e.message);
+            log_warn(
+                "nm-wifi",
+                "connect_with_password failed for ssid='%s': %s".printf(redact_ssid(network.ssid), e.message)
+            );
             throw e;
         }
     }
@@ -743,6 +768,8 @@ public class NmWifiClient : Object {
             new Variant("(@a{sa{sv}}oo)", conn.end(), device_path, "/"),
             cancellable
         );
+
+        log_info("nm-wifi", "hidden network connect request sent for ssid='%s'".printf(redact_ssid(hidden_ssid)));
         return true;
     }
 
@@ -792,6 +819,11 @@ public class NmWifiClient : Object {
 
         var conn = yield core.make_proxy(conn_path, NM_CONN_IFACE, cancellable);
         yield core.call_dbus(conn, "Delete", null, cancellable);
+        log_info(
+            "nm-wifi",
+            "forgot saved profile uuid='%s' network_key='%s'"
+                .printf(redact_uuid(uuid), redact_network_key(network_key))
+        );
         
         return true;
     }
@@ -825,7 +857,7 @@ public class NmWifiClient : Object {
             scanned++;
         }
 
-        core.debug_log("requested scan on %u wifi device(s)".printf(scanned));
+        log_info("nm-wifi", "requested scan on %u wifi device(s)".printf(scanned));
         return true;
     }
 }

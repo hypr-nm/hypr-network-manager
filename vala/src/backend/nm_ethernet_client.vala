@@ -143,7 +143,7 @@ public class NmEthernetClient : Object {
                 NetworkManagerClient.fill_configured_ipv4_from_settings(all_settings, ip_settings);
                 NetworkManagerClient.fill_configured_ipv6_from_settings(all_settings, ip_settings);
             } catch (Error e) {
-                core.debug_log("could not read saved ethernet ipv4 settings: " + e.message);
+                core.debug_log("ethernet_profile_read: saved settings lookup failed error=" + e.message);
             }
         }
 

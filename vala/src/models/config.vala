@@ -245,13 +245,18 @@ public class AppConfig : Object {
 
         if (!has_config) {
             if (explicit_path != null) {
-                log_debug("config", "config file not found: " + effective_config_path);
+                log_debug(
+                    "config",
+                    "load_config: file not found path=%s; outcome=using defaults"
+                        .printf(redact_fs_path(effective_config_path))
+                );
             } else {
                 log_debug(
                     "config",
-                    "config file not found in local/system paths: %s, %s".printf(
-                        local_config_path,
-                        system_config_path
+                    "load_config: file not found in search paths local=%s system=%s; outcome=using defaults"
+                        .printf(
+                        redact_fs_path(local_config_path),
+                        redact_fs_path(system_config_path)
                     )
                 );
             }
@@ -265,9 +270,12 @@ public class AppConfig : Object {
             if ((int64) content_length > MAX_CONFIG_FILE_BYTES) {
                 log_warn(
                     "config",
-                    "config file too large (" + content_length.to_string()
-                        + " bytes, max " + MAX_CONFIG_FILE_BYTES.to_string()
-                        + "): " + effective_config_path
+                    "load_config: rejected oversize file path=%s size=%s max=%s; outcome=using defaults"
+                        .printf(
+                            redact_fs_path(effective_config_path),
+                            content_length.to_string(),
+                            MAX_CONFIG_FILE_BYTES.to_string()
+                        )
                 );
                 return cfg;
             }
@@ -277,7 +285,11 @@ public class AppConfig : Object {
 
             Json.Node? root = parser.get_root();
             if (root == null || root.get_node_type() != Json.NodeType.OBJECT) {
-                log_debug("config", "config root must be a JSON object: " + effective_config_path);
+                log_debug(
+                    "config",
+                    "load_config: invalid JSON root path=%s expected=object; outcome=using defaults"
+                        .printf(redact_fs_path(effective_config_path))
+                );
                 return cfg;
             }
 
@@ -409,9 +421,17 @@ public class AppConfig : Object {
                 cfg.show_band = cfg_show_band;
             }
 
-            log_debug("config", "loaded config: " + effective_config_path);
+            log_debug(
+                "config",
+                "load_config: loaded path=%s"
+                    .printf(redact_fs_path(effective_config_path))
+            );
         } catch (Error e) {
-            log_debug("config", "could not read config %s: %s".printf(effective_config_path, e.message));
+            log_debug(
+                "config",
+                "load_config: read/parse failed path=%s error=%s; outcome=using defaults"
+                    .printf(redact_fs_path(effective_config_path), e.message)
+            );
         }
 
         return cfg;

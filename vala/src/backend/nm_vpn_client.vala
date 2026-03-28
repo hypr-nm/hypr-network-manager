@@ -92,7 +92,7 @@ public class NmVpnClient : Object {
                 string id = (yield core.get_prop_dbus(ac_path, NM_ACTIVE_CONN_IFACE, "Id", cancellable)).get_string();
                 active_map.insert(id, "activated");
             } catch (Error e) {
-                core.debug_log("Could not read active VPN id: " + e.message);
+                core.debug_log("vpn_active_read: connection-id lookup failed error=" + e.message);
             }
         }
 

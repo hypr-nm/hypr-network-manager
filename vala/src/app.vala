@@ -77,19 +77,27 @@ public class NetworkManager : Gtk.Application {
             return false;
         }
         gtk_style_provider_add_for_display(display, provider, priority);
-        debug_log("loaded CSS: " + css_path);
+        log_info(
+            "app",
+            "load_theme_css: loaded stylesheet path=%s"
+                .printf(redact_fs_path(css_path))
+        );
         return true;
     }
 
     private void load_theme_css() {
         string? css_path = resolve_base_css_path();
         if (css_path == null) {
-            debug_log("no themes/base.css found in local/system/bundled locations");
+            debug_log("load_theme_css: no stylesheet found in local/system/bundled paths; outcome=skipping");
             return;
         }
 
         if (!load_css(css_path, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)) {
-            debug_log("failed to load base.css: " + css_path);
+            log_warn(
+                "app",
+                "load_theme_css: failed to apply stylesheet path=%s; outcome=continuing"
+                    .printf(redact_fs_path(css_path))
+            );
         }
     }
 

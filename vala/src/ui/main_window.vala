@@ -126,6 +126,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         if (!layer_shell_active) {
             configure_regular_window_fallback();
         }
+        log_info("gui", "window_init: starting");
         build_ui();
         configure_key_handling();
         refresh_all();
@@ -136,7 +137,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                     nm.scan_wifi.end(res);
                 } catch (Error e) {
                     string message = e.message;
-                    debug_log("Could not request periodic Wi-Fi scan: " + message);
+                    debug_log("wifi_scan: periodic request failed error=" + message + "; outcome=continuing");
                 }
             });
 
@@ -149,10 +150,11 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         this.close_request.connect(() => {
             dispose_lifecycle_owners();
+            log_info("gui", "window_close: requested by user/system");
             return false;
         });
 
-        debug_log("Main window created");
+        log_info("gui", "window_init: completed");
     }
 
     private void debug_log(string message) {
@@ -165,7 +167,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         if (!GtkLayerShell.is_supported()) {
             log_warn(
                 "gui",
-                "gtk4-layer-shell is not supported in this session; falling back to regular window mode"
+                "layer_shell_init: unsupported in current session; outcome=using regular window"
             );
             return false;
         }
@@ -174,7 +176,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         if (!GtkLayerShell.is_layer_window(this)) {
             log_error(
                 "gui",
-                "failed to initialize layer-shell surface; falling back to regular window mode"
+                "layer_shell_init: failed to create layer surface; outcome=using regular window"
             );
             return false;
         }
@@ -199,7 +201,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private void configure_regular_window_fallback() {
         log_warn(
             "gui",
-            "running without layer-shell integration; placement and exclusive zone settings are disabled"
+            "layer_shell_fallback: enabled; outcome=placement/exclusive-zone constraints disabled"
         );
 
         // Keep the fallback window above most windows to mimic popup behavior.
@@ -245,11 +247,13 @@ public class MainWindow : Gtk.ApplicationWindow {
                 nm_events_subscription_enabled = nm.subscribe_network_events_dbus.end(res);
             } catch (Error e) {
                 nm_events_subscription_enabled = false;
-                debug_log("Could not subscribe to NM D-Bus signals, using polling fallback: " + e.message);
+                debug_log("nm_events_subscribe: failed error=" + e.message + "; outcome=polling fallback");
+                log_warn("gui", "nm_events_subscribe: failed; outcome=polling fallback enabled");
                 return;
             }
             if (!nm_events_subscription_enabled) {
-                debug_log("Could not subscribe to NM D-Bus signals, using polling fallback");
+                debug_log("nm_events_subscribe: unavailable; outcome=polling fallback");
+                log_warn("gui", "nm_events_subscribe: unavailable; outcome=polling fallback enabled");
                 return;
             }
 
@@ -257,7 +261,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 schedule_signal_refresh();
             });
 
-            debug_log("NetworkManager D-Bus signal refresh enabled");
+            log_info("gui", "nm_events_subscribe: enabled signal-driven refresh");
         });
     }
 

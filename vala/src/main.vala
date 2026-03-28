@@ -25,10 +25,12 @@ int main(string[] args) {
     }
 
     configure_global_logging(debug_enabled);
+    log_info("cli", "startup: initialized logging and parsed options");
 
     var config = AppConfig.load(config_path);
 
     if (status) {
+        log_info("cli", "mode_select: status mode");
         var nm = new NetworkManagerClient();
         string status_json = "";
         var loop = new MainLoop();
@@ -42,6 +44,7 @@ int main(string[] args) {
     }
 
     if (toggle_wifi) {
+        log_info("cli", "mode_select: toggle-wifi mode");
         var nm = new NetworkManagerClient();
         bool enabled_after_toggle = false;
         int toggle_exit_code = 0;
@@ -59,7 +62,7 @@ int main(string[] args) {
         loop.run();
 
         if (toggle_exit_code != 0) {
-            log_error("cli", "toggle-wifi failed: " + toggle_error);
+            log_error("cli", "toggle_wifi: failed error=" + toggle_error);
             return toggle_exit_code;
         }
         stdout.printf("Wi-Fi %s\n", enabled_after_toggle ? "enabled" : "disabled");
@@ -67,5 +70,6 @@ int main(string[] args) {
     }
 
     var app = new NetworkManager(config);
+    log_info("cli", "mode_select: gui mode");
     return app.run(args);
 }
