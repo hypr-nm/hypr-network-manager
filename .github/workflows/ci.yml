@@ -13,19 +13,26 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PREFIX: /home/runner/.local
-      PKG_CONFIG_PATH: /home/runner/.local/lib/pkgconfig:/home/runner/.local/lib/x86_64-linux-gnu/pkgconfig
-      LD_LIBRARY_PATH: /home/runner/.local/lib:/home/runner/.local/lib/x86_64-linux-gnu
+      PREFIX: /usr/local
+      PKG_CONFIG_PATH: /usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig
+      LD_LIBRARY_PATH: /usr/local/lib/x86_64-linux-gnu:/usr/local/lib
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Cache compiled gtk4-layer-shell (installed prefix)
-      - name: Cache gtk4-layer-shell
+      - name: Cache gtk4-layer-shell (Ubuntu)
         uses: actions/cache@v4
         with:
-          path: ~/.local
+          path: |
+            /usr/local/lib/libgtk4-layer-shell*.so*
+            /usr/local/lib/x86_64-linux-gnu/libgtk4-layer-shell*.so*
+            /usr/local/lib/pkgconfig/gtk4-layer-shell-0.pc
+            /usr/local/lib/x86_64-linux-gnu/pkgconfig/gtk4-layer-shell-0.pc
+            /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
+            /usr/local/share/gir-1.0/Gtk4LayerShell-0.1.gir
+            /usr/local/lib/girepository-1.0/Gtk4LayerShell-0.1.typelib
+            /usr/local/lib/x86_64-linux-gnu/girepository-1.0/Gtk4LayerShell-0.1.typelib
           key: ${{ runner.os }}-gtk4-layer-shell-724be167
 
       # Cache meson build directory
@@ -46,23 +53,24 @@ jobs:
             libjson-glib-dev network-manager \
             git shellcheck
 
-      - name: Build gtk4-layer-shell (if needed)
+      - name: Build gtk4-layer-shell
         run: |
           set -euo pipefail
 
-          if ! pkg-config --exists gtk4-layer-shell-0; then
+          if ! pkg-config --exists gtk4-layer-shell-0 || [ ! -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi ]; then
             git clone https://github.com/wmww/gtk4-layer-shell
             cd gtk4-layer-shell
             git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
 
             meson setup build --prefix=$PREFIX
             ninja -C build
-            ninja -C build install
+            sudo ninja -C build install
           else
             echo "gtk4-layer-shell already cached, skipping build"
           fi
 
           pkg-config --modversion gtk4-layer-shell-0
+          test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
 
       - name: Shell syntax check
         run: bash -n scripts/*.sh scripts/lib/*.sh
@@ -99,6 +107,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache gtk4-layer-shell (Fedora)
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib64/libgtk4-layer-shell*.so*
+            /usr/local/lib64/pkgconfig/gtk4-layer-shell-0.pc
+            /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
+            /usr/local/share/gir-1.0/Gtk4LayerShell-0.1.gir
+            /usr/local/lib64/girepository-1.0/Gtk4LayerShell-0.1.typelib
+          key: fedora-gtk4-layer-shell-724be167
+
       - name: Install dependencies
         run: |
           set -euo pipefail
@@ -114,13 +133,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          git clone https://github.com/wmww/gtk4-layer-shell
-          cd gtk4-layer-shell
-          git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
+          if ! pkg-config --exists gtk4-layer-shell-0 || [ ! -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi ]; then
+            git clone https://github.com/wmww/gtk4-layer-shell
+            cd gtk4-layer-shell
+            git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
 
-          meson setup build --prefix=$PREFIX
-          ninja -C build
-          ninja -C build install
+            meson setup build --prefix=$PREFIX
+            ninja -C build
+            ninja -C build install
+          else
+            echo "gtk4-layer-shell already cached, skipping build"
+          fi
 
           pkg-config --modversion gtk4-layer-shell-0
 
