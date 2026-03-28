@@ -6,6 +6,7 @@ json_glib_dep = dependency('json-glib-1.0')
 executable(
   'hypr-network-manager',
   [
+    'src/logging.vala',
     'src/constants.vala',
     'src/models/config.vala',
     'src/models/wifi_network.vala',
