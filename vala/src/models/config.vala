@@ -58,29 +58,25 @@ public class AppConfig : Object {
     }
 
     private static void warn_invalid_config_type(
-        bool debug_enabled,
         string config_path,
         string key,
         string expected_type,
         Json.Node? node
     ) {
-        if (!debug_enabled) {
-            return;
-        }
-
-        stderr.printf(
-            "[hypr-nm] ignoring config key '%s' in %s: expected %s, got %s\n",
-            key,
-            config_path,
-            expected_type,
-            describe_json_node_type(node)
+        log_debug(
+            "config",
+            "ignoring config key '%s' in %s: expected %s, got %s".printf(
+                key,
+                config_path,
+                expected_type,
+                describe_json_node_type(node)
+            )
         );
     }
 
     private static string? extract_json_string(
         Json.Object obj,
         string key,
-        bool debug_enabled,
         string config_path
     ) {
         if (!obj.has_member(key)) {
@@ -91,7 +87,7 @@ public class AppConfig : Object {
         if (node == null
             || node.get_node_type() != Json.NodeType.VALUE
             || node.get_value_type() != typeof(string)) {
-            warn_invalid_config_type(debug_enabled, config_path, key, "string", node);
+            warn_invalid_config_type(config_path, key, "string", node);
             return null;
         }
 
@@ -101,7 +97,6 @@ public class AppConfig : Object {
     private static int? extract_json_int(
         Json.Object obj,
         string key,
-        bool debug_enabled,
         string config_path
     ) {
         if (!obj.has_member(key)) {
@@ -110,7 +105,7 @@ public class AppConfig : Object {
 
         Json.Node? node = obj.get_member(key);
         if (node == null || node.get_node_type() != Json.NodeType.VALUE) {
-            warn_invalid_config_type(debug_enabled, config_path, key, "integer", node);
+            warn_invalid_config_type(config_path, key, "integer", node);
             return null;
         }
 
@@ -133,20 +128,19 @@ public class AppConfig : Object {
             if ((double) whole != value
                 || value < (double) int.MIN
                 || value > (double) int.MAX) {
-                warn_invalid_config_type(debug_enabled, config_path, key, "integer", node);
+                warn_invalid_config_type(config_path, key, "integer", node);
                 return null;
             }
             return (int) value;
         }
 
-        warn_invalid_config_type(debug_enabled, config_path, key, "integer", node);
+        warn_invalid_config_type(config_path, key, "integer", node);
         return null;
     }
 
     private static bool? extract_json_bool(
         Json.Object obj,
         string key,
-        bool debug_enabled,
         string config_path
     ) {
         if (!obj.has_member(key)) {
@@ -157,7 +151,7 @@ public class AppConfig : Object {
         if (node == null
             || node.get_node_type() != Json.NodeType.VALUE
             || node.get_value_type() != typeof(bool)) {
-            warn_invalid_config_type(debug_enabled, config_path, key, "boolean", node);
+            warn_invalid_config_type(config_path, key, "boolean", node);
             return null;
         }
 
@@ -230,7 +224,7 @@ public class AppConfig : Object {
         );
     }
 
-    public static AppConfig load(string? explicit_path, bool debug_enabled) {
+    public static AppConfig load(string? explicit_path) {
         var cfg = new AppConfig();
 
         string local_config_path = get_default_config_path();
@@ -250,16 +244,16 @@ public class AppConfig : Object {
         }
 
         if (!has_config) {
-            if (debug_enabled) {
-                if (explicit_path != null) {
-                    stderr.printf("[hypr-nm] config file not found: %s\n", effective_config_path);
-                } else {
-                    stderr.printf(
-                        "[hypr-nm] config file not found in local/system paths: %s, %s\n",
+            if (explicit_path != null) {
+                log_debug("config", "config file not found: " + effective_config_path);
+            } else {
+                log_debug(
+                    "config",
+                    "config file not found in local/system paths: %s, %s".printf(
                         local_config_path,
                         system_config_path
-                    );
-                }
+                    )
+                );
             }
             return cfg;
         }
@@ -283,20 +277,18 @@ public class AppConfig : Object {
 
             Json.Node? root = parser.get_root();
             if (root == null || root.get_node_type() != Json.NodeType.OBJECT) {
-                if (debug_enabled) {
-                    stderr.printf("[hypr-nm] config root must be a JSON object: %s\n", effective_config_path);
-                }
+                log_debug("config", "config root must be a JSON object: " + effective_config_path);
                 return cfg;
             }
 
             Json.Object obj = root.get_object();
 
-            int? cfg_width = extract_json_int(obj, "window_width", debug_enabled, effective_config_path);
+            int? cfg_width = extract_json_int(obj, "window_width", effective_config_path);
             if (cfg_width != null && cfg_width > 0) {
                 cfg.window_width = cfg_width;
             }
 
-            int? cfg_height = extract_json_int(obj, "window_height", debug_enabled, effective_config_path);
+            int? cfg_height = extract_json_int(obj, "window_height", effective_config_path);
             if (cfg_height != null && cfg_height > 0) {
                 cfg.window_height = cfg_height;
             }
@@ -304,7 +296,6 @@ public class AppConfig : Object {
             string? cfg_layer = extract_json_string(
                 obj,
                 "layer_shell_layer",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_layer != null) {
@@ -315,7 +306,6 @@ public class AppConfig : Object {
             string? cfg_position = extract_json_string(
                 obj,
                 "position",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_position != null) {
@@ -335,7 +325,6 @@ public class AppConfig : Object {
             int? cfg_margin_top = extract_json_int(
                 obj,
                 "layer_shell_margin_top",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_margin_top != null) {
@@ -344,7 +333,6 @@ public class AppConfig : Object {
             int? cfg_margin_right = extract_json_int(
                 obj,
                 "layer_shell_margin_right",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_margin_right != null) {
@@ -353,7 +341,6 @@ public class AppConfig : Object {
             int? cfg_margin_bottom = extract_json_int(
                 obj,
                 "layer_shell_margin_bottom",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_margin_bottom != null) {
@@ -362,7 +349,6 @@ public class AppConfig : Object {
             int? cfg_margin_left = extract_json_int(
                 obj,
                 "layer_shell_margin_left",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_margin_left != null) {
@@ -372,7 +358,6 @@ public class AppConfig : Object {
             int? cfg_scan_interval = extract_json_int(
                 obj,
                 "scan_interval",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_scan_interval != null && cfg_scan_interval > 0) {
@@ -382,7 +367,6 @@ public class AppConfig : Object {
             int? cfg_pending_wifi_connect_timeout_ms = extract_json_int(
                 obj,
                 "pending_wifi_connect_timeout_ms",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_pending_wifi_connect_timeout_ms != null && cfg_pending_wifi_connect_timeout_ms > 0) {
@@ -392,7 +376,6 @@ public class AppConfig : Object {
             bool? cfg_close_on_connect = extract_json_bool(
                 obj,
                 "close_on_connect",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_close_on_connect != null) {
@@ -402,7 +385,6 @@ public class AppConfig : Object {
             bool? cfg_show_bssid = extract_json_bool(
                 obj,
                 "show_bssid",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_show_bssid != null) {
@@ -412,7 +394,6 @@ public class AppConfig : Object {
             bool? cfg_show_frequency = extract_json_bool(
                 obj,
                 "show_frequency",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_show_frequency != null) {
@@ -422,20 +403,15 @@ public class AppConfig : Object {
             bool? cfg_show_band = extract_json_bool(
                 obj,
                 "show_band",
-                debug_enabled,
                 effective_config_path
             );
             if (cfg_show_band != null) {
                 cfg.show_band = cfg_show_band;
             }
 
-            if (debug_enabled) {
-                stderr.printf("[hypr-nm] loaded config: %s\n", effective_config_path);
-            }
+            log_debug("config", "loaded config: " + effective_config_path);
         } catch (Error e) {
-            if (debug_enabled) {
-                stderr.printf("[hypr-nm] could not read config %s: %s\n", effective_config_path, e.message);
-            }
+            log_debug("config", "could not read config %s: %s".printf(effective_config_path, e.message));
         }
 
         return cfg;

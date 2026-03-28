@@ -14,7 +14,6 @@ public class MainWindow : Gtk.ApplicationWindow {
     private const int MIN_WINDOW_WIDTH = 480;
     private const int MIN_WINDOW_HEIGHT = 680;
 
-    private bool debug_enabled;
     private int window_width;
     private int window_height;
     private bool anchor_top;
@@ -61,14 +60,13 @@ public class MainWindow : Gtk.ApplicationWindow {
     private uint signal_refresh_source_id = 0;
     private ulong nm_events_changed_handler_id = 0;
     private bool nm_events_subscription_enabled = false;
+    private bool layer_shell_active = false;
 
     public MainWindow(
         Gtk.Application app,
-        bool debug_enabled,
         AppConfig config
     ) {
         Object(application: app, title: "Network Manager");
-        this.debug_enabled = debug_enabled;
         this.window_width = config.window_width;
         this.window_height = config.window_height;
         this.anchor_top = config.anchor_top;
@@ -97,7 +95,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         set_resizable(false);
         set_opacity(1.0);
         add_css_class("nm-window");
-        nm = new NetworkManagerClient(debug_enabled);
+        nm = new NetworkManagerClient();
         wifi_controller = new MainWindowWifiController();
         ethernet_controller = new MainWindowEthernetController(
             nm,
@@ -124,7 +122,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         pending_wifi_seen_connecting = new HashTable<string, bool>(str_hash, str_equal);
         active_wifi_connections = new HashTable<string, bool>(str_hash, str_equal);
 
-        configure_layer_shell();
+        layer_shell_active = configure_layer_shell();
+        if (!layer_shell_active) {
+            configure_regular_window_fallback();
+        }
         build_ui();
         configure_key_handling();
         refresh_all();
@@ -155,27 +156,27 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void debug_log(string message) {
-        if (debug_enabled) {
-            stderr.printf("[nm-gui] %s\n", message);
-        }
+        log_debug("gui", message);
     }
 
-    private void configure_layer_shell() {
+    private bool configure_layer_shell() {
         GtkLayerShell.Layer layer_mode = parse_layer_mode(shell_layer);
 
         if (!GtkLayerShell.is_supported()) {
-            stderr.printf(
-                "Warning: GtkLayerShell.is_supported() returned false; attempting init anyway.\n"
+            log_warn(
+                "gui",
+                "gtk4-layer-shell is not supported in this session; falling back to regular window mode"
             );
+            return false;
         }
 
         GtkLayerShell.init_for_window(this);
         if (!GtkLayerShell.is_layer_window(this)) {
-            stderr.printf(
-                "Error: failed to initialize layer-shell surface.\n"
-                + "Try launching with LD_PRELOAD for libgtk4-layer-shell.\n"
+            log_error(
+                "gui",
+                "failed to initialize layer-shell surface; falling back to regular window mode"
             );
-            Process.exit(1);
+            return false;
         }
 
         GtkLayerShell.set_namespace(this, "hypr-network-manager");
@@ -192,6 +193,17 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
         GtkLayerShell.auto_exclusive_zone_enable(this);
+        return true;
+    }
+
+    private void configure_regular_window_fallback() {
+        log_warn(
+            "gui",
+            "running without layer-shell integration; placement and exclusive zone settings are disabled"
+        );
+
+        // Keep the fallback window above most windows to mimic popup behavior.
+        this.set_modal(true);
     }
 
     private GtkLayerShell.Layer parse_layer_mode(string value) {
@@ -271,6 +283,10 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     public void set_popup_text_input_mode(bool enabled) {
+        if (!layer_shell_active) {
+            return;
+        }
+
         if (enabled) {
             GtkLayerShell.set_keyboard_mode(this, GtkLayerShell.KeyboardMode.ON_DEMAND);
             return;

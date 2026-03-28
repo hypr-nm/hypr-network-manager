@@ -4,6 +4,8 @@ int main(string[] args) {
     bool status = false;
     bool toggle_wifi = false;
 
+    configure_global_logging(false);
+
     OptionEntry[] entries = {
         {"config", 'c', 0, OptionArg.STRING, ref config_path, "Config JSON path", "PATH"},
         {"status", 0, 0, OptionArg.NONE, ref status, "Print JSON status for waybar/eww", null},
@@ -18,14 +20,16 @@ int main(string[] args) {
     try {
         context.parse(ref args);
     } catch (OptionError e) {
-        stderr.printf("%s\n", e.message);
+        log_error("cli", e.message);
         return 1;
     }
 
-    var config = AppConfig.load(config_path, debug_enabled);
+    configure_global_logging(debug_enabled);
+
+    var config = AppConfig.load(config_path);
 
     if (status) {
-        var nm = new NetworkManagerClient(debug_enabled);
+        var nm = new NetworkManagerClient();
         string status_json = "";
         var loop = new MainLoop();
         nm.get_status_json_dbus.begin(null, (obj, res) => {
@@ -38,7 +42,7 @@ int main(string[] args) {
     }
 
     if (toggle_wifi) {
-        var nm = new NetworkManagerClient(debug_enabled);
+        var nm = new NetworkManagerClient();
         bool enabled_after_toggle = false;
         int toggle_exit_code = 0;
         string toggle_error = "";
@@ -55,13 +59,13 @@ int main(string[] args) {
         loop.run();
 
         if (toggle_exit_code != 0) {
-            stderr.printf("toggle-wifi failed: %s\n", toggle_error);
+            log_error("cli", "toggle-wifi failed: " + toggle_error);
             return toggle_exit_code;
         }
         stdout.printf("Wi-Fi %s\n", enabled_after_toggle ? "enabled" : "disabled");
         return 0;
     }
 
-    var app = new NetworkManager(config, debug_enabled);
+    var app = new NetworkManager(config);
     return app.run(args);
 }

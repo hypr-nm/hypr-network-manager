@@ -33,7 +33,6 @@ public class NmSignalSubscription : Object {
 }
 
 public class NetworkManagerClient : Object {
-    private bool debug_enabled;
     private GlobalDbusRunner dbus_runner;
     private NmWifiClient wifi_client;
     private NmEthernetClient ethernet_client;
@@ -44,8 +43,7 @@ public class NetworkManagerClient : Object {
 
     public signal void network_events_changed();
 
-    public NetworkManagerClient(bool debug_enabled) {
-        this.debug_enabled = debug_enabled;
+    public NetworkManagerClient() {
         dbus_runner = GlobalDbusRunner.get_default();
         wifi_client = new NmWifiClient(this);
         ethernet_client = new NmEthernetClient(this);
@@ -53,9 +51,7 @@ public class NetworkManagerClient : Object {
     }
 
     internal void debug_log(string message) {
-        if (debug_enabled) {
-            stderr.printf("[hypr-nm] %s\n", message);
-        }
+        log_debug("nm-client", message);
     }
 
     private void add_nm_signal_subscription(DBusProxy proxy, ulong handler_id) {

@@ -10,20 +10,16 @@ private extern void gtk_style_provider_add_for_display(
 
 public class NetworkManager : Gtk.Application {
     private AppConfig config;
-    private bool debug_enabled;
     private MainWindow? window;
     private BlankWindow? dismiss_overlay;
 
-    public NetworkManager(AppConfig config, bool debug_enabled) {
+    public NetworkManager(AppConfig config) {
         Object(application_id: "io.github.hypr-network-manager.vala");
         this.config = config;
-        this.debug_enabled = debug_enabled;
     }
 
     private void debug_log(string message) {
-        if (debug_enabled) {
-            stderr.printf("[hypr-nm] %s\n", message);
-        }
+        log_debug("app", message);
     }
 
     private string get_local_base_css_path() {
@@ -148,7 +144,6 @@ public class NetworkManager : Gtk.Application {
 
         window = new MainWindow(
             this,
-            debug_enabled,
             config
         );
         window.close_request.connect(() => {
