@@ -7,6 +7,8 @@ public class MainWindowWifiRuntimeController : Object {
     private Cancellable? wifi_refresh_cancellable = null;
     private HashTable<string, string> wifi_row_signatures;
     private string[] wifi_row_order = {};
+    private bool wifi_refresh_in_flight = false;
+    private bool wifi_refresh_queued = false;
 
     public MainWindowWifiRuntimeController () {
         wifi_row_signatures = new HashTable<string, string> (str_hash, str_equal);
@@ -31,6 +33,8 @@ public class MainWindowWifiRuntimeController : Object {
             wifi_refresh_cancellable.cancel ();
             wifi_refresh_cancellable = null;
         }
+        wifi_refresh_in_flight = false;
+        wifi_refresh_queued = false;
     }
 
     private uint capture_ui_epoch () {
@@ -265,17 +269,22 @@ public class MainWindowWifiRuntimeController : Object {
         HashTable<string, bool> pending_wifi_seen_connecting,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        owned MainWindowActionCallback on_hide_active_wifi_password_prompt,
-        owned MainWindowActionCallback on_refresh_switch_states,
-        owned MainWindowWifiRowBuildCallback on_build_wifi_row,
-        owned MainWindowLogCallback on_log
+        MainWindowActionCallback on_hide_active_wifi_password_prompt,
+        MainWindowActionCallback on_refresh_switch_states,
+        MainWindowWifiRowBuildCallback on_build_wifi_row,
+        MainWindowLogCallback on_log
     ) {
+        if (wifi_refresh_in_flight) {
+            wifi_refresh_queued = true;
+            return;
+        }
+
+        wifi_refresh_in_flight = true;
         uint epoch = capture_ui_epoch ();
         on_log ("Refreshing Wi-Fi list");
         string current_view = wifi_stack.get_visible_child_name ();
         on_refresh_switch_states ();
 
-        cancel_wifi_refresh ();
         var request_cancellable = new Cancellable ();
         wifi_refresh_cancellable = request_cancellable;
 
@@ -421,6 +430,13 @@ public class MainWindowWifiRuntimeController : Object {
             } finally {
                 if (wifi_refresh_cancellable == request_cancellable) {
                     wifi_refresh_cancellable = null;
+                }
+                wifi_refresh_in_flight = false;
+
+                if (wifi_refresh_queued && is_ui_epoch_valid (epoch)) {
+                    // Coalesce repeated refresh requests during in-flight work.
+                    // A subsequent timer/signal-triggered refresh will pick up the latest state.
+                    wifi_refresh_queued = false;
                 }
             }
         });

@@ -277,10 +277,10 @@ public class MainWindowWifiController : Object {
         HashTable<string, bool> pending_wifi_seen_connecting,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        owned MainWindowActionCallback on_hide_active_wifi_password_prompt,
-        owned MainWindowActionCallback on_refresh_switch_states,
-        owned MainWindowWifiRowBuildCallback on_build_wifi_row,
-        owned MainWindowLogCallback on_log
+        MainWindowActionCallback on_hide_active_wifi_password_prompt,
+        MainWindowActionCallback on_refresh_switch_states,
+        MainWindowWifiRowBuildCallback on_build_wifi_row,
+        MainWindowLogCallback on_log
     ) {
         runtime_controller.refresh_wifi (
             nm,
@@ -293,10 +293,10 @@ public class MainWindowWifiController : Object {
             pending_wifi_seen_connecting,
             active_wifi_password_row_id,
             has_active_wifi_password_prompt,
-            (owned) on_hide_active_wifi_password_prompt,
-            (owned) on_refresh_switch_states,
-            (owned) on_build_wifi_row,
-            (owned) on_log
+            on_hide_active_wifi_password_prompt,
+            on_refresh_switch_states,
+            on_build_wifi_row,
+            on_log
         );
     }
 

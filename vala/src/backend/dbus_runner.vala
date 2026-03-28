@@ -101,6 +101,16 @@ public class GlobalDbusRunner : Object {
             return new DbusRequestResult.success (result);
         } catch (Error e) {
             string proxy_path = proxy.get_object_path ();
+            if (e is IOError.CANCELLED) {
+                log_debug (
+                    "dbus-runner",
+                    "dbus_call: cancelled object=" + redact_object_path (proxy_path)
+                        + " method=" + method
+                        + " timeout_ms=" + effective_timeout_ms.to_string ()
+                );
+                return new DbusRequestResult.failure (e.message);
+            }
+
             log_warn (
                 "dbus-runner",
                 "dbus_call: request failed object=" + redact_object_path (proxy_path)
