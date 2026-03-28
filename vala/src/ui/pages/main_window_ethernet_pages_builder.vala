@@ -7,7 +7,7 @@ public class MainWindowEthernetViewContext : Object {
     public MainWindowEthernetDetailsPage details_page { get; private set; }
     public MainWindowEthernetEditPage edit_page { get; private set; }
 
-    public MainWindowEthernetViewContext(
+    public MainWindowEthernetViewContext (
         Gtk.Widget page,
         Gtk.ListBox listbox,
         Gtk.Stack stack,
@@ -31,96 +31,96 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
     public Gtk.Button primary_button { get; private set; }
     public Gtk.Button edit_button { get; private set; }
 
-    public signal void back();
-    public signal void primary_action();
-    public signal void edit();
+    public signal void back ();
+    public signal void primary_action ();
+    public signal void edit ();
 
-    public MainWindowEthernetDetailsPage() {
-        Object(orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+    public MainWindowEthernetDetailsPage () {
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start(12);
-        this.set_margin_end(12);
-        this.set_margin_top(12);
-        this.set_margin_bottom(12);
-        this.add_css_class("nm-page");
-        this.add_css_class("nm-page-ethernet-details");
-        this.add_css_class("nm-page-network-details");
+        this.set_margin_start (12);
+        this.set_margin_end (12);
+        this.set_margin_top (12);
+        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-ethernet-details");
+        this.add_css_class ("nm-page-network-details");
 
-        var nav_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-        nav_row.add_css_class("nm-details-nav-row");
+        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+        nav_row.add_css_class ("nm-details-nav-row");
 
-        var back_btn = MainWindowHelpers.build_back_button(() => {
-            this.back();
+        var back_btn = MainWindowHelpers.build_back_button (() => {
+            this.back ();
         });
-        nav_row.append(back_btn);
-        this.append(nav_row);
+        nav_row.append (back_btn);
+        this.append (nav_row);
 
-        var header = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
-        header.set_halign(Gtk.Align.CENTER);
-        header.add_css_class("nm-details-header");
+        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        header.set_halign (Gtk.Align.CENTER);
+        header.add_css_class ("nm-details-header");
 
-        var icon = new Gtk.Image.from_icon_name("network-transmit-receive-symbolic");
-        icon.set_pixel_size(28);
-        icon.add_css_class("nm-signal-icon");
-        icon.add_css_class("nm-ethernet-icon");
-        icon.add_css_class("nm-details-network-icon");
-        header.append(icon);
+        var icon = new Gtk.Image.from_icon_name ("network-transmit-receive-symbolic");
+        icon.set_pixel_size (28);
+        icon.add_css_class ("nm-signal-icon");
+        icon.add_css_class ("nm-ethernet-icon");
+        icon.add_css_class ("nm-details-network-icon");
+        header.append (icon);
 
-        this.details_title = new Gtk.Label("Ethernet");
-        this.details_title.set_xalign(0.5f);
-        this.details_title.set_halign(Gtk.Align.CENTER);
-        this.details_title.add_css_class("nm-details-network-title");
-        header.append(this.details_title);
+        this.details_title = new Gtk.Label ("Ethernet");
+        this.details_title.set_xalign (0.5f);
+        this.details_title.set_halign (Gtk.Align.CENTER);
+        this.details_title.add_css_class ("nm-details-network-title");
+        header.append (this.details_title);
 
-        this.action_row = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        this.action_row.set_halign(Gtk.Align.CENTER);
-        this.action_row.add_css_class("nm-details-action-row");
+        this.action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        this.action_row.set_halign (Gtk.Align.CENTER);
+        this.action_row.add_css_class ("nm-details-action-row");
 
-        this.primary_button = new Gtk.Button.with_label("Connect");
-        this.primary_button.add_css_class("nm-button");
-        this.primary_button.add_css_class("nm-action-button");
-        this.primary_button.add_css_class("nm-details-action-button");
-        this.primary_button.clicked.connect(() => {
-            this.primary_action();
+        this.primary_button = new Gtk.Button.with_label ("Connect");
+        this.primary_button.add_css_class ("nm-button");
+        this.primary_button.add_css_class ("nm-action-button");
+        this.primary_button.add_css_class ("nm-details-action-button");
+        this.primary_button.clicked.connect (() => {
+            this.primary_action ();
         });
-        this.action_row.append(this.primary_button);
+        this.action_row.append (this.primary_button);
 
-        this.edit_button = new Gtk.Button.with_label("Edit");
-        this.edit_button.add_css_class("nm-button");
-        this.edit_button.add_css_class("nm-action-button");
-        this.edit_button.add_css_class("nm-details-action-button");
-        this.edit_button.clicked.connect(() => {
-            this.edit();
+        this.edit_button = new Gtk.Button.with_label ("Edit");
+        this.edit_button.add_css_class ("nm-button");
+        this.edit_button.add_css_class ("nm-action-button");
+        this.edit_button.add_css_class ("nm-details-action-button");
+        this.edit_button.clicked.connect (() => {
+            this.edit ();
         });
-        this.action_row.append(this.edit_button);
+        this.action_row.append (this.edit_button);
 
-        header.append(this.action_row);
-        this.append(header);
+        header.append (this.action_row);
+        this.append (header);
 
-        var sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
-        sep.add_css_class("nm-separator");
-        this.append(sep);
+        var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
+        sep.add_css_class ("nm-separator");
+        this.append (sep);
 
-        var scroll = new Gtk.ScrolledWindow();
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class("nm-scroll");
-        scroll.set_vexpand(true);
+        var scroll = new Gtk.ScrolledWindow ();
+        scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class ("nm-scroll");
+        scroll.set_vexpand (true);
 
-        var body = new Gtk.Box(Gtk.Orientation.VERTICAL, 12);
-        body.set_margin_top(4);
-        body.set_margin_bottom(4);
+        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
+        body.set_margin_top (4);
+        body.set_margin_bottom (4);
 
         Gtk.Box b_rows, a_rows, i_rows;
-        body.append(MainWindowHelpers.build_details_section("Basic", out b_rows));
-        body.append(MainWindowHelpers.build_details_section("Advanced", out a_rows));
-        body.append(MainWindowHelpers.build_details_section("IP", out i_rows));
+        body.append (MainWindowHelpers.build_details_section ("Basic", out b_rows));
+        body.append (MainWindowHelpers.build_details_section ("Advanced", out a_rows));
+        body.append (MainWindowHelpers.build_details_section ("IP", out i_rows));
 
         this.basic_rows = b_rows;
         this.advanced_rows = a_rows;
         this.ip_rows = i_rows;
 
-        scroll.set_child(body);
-        this.append(scroll);
+        scroll.set_child (body);
+        this.append (scroll);
     }
 }
 
@@ -140,51 +140,51 @@ public class MainWindowEthernetEditPage : Gtk.Box {
     public Gtk.Switch ipv6_gateway_auto_switch { get; private set; }
     public Gtk.Entry ipv6_gateway_entry { get; private set; }
 
-    public signal void back();
-    public signal void apply();
-    public signal void sync_sensitivity();
+    public signal void back ();
+    public signal void apply ();
+    public signal void sync_sensitivity ();
 
-    public MainWindowEthernetEditPage() {
-        Object(orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+    public MainWindowEthernetEditPage () {
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start(12);
-        this.set_margin_end(12);
-        this.set_margin_top(12);
-        this.set_margin_bottom(12);
-        this.add_css_class("nm-page");
-        this.add_css_class("nm-page-ethernet-edit");
-        this.add_css_class("nm-page-network-edit");
+        this.set_margin_start (12);
+        this.set_margin_end (12);
+        this.set_margin_top (12);
+        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-ethernet-edit");
+        this.add_css_class ("nm-page-network-edit");
 
-        var header = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        var back_btn = MainWindowHelpers.build_back_button(() => {
-            this.back();
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var back_btn = MainWindowHelpers.build_back_button (() => {
+            this.back ();
         });
-        header.append(back_btn);
+        header.append (back_btn);
 
-        this.edit_title = new Gtk.Label("Edit Ethernet");
-        this.edit_title.set_xalign(0.0f);
-        this.edit_title.set_hexpand(true);
-        this.edit_title.add_css_class("nm-section-title");
-        header.append(this.edit_title);
-        this.append(header);
+        this.edit_title = new Gtk.Label ("Edit Ethernet");
+        this.edit_title.set_xalign (0.0f);
+        this.edit_title.set_hexpand (true);
+        this.edit_title.add_css_class ("nm-section-title");
+        header.append (this.edit_title);
+        this.append (header);
 
-        var form = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
-        form.add_css_class("nm-edit-form");
-        form.add_css_class("nm-edit-ethernet-form");
-        form.add_css_class("nm-edit-network-form");
+        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        form.add_css_class ("nm-edit-form");
+        form.add_css_class ("nm-edit-ethernet-form");
+        form.add_css_class ("nm-edit-network-form");
 
-        this.note_label = new Gtk.Label("");
-        this.note_label.set_xalign(0.0f);
-        this.note_label.set_wrap(true);
-        this.note_label.add_css_class("nm-sub-label");
-        this.note_label.add_css_class("nm-edit-note");
-        form.append(this.note_label);
+        this.note_label = new Gtk.Label ("");
+        this.note_label.set_xalign (0.0f);
+        this.note_label.set_wrap (true);
+        this.note_label.add_css_class ("nm-sub-label");
+        this.note_label.add_css_class ("nm-edit-note");
+        form.append (this.note_label);
 
         Gtk.DropDown v4_method;
         Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;
         Gtk.Switch v4_gw_auto, v4_dns_auto;
 
-        MainWindowIpEditFormBuilder.append_ipv4_section(
+        MainWindowIpEditFormBuilder.append_ipv4_section (
             form,
             out v4_method,
             out v4_address,
@@ -194,7 +194,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
             out v4_dns_auto,
             out v4_dns,
             () => {
-                this.sync_sensitivity();
+                this.sync_sensitivity ();
             },
             true
         );
@@ -211,7 +211,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         Gtk.Entry v6_address, v6_prefix, v6_gw;
         Gtk.Switch v6_gw_auto;
 
-        MainWindowIpEditFormBuilder.append_ipv6_section(
+        MainWindowIpEditFormBuilder.append_ipv6_section (
             form,
             out v6_method,
             out v6_address,
@@ -219,7 +219,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
             out v6_gw_auto,
             out v6_gw,
             () => {
-                this.sync_sensitivity();
+                this.sync_sensitivity ();
             },
             true
         );
@@ -230,100 +230,100 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         this.ipv6_gateway_auto_switch = v6_gw_auto;
         this.ipv6_gateway_entry = v6_gw;
 
-        var actions = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 8);
-        var save_btn = new Gtk.Button.with_label("Apply");
-        save_btn.add_css_class("nm-button");
-        save_btn.add_css_class("suggested-action");
-        save_btn.clicked.connect(() => {
-            this.apply();
+        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var save_btn = new Gtk.Button.with_label ("Apply");
+        save_btn.add_css_class ("nm-button");
+        save_btn.add_css_class ("suggested-action");
+        save_btn.clicked.connect (() => {
+            this.apply ();
         });
-        actions.append(save_btn);
+        actions.append (save_btn);
 
-        form.append(actions);
+        form.append (actions);
 
-        var scroll = new Gtk.ScrolledWindow();
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class("nm-scroll");
-        scroll.set_vexpand(true);
-        scroll.set_child(form);
+        var scroll = new Gtk.ScrolledWindow ();
+        scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class ("nm-scroll");
+        scroll.set_vexpand (true);
+        scroll.set_child (form);
 
-        this.append(scroll);
+        this.append (scroll);
     }
 }
 
 public class MainWindowEthernetPageBuilder : Object {
-    public static Gtk.Widget build_page(
+    public static Gtk.Widget build_page (
         out Gtk.ListBox ethernet_listbox,
         out Gtk.Stack ethernet_stack,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
         MainWindowActionCallback on_refresh
     ) {
-        var page = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
-        page.add_css_class("nm-page");
-        page.add_css_class("nm-page-ethernet");
+        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        page.add_css_class ("nm-page");
+        page.add_css_class ("nm-page-ethernet");
 
-        var toolbar = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
-        toolbar.set_margin_start(12);
-        toolbar.set_margin_end(8);
-        toolbar.set_margin_top(8);
-        toolbar.set_margin_bottom(8);
-        toolbar.add_css_class("nm-toolbar");
+        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+        toolbar.set_margin_start (12);
+        toolbar.set_margin_end (8);
+        toolbar.set_margin_top (8);
+        toolbar.set_margin_bottom (8);
+        toolbar.add_css_class ("nm-toolbar");
 
-        var title = new Gtk.Label("Ethernet");
-        title.set_xalign(0.0f);
-        title.set_hexpand(true);
-        title.add_css_class("nm-section-title");
-        toolbar.append(title);
+        var title = new Gtk.Label ("Ethernet");
+        title.set_xalign (0.0f);
+        title.set_hexpand (true);
+        title.add_css_class ("nm-section-title");
+        toolbar.append (title);
 
-        var refresh_btn = new Gtk.Button();
-        refresh_btn.add_css_class("nm-button");
-        refresh_btn.add_css_class("nm-icon-button");
-        var refresh_icon = new Gtk.Image.from_icon_name("view-refresh-symbolic");
-        refresh_icon.set_pixel_size(16);
-        refresh_icon.add_css_class("nm-toolbar-icon");
-        refresh_icon.add_css_class("nm-refresh-icon");
-        refresh_icon.add_css_class("nm-ethernet-refresh-icon");
-        refresh_btn.set_child(refresh_icon);
-        refresh_btn.clicked.connect(() => {
-            on_refresh();
+        var refresh_btn = new Gtk.Button ();
+        refresh_btn.add_css_class ("nm-button");
+        refresh_btn.add_css_class ("nm-icon-button");
+        var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
+        refresh_icon.set_pixel_size (16);
+        refresh_icon.add_css_class ("nm-toolbar-icon");
+        refresh_icon.add_css_class ("nm-refresh-icon");
+        refresh_icon.add_css_class ("nm-ethernet-refresh-icon");
+        refresh_btn.set_child (refresh_icon);
+        refresh_btn.clicked.connect (() => {
+            on_refresh ();
         });
-        toolbar.append(refresh_btn);
+        toolbar.append (refresh_btn);
 
-        page.append(toolbar);
+        page.append (toolbar);
 
-        var scroll = new Gtk.ScrolledWindow();
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class("nm-scroll");
+        var scroll = new Gtk.ScrolledWindow ();
+        scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class ("nm-scroll");
 
-        ethernet_listbox = new Gtk.ListBox();
-        ethernet_listbox.set_selection_mode(Gtk.SelectionMode.NONE);
-        ethernet_listbox.add_css_class("nm-list");
-        scroll.set_child(ethernet_listbox);
+        ethernet_listbox = new Gtk.ListBox ();
+        ethernet_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
+        ethernet_listbox.add_css_class ("nm-list");
+        scroll.set_child (ethernet_listbox);
 
-        var ethernet_placeholder = new Gtk.Box(Gtk.Orientation.VERTICAL, 8);
-        ethernet_placeholder.set_halign(Gtk.Align.CENTER);
-        ethernet_placeholder.set_valign(Gtk.Align.CENTER);
-        ethernet_placeholder.add_css_class("nm-empty-state");
-        var eth_icon = new Gtk.Image.from_icon_name("network-wired-symbolic");
-        eth_icon.set_pixel_size(24);
-        eth_icon.add_css_class("nm-placeholder-icon");
-        eth_icon.add_css_class("nm-ethernet-placeholder-icon");
-        var eth_lbl = new Gtk.Label("No Ethernet devices found");
-        eth_lbl.add_css_class("nm-placeholder-label");
-        ethernet_placeholder.append(eth_icon);
-        ethernet_placeholder.append(eth_lbl);
+        var ethernet_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        ethernet_placeholder.set_halign (Gtk.Align.CENTER);
+        ethernet_placeholder.set_valign (Gtk.Align.CENTER);
+        ethernet_placeholder.add_css_class ("nm-empty-state");
+        var eth_icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
+        eth_icon.set_pixel_size (24);
+        eth_icon.add_css_class ("nm-placeholder-icon");
+        eth_icon.add_css_class ("nm-ethernet-placeholder-icon");
+        var eth_lbl = new Gtk.Label ("No Ethernet devices found");
+        eth_lbl.add_css_class ("nm-placeholder-label");
+        ethernet_placeholder.append (eth_icon);
+        ethernet_placeholder.append (eth_lbl);
 
-        ethernet_stack = new Gtk.Stack();
-        ethernet_stack.set_vexpand(true);
-        ethernet_stack.add_css_class("nm-content-stack");
-        ethernet_stack.add_named(scroll, "list");
-        ethernet_stack.add_named(ethernet_placeholder, "empty");
-        ethernet_stack.add_named(details_page, "details");
-        ethernet_stack.add_named(edit_page, "edit");
-        ethernet_stack.set_visible_child_name("empty");
+        ethernet_stack = new Gtk.Stack ();
+        ethernet_stack.set_vexpand (true);
+        ethernet_stack.add_css_class ("nm-content-stack");
+        ethernet_stack.add_named (scroll, "list");
+        ethernet_stack.add_named (ethernet_placeholder, "empty");
+        ethernet_stack.add_named (details_page, "details");
+        ethernet_stack.add_named (edit_page, "edit");
+        ethernet_stack.set_visible_child_name ("empty");
 
-        page.append(ethernet_stack);
+        page.append (ethernet_stack);
         return page;
     }
 }

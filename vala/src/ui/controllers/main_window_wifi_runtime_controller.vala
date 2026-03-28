@@ -8,40 +8,40 @@ public class MainWindowWifiRuntimeController : Object {
     private HashTable<string, string> wifi_row_signatures;
     private string[] wifi_row_order = {};
 
-    public MainWindowWifiRuntimeController() {
-        wifi_row_signatures = new HashTable<string, string>(str_hash, str_equal);
+    public MainWindowWifiRuntimeController () {
+        wifi_row_signatures = new HashTable<string, string> (str_hash, str_equal);
     }
 
-    public void on_page_leave() {
-        cancel_wifi_refresh();
-        invalidate_ui_state();
+    public void on_page_leave () {
+        cancel_wifi_refresh ();
+        invalidate_ui_state ();
     }
 
-    public void dispose_controller() {
+    public void dispose_controller () {
         if (is_disposed) {
             return;
         }
         is_disposed = true;
-        cancel_wifi_refresh();
-        invalidate_ui_state();
+        cancel_wifi_refresh ();
+        invalidate_ui_state ();
     }
 
-    private void cancel_wifi_refresh() {
+    private void cancel_wifi_refresh () {
         if (wifi_refresh_cancellable != null) {
-            wifi_refresh_cancellable.cancel();
+            wifi_refresh_cancellable.cancel ();
             wifi_refresh_cancellable = null;
         }
     }
 
-    private uint capture_ui_epoch() {
+    private uint capture_ui_epoch () {
         return ui_epoch;
     }
 
-    private bool is_ui_epoch_valid(uint epoch) {
+    private bool is_ui_epoch_valid (uint epoch) {
         return !is_disposed && epoch == ui_epoch;
     }
 
-    private void invalidate_ui_state() {
+    private void invalidate_ui_state () {
         ui_epoch++;
         if (ui_epoch == 0) {
             ui_epoch = 1;
@@ -51,23 +51,23 @@ public class MainWindowWifiRuntimeController : Object {
             switch_refresh_epoch = 1;
         }
         updating_switches = false;
-        cancel_all_timeout_sources();
+        cancel_all_timeout_sources ();
         wifi_row_order = {};
-        wifi_row_signatures.remove_all();
+        wifi_row_signatures.remove_all ();
     }
 
-    public bool is_updating_switches() {
+    public bool is_updating_switches () {
         return updating_switches;
     }
 
-    private void track_timeout_source(uint source_id) {
+    private void track_timeout_source (uint source_id) {
         if (source_id == 0) {
             return;
         }
         timeout_source_ids += source_id;
     }
 
-    private void untrack_timeout_source(uint source_id) {
+    private void untrack_timeout_source (uint source_id) {
         if (source_id == 0 || timeout_source_ids.length == 0) {
             return;
         }
@@ -81,22 +81,22 @@ public class MainWindowWifiRuntimeController : Object {
         timeout_source_ids = remaining;
     }
 
-    private void cancel_all_timeout_sources() {
+    private void cancel_all_timeout_sources () {
         if (timeout_source_ids.length == 0) {
             return;
         }
 
         foreach (uint source_id in timeout_source_ids) {
-            Source.remove(source_id);
+            Source.remove (source_id);
         }
         timeout_source_ids = {};
     }
 
-    private static string get_wifi_row_id(WifiNetwork net) {
-        return "%s|%s".printf(net.device_path, net.ap_path);
+    private static string get_wifi_row_id (WifiNetwork net) {
+        return "%s|%s".printf (net.device_path, net.ap_path);
     }
 
-    private static string build_wifi_row_signature(
+    private static string build_wifi_row_signature (
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting
@@ -105,7 +105,7 @@ public class MainWindowWifiRuntimeController : Object {
         int connecting_flag = is_connecting ? 1 : 0;
         int secured_flag = net.is_secured ? 1 : 0;
         int saved_flag = net.saved ? 1 : 0;
-        return "%s|%s|%s|%u|%d|%d|%d|%d|%s|%u|%u|%u|%u|%u|%u|%u|%s|%s".printf(
+        return "%s|%s|%s|%u|%d|%d|%d|%d|%s|%u|%u|%u|%u|%u|%u|%u|%s|%s".printf (
             net.ssid,
             net.device_path,
             net.ap_path,
@@ -127,7 +127,7 @@ public class MainWindowWifiRuntimeController : Object {
         );
     }
 
-    private static bool contains_value(string[] values, string candidate) {
+    private static bool contains_value (string[] values, string candidate) {
         foreach (var value in values) {
             if (value == candidate) {
                 return true;
@@ -136,7 +136,7 @@ public class MainWindowWifiRuntimeController : Object {
         return false;
     }
 
-    private void reconcile_wifi_rows(
+    private void reconcile_wifi_rows (
         Gtk.ListBox wifi_listbox,
         WifiNetwork[] networks,
         HashTable<string, bool> active_wifi_connections,
@@ -146,29 +146,29 @@ public class MainWindowWifiRuntimeController : Object {
         MainWindowActionCallback on_hide_active_wifi_password_prompt,
         MainWindowWifiRowBuildCallback on_build_wifi_row
     ) {
-        var visible_rows_by_id = new HashTable<string, Gtk.ListBoxRow>(str_hash, str_equal);
-        for (Gtk.Widget? child = wifi_listbox.get_first_child(); child != null; child = child.get_next_sibling()) {
+        var visible_rows_by_id = new HashTable<string, Gtk.ListBoxRow> (str_hash, str_equal);
+        for (Gtk.Widget? child = wifi_listbox.get_first_child (); child != null; child = child.get_next_sibling ()) {
             var existing_row = child as Gtk.ListBoxRow;
             if (existing_row == null) {
                 continue;
             }
 
-            string? existing_row_id = (string?) existing_row.get_data<string>("nm-row-id");
+            string? existing_row_id = (string?) existing_row.get_data<string> ("nm-row-id");
             if (existing_row_id == null || existing_row_id == "") {
                 continue;
             }
 
-            if (!visible_rows_by_id.contains(existing_row_id)) {
-                visible_rows_by_id.insert(existing_row_id, existing_row);
+            if (!visible_rows_by_id.contains (existing_row_id)) {
+                visible_rows_by_id.insert (existing_row_id, existing_row);
             }
         }
 
-        var networks_by_row_id = new HashTable<string, WifiNetwork>(str_hash, str_equal);
+        var networks_by_row_id = new HashTable<string, WifiNetwork> (str_hash, str_equal);
         string[] scan_order = {};
 
         foreach (var net in networks) {
-            string row_id = get_wifi_row_id(net);
-            networks_by_row_id.insert(row_id, net);
+            string row_id = get_wifi_row_id (net);
+            networks_by_row_id.insert (row_id, net);
             scan_order += row_id;
         }
 
@@ -176,22 +176,22 @@ public class MainWindowWifiRuntimeController : Object {
             && active_wifi_password_row_id != null
             && active_wifi_password_row_id != "";
         bool active_prompt_row_still_present = has_active_prompt_id
-            && networks_by_row_id.contains(active_wifi_password_row_id);
+            && networks_by_row_id.contains (active_wifi_password_row_id);
 
         if (has_active_prompt_id && !active_prompt_row_still_present) {
-            on_hide_active_wifi_password_prompt();
+            on_hide_active_wifi_password_prompt ();
         }
 
         bool keep_stable_order = has_active_prompt_id && active_prompt_row_still_present;
         string[] ordered_row_ids = {};
         if (keep_stable_order) {
             foreach (var existing_id in wifi_row_order) {
-                if (networks_by_row_id.contains(existing_id)) {
+                if (networks_by_row_id.contains (existing_id)) {
                     ordered_row_ids += existing_id;
                 }
             }
             foreach (var scan_row_id in scan_order) {
-                if (!contains_value(ordered_row_ids, scan_row_id)) {
+                if (!contains_value (ordered_row_ids, scan_row_id)) {
                     ordered_row_ids += scan_row_id;
                 }
             }
@@ -199,53 +199,53 @@ public class MainWindowWifiRuntimeController : Object {
             ordered_row_ids = scan_order;
         }
 
-        foreach (var existing_id in visible_rows_by_id.get_keys()) {
-            if (networks_by_row_id.contains(existing_id)) {
+        foreach (var existing_id in visible_rows_by_id.get_keys ()) {
+            if (networks_by_row_id.contains (existing_id)) {
                 continue;
             }
 
-            var stale_row = visible_rows_by_id.lookup(existing_id);
-            if (stale_row != null && stale_row.get_parent() == wifi_listbox) {
-                wifi_listbox.remove(stale_row);
+            var stale_row = visible_rows_by_id.lookup (existing_id);
+            if (stale_row != null && stale_row.get_parent () == wifi_listbox) {
+                wifi_listbox.remove (stale_row);
             }
-            wifi_row_signatures.remove(existing_id);
+            wifi_row_signatures.remove (existing_id);
         }
 
         int index = 0;
         foreach (var row_id in ordered_row_ids) {
-            var net = networks_by_row_id.lookup(row_id);
+            var net = networks_by_row_id.lookup (row_id);
             string net_key = net.network_key;
-            bool is_connected_now = active_wifi_connections.contains(net_key);
-            bool is_connecting = pending_wifi_connect.contains(net_key);
-            string new_signature = build_wifi_row_signature(net, is_connected_now, is_connecting);
+            bool is_connected_now = active_wifi_connections.contains (net_key);
+            bool is_connecting = pending_wifi_connect.contains (net_key);
+            string new_signature = build_wifi_row_signature (net, is_connected_now, is_connecting);
 
-            var row = visible_rows_by_id.lookup(row_id);
-            string? existing_signature = wifi_row_signatures.lookup(row_id);
+            var row = visible_rows_by_id.lookup (row_id);
+            string? existing_signature = wifi_row_signatures.lookup (row_id);
             bool preserve_prompt_row = active_prompt_row_still_present
                 && active_wifi_password_row_id == row_id;
             bool needs_rebuild = row == null || (!preserve_prompt_row && existing_signature != new_signature);
 
             if (needs_rebuild) {
-                var rebuilt_row = on_build_wifi_row(net);
-                rebuilt_row.set_data<string>("nm-row-id", row_id);
-                if (row != null && row.get_parent() == wifi_listbox) {
-                    wifi_listbox.remove(row);
+                var rebuilt_row = on_build_wifi_row (net);
+                rebuilt_row.set_data<string> ("nm-row-id", row_id);
+                if (row != null && row.get_parent () == wifi_listbox) {
+                    wifi_listbox.remove (row);
                 }
                 row = rebuilt_row;
-                visible_rows_by_id.insert(row_id, row);
-                wifi_row_signatures.insert(row_id, new_signature);
+                visible_rows_by_id.insert (row_id, row);
+                wifi_row_signatures.insert (row_id, new_signature);
             }
 
-            var current_row = wifi_listbox.get_row_at_index(index);
+            var current_row = wifi_listbox.get_row_at_index (index);
             if (current_row != row) {
-                if (row.get_parent() == wifi_listbox) {
-                    wifi_listbox.remove(row);
+                if (row.get_parent () == wifi_listbox) {
+                    wifi_listbox.remove (row);
                 }
-                wifi_listbox.insert(row, index);
+                wifi_listbox.insert (row, index);
             }
 
             if (!preserve_prompt_row) {
-                wifi_row_signatures.insert(row_id, new_signature);
+                wifi_row_signatures.insert (row_id, new_signature);
             }
 
             index++;
@@ -254,7 +254,7 @@ public class MainWindowWifiRuntimeController : Object {
         wifi_row_order = ordered_row_ids;
     }
 
-    public void refresh_wifi(
+    public void refresh_wifi (
         NetworkManagerClient nm,
         Gtk.Stack wifi_stack,
         Gtk.ListBox wifi_listbox,
@@ -270,18 +270,18 @@ public class MainWindowWifiRuntimeController : Object {
         owned MainWindowWifiRowBuildCallback on_build_wifi_row,
         owned MainWindowLogCallback on_log
     ) {
-        uint epoch = capture_ui_epoch();
-        on_log("Refreshing Wi-Fi list");
-        string current_view = wifi_stack.get_visible_child_name();
-        on_refresh_switch_states();
+        uint epoch = capture_ui_epoch ();
+        on_log ("Refreshing Wi-Fi list");
+        string current_view = wifi_stack.get_visible_child_name ();
+        on_refresh_switch_states ();
 
-        cancel_wifi_refresh();
-        var request_cancellable = new Cancellable();
+        cancel_wifi_refresh ();
+        var request_cancellable = new Cancellable ();
         wifi_refresh_cancellable = request_cancellable;
 
-        nm.get_wifi_refresh_data.begin(request_cancellable, (obj, res) => {
+        nm.get_wifi_refresh_data.begin (request_cancellable, (obj, res) => {
             try {
-                var refresh_data = nm.get_wifi_refresh_data.end(res);
+                var refresh_data = nm.get_wifi_refresh_data.end (res);
                 if (wifi_refresh_cancellable != request_cancellable) {
                     return;
                 }
@@ -289,34 +289,34 @@ public class MainWindowWifiRuntimeController : Object {
                 WifiNetwork[] networks = refresh_data.networks;
                 NetworkDevice[] devices = refresh_data.devices;
 
-                if (!is_ui_epoch_valid(epoch)) {
+                if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
 
                 string? primary_connected_ssid = null;
 
-                var wifi_device_states = new HashTable<string, uint>(str_hash, str_equal);
+                var wifi_device_states = new HashTable<string, uint> (str_hash, str_equal);
                 foreach (var dev in devices) {
                     if (!dev.is_wifi) {
                         continue;
                     }
-                    wifi_device_states.insert(dev.device_path, dev.state);
+                    wifi_device_states.insert (dev.device_path, dev.state);
                 }
 
-                active_wifi_connections.remove_all();
+                active_wifi_connections.remove_all ();
                 foreach (var net in networks) {
                     if (!net.connected) {
                         continue;
                     }
 
-                    uint? device_state = wifi_device_states.lookup(net.device_path);
+                    uint? device_state = wifi_device_states.lookup (net.device_path);
                     bool is_fully_activated = device_state != null
                         && device_state == NM_DEVICE_STATE_ACTIVATED;
                     if (!is_fully_activated) {
                         continue;
                     }
 
-                    active_wifi_connections.insert(net.network_key, true);
+                    active_wifi_connections.insert (net.network_key, true);
                     if (primary_connected_ssid == null) {
                         primary_connected_ssid = net.ssid;
                     }
@@ -324,13 +324,13 @@ public class MainWindowWifiRuntimeController : Object {
 
                 foreach (var net in networks) {
                     string net_key = net.network_key;
-                    if (!pending_wifi_connect.contains(net_key)) {
+                    if (!pending_wifi_connect.contains (net_key)) {
                         continue;
                     }
 
-                    if (active_wifi_connections.contains(net_key)) {
-                        pending_wifi_connect.remove(net_key);
-                        pending_wifi_seen_connecting.remove(net_key);
+                    if (active_wifi_connections.contains (net_key)) {
+                        pending_wifi_connect.remove (net_key);
+                        pending_wifi_seen_connecting.remove (net_key);
                         continue;
                     }
 
@@ -349,26 +349,26 @@ public class MainWindowWifiRuntimeController : Object {
                     bool is_connecting_state = matched_device.state >= 40
                         && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
                     if (is_connecting_state) {
-                        pending_wifi_seen_connecting.insert(net_key, true);
+                        pending_wifi_seen_connecting.insert (net_key, true);
                         continue;
                     }
 
                     bool activated_on_other_network = matched_device.state == NM_DEVICE_STATE_ACTIVATED
-                        && !active_wifi_connections.contains(net_key);
+                        && !active_wifi_connections.contains (net_key);
                     if (activated_on_other_network || matched_device.state == NM_DEVICE_STATE_FAILED) {
-                        pending_wifi_connect.remove(net_key);
-                        pending_wifi_seen_connecting.remove(net_key);
+                        pending_wifi_connect.remove (net_key);
+                        pending_wifi_seen_connecting.remove (net_key);
                         continue;
                     }
 
-                    if (pending_wifi_seen_connecting.contains(net_key)
+                    if (pending_wifi_seen_connecting.contains (net_key)
                         && matched_device.state <= NM_DEVICE_STATE_DISCONNECTED) {
-                        pending_wifi_connect.remove(net_key);
-                        pending_wifi_seen_connecting.remove(net_key);
+                        pending_wifi_connect.remove (net_key);
+                        pending_wifi_seen_connecting.remove (net_key);
                     }
                 }
 
-                reconcile_wifi_rows(
+                reconcile_wifi_rows (
                     wifi_listbox,
                     networks,
                     active_wifi_connections,
@@ -381,9 +381,9 @@ public class MainWindowWifiRuntimeController : Object {
 
                 if (current_view == "details" || current_view == "edit" || current_view == "add") {
                     // Avoid touching ref parameters from async callbacks.
-                    wifi_stack.set_visible_child_name(current_view);
+                    wifi_stack.set_visible_child_name (current_view);
                 } else {
-                    wifi_stack.set_visible_child_name(networks.length > 0 ? "list" : "empty");
+                    wifi_stack.set_visible_child_name (networks.length > 0 ? "list" : "empty");
                 }
 
                 if (networks.length > 0) {
@@ -398,26 +398,26 @@ public class MainWindowWifiRuntimeController : Object {
                     }
 
                     if (connected != null) {
-                        status_label.set_text("Wi-Fi · %s (%u%%)".printf(connected.ssid, connected.signal));
-                        status_icon.set_from_icon_name(connected.signal_icon_name);
+                        status_label.set_text ("Wi-Fi · %s (%u%%)".printf (connected.ssid, connected.signal));
+                        status_icon.set_from_icon_name (connected.signal_icon_name);
                     } else if (primary_connected_ssid != null) {
-                        status_label.set_text("Wi-Fi · %s".printf(primary_connected_ssid));
-                        status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
+                        status_label.set_text ("Wi-Fi · %s".printf (primary_connected_ssid));
+                        status_icon.set_from_icon_name ("network-wireless-signal-good-symbolic");
                     } else {
-                        status_label.set_text("Wi-Fi available (%u networks)".printf(networks.length));
-                        status_icon.set_from_icon_name("network-wireless-signal-good-symbolic");
+                        status_label.set_text ("Wi-Fi available (%u networks)".printf (networks.length));
+                        status_icon.set_from_icon_name ("network-wireless-signal-good-symbolic");
                     }
                 } else {
-                    status_label.set_text("No Wi-Fi networks found");
-                    status_icon.set_from_icon_name("network-wireless-offline-symbolic");
+                    status_label.set_text ("No Wi-Fi networks found");
+                    status_icon.set_from_icon_name ("network-wireless-offline-symbolic");
                 }
 
-                on_log("Rendered %u Wi-Fi rows".printf(networks.length));
+                on_log ("Rendered %u Wi-Fi rows".printf (networks.length));
             } catch (Error e) {
-                if (e is IOError.CANCELLED || !is_ui_epoch_valid(epoch)) {
+                if (e is IOError.CANCELLED || !is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_log("Wi-Fi refresh failed: " + e.message);
+                on_log ("Wi-Fi refresh failed: " + e.message);
             } finally {
                 if (wifi_refresh_cancellable == request_cancellable) {
                     wifi_refresh_cancellable = null;
@@ -426,7 +426,7 @@ public class MainWindowWifiRuntimeController : Object {
         });
     }
 
-    public void connect_wifi_with_optional_password(
+    public void connect_wifi_with_optional_password (
         NetworkManagerClient nm,
         WifiNetwork net,
         string? password,
@@ -440,124 +440,124 @@ public class MainWindowWifiRuntimeController : Object {
         MainWindowActionCallback on_refresh_wifi,
         MainWindowErrorCallback on_error
     ) {
-        uint epoch = capture_ui_epoch();
+        uint epoch = capture_ui_epoch ();
 
         string net_key = net.network_key;
-        if (!active_wifi_connections.contains(net_key)) {
-            pending_wifi_connect.insert(net_key, true);
-            pending_wifi_seen_connecting.remove(net_key);
+        if (!active_wifi_connections.contains (net_key)) {
+            pending_wifi_connect.insert (net_key, true);
+            pending_wifi_seen_connecting.remove (net_key);
         }
 
-        nm.connect_wifi.begin(net, password, null, (obj, res) => {
+        nm.connect_wifi.begin (net, password, null, (obj, res) => {
             try {
-                nm.connect_wifi.end(res);
-                if (!is_ui_epoch_valid(epoch)) {
+                nm.connect_wifi.end (res);
+                if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
 
                 if (close_on_connect) {
-                    on_close_window();
+                    on_close_window ();
                     return;
                 }
 
-                on_refresh_after_action(true);
+                on_refresh_after_action (true);
 
                 string pending_ssid = net_key;
                 uint effective_timeout_ms = pending_wifi_connect_timeout_ms >= 1000
                     ? pending_wifi_connect_timeout_ms
                     : 1000;
                 uint timeout_id = 0;
-                timeout_id = Timeout.add(effective_timeout_ms, () => {
-                    untrack_timeout_source(timeout_id);
-                    if (!is_ui_epoch_valid(epoch)) {
+                timeout_id = Timeout.add (effective_timeout_ms, () => {
+                    untrack_timeout_source (timeout_id);
+                    if (!is_ui_epoch_valid (epoch)) {
                         return false;
                     }
 
-                    if (pending_wifi_connect.contains(pending_ssid)) {
-                        pending_wifi_connect.remove(pending_ssid);
-                        pending_wifi_seen_connecting.remove(pending_ssid);
-                        on_refresh_wifi();
+                    if (pending_wifi_connect.contains (pending_ssid)) {
+                        pending_wifi_connect.remove (pending_ssid);
+                        pending_wifi_seen_connecting.remove (pending_ssid);
+                        on_refresh_wifi ();
                     }
                     return false;
                 });
-                track_timeout_source(timeout_id);
+                track_timeout_source (timeout_id);
             } catch (Error e) {
-                if (!is_ui_epoch_valid(epoch)) {
+                if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                pending_wifi_connect.remove(net_key);
-                pending_wifi_seen_connecting.remove(net_key);
-                on_error("Connect failed: " + e.message);
+                pending_wifi_connect.remove (net_key);
+                pending_wifi_seen_connecting.remove (net_key);
+                on_error ("Connect failed: " + e.message);
             }
         });
     }
 
-    public void refresh_after_action(
+    public void refresh_after_action (
         NetworkManagerClient nm,
         bool request_wifi_scan,
         MainWindowActionCallback on_refresh_all,
         MainWindowLogCallback on_log
     ) {
-        uint epoch = capture_ui_epoch();
+        uint epoch = capture_ui_epoch ();
 
         if (request_wifi_scan) {
-            nm.scan_wifi.begin(null, (obj, res) => {
+            nm.scan_wifi.begin (null, (obj, res) => {
                 try {
-                    nm.scan_wifi.end(res);
+                    nm.scan_wifi.end (res);
                 } catch (Error e) {
                     string message = e.message;
-                    if (!is_ui_epoch_valid(epoch)) {
+                    if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_log("Could not request Wi-Fi scan: " + message);
+                    on_log ("Could not request Wi-Fi scan: " + message);
                 }
             });
         }
 
-        if (!is_ui_epoch_valid(epoch)) {
+        if (!is_ui_epoch_valid (epoch)) {
             return;
         }
-        on_refresh_all();
+        on_refresh_all ();
 
         // NetworkManager state transitions are async; refresh again shortly after actions.
         uint quick_refresh_id = 0;
-        quick_refresh_id = Timeout.add(650, () => {
-            untrack_timeout_source(quick_refresh_id);
-            if (!is_ui_epoch_valid(epoch)) {
+        quick_refresh_id = Timeout.add (650, () => {
+            untrack_timeout_source (quick_refresh_id);
+            if (!is_ui_epoch_valid (epoch)) {
                 return false;
             }
 
             if (request_wifi_scan) {
-                nm.scan_wifi.begin(null, (obj, res) => {
+                nm.scan_wifi.begin (null, (obj, res) => {
                     try {
-                        nm.scan_wifi.end(res);
+                        nm.scan_wifi.end (res);
                     } catch (Error e) {
                         string message = e.message;
-                        if (!is_ui_epoch_valid(epoch)) {
+                        if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        on_log("Could not request delayed Wi-Fi scan: " + message);
+                        on_log ("Could not request delayed Wi-Fi scan: " + message);
                     }
                 });
             }
-            on_refresh_all();
+            on_refresh_all ();
             return false;
         });
-        track_timeout_source(quick_refresh_id);
+        track_timeout_source (quick_refresh_id);
 
         uint followup_refresh_id = 0;
-        followup_refresh_id = Timeout.add(1800, () => {
-            untrack_timeout_source(followup_refresh_id);
-            if (!is_ui_epoch_valid(epoch)) {
+        followup_refresh_id = Timeout.add (1800, () => {
+            untrack_timeout_source (followup_refresh_id);
+            if (!is_ui_epoch_valid (epoch)) {
                 return false;
             }
-            on_refresh_all();
+            on_refresh_all ();
             return false;
         });
-        track_timeout_source(followup_refresh_id);
+        track_timeout_source (followup_refresh_id);
     }
 
-    public void show_wifi_password_prompt(
+    public void show_wifi_password_prompt (
         ref Gtk.Revealer? active_wifi_password_revealer,
         ref Gtk.Entry? active_wifi_password_entry,
         Gtk.Revealer revealer,
@@ -565,23 +565,23 @@ public class MainWindowWifiRuntimeController : Object {
         MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
         if (active_wifi_password_revealer != null && active_wifi_password_revealer != revealer) {
-            active_wifi_password_revealer.set_reveal_child(false);
+            active_wifi_password_revealer.set_reveal_child (false);
         }
 
         if (active_wifi_password_entry != null && active_wifi_password_entry != entry) {
-            active_wifi_password_entry.set_text("");
+            active_wifi_password_entry.set_text ("");
         }
 
         active_wifi_password_revealer = revealer;
         active_wifi_password_entry = entry;
-        entry.set_text("");
-        entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
-        on_set_popup_text_input_mode(true);
-        revealer.set_reveal_child(true);
-        entry.grab_focus();
+        entry.set_text ("");
+        entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
+        on_set_popup_text_input_mode (true);
+        revealer.set_reveal_child (true);
+        entry.grab_focus ();
     }
 
-    public void hide_wifi_password_prompt(
+    public void hide_wifi_password_prompt (
         ref Gtk.Revealer? active_wifi_password_revealer,
         ref Gtk.Entry? active_wifi_password_entry,
         Gtk.Revealer revealer,
@@ -589,41 +589,41 @@ public class MainWindowWifiRuntimeController : Object {
         string? value,
         MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
-        revealer.set_reveal_child(false);
+        revealer.set_reveal_child (false);
         if (value == null) {
-            entry.set_text("");
+            entry.set_text ("");
         }
 
         if (active_wifi_password_revealer == revealer) {
             active_wifi_password_revealer = null;
             active_wifi_password_entry = null;
-            on_set_popup_text_input_mode(false);
+            on_set_popup_text_input_mode (false);
         }
     }
 
-    public void hide_active_wifi_password_prompt(
+    public void hide_active_wifi_password_prompt (
         ref Gtk.Revealer? active_wifi_password_revealer,
         ref Gtk.Entry? active_wifi_password_entry,
         MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
         if (active_wifi_password_revealer != null) {
-            active_wifi_password_revealer.set_reveal_child(false);
+            active_wifi_password_revealer.set_reveal_child (false);
         }
         if (active_wifi_password_entry != null) {
-            active_wifi_password_entry.set_text("");
+            active_wifi_password_entry.set_text ("");
         }
         active_wifi_password_revealer = null;
         active_wifi_password_entry = null;
-        on_set_popup_text_input_mode(false);
+        on_set_popup_text_input_mode (false);
     }
 
-    public void refresh_switch_states(
+    public void refresh_switch_states (
         NetworkManagerClient nm,
         Gtk.Switch wifi_switch,
         Gtk.Switch networking_switch,
         MainWindowLogCallback on_log
     ) {
-        uint epoch = capture_ui_epoch();
+        uint epoch = capture_ui_epoch ();
         uint refresh_epoch = switch_refresh_epoch + 1;
         if (refresh_epoch == 0) {
             refresh_epoch = 1;
@@ -631,27 +631,27 @@ public class MainWindowWifiRuntimeController : Object {
         switch_refresh_epoch = refresh_epoch;
         updating_switches = true;
 
-        nm.get_wifi_enabled_dbus.begin(null, (obj, wifi_res) => {
+        nm.get_wifi_enabled_dbus.begin (null, (obj, wifi_res) => {
             try {
-                bool wifi_enabled = nm.get_wifi_enabled_dbus.end(wifi_res);
-                if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
-                    wifi_switch.set_active(wifi_enabled);
+                bool wifi_enabled = nm.get_wifi_enabled_dbus.end (wifi_res);
+                if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
+                    wifi_switch.set_active (wifi_enabled);
                 }
             } catch (Error e) {
-                if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
-                    on_log("Could not read WirelessEnabled: " + e.message);
+                if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
+                    on_log ("Could not read WirelessEnabled: " + e.message);
                 }
             }
 
-            nm.get_networking_enabled_dbus.begin(null, (obj2, net_res) => {
+            nm.get_networking_enabled_dbus.begin (null, (obj2, net_res) => {
                 try {
-                    bool net_enabled = nm.get_networking_enabled_dbus.end(net_res);
-                    if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
-                        networking_switch.set_active(net_enabled);
+                    bool net_enabled = nm.get_networking_enabled_dbus.end (net_res);
+                    if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
+                        networking_switch.set_active (net_enabled);
                     }
                 } catch (Error e) {
-                    if (is_ui_epoch_valid(epoch) && switch_refresh_epoch == refresh_epoch) {
-                        on_log("Could not read NetworkingEnabled: " + e.message);
+                    if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
+                        on_log ("Could not read NetworkingEnabled: " + e.message);
                     }
                 } finally {
                     if (switch_refresh_epoch == refresh_epoch) {
@@ -662,7 +662,7 @@ public class MainWindowWifiRuntimeController : Object {
         });
     }
 
-    public void on_wifi_switch_changed(
+    public void on_wifi_switch_changed (
         NetworkManagerClient nm,
         Gtk.Switch wifi_switch,
         MainWindowErrorCallback on_error,
@@ -673,28 +673,28 @@ public class MainWindowWifiRuntimeController : Object {
             return;
         }
 
-        uint epoch = capture_ui_epoch();
-        bool enabled = wifi_switch.get_active();
+        uint epoch = capture_ui_epoch ();
+        bool enabled = wifi_switch.get_active ();
 
-        nm.set_wifi_enabled.begin(enabled, null, (obj, res) => {
+        nm.set_wifi_enabled.begin (enabled, null, (obj, res) => {
             try {
-                nm.set_wifi_enabled.end(res);
-                if (!is_ui_epoch_valid(epoch)) {
+                nm.set_wifi_enabled.end (res);
+                if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action(enabled);
+                on_refresh_after_action (enabled);
             } catch (Error e) {
                 string message = e.message;
-                if (!is_ui_epoch_valid(epoch)) {
+                if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                    on_error("Could not toggle Wi-Fi: " + message);
-                on_refresh_switch_states();
+                    on_error ("Could not toggle Wi-Fi: " + message);
+                on_refresh_switch_states ();
             }
         });
     }
 
-    public void on_networking_switch_changed(
+    public void on_networking_switch_changed (
         NetworkManagerClient nm,
         Gtk.Switch networking_switch,
         MainWindowErrorCallback on_error,
@@ -705,23 +705,23 @@ public class MainWindowWifiRuntimeController : Object {
             return;
         }
 
-        uint epoch = capture_ui_epoch();
-        bool enabled = networking_switch.get_active();
+        uint epoch = capture_ui_epoch ();
+        bool enabled = networking_switch.get_active ();
 
-        nm.set_networking_enabled.begin(enabled, null, (obj, res) => {
+        nm.set_networking_enabled.begin (enabled, null, (obj, res) => {
             try {
-                nm.set_networking_enabled.end(res);
-                if (!is_ui_epoch_valid(epoch)) {
+                nm.set_networking_enabled.end (res);
+                if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action(enabled);
+                on_refresh_after_action (enabled);
             } catch (Error e) {
                 string message = e.message;
-                if (!is_ui_epoch_valid(epoch)) {
+                if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                    on_error("Could not toggle networking: " + message);
-                on_refresh_switch_states();
+                    on_error ("Could not toggle networking: " + message);
+                on_refresh_switch_states ();
             }
         });
     }

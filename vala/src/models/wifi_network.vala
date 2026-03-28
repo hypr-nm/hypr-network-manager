@@ -23,13 +23,13 @@ public class WifiNetwork : Object {
 
     public string signal_label {
         owned get {
-            return WifiSignalLevels.get_label(signal);
+            return WifiSignalLevels.get_label (signal);
         }
     }
 
     public string signal_icon_name {
         owned get {
-            return WifiSignalLevels.get_icon_name(signal);
+            return WifiSignalLevels.get_icon_name (signal);
         }
     }
 }

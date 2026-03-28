@@ -1,13 +1,13 @@
 using GLib;
 
 public class NmClientUtils : Object {
-    public static string decode_ssid(Variant v) {
-        var bytes = v.get_data_as_bytes();
+    public static string decode_ssid (Variant v) {
+        var bytes = v.get_data_as_bytes ();
         if (bytes == null) {
             return "";
         }
 
-        unowned uint8[] raw = bytes.get_data();
+        unowned uint8[] raw = bytes.get_data ();
         if (raw.length == 0) {
             return "";
         }
@@ -25,33 +25,33 @@ public class NmClientUtils : Object {
 
         cleaned[cleaned_len] = 0;
         string decoded = (string) cleaned;
-        if (decoded.validate()) {
+        if (decoded.validate ()) {
             return decoded;
         }
 
         // Fallback for non-UTF-8 SSIDs: keep printable ASCII, escape other bytes.
-        var escaped = new StringBuilder();
+        var escaped = new StringBuilder ();
         for (int i = 0; i < cleaned_len; i++) {
             uint8 b = cleaned[i];
             if (b >= 32 && b <= 126) {
-                escaped.append_c((char) b);
+                escaped.append_c ((char) b);
             } else {
-                escaped.append_printf("\\x%02X", b);
+                escaped.append_printf ("\\x%02X", b);
             }
         }
         return escaped.str;
     }
 
-    public static Variant make_ssid_variant(string ssid) {
-        var ssid_bytes = new VariantBuilder(new VariantType("ay"));
+    public static Variant make_ssid_variant (string ssid) {
+        var ssid_bytes = new VariantBuilder (new VariantType ("ay"));
         for (int i = 0; i < ssid.length; i++) {
-            ssid_bytes.add("y", (uint8) ssid[i]);
+            ssid_bytes.add ("y", (uint8) ssid[i]);
         }
-        return ssid_bytes.end();
+        return ssid_bytes.end ();
     }
 
-    public static string normalize_ipv4_method(string value) {
-        string method = value.strip().down();
+    public static string normalize_ipv4_method (string value) {
+        string method = value.strip ().down ();
         switch (method) {
         case "manual":
         case "disabled":
@@ -62,8 +62,8 @@ public class NmClientUtils : Object {
         }
     }
 
-    public static string normalize_ipv6_method(string value) {
-        string method = value.strip().down();
+    public static string normalize_ipv6_method (string value) {
+        string method = value.strip ().down ();
         switch (method) {
         case "manual":
         case "disabled":
@@ -78,87 +78,87 @@ public class NmClientUtils : Object {
         }
     }
 
-    public static string join_string_variant_list(Variant list_variant) {
-        var out = new StringBuilder();
-        for (int i = 0; i < list_variant.n_children(); i++) {
-            Variant child = list_variant.get_child_value(i);
-            if (!child.is_of_type(new VariantType("s"))) {
+    public static string join_string_variant_list (Variant list_variant) {
+        var out = new StringBuilder ();
+        for (int i = 0; i < list_variant.n_children (); i++) {
+            Variant child = list_variant.get_child_value (i);
+            if (!child.is_of_type (new VariantType ("s"))) {
                 continue;
             }
 
-            string value = child.get_string();
+            string value = child.get_string ();
             if (value == "") {
                 continue;
             }
             if (out.len > 0) {
-                out.append(", ");
+                out.append (", ");
             }
-            out.append(value);
+            out.append (value);
         }
         return out.str;
     }
 
-    public static string extract_dns_list_string(Variant dns_variant) {
-        if (dns_variant.is_of_type(new VariantType("as"))) {
-            return join_string_variant_list(dns_variant);
+    public static string extract_dns_list_string (Variant dns_variant) {
+        if (dns_variant.is_of_type (new VariantType ("as"))) {
+            return join_string_variant_list (dns_variant);
         }
 
-        if (dns_variant.is_of_type(new VariantType("aay"))) {
-            var out = new StringBuilder();
-            for (int i = 0; i < dns_variant.n_children(); i++) {
-                Variant addr_bytes_v = dns_variant.get_child_value(i);
-                Bytes? bytes = addr_bytes_v.get_data_as_bytes();
+        if (dns_variant.is_of_type (new VariantType ("aay"))) {
+            var out = new StringBuilder ();
+            for (int i = 0; i < dns_variant.n_children (); i++) {
+                Variant addr_bytes_v = dns_variant.get_child_value (i);
+                Bytes? bytes = addr_bytes_v.get_data_as_bytes ();
                 if (bytes == null) {
                     continue;
                 }
 
-                unowned uint8[] raw = bytes.get_data();
+                unowned uint8[] raw = bytes.get_data ();
                 if (raw.length == 16) {
                     // Format as full IPv6 groups (no compression needed for display/edit prefill).
                     string addr =
                         "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x"
-                            .printf(
+                            .printf (
                                 raw[0], raw[1], raw[2], raw[3],
                                 raw[4], raw[5], raw[6], raw[7],
                                 raw[8], raw[9], raw[10], raw[11],
                                 raw[12], raw[13], raw[14], raw[15]
                             );
                     if (out.len > 0) {
-                        out.append(", ");
+                        out.append (", ");
                     }
-                    out.append(addr);
+                    out.append (addr);
                     continue;
                 }
 
                 if (raw.length == 4) {
-                    string addr = "%u.%u.%u.%u".printf(raw[0], raw[1], raw[2], raw[3]);
+                    string addr = "%u.%u.%u.%u".printf (raw[0], raw[1], raw[2], raw[3]);
                     if (out.len > 0) {
-                        out.append(", ");
+                        out.append (", ");
                     }
-                    out.append(addr);
+                    out.append (addr);
                 }
             }
             return out.str;
         }
 
-        if (dns_variant.is_of_type(new VariantType("aa{sv}"))) {
-            var out = new StringBuilder();
-            for (int i = 0; i < dns_variant.n_children(); i++) {
-                Variant item = dns_variant.get_child_value(i);
-                Variant? addr_v = item.lookup_value("address", new VariantType("s"));
+        if (dns_variant.is_of_type (new VariantType ("aa{sv}"))) {
+            var out = new StringBuilder ();
+            for (int i = 0; i < dns_variant.n_children (); i++) {
+                Variant item = dns_variant.get_child_value (i);
+                Variant? addr_v = item.lookup_value ("address", new VariantType ("s"));
                 if (addr_v == null) {
                     continue;
                 }
 
-                string addr = addr_v.get_string();
+                string addr = addr_v.get_string ();
                 if (addr == "") {
                     continue;
                 }
 
                 if (out.len > 0) {
-                    out.append(", ");
+                    out.append (", ");
                 }
-                out.append(addr);
+                out.append (addr);
             }
             return out.str;
         }
@@ -166,10 +166,10 @@ public class NmClientUtils : Object {
         return "";
     }
 
-    public static bool parse_ipv4_to_uint32(string ip_text, out uint32 value) {
+    public static bool parse_ipv4_to_uint32 (string ip_text, out uint32 value) {
         value = 0;
-        string ip = ip_text.strip();
-        string[] octets = ip.split(".");
+        string ip = ip_text.strip ();
+        string[] octets = ip.split (".");
         if (octets.length != 4) {
             return false;
         }
@@ -177,7 +177,7 @@ public class NmClientUtils : Object {
         uint[] parts = {0, 0, 0, 0};
         for (int i = 0; i < 4; i++) {
             uint parsed;
-            if (!uint.try_parse(octets[i], out parsed) || parsed > 255) {
+            if (!uint.try_parse (octets[i], out parsed) || parsed > 255) {
                 return false;
             }
             parts[i] = parsed;
@@ -192,19 +192,19 @@ public class NmClientUtils : Object {
         return true;
     }
 
-    public static string format_ipv4_from_uint32(uint32 value) {
+    public static string format_ipv4_from_uint32 (uint32 value) {
         uint32 o1 = value & 0xFF;
         uint32 o2 = (value >> 8) & 0xFF;
         uint32 o3 = (value >> 16) & 0xFF;
         uint32 o4 = (value >> 24) & 0xFF;
-        return "%u.%u.%u.%u".printf(o1, o2, o3, o4);
+        return "%u.%u.%u.%u".printf (o1, o2, o3, o4);
     }
 
-    public static void fill_configured_ipv4_from_settings(
+    public static void fill_configured_ipv4_from_settings (
         Variant all_settings,
         NetworkIpSettings out_ip
     ) {
-        Variant? ipv4_group = all_settings.lookup_value("ipv4", new VariantType("a{sv}"));
+        Variant? ipv4_group = all_settings.lookup_value ("ipv4", new VariantType ("a{sv}"));
         if (ipv4_group == null) {
             out_ip.ipv4_method = "auto";
             out_ip.gateway_auto = true;
@@ -212,144 +212,144 @@ public class NmClientUtils : Object {
             return;
         }
 
-        Variant? method_v = ipv4_group.lookup_value("method", new VariantType("s"));
+        Variant? method_v = ipv4_group.lookup_value ("method", new VariantType ("s"));
         if (method_v != null) {
-            out_ip.ipv4_method = normalize_ipv4_method(method_v.get_string());
+            out_ip.ipv4_method = normalize_ipv4_method (method_v.get_string ());
         }
 
-        Variant? ignore_routes_v = ipv4_group.lookup_value("ignore-auto-routes", new VariantType("b"));
+        Variant? ignore_routes_v = ipv4_group.lookup_value ("ignore-auto-routes", new VariantType ("b"));
         if (ignore_routes_v != null) {
-            out_ip.gateway_auto = !ignore_routes_v.get_boolean();
+            out_ip.gateway_auto = !ignore_routes_v.get_boolean ();
         }
 
-        Variant? ignore_dns_v = ipv4_group.lookup_value("ignore-auto-dns", new VariantType("b"));
+        Variant? ignore_dns_v = ipv4_group.lookup_value ("ignore-auto-dns", new VariantType ("b"));
         if (ignore_dns_v != null) {
-            out_ip.dns_auto = !ignore_dns_v.get_boolean();
+            out_ip.dns_auto = !ignore_dns_v.get_boolean ();
         }
 
-        Variant? gateway_v = ipv4_group.lookup_value("gateway", new VariantType("s"));
+        Variant? gateway_v = ipv4_group.lookup_value ("gateway", new VariantType ("s"));
         if (gateway_v != null) {
-            out_ip.configured_gateway = gateway_v.get_string();
+            out_ip.configured_gateway = gateway_v.get_string ();
         }
 
-        if (out_ip.configured_gateway.strip() == "") {
-            Variant? route_data_v = ipv4_group.lookup_value("route-data", new VariantType("aa{sv}"));
+        if (out_ip.configured_gateway.strip () == "") {
+            Variant? route_data_v = ipv4_group.lookup_value ("route-data", new VariantType ("aa{sv}"));
             if (route_data_v != null) {
-                for (int i = 0; i < route_data_v.n_children(); i++) {
-                    Variant route = route_data_v.get_child_value(i);
-                    Variant? dest_v = route.lookup_value("dest", new VariantType("s"));
-                    Variant? prefix_v = route.lookup_value("prefix", new VariantType("u"));
-                    Variant? hop_v = route.lookup_value("next-hop", new VariantType("s"));
+                for (int i = 0; i < route_data_v.n_children (); i++) {
+                    Variant route = route_data_v.get_child_value (i);
+                    Variant? dest_v = route.lookup_value ("dest", new VariantType ("s"));
+                    Variant? prefix_v = route.lookup_value ("prefix", new VariantType ("u"));
+                    Variant? hop_v = route.lookup_value ("next-hop", new VariantType ("s"));
                     if (dest_v == null || prefix_v == null || hop_v == null) {
                         continue;
                     }
 
-                    string dest = dest_v.get_string();
-                    uint32 prefix = prefix_v.get_uint32();
+                    string dest = dest_v.get_string ();
+                    uint32 prefix = prefix_v.get_uint32 ();
                     if ((dest == "0.0.0.0" || dest == "") && prefix == 0) {
-                        out_ip.configured_gateway = hop_v.get_string();
+                        out_ip.configured_gateway = hop_v.get_string ();
                         break;
                     }
                 }
             }
         }
 
-        if (out_ip.configured_gateway.strip() == "") {
-            Variant? routes_v = ipv4_group.lookup_value("routes", new VariantType("aau"));
+        if (out_ip.configured_gateway.strip () == "") {
+            Variant? routes_v = ipv4_group.lookup_value ("routes", new VariantType ("aau"));
             if (routes_v != null) {
-                for (int i = 0; i < routes_v.n_children(); i++) {
-                    Variant route = routes_v.get_child_value(i);
-                    if (route.n_children() < 3) {
+                for (int i = 0; i < routes_v.n_children (); i++) {
+                    Variant route = routes_v.get_child_value (i);
+                    if (route.n_children () < 3) {
                         continue;
                     }
 
-                    uint32 dest_legacy = route.get_child_value(0).get_uint32();
-                    uint32 prefix_legacy = route.get_child_value(1).get_uint32();
+                    uint32 dest_legacy = route.get_child_value (0).get_uint32 ();
+                    uint32 prefix_legacy = route.get_child_value (1).get_uint32 ();
                     if (dest_legacy == 0 && prefix_legacy == 0) {
-                        uint32 hop_legacy = route.get_child_value(2).get_uint32();
-                        out_ip.configured_gateway = format_ipv4_from_uint32(hop_legacy);
+                        uint32 hop_legacy = route.get_child_value (2).get_uint32 ();
+                        out_ip.configured_gateway = format_ipv4_from_uint32 (hop_legacy);
                         break;
                     }
                 }
             }
         }
 
-        Variant? dns_data_v = ipv4_group.lookup_value("dns-data", null);
+        Variant? dns_data_v = ipv4_group.lookup_value ("dns-data", null);
         if (dns_data_v != null) {
-            out_ip.configured_dns = extract_dns_list_string(dns_data_v);
+            out_ip.configured_dns = extract_dns_list_string (dns_data_v);
         }
 
-        Variant? address_data_v = ipv4_group.lookup_value("address-data", new VariantType("aa{sv}"));
-        if (address_data_v == null || address_data_v.n_children() == 0) {
+        Variant? address_data_v = ipv4_group.lookup_value ("address-data", new VariantType ("aa{sv}"));
+        if (address_data_v == null || address_data_v.n_children () == 0) {
             return;
         }
 
-        Variant first_addr = address_data_v.get_child_value(0);
-        Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
-        Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
+        Variant first_addr = address_data_v.get_child_value (0);
+        Variant? addr_v = first_addr.lookup_value ("address", new VariantType ("s"));
+        Variant? prefix_v = first_addr.lookup_value ("prefix", new VariantType ("u"));
         if (addr_v != null) {
-            out_ip.configured_address = addr_v.get_string();
+            out_ip.configured_address = addr_v.get_string ();
         }
         if (prefix_v != null) {
-            out_ip.configured_prefix = prefix_v.get_uint32();
+            out_ip.configured_prefix = prefix_v.get_uint32 ();
         }
     }
 
-    public static void fill_configured_ipv6_from_settings(
+    public static void fill_configured_ipv6_from_settings (
         Variant all_settings,
         NetworkIpSettings out_ip
     ) {
-        Variant? ipv6_group = all_settings.lookup_value("ipv6", new VariantType("a{sv}"));
+        Variant? ipv6_group = all_settings.lookup_value ("ipv6", new VariantType ("a{sv}"));
         if (ipv6_group == null) {
             out_ip.ipv6_method = "auto";
             return;
         }
 
-        Variant? method_v = ipv6_group.lookup_value("method", new VariantType("s"));
+        Variant? method_v = ipv6_group.lookup_value ("method", new VariantType ("s"));
         if (method_v != null) {
-            out_ip.ipv6_method = normalize_ipv6_method(method_v.get_string());
+            out_ip.ipv6_method = normalize_ipv6_method (method_v.get_string ());
         }
 
-        Variant? ignore_routes_v = ipv6_group.lookup_value("ignore-auto-routes", new VariantType("b"));
+        Variant? ignore_routes_v = ipv6_group.lookup_value ("ignore-auto-routes", new VariantType ("b"));
         if (ignore_routes_v != null) {
-            out_ip.ipv6_gateway_auto = !ignore_routes_v.get_boolean();
+            out_ip.ipv6_gateway_auto = !ignore_routes_v.get_boolean ();
         }
 
-        Variant? ignore_dns_v = ipv6_group.lookup_value("ignore-auto-dns", new VariantType("b"));
+        Variant? ignore_dns_v = ipv6_group.lookup_value ("ignore-auto-dns", new VariantType ("b"));
         if (ignore_dns_v != null) {
-            out_ip.ipv6_dns_auto = !ignore_dns_v.get_boolean();
+            out_ip.ipv6_dns_auto = !ignore_dns_v.get_boolean ();
         }
 
-        Variant? gateway_v = ipv6_group.lookup_value("gateway", new VariantType("s"));
+        Variant? gateway_v = ipv6_group.lookup_value ("gateway", new VariantType ("s"));
         if (gateway_v != null) {
-            out_ip.configured_ipv6_gateway = gateway_v.get_string();
+            out_ip.configured_ipv6_gateway = gateway_v.get_string ();
         }
 
-        Variant? dns_data_v = ipv6_group.lookup_value("dns-data", null);
+        Variant? dns_data_v = ipv6_group.lookup_value ("dns-data", null);
         if (dns_data_v != null) {
-            out_ip.configured_ipv6_dns = extract_dns_list_string(dns_data_v);
+            out_ip.configured_ipv6_dns = extract_dns_list_string (dns_data_v);
         }
 
-        if (out_ip.configured_ipv6_dns.strip() == "") {
-            Variant? dns_v = ipv6_group.lookup_value("dns", null);
+        if (out_ip.configured_ipv6_dns.strip () == "") {
+            Variant? dns_v = ipv6_group.lookup_value ("dns", null);
             if (dns_v != null) {
-                out_ip.configured_ipv6_dns = extract_dns_list_string(dns_v);
+                out_ip.configured_ipv6_dns = extract_dns_list_string (dns_v);
             }
         }
 
-        Variant? address_data_v = ipv6_group.lookup_value("address-data", new VariantType("aa{sv}"));
-        if (address_data_v == null || address_data_v.n_children() == 0) {
+        Variant? address_data_v = ipv6_group.lookup_value ("address-data", new VariantType ("aa{sv}"));
+        if (address_data_v == null || address_data_v.n_children () == 0) {
             return;
         }
 
-        Variant first_addr = address_data_v.get_child_value(0);
-        Variant? addr_v = first_addr.lookup_value("address", new VariantType("s"));
-        Variant? prefix_v = first_addr.lookup_value("prefix", new VariantType("u"));
+        Variant first_addr = address_data_v.get_child_value (0);
+        Variant? addr_v = first_addr.lookup_value ("address", new VariantType ("s"));
+        Variant? prefix_v = first_addr.lookup_value ("prefix", new VariantType ("u"));
         if (addr_v != null) {
-            out_ip.configured_ipv6_address = addr_v.get_string();
+            out_ip.configured_ipv6_address = addr_v.get_string ();
         }
         if (prefix_v != null) {
-            out_ip.configured_ipv6_prefix = prefix_v.get_uint32();
+            out_ip.configured_ipv6_prefix = prefix_v.get_uint32 ();
         }
     }
 

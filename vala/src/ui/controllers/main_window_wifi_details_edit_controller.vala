@@ -9,56 +9,56 @@ public class MainWindowWifiDetailsEditController : Object {
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
 
-    public MainWindowWifiDetailsEditController() {
+    public MainWindowWifiDetailsEditController () {
     }
 
-    public void on_page_leave() {
-        invalidate_ui_state();
+    public void on_page_leave () {
+        invalidate_ui_state ();
     }
 
-    public void dispose_controller() {
+    public void dispose_controller () {
         if (is_disposed) {
             return;
         }
         is_disposed = true;
-        invalidate_ui_state();
+        invalidate_ui_state ();
     }
 
-    private uint capture_ui_epoch() {
+    private uint capture_ui_epoch () {
         return ui_epoch;
     }
 
-    private bool is_ui_epoch_valid(uint epoch) {
+    private bool is_ui_epoch_valid (uint epoch) {
         return !is_disposed && epoch == ui_epoch;
     }
 
-    private void invalidate_ui_state() {
+    private void invalidate_ui_state () {
         ui_epoch++;
         if (ui_epoch == 0) {
             ui_epoch = 1;
         }
-        cancel_all_timeout_sources();
+        cancel_all_timeout_sources ();
     }
 
-    private void cancel_all_timeout_sources() {
+    private void cancel_all_timeout_sources () {
         if (timeout_source_ids.length == 0) {
             return;
         }
 
         foreach (uint source_id in timeout_source_ids) {
-            Source.remove(source_id);
+            Source.remove (source_id);
         }
         timeout_source_ids = {};
     }
 
-    private void track_timeout_source(uint source_id) {
+    private void track_timeout_source (uint source_id) {
         if (source_id == 0) {
             return;
         }
         timeout_source_ids += source_id;
     }
 
-    private void untrack_timeout_source(uint source_id) {
+    private void untrack_timeout_source (uint source_id) {
         if (source_id == 0 || timeout_source_ids.length == 0) {
             return;
         }
@@ -72,7 +72,7 @@ public class MainWindowWifiDetailsEditController : Object {
         timeout_source_ids = remaining;
     }
 
-    private bool is_wifi_device_fully_disconnected(NetworkDevice dev) {
+    private bool is_wifi_device_fully_disconnected (NetworkDevice dev) {
         if (dev.is_connected) {
             return false;
         }
@@ -81,7 +81,7 @@ public class MainWindowWifiDetailsEditController : Object {
         return !is_connecting;
     }
 
-    private void reconnect_after_disconnect_with_retry(
+    private void reconnect_after_disconnect_with_retry (
         NetworkManagerClient nm,
         WifiNetwork net,
         HashTable<string, bool> pending_wifi_connect,
@@ -95,24 +95,24 @@ public class MainWindowWifiDetailsEditController : Object {
     ) {
         string net_key = net.network_key;
 
-        if (!is_ui_epoch_valid(epoch)) {
+        if (!is_ui_epoch_valid (epoch)) {
             return;
         }
 
-        nm.get_devices.begin(null, (obj, res) => {
-            if (!is_ui_epoch_valid(epoch)) {
+        nm.get_devices.begin (null, (obj, res) => {
+            if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
 
             bool ready_to_reconnect = true;
             try {
-                var devices = nm.get_devices.end(res);
+                var devices = nm.get_devices.end (res);
                 foreach (var dev in devices) {
                     if (!dev.is_wifi || dev.device_path != net.device_path) {
                         continue;
                     }
 
-                    ready_to_reconnect = is_wifi_device_fully_disconnected(dev);
+                    ready_to_reconnect = is_wifi_device_fully_disconnected (dev);
                     break;
                 }
             } catch (Error e) {
@@ -121,47 +121,47 @@ public class MainWindowWifiDetailsEditController : Object {
             }
 
             if (ready_to_reconnect) {
-                nm.connect_wifi.begin(net, null, null, (obj2, res2) => {
+                nm.connect_wifi.begin (net, null, null, (obj2, res2) => {
                     try {
-                        nm.connect_wifi.end(res2);
-                        if (!is_ui_epoch_valid(epoch)) {
+                        nm.connect_wifi.end (res2);
+                        if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        on_refresh_after_action(true);
-                        on_open_details();
-                        disable_popup_text_input();
+                        on_refresh_after_action (true);
+                        on_open_details ();
+                        disable_popup_text_input ();
                     } catch (Error e) {
-                        if (!is_ui_epoch_valid(epoch)) {
+                        if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        pending_wifi_connect.remove(net_key);
-                        pending_wifi_seen_connecting.remove(net_key);
-                        on_error("Reconnect after edit failed: " + e.message);
-                        on_refresh_after_action(true);
-                        on_open_details();
-                        disable_popup_text_input();
+                        pending_wifi_connect.remove (net_key);
+                        pending_wifi_seen_connecting.remove (net_key);
+                        on_error ("Reconnect after edit failed: " + e.message);
+                        on_refresh_after_action (true);
+                        on_open_details ();
+                        disable_popup_text_input ();
                     }
                 });
                 return;
             }
 
             if (waited_ms >= WIFI_RECONNECT_MAX_WAIT_MS) {
-                pending_wifi_connect.remove(net_key);
-                pending_wifi_seen_connecting.remove(net_key);
-                on_error(
+                pending_wifi_connect.remove (net_key);
+                pending_wifi_seen_connecting.remove (net_key);
+                on_error (
                     "Reconnect after edit timed out while waiting for disconnect to complete."
                 );
-                on_refresh_after_action(true);
-                on_open_details();
-                disable_popup_text_input();
+                on_refresh_after_action (true);
+                on_open_details ();
+                disable_popup_text_input ();
                 return;
             }
 
             uint next_waited_ms = waited_ms + WIFI_RECONNECT_CHECK_INTERVAL_MS;
             uint timeout_id = 0;
-            timeout_id = Timeout.add(WIFI_RECONNECT_CHECK_INTERVAL_MS, () => {
-                untrack_timeout_source(timeout_id);
-                reconnect_after_disconnect_with_retry(
+            timeout_id = Timeout.add (WIFI_RECONNECT_CHECK_INTERVAL_MS, () => {
+                untrack_timeout_source (timeout_id);
+                reconnect_after_disconnect_with_retry (
                     nm,
                     net,
                     pending_wifi_connect,
@@ -175,184 +175,184 @@ public class MainWindowWifiDetailsEditController : Object {
                 );
                 return false;
             });
-            track_timeout_source(timeout_id);
+            track_timeout_source (timeout_id);
         });
     }
 
-    public void populate_wifi_details(
+    public void populate_wifi_details (
         NetworkManagerClient nm,
         WifiNetwork net,
         HashTable<string, bool> active_wifi_connections,
         MainWindowWifiDetailsPage page,
         MainWindowLogCallback log_debug
     ) {
-        uint epoch = capture_ui_epoch();
+        uint epoch = capture_ui_epoch ();
 
-        page.details_title.set_text(net.ssid);
-        bool is_connected_now = active_wifi_connections.contains(net.network_key);
+        page.details_title.set_text (net.ssid);
+        bool is_connected_now = active_wifi_connections.contains (net.network_key);
         bool can_manage_saved_profile = net.saved;
-        page.action_row.set_visible(can_manage_saved_profile);
-        page.forget_button.set_visible(can_manage_saved_profile);
-        page.edit_button.set_visible(can_manage_saved_profile);
+        page.action_row.set_visible (can_manage_saved_profile);
+        page.forget_button.set_visible (can_manage_saved_profile);
+        page.edit_button.set_visible (can_manage_saved_profile);
 
-        MainWindowHelpers.clear_box(page.basic_rows);
-        MainWindowHelpers.clear_box(page.advanced_rows);
-        MainWindowHelpers.clear_box(page.ip_rows);
+        MainWindowHelpers.clear_box (page.basic_rows);
+        MainWindowHelpers.clear_box (page.advanced_rows);
+        MainWindowHelpers.clear_box (page.ip_rows);
 
-        page.basic_rows.append(
-            MainWindowHelpers.build_details_row(
+        page.basic_rows.append (
+            MainWindowHelpers.build_details_row (
                 "Connection Status",
                 is_connected_now ? "Connected" : "Not connected"
             )
         );
-        page.basic_rows.append(
-            MainWindowHelpers.build_details_row("Signal Strength", "%u%%".printf(net.signal))
+        page.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Signal Strength", "%u%%".printf (net.signal))
         );
-        page.basic_rows.append(
-            MainWindowHelpers.build_details_row("Bars", MainWindowHelpers.get_signal_bars(net.signal))
+        page.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Bars", MainWindowHelpers.get_signal_bars (net.signal))
         );
-        page.basic_rows.append(
-            MainWindowHelpers.build_details_row("Security", net.is_secured ? "Secured" : "Open")
+        page.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Security", net.is_secured ? "Secured" : "Open")
         );
-        page.basic_rows.append(
-            MainWindowHelpers.build_details_row("Saved Profile", net.saved ? "Yes" : "No")
+        page.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Saved Profile", net.saved ? "Yes" : "No")
         );
 
-        string band = MainWindowHelpers.get_band_label(net.frequency_mhz);
-        int channel = MainWindowHelpers.get_channel_from_frequency(net.frequency_mhz);
-        page.advanced_rows.append(
-            MainWindowHelpers.build_details_row(
+        string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
+        int channel = MainWindowHelpers.get_channel_from_frequency (net.frequency_mhz);
+        page.advanced_rows.append (
+            MainWindowHelpers.build_details_row (
                 "Frequency",
-                net.frequency_mhz > 0 ? "%.1f GHz".printf((double) net.frequency_mhz / 1000.0) : "n/a"
+                net.frequency_mhz > 0 ? "%.1f GHz".printf ((double) net.frequency_mhz / 1000.0) : "n/a"
             )
         );
-        page.advanced_rows.append(
-            MainWindowHelpers.build_details_row("Channel", channel > 0 ? "%d".printf(channel) : "n/a")
+        page.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("Channel", channel > 0 ? "%d".printf (channel) : "n/a")
         );
-        page.advanced_rows.append(
-            MainWindowHelpers.build_details_row("Band", band != "" ? band : "n/a")
+        page.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("Band", band != "" ? band : "n/a")
         );
-        page.advanced_rows.append(
-            MainWindowHelpers.build_details_row("BSSID", net.bssid != "" ? net.bssid : "n/a")
+        page.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("BSSID", net.bssid != "" ? net.bssid : "n/a")
         );
-        page.advanced_rows.append(
-            MainWindowHelpers.build_details_row(
+        page.advanced_rows.append (
+            MainWindowHelpers.build_details_row (
                 "Max bitrate",
                 net.max_bitrate_kbps > 0
-                    ? "%.1f Mbps".printf((double) net.max_bitrate_kbps / 1000.0)
+                    ? "%.1f Mbps".printf ((double) net.max_bitrate_kbps / 1000.0)
                     : "n/a"
             )
         );
-        page.advanced_rows.append(
-            MainWindowHelpers.build_details_row("Mode", MainWindowHelpers.get_mode_label(net.mode))
+        page.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("Mode", MainWindowHelpers.get_mode_label (net.mode))
         );
 
-        page.ip_rows.append(
-            MainWindowHelpers.build_details_row("Loading", "Reading IP settings...")
+        page.ip_rows.append (
+            MainWindowHelpers.build_details_row ("Loading", "Reading IP settings…")
         );
 
-        nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
-            if (!is_ui_epoch_valid(epoch)) {
+        nm.get_wifi_network_ip_settings.begin (net, null, (obj, res) => {
+            if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
 
-            if (page.details_title.get_text() != net.ssid) {
+            if (page.details_title.get_text () != net.ssid) {
                 return;
             }
 
-            var ip_settings = nm.get_wifi_network_ip_settings.end(res);
+            var ip_settings = nm.get_wifi_network_ip_settings.end (res);
 
-            MainWindowHelpers.clear_box(page.ip_rows);
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            MainWindowHelpers.clear_box (page.ip_rows);
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Configured IPv4 Method",
-                    MainWindowHelpers.get_ipv4_method_label(ip_settings.ipv4_method)
+                    MainWindowHelpers.get_ipv4_method_label (ip_settings.ipv4_method)
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Configured IPv4 Address",
-                    MainWindowHelpers.format_ip_with_prefix(
+                    MainWindowHelpers.format_ip_with_prefix (
                         ip_settings.configured_address,
                         ip_settings.configured_prefix
                     )
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Configured Gateway",
-                    ip_settings.configured_gateway.strip() != "" ? ip_settings.configured_gateway : "n/a"
+                    ip_settings.configured_gateway.strip () != "" ? ip_settings.configured_gateway : "n/a"
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Configured DNS",
-                    ip_settings.configured_dns.strip() != "" ? ip_settings.configured_dns : "n/a"
+                    ip_settings.configured_dns.strip () != "" ? ip_settings.configured_dns : "n/a"
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Current IPv4 Address",
-                    MainWindowHelpers.format_ip_with_prefix(
+                    MainWindowHelpers.format_ip_with_prefix (
                         ip_settings.current_address,
                         ip_settings.current_prefix
                     )
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Current Gateway",
-                    ip_settings.current_gateway.strip() != "" ? ip_settings.current_gateway : "n/a"
+                    ip_settings.current_gateway.strip () != "" ? ip_settings.current_gateway : "n/a"
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Current DNS",
-                    ip_settings.current_dns.strip() != "" ? ip_settings.current_dns : "n/a"
+                    ip_settings.current_dns.strip () != "" ? ip_settings.current_dns : "n/a"
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Configured IPv6 Method",
-                    MainWindowHelpers.get_ipv6_method_label(ip_settings.ipv6_method)
+                    MainWindowHelpers.get_ipv6_method_label (ip_settings.ipv6_method)
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Configured IPv6 Address",
-                    MainWindowHelpers.format_ip_with_prefix(
+                    MainWindowHelpers.format_ip_with_prefix (
                         ip_settings.configured_ipv6_address,
                         ip_settings.configured_ipv6_prefix
                     )
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Configured IPv6 Gateway",
-                    ip_settings.configured_ipv6_gateway.strip() != ""
+                    ip_settings.configured_ipv6_gateway.strip () != ""
                         ? ip_settings.configured_ipv6_gateway
                         : "n/a"
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Current IPv6 Address",
-                    MainWindowHelpers.format_ip_with_prefix(
+                    MainWindowHelpers.format_ip_with_prefix (
                         ip_settings.current_ipv6_address,
                         ip_settings.current_ipv6_prefix
                     )
                 )
             );
-            page.ip_rows.append(
-                MainWindowHelpers.build_details_row(
+            page.ip_rows.append (
+                MainWindowHelpers.build_details_row (
                     "Current IPv6 Gateway",
-                    ip_settings.current_ipv6_gateway.strip() != "" ? ip_settings.current_ipv6_gateway : "n/a"
+                    ip_settings.current_ipv6_gateway.strip () != "" ? ip_settings.current_ipv6_gateway : "n/a"
                 )
             );
         });
     }
 
-    public void open_wifi_edit(
+    public void open_wifi_edit (
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
@@ -361,75 +361,75 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowActionCallback enable_popup_text_input,
         MainWindowLogCallback log_debug
     ) {
-        uint epoch = capture_ui_epoch();
+        uint epoch = capture_ui_epoch ();
 
-        page.edit_title.set_text("Edit: %s".printf(net.ssid));
-        page.password_entry.set_text("");
+        page.edit_title.set_text ("Edit: %s".printf (net.ssid));
+        page.password_entry.set_text ("");
 
         if (net.is_secured) {
-            page.note_label.set_text(
+            page.note_label.set_text (
                 "Leave password empty to keep current credentials.\n"
                 + "IPv4 and IPv6 settings can be changed below (auto/manual/disabled)."
             );
         } else {
-            page.note_label.set_text("Open network. Password is not required.");
+            page.note_label.set_text ("Open network. Password is not required.");
         }
 
-        wifi_stack.set_visible_child_name("edit");
-        enable_popup_text_input();
-        page.password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD);
-        page.password_entry.grab_focus();
+        wifi_stack.set_visible_child_name ("edit");
+        enable_popup_text_input ();
+        page.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
+        page.password_entry.grab_focus ();
 
-        page.ipv4_method_dropdown.set_selected(0);
-        page.ipv4_address_entry.set_text("");
-        page.ipv4_prefix_entry.set_text("");
-        page.gateway_auto_switch.set_active(true);
-        page.ipv4_gateway_entry.set_text("");
-        page.dns_auto_switch.set_active(true);
-        page.ipv4_dns_entry.set_text("");
-        page.ipv6_method_dropdown.set_selected(0);
-        page.ipv6_address_entry.set_text("");
-        page.ipv6_prefix_entry.set_text("");
-        page.ipv6_gateway_auto_switch.set_active(true);
-        page.ipv6_gateway_entry.set_text("");
-        sync_sensitivity();
+        page.ipv4_method_dropdown.set_selected (0);
+        page.ipv4_address_entry.set_text ("");
+        page.ipv4_prefix_entry.set_text ("");
+        page.gateway_auto_switch.set_active (true);
+        page.ipv4_gateway_entry.set_text ("");
+        page.dns_auto_switch.set_active (true);
+        page.ipv4_dns_entry.set_text ("");
+        page.ipv6_method_dropdown.set_selected (0);
+        page.ipv6_address_entry.set_text ("");
+        page.ipv6_prefix_entry.set_text ("");
+        page.ipv6_gateway_auto_switch.set_active (true);
+        page.ipv6_gateway_entry.set_text ("");
+        sync_sensitivity ();
 
-        nm.get_wifi_network_ip_settings.begin(net, null, (obj, res) => {
-            if (!is_ui_epoch_valid(epoch)) {
+        nm.get_wifi_network_ip_settings.begin (net, null, (obj, res) => {
+            if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
 
-            if (page.edit_title.get_text() != "Edit: %s".printf(net.ssid)) {
+            if (page.edit_title.get_text () != "Edit: %s".printf (net.ssid)) {
                 return;
             }
 
-            var ip_settings = nm.get_wifi_network_ip_settings.end(res);
+            var ip_settings = nm.get_wifi_network_ip_settings.end (res);
 
-            page.ipv4_method_dropdown.set_selected(
-                MainWindowHelpers.get_ipv4_method_dropdown_index(ip_settings.ipv4_method)
+            page.ipv4_method_dropdown.set_selected (
+                MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)
             );
-            page.ipv4_address_entry.set_text(ip_settings.configured_address);
-            page.ipv4_prefix_entry.set_text(
-                ip_settings.configured_prefix > 0 ? "%u".printf(ip_settings.configured_prefix) : ""
+            page.ipv4_address_entry.set_text (ip_settings.configured_address);
+            page.ipv4_prefix_entry.set_text (
+                ip_settings.configured_prefix > 0 ? "%u".printf (ip_settings.configured_prefix) : ""
             );
-            page.gateway_auto_switch.set_active(ip_settings.gateway_auto);
-            page.ipv4_gateway_entry.set_text(ip_settings.configured_gateway);
-            page.dns_auto_switch.set_active(ip_settings.dns_auto);
-            page.ipv4_dns_entry.set_text(ip_settings.configured_dns);
-            page.ipv6_method_dropdown.set_selected(
-                MainWindowHelpers.get_ipv6_method_dropdown_index(ip_settings.ipv6_method)
+            page.gateway_auto_switch.set_active (ip_settings.gateway_auto);
+            page.ipv4_gateway_entry.set_text (ip_settings.configured_gateway);
+            page.dns_auto_switch.set_active (ip_settings.dns_auto);
+            page.ipv4_dns_entry.set_text (ip_settings.configured_dns);
+            page.ipv6_method_dropdown.set_selected (
+                MainWindowHelpers.get_ipv6_method_dropdown_index (ip_settings.ipv6_method)
             );
-            page.ipv6_address_entry.set_text(ip_settings.configured_ipv6_address);
-            page.ipv6_prefix_entry.set_text(
-                ip_settings.configured_ipv6_prefix > 0 ? "%u".printf(ip_settings.configured_ipv6_prefix) : ""
+            page.ipv6_address_entry.set_text (ip_settings.configured_ipv6_address);
+            page.ipv6_prefix_entry.set_text (
+                ip_settings.configured_ipv6_prefix > 0 ? "%u".printf (ip_settings.configured_ipv6_prefix) : ""
             );
-            page.ipv6_gateway_auto_switch.set_active(ip_settings.ipv6_gateway_auto);
-            page.ipv6_gateway_entry.set_text(ip_settings.configured_ipv6_gateway);
-            sync_sensitivity();
+            page.ipv6_gateway_auto_switch.set_active (ip_settings.ipv6_gateway_auto);
+            page.ipv6_gateway_entry.set_text (ip_settings.configured_ipv6_gateway);
+            sync_sensitivity ();
         });
     }
 
-    public bool apply_wifi_edit(
+    public bool apply_wifi_edit (
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
@@ -440,20 +440,20 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowActionCallback on_open_details,
         MainWindowActionCallback disable_popup_text_input
     ) {
-        uint epoch = capture_ui_epoch();
+        uint epoch = capture_ui_epoch ();
         string net_key = net.network_key;
-        string password = page.password_entry.get_text().strip();
+        string password = page.password_entry.get_text ().strip ();
 
-        string method = MainWindowWifiEditUtils.get_selected_ipv4_method(page.ipv4_method_dropdown);
-        string ipv4_address = page.ipv4_address_entry.get_text().strip();
-        bool gateway_auto = page.gateway_auto_switch.get_active();
-        string ipv4_gateway = page.ipv4_gateway_entry.get_text().strip();
-        bool dns_auto = page.dns_auto_switch.get_active();
-        string dns_csv = page.ipv4_dns_entry.get_text().strip();
-        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method(page.ipv6_method_dropdown);
-        string ipv6_address = page.ipv6_address_entry.get_text().strip();
-        bool ipv6_gateway_auto = page.ipv6_gateway_auto_switch.get_active();
-        string ipv6_gateway = page.ipv6_gateway_entry.get_text().strip();
+        string method = MainWindowWifiEditUtils.get_selected_ipv4_method (page.ipv4_method_dropdown);
+        string ipv4_address = page.ipv4_address_entry.get_text ().strip ();
+        bool gateway_auto = page.gateway_auto_switch.get_active ();
+        string ipv4_gateway = page.ipv4_gateway_entry.get_text ().strip ();
+        bool dns_auto = page.dns_auto_switch.get_active ();
+        string dns_csv = page.ipv4_dns_entry.get_text ().strip ();
+        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method (page.ipv6_method_dropdown);
+        string ipv6_address = page.ipv6_address_entry.get_text ().strip ();
+        bool ipv6_gateway_auto = page.ipv6_gateway_auto_switch.get_active ();
+        string ipv6_gateway = page.ipv6_gateway_entry.get_text ().strip ();
 
         if (method == "disabled") {
             gateway_auto = true;
@@ -466,75 +466,75 @@ public class MainWindowWifiDetailsEditController : Object {
 
         uint32 ipv4_prefix;
         string prefix_error;
-        if (!MainWindowWifiEditUtils.try_parse_prefix(
-            page.ipv4_prefix_entry.get_text(),
+        if (!MainWindowWifiEditUtils.try_parse_prefix (
+            page.ipv4_prefix_entry.get_text (),
             out ipv4_prefix,
             out prefix_error
         )) {
-            on_error(prefix_error);
+            on_error (prefix_error);
             return false;
         }
 
         uint32 ipv6_prefix;
         string prefix6_error;
-        if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix(
-            page.ipv6_prefix_entry.get_text(),
+        if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix (
+            page.ipv6_prefix_entry.get_text (),
             out ipv6_prefix,
             out prefix6_error
         )) {
-            on_error(prefix6_error);
+            on_error (prefix6_error);
             return false;
         }
 
         if (method == "manual") {
             if (ipv4_address == "") {
-                on_error("Manual IPv4 requires an address.");
+                on_error ("Manual IPv4 requires an address.");
                 return false;
             }
             if (ipv4_prefix == 0) {
-                on_error("Manual IPv4 requires a prefix between 1 and 32.");
+                on_error ("Manual IPv4 requires a prefix between 1 and 32.");
                 return false;
             }
         }
 
         if (!gateway_auto && ipv4_gateway == "") {
-            on_error("Manual gateway is enabled; please provide a gateway address.");
+            on_error ("Manual gateway is enabled; please provide a gateway address.");
             return false;
         }
 
         if (!gateway_auto && method == "disabled") {
-            on_error("Manual gateway is not supported when IPv4 method is Disabled.");
+            on_error ("Manual gateway is not supported when IPv4 method is Disabled.");
             return false;
         }
 
-        string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv(dns_csv);
+        string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
         if (!dns_auto && dns_servers.length == 0) {
-            on_error("Manual DNS is enabled; provide at least one DNS server.");
+            on_error ("Manual DNS is enabled; provide at least one DNS server.");
             return false;
         }
 
         if (method6 == "manual") {
             if (ipv6_address == "") {
-                on_error("Manual IPv6 requires an address.");
+                on_error ("Manual IPv6 requires an address.");
                 return false;
             }
             if (ipv6_prefix == 0) {
-                on_error("Manual IPv6 requires a prefix between 1 and 128.");
+                on_error ("Manual IPv6 requires a prefix between 1 and 128.");
                 return false;
             }
         }
 
         if (!ipv6_gateway_auto && ipv6_gateway == "") {
-            on_error("Manual IPv6 gateway is enabled; please provide a gateway address.");
+            on_error ("Manual IPv6 gateway is enabled; please provide a gateway address.");
             return false;
         }
 
         if (!ipv6_gateway_auto && (method6 == "disabled" || method6 == "ignore")) {
-            on_error("Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore.");
+            on_error ("Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore.");
             return false;
         }
 
-        nm.update_wifi_network_settings.begin(
+        nm.update_wifi_network_settings.begin (
             net,
             password,
             method,
@@ -554,40 +554,40 @@ public class MainWindowWifiDetailsEditController : Object {
             null,
             (obj, res) => {
                 try {
-                    nm.update_wifi_network_settings.end(res);
+                    nm.update_wifi_network_settings.end (res);
                 } catch (Error e) {
-                    if (!is_ui_epoch_valid(epoch)) {
+                    if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_error("Apply failed: " + e.message);
+                    on_error ("Apply failed: " + e.message);
                     return;
                 }
 
                 if (!net.connected) {
-                    if (!is_ui_epoch_valid(epoch)) {
+                    if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_refresh_after_action(method != "disabled");
-                    on_open_details();
-                    disable_popup_text_input();
+                    on_refresh_after_action (method != "disabled");
+                    on_open_details ();
+                    disable_popup_text_input ();
                     return;
                 }
 
-                nm.disconnect_wifi.begin(net, null, (obj2, res2) => {
+                nm.disconnect_wifi.begin (net, null, (obj2, res2) => {
                     try {
-                        nm.disconnect_wifi.end(res2);
+                        nm.disconnect_wifi.end (res2);
                     } catch (Error e) {
-                        if (!is_ui_epoch_valid(epoch)) {
+                        if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        on_error("Disconnect before reconnect failed: " + e.message);
+                        on_error ("Disconnect before reconnect failed: " + e.message);
                         return;
                     }
 
-                    pending_wifi_connect.insert(net_key, true);
-                    pending_wifi_seen_connecting.remove(net_key);
+                    pending_wifi_connect.insert (net_key, true);
+                    pending_wifi_seen_connecting.remove (net_key);
 
-                    reconnect_after_disconnect_with_retry(
+                    reconnect_after_disconnect_with_retry (
                         nm,
                         net,
                         pending_wifi_connect,
@@ -603,7 +603,7 @@ public class MainWindowWifiDetailsEditController : Object {
             }
         );
 
-        if (!is_ui_epoch_valid(epoch)) {
+        if (!is_ui_epoch_valid (epoch)) {
             return false;
         }
         return true;

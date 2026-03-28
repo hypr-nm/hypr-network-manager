@@ -1,7 +1,7 @@
 using GLib;
 
 public class NmStatusFormatter : Object {
-    public static void pick_status_fields(
+    public static void pick_status_fields (
         bool networking_on,
         bool wifi_on,
         NetworkDevice? active_wifi,
@@ -31,7 +31,7 @@ public class NmStatusFormatter : Object {
         if (active_wifi != null) {
             text = "WIFI";
             alt = active_wifi.connection != "" ? active_wifi.connection : "WiFi";
-            tooltip = "WiFi: " + alt + " (" + wifi_signal.to_string() + "%)\\nDevice: " + active_wifi.name;
+            tooltip = "WiFi: " + alt + " (" + wifi_signal.to_string () + "%)\\nDevice: " + active_wifi.name;
             klass = "wifi";
             return;
         }
@@ -50,21 +50,21 @@ public class NmStatusFormatter : Object {
         klass = "disconnected";
     }
 
-    public static string build_status_json(string text, string alt, string tooltip, string klass) {
-        var builder = new Json.Builder();
-        builder.begin_object();
-        builder.set_member_name("text");
-        builder.add_string_value(text);
-        builder.set_member_name("alt");
-        builder.add_string_value(alt);
-        builder.set_member_name("tooltip");
-        builder.add_string_value(tooltip);
-        builder.set_member_name("class");
-        builder.add_string_value(klass);
-        builder.end_object();
+    public static string build_status_json (string text, string alt, string tooltip, string klass) {
+        var builder = new Json.Builder ();
+        builder.begin_object ();
+        builder.set_member_name ("text");
+        builder.add_string_value (text);
+        builder.set_member_name ("alt");
+        builder.add_string_value (alt);
+        builder.set_member_name ("tooltip");
+        builder.add_string_value (tooltip);
+        builder.set_member_name ("class");
+        builder.add_string_value (klass);
+        builder.end_object ();
 
-        var generator = new Json.Generator();
-        generator.set_root(builder.get_root());
-        return generator.to_data(null);
+        var generator = new Json.Generator ();
+        generator.set_root (builder.get_root ());
+        return generator.to_data (null);
     }
 }

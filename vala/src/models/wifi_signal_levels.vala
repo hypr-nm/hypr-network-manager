@@ -14,7 +14,7 @@ public class WifiSignalLevels : Object {
         EXCELLENT
     }
 
-    private static SignalLevel get_level(uint8 signal) {
+    private static SignalLevel get_level (uint8 signal) {
         if (signal >= THRESHOLD_EXCELLENT) {
             return SignalLevel.EXCELLENT;
         }
@@ -30,8 +30,8 @@ public class WifiSignalLevels : Object {
         return SignalLevel.VERY_WEAK;
     }
 
-    public static string get_label(uint8 signal) {
-        switch (get_level(signal)) {
+    public static string get_label (uint8 signal) {
+        switch (get_level (signal)) {
         case SignalLevel.EXCELLENT:
             return "Excellent";
         case SignalLevel.GOOD:
@@ -45,8 +45,8 @@ public class WifiSignalLevels : Object {
         }
     }
 
-    public static string get_icon_name(uint8 signal) {
-        switch (get_level(signal)) {
+    public static string get_icon_name (uint8 signal) {
+        switch (get_level (signal)) {
         case SignalLevel.EXCELLENT:
             return "network-wireless-signal-excellent-symbolic";
         case SignalLevel.GOOD:
@@ -60,8 +60,8 @@ public class WifiSignalLevels : Object {
         }
     }
 
-    public static string get_secured_icon_name(uint8 signal) {
-        switch (get_level(signal)) {
+    public static string get_secured_icon_name (uint8 signal) {
+        switch (get_level (signal)) {
         case SignalLevel.EXCELLENT:
             return "network-wireless-signal-excellent-secure-symbolic";
         case SignalLevel.GOOD:
@@ -75,8 +75,8 @@ public class WifiSignalLevels : Object {
         }
     }
 
-    public static string get_bars(uint8 signal) {
-        switch (get_level(signal)) {
+    public static string get_bars (uint8 signal) {
+        switch (get_level (signal)) {
         case SignalLevel.EXCELLENT:
             return "||||";
         case SignalLevel.GOOD:
@@ -84,9 +84,9 @@ public class WifiSignalLevels : Object {
         case SignalLevel.FAIR:
             return "||..";
         case SignalLevel.WEAK:
-            return "|...";
+            return "|…";
         default:
-            return "....";
+            return "….";
         }
     }
 }
