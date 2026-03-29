@@ -71,7 +71,7 @@ public class MainWindowWifiRowBuilder : Object {
         expand_hint.set_valign (Gtk.Align.CENTER);
         content.append (expand_hint);
 
-        var actions_panel = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
         actions_panel.add_css_class ("nm-row-actions");
 
         var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
@@ -199,18 +199,25 @@ public class MainWindowWifiRowBuilder : Object {
 
         action_buttons.append (action);
         action_buttons.append (details_btn);
-        actions_panel.append (action_buttons);
 
         if (has_resolvable_saved_profile) {
             var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
             auto_connect.add_css_class ("nm-row-autoconnect-check");
             auto_connect.set_active (net.autoconnect);
             auto_connect.set_sensitive (!is_connecting);
+            auto_connect.set_hexpand (true);
+            auto_connect.set_halign (Gtk.Align.START);
             auto_connect.toggled.connect (() => {
                 on_set_auto_connect (net, auto_connect.get_active ());
             });
             actions_panel.append (auto_connect);
+        } else {
+            var spacer = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+            spacer.set_hexpand (true);
+            actions_panel.append (spacer);
         }
+        
+        actions_panel.append (action_buttons);
 
         var actions_revealer = new Gtk.Revealer ();
         actions_revealer.add_css_class ("nm-row-actions-revealer");
@@ -219,10 +226,38 @@ public class MainWindowWifiRowBuilder : Object {
         actions_revealer.set_reveal_child (false);
         actions_revealer.set_child (actions_panel);
 
-        var click = new Gtk.GestureClick ();
+                var click = new Gtk.GestureClick ();
         click.released.connect ((n_press, x, y) => {
             bool expanded = !actions_revealer.get_reveal_child ();
+            
+            if (expanded) {
+                var parent = row.get_parent () as Gtk.ListBox;
+                if (parent != null) {
+                    for (Gtk.Widget? child = parent.get_first_child(); child != null; child = child.get_next_sibling()) {
+                        if (child != row) {
+                            var other_row = child as Gtk.ListBoxRow;
+                            if (other_row != null && other_row.get_data<bool> ("nm-actions-expanded")) {
+                                // Collapse other row
+                                for (Gtk.Widget? rchild = other_row.get_first_child(); rchild != null; rchild = rchild.get_next_sibling()) {
+                                    var box = rchild as Gtk.Box;
+                                    if (box != null) {
+                                        for (Gtk.Widget? bchild = box.get_first_child(); bchild != null; bchild = bchild.get_next_sibling()) {
+                                            var rev = bchild as Gtk.Revealer;
+                                            if (rev != null && rev.has_css_class ("nm-row-actions-revealer")) {
+                                                rev.set_reveal_child (false);
+                                                other_row.set_data<bool> ("nm-actions-expanded", false);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
             actions_revealer.set_reveal_child (expanded);
+            row.set_data<bool> ("nm-actions-expanded", expanded);
             if (!expanded) {
                 on_hide_password_prompt (prompt_revealer, prompt_entry, null);
             }
