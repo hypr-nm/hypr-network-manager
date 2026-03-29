@@ -229,11 +229,13 @@ public class NmEthernetClient : Object {
         Variant updated_ipv4;
         Variant updated_ipv6;
         string builder_error = "";
-        if (!NmWifiSettingsBuilder.build_updated_ipv4_section (all_settings, ipv4, out updated_ipv4, out builder_error)) {
+        if (!NmWifiSettingsBuilder.build_updated_ipv4_section (all_settings, ipv4,
+             out updated_ipv4, out builder_error)) {
             throw new IOError.FAILED (builder_error);
         }
 
-        if (!NmWifiSettingsBuilder.build_updated_ipv6_section (all_settings, ipv6, out updated_ipv6, out builder_error)) {
+        if (!NmWifiSettingsBuilder.build_updated_ipv6_section (all_settings, ipv6, out updated_ipv6,
+             out builder_error)) {
             throw new IOError.FAILED (builder_error);
         }
 
