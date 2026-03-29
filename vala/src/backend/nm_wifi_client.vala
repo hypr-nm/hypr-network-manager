@@ -50,7 +50,7 @@ public class NmWifiClient : GLib.Object {
 
             var d = new NetworkDevice () {
                 name = dev.get_iface (),
-                device_path = dev.get_path (),
+                device_path = ((NM.Object)dev).get_path (),
                 device_type = NM_DEVICE_TYPE_WIFI,
                 state = dev.get_state (),
                 connection = "",
@@ -109,8 +109,8 @@ public class NmWifiClient : GLib.Object {
                     connected = connected,
                     is_secured = is_secured,
                     saved = saved,
-                    device_path = dev.get_path (),
-                    ap_path = ap.get_path (),
+                    device_path = ((NM.Object)dev).get_path (),
+                    ap_path = ((NM.Object)ap).get_path (),
                     bssid = ap.get_bssid (),
                     frequency_mhz = ap.get_frequency (),
                     max_bitrate_kbps = ap.get_max_bitrate (),
@@ -182,7 +182,7 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
         if (conn == null) {
-            log_warning ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
+            log_warn ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
              throw new IOError.NOT_FOUND ("Connection not found");
         }
         var s_ip4 = conn.get_setting_ip4_config ();
@@ -291,7 +291,7 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
         if (conn == null) {
-            log_warning ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
+            log_warn ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
             throw new IOError.NOT_FOUND ("Connection not found");
         }
 
@@ -307,13 +307,13 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
         if (conn == null) {
-            log_warning ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
+            log_warn ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
             throw new IOError.NOT_FOUND ("Connection not found");
         }
         
         var dev = client.get_device_by_path (network.device_path);
         if (dev == null) {
-            log_warning ("nm-wifi-client", "Device not found for path: " + network.device_path);
+            log_warn ("nm-wifi-client", "Device not found for path: " + network.device_path);
             throw new IOError.NOT_FOUND ("Device not found");
         }
         
@@ -326,7 +326,9 @@ public class NmWifiClient : GLib.Object {
         string ssid,
         string? password,
         bool is_hidden = false,
-        HiddenWifiSecurityMode security_mode = HiddenWifiSecurityMode.OPEN
+        HiddenWifiSecurityMode security_mode = HiddenWifiSecurityMode.OPEN,
+        uint32 rsn_flags = 0,
+        uint32 wpa_flags = 0
     ) {
         var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
         
@@ -356,11 +358,29 @@ public class NmWifiClient : GLib.Object {
                     s_sec.key_mgmt = "none";
                     s_sec.wep_key0 = password;
                     s_sec.wep_key_type = NM.WepKeyType.PASSPHRASE;
+                } else if (security_mode == HiddenWifiSecurityMode.SAE) {
+                    s_sec.key_mgmt = "sae";
+                    s_sec.psk = password;
+                } else if (security_mode == HiddenWifiSecurityMode.WPA_PSK_SAE) {
+                    s_sec.key_mgmt = "sae";
+                    s_sec.psk = password;
                 }
             } else {
-                // Simplified, assumes WPA-PSK for visible secured networks
-                s_sec.key_mgmt = "wpa-psk";
-                s_sec.psk = password;
+                if ((rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_SAE) != 0) {
+                    s_sec.key_mgmt = "sae";
+                    s_sec.psk = password;
+                } else if ((rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_OWE) != 0) {
+                    s_sec.key_mgmt = "owe";
+                    s_sec.psk = password;
+                } else if ((rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_PSK) != 0 ||
+                           (wpa_flags & NM.80211ApSecurityFlags.KEY_MGMT_PSK) != 0) {
+                    s_sec.key_mgmt = "wpa-psk";
+                    s_sec.psk = password;
+                } else {
+                    // Fallback
+                    s_sec.key_mgmt = "wpa-psk";
+                    s_sec.psk = password;
+                }
             }
             conn.add_setting (s_sec);
         }
@@ -385,11 +405,11 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var dev = client.get_device_by_path (network.device_path);
         if (dev == null) {
-            log_warning ("nm-wifi-client", "Device not found for path: " + network.device_path);
+            log_warn ("nm-wifi-client", "Device not found for path: " + network.device_path);
             throw new IOError.NOT_FOUND ("Device not found");
         }
 
-        var conn = create_wifi_connection (network.ssid, password);
+        var conn = create_wifi_connection (network.ssid, password, false, HiddenWifiSecurityMode.OPEN, network.rsn_flags, network.wpa_flags);
         yield client.add_and_activate_connection_async (conn, dev, network.ap_path, cancellable);
         return true;
     }
@@ -427,7 +447,7 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var dev = client.get_device_by_path (network.device_path);
         if (dev == null) {
-            log_warning ("nm-wifi-client", "Device not found for path: " + network.device_path);
+            log_warn ("nm-wifi-client", "Device not found for path: " + network.device_path);
             throw new IOError.NOT_FOUND ("Device not found");
         }
 
@@ -443,7 +463,7 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var conn = client.get_connection_by_uuid (profile_uuid);
         if (conn == null) {
-            log_warning ("nm-wifi-client", "Connection not found for UUID: " + profile_uuid);
+            log_warn ("nm-wifi-client", "Connection not found for UUID: " + profile_uuid);
             throw new IOError.NOT_FOUND ("Connection not found");
         }
 

@@ -32,7 +32,7 @@ public class NmEthernetClient : GLib.Object {
 
         var dev = client.get_device_by_path (device.device_path);
         if (dev == null) {
-            log_warning ("nm-ethernet-client", "Device not found for connection: " + device.device_path);
+            log_warn ("nm-ethernet-client", "Device not found for connection: " + device.device_path);
             throw new IOError.NOT_FOUND ("Device not found.");
         }
 
@@ -47,7 +47,7 @@ public class NmEthernetClient : GLib.Object {
         var client = core.nm_client;
         var dev = client.get_device_by_iface (interface_name);
         if (dev == null) {
-            log_warning ("nm-ethernet-client", "Device not found for interface: " + interface_name);
+            log_warn ("nm-ethernet-client", "Device not found for interface: " + interface_name);
             throw new IOError.NOT_FOUND ("Device not found.");
         }
 

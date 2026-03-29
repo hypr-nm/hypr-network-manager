@@ -136,7 +136,7 @@ public class NetworkManagerClient : GLib.Object {
         foreach (var dev in devices) {
             var d = new NetworkDevice () {
                 name = dev.get_iface (),
-                device_path = dev.get_path (),
+                device_path = ((NM.Object)dev).get_path (),
                 device_type = dev.get_device_type (),
                 state = dev.get_state (),
                 connection = "",
