@@ -233,8 +233,31 @@ public class MainWindowWifiRuntimeController : Object {
             bool needs_rebuild = row == null || (!preserve_prompt_row && existing_signature != new_signature);
 
             if (needs_rebuild) {
+                bool was_expanded = false;
+                if (row != null) {
+                    was_expanded = row.get_data<bool> ("nm-actions-expanded");
+                }
+
                 var rebuilt_row = on_build_wifi_row (net);
                 rebuilt_row.set_data<string> ("nm-row-id", row_id);
+
+                if (was_expanded) {
+                    for (Gtk.Widget? child = rebuilt_row.get_first_child(); child != null; child = child.get_next_sibling()) {
+                        var box = child as Gtk.Box;
+                        if (box != null) {
+                            for (Gtk.Widget? bchild = box.get_first_child(); bchild != null; bchild = bchild.get_next_sibling()) {
+                                var rev = bchild as Gtk.Revealer;
+                                if (rev != null && rev.has_css_class ("nm-row-actions-revealer")) {
+                                    rev.set_reveal_child (true);
+                                    rebuilt_row.set_data<bool> ("nm-actions-expanded", true);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
                 if (row != null && row.get_parent () == wifi_listbox) {
                     wifi_listbox.remove (row);
                 }
