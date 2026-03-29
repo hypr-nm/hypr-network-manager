@@ -409,6 +409,25 @@ public class NmWifiClient : GLib.Object {
             throw new IOError.NOT_FOUND ("Device not found");
         }
 
+        if (network.saved && network.saved_connection_uuid != "") {
+            var existing_conn = client.get_connection_by_uuid (network.saved_connection_uuid);
+            if (existing_conn != null) {
+                if (password != null && password != "") {
+                    var s_sec = existing_conn.get_setting_wireless_security ();
+                    if (s_sec == null) {
+                        s_sec = new NM.SettingWirelessSecurity ();
+                        existing_conn.add_setting (s_sec);
+                    }
+                    s_sec.psk = password;
+                    if (existing_conn is NM.RemoteConnection) {
+                        yield ((NM.RemoteConnection)existing_conn).commit_changes_async (true, cancellable);
+                    }
+                }
+                yield client.activate_connection_async (existing_conn, dev, network.ap_path, cancellable);
+                return true;
+            }
+        }
+
         var conn = create_wifi_connection (network.ssid, password, false, HiddenWifiSecurityMode.OPEN, network.rsn_flags, network.wpa_flags);
         yield client.add_and_activate_connection_async (conn, dev, network.ap_path, cancellable);
         return true;
