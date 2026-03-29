@@ -84,6 +84,7 @@ public class MainWindowWifiDetailsEditController : Object {
     private void reconnect_after_disconnect_with_retry (
         NetworkManagerClient nm,
         WifiNetwork net,
+        bool close_after_apply,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
         MainWindowErrorCallback on_error,
@@ -127,9 +128,11 @@ public class MainWindowWifiDetailsEditController : Object {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
+                        if (close_after_apply) {
+                            on_open_details ();
+                            disable_popup_text_input ();
+                        }
                         on_refresh_after_action (true);
-                        on_open_details ();
-                        disable_popup_text_input ();
                     } catch (Error e) {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
@@ -137,9 +140,7 @@ public class MainWindowWifiDetailsEditController : Object {
                         pending_wifi_connect.remove (net_key);
                         pending_wifi_seen_connecting.remove (net_key);
                         on_error ("Reconnect after edit failed: " + e.message);
-                        on_refresh_after_action (true);
-                        on_open_details ();
-                        disable_popup_text_input ();
+                        on_refresh_after_action (false);
                     }
                 });
                 return;
@@ -151,9 +152,7 @@ public class MainWindowWifiDetailsEditController : Object {
                 on_error (
                     "Reconnect after edit timed out while waiting for disconnect to complete."
                 );
-                on_refresh_after_action (true);
-                on_open_details ();
-                disable_popup_text_input ();
+                on_refresh_after_action (false);
                 return;
             }
 
@@ -164,6 +163,7 @@ public class MainWindowWifiDetailsEditController : Object {
                 reconnect_after_disconnect_with_retry (
                     nm,
                     net,
+                    close_after_apply,
                     pending_wifi_connect,
                     pending_wifi_seen_connecting,
                     on_error,
@@ -433,6 +433,7 @@ public class MainWindowWifiDetailsEditController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
+        bool close_after_apply,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
         MainWindowErrorCallback on_error,
@@ -567,9 +568,11 @@ public class MainWindowWifiDetailsEditController : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
+                    if (close_after_apply) {
+                        on_open_details ();
+                        disable_popup_text_input ();
+                    }
                     on_refresh_after_action (method != "disabled");
-                    on_open_details ();
-                    disable_popup_text_input ();
                     return;
                 }
 
@@ -590,6 +593,7 @@ public class MainWindowWifiDetailsEditController : Object {
                     reconnect_after_disconnect_with_retry (
                         nm,
                         net,
+                        close_after_apply,
                         pending_wifi_connect,
                         pending_wifi_seen_connecting,
                         on_error,

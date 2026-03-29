@@ -1,6 +1,7 @@
 using GLib;
+using NM;
 
-public class WifiRefreshData : Object {
+public class WifiRefreshData : GLib.Object {
     public WifiNetwork[] networks;
     public NetworkDevice[] devices;
 
@@ -10,41 +11,36 @@ public class WifiRefreshData : Object {
     }
 }
 
-public class WifiSavedProfileIndex : Object {
-    public HashTable<string, bool> generic_saved_network_keys;
-    public HashTable<string, bool> bssid_locked_profiles;
-    public HashTable<string, string> unique_saved_network_key_uuids;
+public class NetworkManagerClient : GLib.Object {
+    public NM.Client nm_client;
 
-    public WifiSavedProfileIndex () {
-        generic_saved_network_keys = new HashTable<string, bool> (str_hash, str_equal);
-        bssid_locked_profiles = new HashTable<string, bool> (str_hash, str_equal);
-        unique_saved_network_key_uuids = new HashTable<string, string> (str_hash, str_equal);
-    }
-}
-
-public class NmSignalSubscription : Object {
-    public DBusProxy proxy;
-    public ulong handler_id;
-
-    public NmSignalSubscription (DBusProxy proxy, ulong handler_id) {
-        this.proxy = proxy;
-        this.handler_id = handler_id;
-    }
-}
-
-public class NetworkManagerClient : Object {
-    private GlobalDbusRunner dbus_runner;
     private NmWifiClient wifi_client;
     private NmEthernetClient ethernet_client;
     private NmVpnClient vpn_client;
     private bool nm_signals_active = false;
-    private List<NmSignalSubscription> nm_signal_subscriptions = new List<NmSignalSubscription> ();
-    private HashTable<string, bool> nm_subscribed_device_paths = new HashTable<string, bool> (str_hash, str_equal);
 
     public signal void network_events_changed ();
 
+    public static string normalize_ipv4_method (string value) {
+        if (value == "auto" || value == "manual" || value == "link-local" || value == "shared" || value == "disabled") {
+            return value;
+        }
+        return "auto";
+    }
+
+    public static string normalize_ipv6_method (string value) {
+        if (value == "auto" || value == "manual" || value == "ignore" || value == "shared" || value == "disabled" || value == "link-local") {
+            return value;
+        }
+        return "auto";
+    }
+
     public NetworkManagerClient () {
-        dbus_runner = GlobalDbusRunner.get_default ();
+        try {
+            nm_client = new NM.Client (null);
+        } catch (Error e) {
+            log_error ("nm-client", "Failed to initialize NM.Client: " + e.message);
+        }
         wifi_client = new NmWifiClient (this);
         ethernet_client = new NmEthernetClient (this);
         vpn_client = new NmVpnClient (this);
@@ -54,495 +50,111 @@ public class NetworkManagerClient : Object {
         log_debug ("nm-client", message);
     }
 
-    private void add_nm_signal_subscription (DBusProxy proxy, ulong handler_id) {
-        nm_signal_subscriptions.append (new NmSignalSubscription (proxy, handler_id));
-    }
-
     private void emit_nm_change_event (string reason) {
         debug_log ("nm_signal_event: received reason=" + reason);
         network_events_changed ();
     }
 
-    private async void subscribe_device_signals_dbus (
-        string device_path,
-        Cancellable? cancellable = null
-    ) {
-        if (nm_subscribed_device_paths.contains (device_path)) {
-            return;
-        }
-
-        try {
-            var dev_proxy = yield make_proxy (device_path, NM_DEVICE_IFACE, cancellable);
-            ulong state_handler_id = dev_proxy.g_signal.connect ((sender_name, signal_name, parameters) => {
-                if (signal_name == "StateChanged") {
-                    emit_nm_change_event ("Device.StateChanged (" + device_path + ")");
-                }
-            });
-            add_nm_signal_subscription (dev_proxy, state_handler_id);
-
-            uint32 dev_type = (yield get_prop_dbus (
-                device_path,
-                NM_DEVICE_IFACE,
-                "DeviceType",
-                cancellable
-            )).get_uint32 ();
-            if (dev_type == NM_DEVICE_TYPE_WIFI) {
-                var wireless_proxy = yield make_proxy (device_path, NM_WIRELESS_IFACE, cancellable);
-                ulong wifi_handler_id = wireless_proxy.g_signal.connect ((sender_name, signal_name, parameters) => {
-                    if (signal_name == "AccessPointAdded" || signal_name == "AccessPointRemoved") {
-                        emit_nm_change_event ("Wireless." + signal_name + " (" + device_path + ")");
-                    }
-                });
-                add_nm_signal_subscription (wireless_proxy, wifi_handler_id);
-            }
-
-            nm_subscribed_device_paths.insert (device_path, true);
-        } catch (Error e) {
-            debug_log (
-                "nm_device_subscribe: failed device="
-                    + redact_object_path (device_path)
-                    + " error=" + e.message
-                    + "; outcome=continuing"
-            );
-        }
-    }
-
-    private void clear_nm_signal_subscriptions () {
-        foreach (var sub in nm_signal_subscriptions) {
-            SignalHandler.disconnect (sub.proxy, sub.handler_id);
-        }
-        nm_signal_subscriptions = new List<NmSignalSubscription> ();
-        nm_subscribed_device_paths.remove_all ();
-    }
-
-    internal async DBusProxy make_proxy (
-        string object_path,
-        string iface,
-        Cancellable? cancellable = null
-    ) throws Error {
-        return yield new DBusProxy.for_bus (
-            BusType.SYSTEM,
-            DBusProxyFlags.NONE,
-            null,
-            NM_SERVICE,
-            object_path,
-            iface,
-            cancellable
-        );
-    }
-
-    internal async Variant call_dbus (
-        DBusProxy proxy,
-        string method,
-        Variant? parameters,
-        Cancellable? cancellable = null
-    ) throws Error {
-        var result = yield dbus_runner.run_with_proxy (
-            proxy,
-            method,
-            parameters,
-            DBusCallFlags.NONE,
-            NM_DBUS_TIMEOUT_MS,
-            cancellable
-        );
-
-        if (!result.ok || result.value == null) {
-            string message = result.error_message != "" ? result.error_message : "unknown error";
-            throw new IOError.FAILED ("D-Bus call '%s' failed: %s".printf (method, message));
-        }
-
-        return result.value;
-    }
-
-    public async DbusRequestResult run_dbus_request (
-        string service,
-        string object_path,
-        string iface,
-        string method,
-        Variant? parameters = null,
-        Cancellable? cancellable = null
-    ) {
-        return yield dbus_runner.run (
-            BusType.SYSTEM,
-            service,
-            object_path,
-            iface,
-            method,
-            parameters,
-            DBusCallFlags.NONE,
-            NM_DBUS_TIMEOUT_MS,
-            cancellable
-        );
-    }
-
-    internal async Variant get_prop_dbus (
-        string object_path,
-        string iface,
-        string prop,
-        Cancellable? cancellable = null
-    ) throws Error {
-        var proxy = yield make_proxy (object_path, DBUS_PROPS_IFACE, cancellable);
-        var result = yield call_dbus (
-            proxy,
-            "Get",
-            new Variant ("(ss)", iface, prop),
-            cancellable
-        );
-        var boxed = result.get_child_value (0);
-        return boxed.get_variant ();
-    }
-
     public async bool subscribe_network_events_dbus (Cancellable? cancellable = null) throws Error {
-        if (nm_signals_active) {
+        if (nm_signals_active || nm_client == null) {
             return true;
         }
 
-        try {
-            var nm_proxy = yield make_proxy (NM_PATH, NM_IFACE, cancellable);
-            ulong nm_handler_id = nm_proxy.g_signal.connect ((sender_name, signal_name, parameters) => {
-                if (signal_name == "StateChanged") {
-                    emit_nm_change_event ("NetworkManager.StateChanged");
-                    return;
-                }
-
-                if (signal_name == "DeviceAdded") {
-                    string? device_path = null;
-                    if (parameters != null && parameters.n_children () > 0) {
-                        device_path = parameters.get_child_value (0).get_string ();
-                    }
-
-                    if (device_path != null && device_path != "") {
-                        subscribe_device_signals_dbus.begin (device_path, null);
-                    }
-
-                    emit_nm_change_event ("NetworkManager.DeviceAdded");
-                    return;
-                }
-
-                if (signal_name == "DeviceRemoved") {
-                    emit_nm_change_event ("NetworkManager.DeviceRemoved");
-                    return;
-                }
+        nm_client.device_added.connect ((dev) => {
+            emit_nm_change_event ("DeviceAdded (" + dev.get_iface () + ")");
+            dev.state_changed.connect ((new_state, old_state, reason) => {
+                emit_nm_change_event ("DeviceStateChanged (" + dev.get_iface () + ")");
             });
-            add_nm_signal_subscription (nm_proxy, nm_handler_id);
-
-            var devices_res = yield call_dbus (nm_proxy, "GetDevices", null, cancellable);
-            var devices = devices_res.get_child_value (0);
-            for (int i = 0; i < devices.n_children (); i++) {
-                yield subscribe_device_signals_dbus (devices.get_child_value (i).get_string (), cancellable);
+            if (dev is NM.DeviceWifi) {
+                ((NM.DeviceWifi)dev).access_point_added.connect ((ap) => {
+                    emit_nm_change_event ("AccessPointAdded (" + dev.get_iface () + ")");
+                });
+                ((NM.DeviceWifi)dev).access_point_removed.connect ((ap) => {
+                    emit_nm_change_event ("AccessPointRemoved (" + dev.get_iface () + ")");
+                });
             }
+        });
+        
+        nm_client.device_removed.connect ((dev) => {
+            emit_nm_change_event ("DeviceRemoved (" + dev.get_iface () + ")");
+        });
 
-            nm_signals_active = true;
-            log_info ("nm-client", "nm_events_subscribe: enabled");
-            return true;
-        } catch (Error e) {
-            clear_nm_signal_subscriptions ();
-            nm_signals_active = false;
-            throw e;
+        nm_client.any_device_added.connect ((dev) => {
+            emit_nm_change_event ("AnyDeviceAdded");
+        });
+
+        nm_client.any_device_removed.connect ((dev) => {
+            emit_nm_change_event ("AnyDeviceRemoved");
+        });
+
+        nm_client.active_connection_added.connect ((conn) => {
+            emit_nm_change_event ("ActiveConnectionAdded");
+        });
+
+        nm_client.active_connection_removed.connect ((conn) => {
+            emit_nm_change_event ("ActiveConnectionRemoved");
+        });
+
+        nm_client.notify["wireless-enabled"].connect (() => {
+            emit_nm_change_event ("WirelessEnabled");
+        });
+
+        nm_client.notify["networking-enabled"].connect (() => {
+            emit_nm_change_event ("NetworkingEnabled");
+        });
+
+        foreach (var dev in nm_client.get_devices ()) {
+            dev.state_changed.connect ((new_state, old_state, reason) => {
+                emit_nm_change_event ("DeviceStateChanged (" + dev.get_iface () + ")");
+            });
+            if (dev is NM.DeviceWifi) {
+                ((NM.DeviceWifi)dev).access_point_added.connect ((ap) => {
+                    emit_nm_change_event ("AccessPointAdded (" + dev.get_iface () + ")");
+                });
+                ((NM.DeviceWifi)dev).access_point_removed.connect ((ap) => {
+                    emit_nm_change_event ("AccessPointRemoved (" + dev.get_iface () + ")");
+                });
+            }
         }
+
+        nm_signals_active = true;
+        log_info ("nm-client", "nm_events_subscribe: enabled");
+        return true;
     }
 
     public void unsubscribe_network_events () {
-        if (!nm_signals_active && nm_signal_subscriptions.length () == 0) {
+        if (!nm_signals_active) {
             return;
         }
-
-        clear_nm_signal_subscriptions ();
         nm_signals_active = false;
         log_info ("nm-client", "nm_events_subscribe: disabled");
     }
 
-    internal async List<NetworkDevice> get_devices_dbus (Cancellable? cancellable = null) throws Error {
+    public async List<NetworkDevice> get_devices (Cancellable? cancellable = null) throws Error {
         var devices_out = new List<NetworkDevice> ();
+        var devices = nm_client.get_devices ();
+        foreach (var dev in devices) {
+            var d = new NetworkDevice () {
+                name = dev.get_iface (),
+                device_path = dev.get_path (),
+                device_type = dev.get_device_type (),
+                state = dev.get_state (),
+                connection = "",
+                connection_uuid = ""
+            };
 
-        var nm = yield make_proxy (NM_PATH, NM_IFACE, cancellable);
-        var devices_res = yield call_dbus (nm, "GetDevices", null, cancellable);
-        var devices = devices_res.get_child_value (0);
-
-        for (int i = 0; i < devices.n_children (); i++) {
-            string dev_path = devices.get_child_value (i).get_string ();
-            try {
-                string iface = (yield get_prop_dbus (dev_path, NM_DEVICE_IFACE, "Interface",
-                    cancellable)).get_string ();
-                if (iface == "" || iface == "lo") {
-                    continue;
-                }
-
-                uint32 dev_type = (yield get_prop_dbus (dev_path, NM_DEVICE_IFACE, "DeviceType",
-                    cancellable)).get_uint32 ();
-                uint32 state = (yield get_prop_dbus (dev_path, NM_DEVICE_IFACE, "State", cancellable)).get_uint32 ();
-
-                string conn_name = "";
-                string conn_uuid = "";
-                string ac_path = (yield get_prop_dbus (
-                    dev_path,
-                    NM_DEVICE_IFACE,
-                    "ActiveConnection",
-                    cancellable
-                )).get_string ();
-                if (ac_path != "/") {
-                    try {
-                        conn_name = (yield get_prop_dbus (ac_path, NM_ACTIVE_CONN_IFACE, "Id",
-                            cancellable)).get_string ();
-                        conn_uuid = (yield get_prop_dbus (ac_path, NM_ACTIVE_CONN_IFACE, "Uuid",
-                            cancellable)).get_string ();
-                    } catch (Error e) {
-                        debug_log (
-                            "nm_device_read: failed active-connection lookup device="
-                                + redact_object_path (dev_path)
-                                + " error=" + e.message
-                                + "; outcome=continuing"
-                        );
-                    }
-                }
-
-                if (conn_name == "" && dev_type == NM_DEVICE_TYPE_ETHERNET) {
-                    try {
-                        Variant available_connections = yield get_prop_dbus (
-                            dev_path,
-                            NM_DEVICE_IFACE,
-                            "AvailableConnections",
-                            cancellable
-                        );
-                        for (int j = 0; j < available_connections.n_children (); j++) {
-                            string conn_path = available_connections.get_child_value (j).get_string ();
-                            try {
-                                var conn = yield make_proxy (conn_path, NM_CONN_IFACE, cancellable);
-                                var settings_res = yield call_dbus (conn, "GetSettings", null, cancellable);
-                                var all_settings = settings_res.get_child_value (0);
-
-                                Variant? conn_group = all_settings.lookup_value (
-                                    "connection",
-                                    new VariantType ("a{sv}")
-                                );
-                                if (conn_group == null) {
-                                    continue;
-                                }
-
-                                Variant? type_v = conn_group.lookup_value ("type", new VariantType ("s"));
-                                if (type_v == null || type_v.get_string () != "802-3-ethernet") {
-                                    continue;
-                                }
-
-                                Variant? id_v = conn_group.lookup_value ("id", new VariantType ("s"));
-                                Variant? uuid_v = conn_group.lookup_value ("uuid", new VariantType ("s"));
-                                if (id_v != null && id_v.get_string () != "") {
-                                    conn_name = id_v.get_string ();
-                                    conn_uuid = uuid_v != null ? uuid_v.get_string () : "";
-                                    break;
-                                }
-                            } catch (Error e) {
-                                debug_log (
-                                    "nm_profile_read: skipped stale profile path="
-                                        + redact_object_path (conn_path)
-                                        + " error=" + e.message
-                                );
-                            }
-                        }
-                    } catch (Error e) {
-                        debug_log (
-                            "nm_profile_list: failed Ethernet profile enumeration device="
-                                + redact_object_path (dev_path)
-                                + " error=" + e.message
-                                + "; outcome=continuing"
-                        );
-                    }
-                }
-
-                devices_out.append (new NetworkDevice () {
-                    name = iface,
-                    device_path = dev_path,
-                    device_type = dev_type,
-                    state = state,
-                    connection = conn_name,
-                    connection_uuid = conn_uuid
-                });
-            } catch (Error e) {
-                debug_log (
-                    "nm_device_read: skipped transient device path="
-                        + redact_object_path (dev_path)
-                        + " error=" + e.message
-                );
+            var ac = dev.get_active_connection ();
+            if (ac != null) {
+                d.connection = ac.get_id ();
+                d.connection_uuid = ac.get_uuid ();
             }
+            devices_out.append (d);
         }
-
         return devices_out;
     }
 
     public async WifiRefreshData get_wifi_refresh_data (Cancellable? cancellable = null) throws Error {
         return yield wifi_client.get_refresh_data (cancellable);
-    }
-
-    internal static string normalize_ipv4_method (string value) {
-        return NmClientUtils.normalize_ipv4_method (value);
-    }
-
-    internal static string normalize_ipv6_method (string value) {
-        return NmClientUtils.normalize_ipv6_method (value);
-    }
-
-    private static string extract_dns_list_string (Variant dns_variant) {
-        return NmClientUtils.extract_dns_list_string (dns_variant);
-    }
-
-    internal static void fill_configured_ipv4_from_settings (Variant all_settings, NetworkIpSettings out_ip) {
-        NmClientUtils.fill_configured_ipv4_from_settings (all_settings, out_ip);
-    }
-
-    internal static void fill_configured_ipv6_from_settings (Variant all_settings, NetworkIpSettings out_ip) {
-        NmClientUtils.fill_configured_ipv6_from_settings (all_settings, out_ip);
-    }
-
-    internal async void fill_runtime_ipv4_for_device_dbus (
-        string device_path,
-        bool device_connected,
-        NetworkIpSettings out_ip,
-        Cancellable? cancellable = null
-    ) {
-        if (!device_connected) {
-            return;
-        }
-
-        try {
-            string active_conn_path = (yield get_prop_dbus (
-                device_path,
-                NM_DEVICE_IFACE,
-                "ActiveConnection",
-                cancellable
-            )).get_string ();
-            if (active_conn_path == "/") {
-                return;
-            }
-
-            string ip4_config_path = (yield get_prop_dbus (
-                active_conn_path,
-                NM_ACTIVE_CONN_IFACE,
-                "Ip4Config",
-                cancellable
-            )).get_string ();
-            if (ip4_config_path == "/") {
-                return;
-            }
-
-            Variant address_data = yield get_prop_dbus (
-                ip4_config_path,
-                NM_IP4_CONFIG_IFACE,
-                "AddressData",
-                cancellable
-            );
-            if (address_data.n_children () > 0) {
-                Variant first_addr = address_data.get_child_value (0);
-                Variant? addr_v = first_addr.lookup_value ("address", new VariantType ("s"));
-                Variant? prefix_v = first_addr.lookup_value ("prefix", new VariantType ("u"));
-                if (addr_v != null) {
-                    out_ip.current_address = addr_v.get_string ();
-                }
-                if (prefix_v != null) {
-                    out_ip.current_prefix = prefix_v.get_uint32 ();
-                }
-            }
-
-            try {
-                out_ip.current_gateway = (yield get_prop_dbus (
-                    ip4_config_path,
-                    NM_IP4_CONFIG_IFACE,
-                    "Gateway",
-                    cancellable
-                )).get_string ();
-            } catch (Error gateway_err) {
-                debug_log ("ip4_runtime_read: gateway lookup failed error=" + gateway_err.message);
-            }
-
-            try {
-                Variant dns_data = yield get_prop_dbus (
-                    ip4_config_path,
-                    NM_IP4_CONFIG_IFACE,
-                    "NameserverData",
-                    cancellable
-                );
-                out_ip.current_dns = extract_dns_list_string (dns_data);
-            } catch (Error dns_err) {
-                debug_log ("ip4_runtime_read: DNS lookup failed error=" + dns_err.message);
-            }
-        } catch (Error e) {
-            debug_log ("ip4_runtime_read: failed error=" + e.message + "; outcome=continuing");
-        }
-    }
-
-    internal async void fill_runtime_ipv6_for_device_dbus (
-        string device_path,
-        bool device_connected,
-        NetworkIpSettings out_ip,
-        Cancellable? cancellable = null
-    ) {
-        if (!device_connected) {
-            return;
-        }
-
-        try {
-            string active_conn_path = (yield get_prop_dbus (
-                device_path,
-                NM_DEVICE_IFACE,
-                "ActiveConnection",
-                cancellable
-            )).get_string ();
-            if (active_conn_path == "/") {
-                return;
-            }
-
-            string ip6_config_path = (yield get_prop_dbus (
-                active_conn_path,
-                NM_ACTIVE_CONN_IFACE,
-                "Ip6Config",
-                cancellable
-            )).get_string ();
-            if (ip6_config_path == "/") {
-                return;
-            }
-
-            Variant address_data = yield get_prop_dbus (
-                ip6_config_path,
-                NM_IP6_CONFIG_IFACE,
-                "AddressData",
-                cancellable
-            );
-            if (address_data.n_children () > 0) {
-                Variant first_addr = address_data.get_child_value (0);
-                Variant? addr_v = first_addr.lookup_value ("address", new VariantType ("s"));
-                Variant? prefix_v = first_addr.lookup_value ("prefix", new VariantType ("u"));
-                if (addr_v != null) {
-                    out_ip.current_ipv6_address = addr_v.get_string ();
-                }
-                if (prefix_v != null) {
-                    out_ip.current_ipv6_prefix = prefix_v.get_uint32 ();
-                }
-            }
-
-            try {
-                out_ip.current_ipv6_gateway = (yield get_prop_dbus (
-                    ip6_config_path,
-                    NM_IP6_CONFIG_IFACE,
-                    "Gateway",
-                    cancellable
-                )).get_string ();
-            } catch (Error gateway_err) {
-                debug_log ("ip6_runtime_read: gateway lookup failed error=" + gateway_err.message);
-            }
-
-            try {
-                Variant dns_data = yield get_prop_dbus (
-                    ip6_config_path,
-                    NM_IP6_CONFIG_IFACE,
-                    "NameserverData",
-                    cancellable
-                );
-                out_ip.current_ipv6_dns = extract_dns_list_string (dns_data);
-            } catch (Error dns_err) {
-                debug_log ("ip6_runtime_read: DNS lookup failed error=" + dns_err.message);
-            }
-        } catch (Error e) {
-            debug_log ("ip6_runtime_read: failed error=" + e.message + "; outcome=continuing");
-        }
     }
 
     public async NetworkIpSettings get_wifi_network_ip_settings (
@@ -597,57 +209,28 @@ public class NetworkManagerClient : Object {
         );
     }
 
-    public async List<NetworkDevice> get_devices (Cancellable? cancellable = null) throws Error {
-        return yield get_devices_dbus (cancellable);
-    }
-
     public async bool get_wifi_enabled_dbus (Cancellable? cancellable = null) throws Error {
-        return (yield get_prop_dbus (NM_PATH, NM_IFACE, "WirelessEnabled", cancellable)).get_boolean ();
+        return nm_client.wireless_enabled;
     }
 
     public async bool get_networking_enabled_dbus (Cancellable? cancellable = null) throws Error {
-        return (yield get_prop_dbus (NM_PATH, NM_IFACE, "NetworkingEnabled", cancellable)).get_boolean ();
-    }
-
-    private async bool set_nm_bool_property_dbus (
-        string prop_name,
-        bool value,
-        Cancellable? cancellable = null
-    ) throws Error {
-        var proxy = yield make_proxy (NM_PATH, DBUS_PROPS_IFACE, cancellable);
-        yield call_dbus (
-            proxy,
-            "Set",
-            new Variant ("(ssv)", NM_IFACE, prop_name, new Variant.boolean (value)),
-            cancellable
-        );
-        return true;
+        return nm_client.networking_enabled;
     }
 
     public async bool set_wifi_enabled (bool enabled, Cancellable? cancellable = null) throws Error {
-        return yield set_nm_bool_property_dbus ("WirelessEnabled", enabled, cancellable);
+        nm_client.wireless_enabled = enabled;
+        return true;
     }
 
     public async bool set_networking_enabled (bool enabled, Cancellable? cancellable = null) throws Error {
-        try {
-            var nm = yield make_proxy (NM_PATH, NM_IFACE, cancellable);
-            yield call_dbus (
-                nm,
-                "Enable",
-                new Variant ("(b)", enabled),
-                cancellable
-            );
-            return true;
-        } catch (Error e) {
-            debug_log ("networking_toggle: Enable () failed error=" + e.message + "; outcome=property fallback");
-            return yield set_nm_bool_property_dbus ("NetworkingEnabled", enabled, cancellable);
-        }
+        nm_client.networking_enabled = enabled;
+        return true;
     }
 
     public async bool toggle_wifi_dbus (Cancellable? cancellable = null) throws Error {
-        bool current = yield get_wifi_enabled_dbus (cancellable);
+        bool current = nm_client.wireless_enabled;
         bool enabled_after_toggle = !current;
-        yield set_nm_bool_property_dbus ("WirelessEnabled", enabled_after_toggle, cancellable);
+        nm_client.wireless_enabled = enabled_after_toggle;
         return enabled_after_toggle;
     }
 
@@ -692,6 +275,15 @@ public class NetworkManagerClient : Object {
         return yield wifi_client.forget_network (profile_uuid, network_key, cancellable);
     }
 
+    public async bool set_wifi_network_autoconnect (
+        WifiNetwork network,
+        bool enabled,
+        int32 priority = 10,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield wifi_client.set_network_autoconnect (network, enabled, priority, cancellable);
+    }
+
     public async bool connect_vpn (string name, Cancellable? cancellable = null) throws Error {
         return yield vpn_client.connect (name, cancellable);
     }
@@ -709,18 +301,8 @@ public class NetworkManagerClient : Object {
     }
 
     public async string get_status_json_dbus (Cancellable? cancellable = null) {
-        bool networking_on = false;
-        bool wifi_on = false;
-        try {
-            networking_on = yield get_networking_enabled_dbus (cancellable);
-        } catch (Error e) {
-            debug_log ("status_read: networking-enabled lookup failed error=" + e.message);
-        }
-        try {
-            wifi_on = yield get_wifi_enabled_dbus (cancellable);
-        } catch (Error e) {
-            debug_log ("status_read: wifi-enabled lookup failed error=" + e.message);
-        }
+        bool networking_on = nm_client.networking_enabled;
+        bool wifi_on = nm_client.wireless_enabled;
 
         NetworkDevice[] devices = {};
         WifiNetwork[] wifi_nets = {};

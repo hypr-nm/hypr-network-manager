@@ -209,6 +209,7 @@ public class MainWindowWifiController : Object {
         ref WifiNetwork? selected_wifi_network,
         NetworkManagerClient nm,
         MainWindowWifiEditPage page,
+        bool close_after_apply,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
         MainWindowErrorCallback on_error,
@@ -225,6 +226,7 @@ public class MainWindowWifiController : Object {
             nm,
             net,
             page,
+            close_after_apply,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
             on_error,
@@ -246,6 +248,7 @@ public class MainWindowWifiController : Object {
         owned MainWindowWifiNetworkCallback on_forget_saved_network,
         owned MainWindowWifiNetworkCallback on_disconnect,
         owned MainWindowWifiNetworkPasswordCallback on_connect,
+        owned MainWindowWifiNetworkBoolCallback on_set_auto_connect,
         owned MainWindowPasswordPromptShowCallback on_show_password_prompt,
         owned MainWindowPasswordPromptHideCallback on_hide_password_prompt
     ) {
@@ -261,6 +264,7 @@ public class MainWindowWifiController : Object {
             (owned) on_forget_saved_network,
             (owned) on_disconnect,
             (owned) on_connect,
+            (owned) on_set_auto_connect,
             (owned) on_show_password_prompt,
             (owned) on_hide_password_prompt
         );

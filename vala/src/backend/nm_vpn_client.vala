@@ -1,147 +1,81 @@
 using GLib;
 
-public class NmVpnClient : Object {
+public class NmVpnClient : GLib.Object {
     private NetworkManagerClient core;
 
     public NmVpnClient (NetworkManagerClient core) {
         this.core = core;
     }
 
-    private async string resolve_connection_by_name (
-        string name,
-        Cancellable? cancellable = null
-    ) throws Error {
-        string? match = null;
-
-        var settings = yield core.make_proxy (NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
-        var list_res = yield core.call_dbus (settings, "ListConnections", null, cancellable);
-        var conns = list_res.get_child_value (0);
-
-        for (int i = 0; i < conns.n_children (); i++) {
-            string conn_path = conns.get_child_value (i).get_string ();
-            var conn = yield core.make_proxy (conn_path, NM_CONN_IFACE, cancellable);
-            var settings_res = yield core.call_dbus (conn, "GetSettings", null, cancellable);
-            var all_settings = settings_res.get_child_value (0);
-
-            Variant? conn_group = all_settings.lookup_value ("connection", new VariantType ("a{sv}"));
-            if (conn_group == null) {
-                continue;
-            }
-
-            Variant? id_v = conn_group.lookup_value ("id", new VariantType ("s"));
-            if (id_v != null && id_v.get_string () == name) {
-                if (match != null) {
-                    throw new IOError.FAILED (
-                        "Multiple connections share this name. Use UUID to activate a specific profile."
-                    );
-                }
-                match = conn_path;
-            }
-        }
-
-        if (match == null) {
-            throw new IOError.NOT_FOUND ("Connection not found.");
-        }
-
-        return match;
-    }
-
     public new async bool connect (string name, Cancellable? cancellable = null) throws Error {
-        string conn_path = yield resolve_connection_by_name (name, cancellable);
-
-        var nm = yield core.make_proxy (NM_PATH, NM_IFACE, cancellable);
-        yield core.call_dbus (
-            nm,
-            "ActivateConnection",
-            new Variant ("(ooo)", conn_path, "/", "/"),
-            cancellable
-        );
+        var client = core.nm_client;
+        NM.Connection? vpn_conn = null;
+        
+        foreach (var conn in client.get_connections ()) {
+            var s_vpn = conn.get_setting_vpn ();
+            if (s_vpn != null && conn.get_id () == name) {
+                vpn_conn = conn;
+                break;
+            }
+        }
+        
+        if (vpn_conn == null) {
+            throw new IOError.NOT_FOUND ("VPN connection not found");
+        }
+        
+        yield client.activate_connection_async (vpn_conn, null, null, cancellable);
         return true;
     }
 
     public new async bool disconnect (string name, Cancellable? cancellable = null) throws Error {
-        var nm = yield core.make_proxy (NM_PATH, NM_IFACE, cancellable);
-        Variant active_conns = yield core.get_prop_dbus (NM_PATH, NM_IFACE, "ActiveConnections", cancellable);
-        for (int i = 0; i < active_conns.n_children (); i++) {
-            string ac_path = active_conns.get_child_value (i).get_string ();
-            string id = (yield core.get_prop_dbus (
-                ac_path,
-                NM_ACTIVE_CONN_IFACE,
-                "Id",
-                cancellable
-            )).get_string ();
-            if (id != name) {
-                continue;
+        var client = core.nm_client;
+        foreach (var ac in client.get_active_connections ()) {
+            var conn = ac.get_connection ();
+            if (conn != null && conn.get_setting_vpn () != null && conn.get_id () == name) {
+                yield client.deactivate_connection_async (ac, cancellable);
+                return true;
             }
-
-            yield core.call_dbus (nm, "DeactivateConnection", new Variant ("(o)", ac_path), cancellable);
-            return true;
         }
-
-        throw new IOError.NOT_FOUND ("Active connection not found.");
+        
+        throw new IOError.NOT_FOUND ("Active VPN connection not found");
     }
 
     public async List<VpnConnection> get_connections (Cancellable? cancellable = null) throws Error {
         var vpns = new List<VpnConnection> ();
-
-        var active_map = new HashTable<string, string> (str_hash, str_equal);
-        Variant active_conns = yield core.get_prop_dbus (NM_PATH, NM_IFACE, "ActiveConnections", cancellable);
-        for (int i = 0; i < active_conns.n_children (); i++) {
-            string ac_path = active_conns.get_child_value (i).get_string ();
-            try {
-                string id = (yield core.get_prop_dbus (ac_path, NM_ACTIVE_CONN_IFACE, "Id", cancellable)).get_string ();
-                active_map.insert (id, "activated");
-            } catch (Error e) {
-                core.debug_log ("vpn_active_read: connection-id lookup failed error=" + e.message);
-            }
-        }
-
-        var settings = yield core.make_proxy (NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
-        var list_res = yield core.call_dbus (settings, "ListConnections", null, cancellable);
-        var conns = list_res.get_child_value (0);
-
-        for (int i = 0; i < conns.n_children (); i++) {
-            string conn_path = conns.get_child_value (i).get_string ();
-            var conn = yield core.make_proxy (conn_path, NM_CONN_IFACE, cancellable);
-            var settings_res = yield core.call_dbus (conn, "GetSettings", null, cancellable);
-            var all_settings = settings_res.get_child_value (0);
-
-            Variant? conn_group = all_settings.lookup_value ("connection", new VariantType ("a{sv}"));
-            if (conn_group == null) {
+        var client = core.nm_client;
+        
+        foreach (var conn in client.get_connections ()) {
+            var s_vpn = conn.get_setting_vpn ();
+            if (s_vpn == null) {
                 continue;
             }
-
-            Variant? type_v = conn_group.lookup_value ("type", new VariantType ("s"));
-            if (type_v == null || type_v.get_string () != "vpn") {
-                continue;
-            }
-
-            Variant? id_v = conn_group.lookup_value ("id", new VariantType ("s"));
-            if (id_v == null) {
-                continue;
-            }
-
-            string name = id_v.get_string ();
-            Variant? vpn_group = all_settings.lookup_value ("vpn", new VariantType ("a{sv}"));
-            string vpn_type = "vpn";
-            if (vpn_group != null) {
-                Variant? svc_v = vpn_group.lookup_value ("service-type", new VariantType ("s"));
-                if (svc_v != null) {
-                    string svc = svc_v.get_string ();
-                    var parts = svc.split (".");
-                    if (parts.length > 0) {
-                        vpn_type = parts[parts.length - 1];
+            
+            var vpn = new VpnConnection () {
+                name = conn.get_id (),
+                vpn_type = s_vpn.get_service_type (),
+                state = "deactivated"
+            };
+            
+            foreach (var ac in client.get_active_connections ()) {
+                var c = ac.get_connection ();
+                if (c != null && c.get_uuid () == conn.get_uuid ()) {
+                    var s = ac.get_state ();
+                    if (s == NM.ActiveConnectionState.ACTIVATED) {
+                        vpn.state = "activated";
+                    } else if (s == NM.ActiveConnectionState.ACTIVATING) {
+                        vpn.state = "activating";
+                    } else if (s == NM.ActiveConnectionState.DEACTIVATING) {
+                        vpn.state = "deactivating";
+                    } else {
+                        vpn.state = "deactivated";
                     }
+                    break;
                 }
             }
-
-            vpns.append (new VpnConnection () {
-                name = name,
-                state = active_map.contains (name) ? "activated" : "deactivated",
-                vpn_type = vpn_type
-            });
+            
+            vpns.append (vpn);
         }
-
+        
         return vpns;
     }
 }

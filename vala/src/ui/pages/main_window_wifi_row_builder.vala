@@ -11,6 +11,7 @@ public class MainWindowWifiRowBuilder : Object {
         owned MainWindowWifiNetworkCallback on_forget_saved_network,
         owned MainWindowWifiNetworkCallback on_disconnect,
         owned MainWindowWifiNetworkPasswordCallback on_connect,
+        owned MainWindowWifiNetworkBoolCallback on_set_auto_connect,
         owned MainWindowPasswordPromptShowCallback on_show_password_prompt,
         owned MainWindowPasswordPromptHideCallback on_hide_password_prompt
     ) {
@@ -65,9 +66,17 @@ public class MainWindowWifiRowBuilder : Object {
         info.append (sub);
         content.append (info);
 
-        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-        actions.add_css_class ("nm-row-actions");
-        actions.set_valign (Gtk.Align.CENTER);
+        var expand_hint = new Gtk.Image.from_icon_name ("pan-down-symbolic");
+        expand_hint.add_css_class ("nm-row-expand-icon");
+        expand_hint.set_valign (Gtk.Align.CENTER);
+        content.append (expand_hint);
+
+        var actions_panel = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        actions_panel.add_css_class ("nm-row-actions");
+
+        var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+        action_buttons.add_css_class ("nm-row-action-buttons");
+        action_buttons.set_valign (Gtk.Align.CENTER);
 
         var details_btn = new Gtk.Button ();
         details_btn.add_css_class ("nm-button");
@@ -93,7 +102,7 @@ public class MainWindowWifiRowBuilder : Object {
             forget.clicked.connect (() => {
                 on_forget_saved_network (net);
             });
-            actions.append (forget);
+            action_buttons.append (forget);
         }
 
         string action_label = is_connecting ? "Connecting…" : (is_connected_now ? "Disconnect" : "Connect");
@@ -187,11 +196,41 @@ public class MainWindowWifiRowBuilder : Object {
                 on_connect (net, null);
             }
         });
-        actions.append (action);
-        actions.append (details_btn);
-        content.append (actions);
+
+        action_buttons.append (action);
+        action_buttons.append (details_btn);
+        actions_panel.append (action_buttons);
+
+        if (has_resolvable_saved_profile) {
+            var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
+            auto_connect.add_css_class ("nm-row-autoconnect-check");
+            auto_connect.set_active (true);
+            auto_connect.set_sensitive (!is_connecting);
+            auto_connect.toggled.connect (() => {
+                on_set_auto_connect (net, auto_connect.get_active ());
+            });
+            actions_panel.append (auto_connect);
+        }
+
+        var actions_revealer = new Gtk.Revealer ();
+        actions_revealer.add_css_class ("nm-row-actions-revealer");
+        actions_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+        actions_revealer.set_transition_duration (220);
+        actions_revealer.set_reveal_child (false);
+        actions_revealer.set_child (actions_panel);
+
+        var click = new Gtk.GestureClick ();
+        click.released.connect ((n_press, x, y) => {
+            bool expanded = !actions_revealer.get_reveal_child ();
+            actions_revealer.set_reveal_child (expanded);
+            if (!expanded) {
+                on_hide_password_prompt (prompt_revealer, prompt_entry, null);
+            }
+        });
+        content.add_controller (click);
 
         row_root.append (content);
+        row_root.append (actions_revealer);
         row_root.append (prompt_revealer);
         row.set_child (row_root);
         return row;

@@ -1,97 +1,42 @@
 using GLib;
 
-public class NmEthernetClient : Object {
+public class NmEthernetClient : GLib.Object {
     private NetworkManagerClient core;
 
     public NmEthernetClient (NetworkManagerClient core) {
         this.core = core;
     }
 
-    private async string resolve_connection_path (
-        NetworkDevice device,
-        string ambiguous_message,
-        string not_found_message,
-        Cancellable? cancellable = null
-    ) throws Error {
-        string? uuid_match = null;
-        string? name_match = null;
-        bool name_ambiguous = false;
-
-        var settings = yield core.make_proxy (NM_SETTINGS_PATH, NM_SETTINGS_IFACE, cancellable);
-        var list_res = yield core.call_dbus (settings, "ListConnections", null, cancellable);
-        var conns = list_res.get_child_value (0);
-
-        for (int i = 0; i < conns.n_children (); i++) {
-            string candidate_path = conns.get_child_value (i).get_string ();
-            var conn = yield core.make_proxy (candidate_path, NM_CONN_IFACE, cancellable);
-            var settings_res = yield core.call_dbus (conn, "GetSettings", null, cancellable);
-            var all_settings = settings_res.get_child_value (0);
-
-            Variant? conn_group = all_settings.lookup_value ("connection", new VariantType ("a{sv}"));
-            if (conn_group == null) {
-                continue;
-            }
-
-            Variant? type_v = conn_group.lookup_value ("type", new VariantType ("s"));
-            if (type_v == null || type_v.get_string () != "802-3-ethernet") {
-                continue;
-            }
-
-            if (device.connection_uuid.strip () != "") {
-                Variant? uuid_v = conn_group.lookup_value ("uuid", new VariantType ("s"));
-                if (uuid_v != null && uuid_v.get_string () == device.connection_uuid) {
-                    uuid_match = candidate_path;
-                    break;
-                }
-            }
-
-            Variant? id_v = conn_group.lookup_value ("id", new VariantType ("s"));
-            if (id_v != null && id_v.get_string () == device.connection) {
-                if (name_match != null) {
-                    name_ambiguous = true;
-                } else {
-                    name_match = candidate_path;
-                }
+    private NM.Connection? resolve_connection (NetworkDevice device) {
+        var client = core.nm_client;
+        if (device.connection_uuid != "") {
+            var c = client.get_connection_by_uuid (device.connection_uuid);
+            if (c != null) return c;
+        }
+        foreach (var conn in client.get_connections ()) {
+            var s_eth = conn.get_setting_wired ();
+            if (s_eth != null && conn.get_id () == device.connection) {
+                return conn;
             }
         }
-
-        if (uuid_match != null) {
-            return uuid_match;
-        }
-
-        if (name_ambiguous) {
-            throw new IOError.FAILED (ambiguous_message);
-        }
-
-        if (name_match == null) {
-            throw new IOError.NOT_FOUND (not_found_message);
-        }
-
-        return name_match;
+        return null;
     }
 
     public async bool connect_device (
         NetworkDevice device,
         Cancellable? cancellable = null
     ) throws Error {
-        if (device.connection.strip () == "") {
-            throw new IOError.FAILED ("No saved Ethernet profile available for this interface.");
+        var client = core.nm_client;
+        var conn = resolve_connection (device);
+        if (conn == null) throw new IOError.NOT_FOUND ("No saved Ethernet profile found.");
+
+        var dev = client.get_device_by_path (device.device_path);
+        if (dev == null) {
+            log_warning ("nm-ethernet-client", "Device not found for connection: " + device.device_path);
+            throw new IOError.NOT_FOUND ("Device not found.");
         }
 
-        string conn_path = yield resolve_connection_path (
-            device,
-            "Multiple Ethernet profiles share this name. Use UUID to activate a specific profile.",
-            "No saved Ethernet profile found.",
-            cancellable
-        );
-
-        var nm = yield core.make_proxy (NM_PATH, NM_IFACE, cancellable);
-        yield core.call_dbus (
-            nm,
-            "ActivateConnection",
-            new Variant ("(ooo)", conn_path, "/", "/"),
-            cancellable
-        );
+        yield client.activate_connection_async (conn, dev, null, cancellable);
         return true;
     }
 
@@ -99,28 +44,15 @@ public class NmEthernetClient : Object {
         string interface_name,
         Cancellable? cancellable = null
     ) throws Error {
-        var nm = yield core.make_proxy (NM_PATH, NM_IFACE, cancellable);
-        var devices_res = yield core.call_dbus (nm, "GetDevices", null, cancellable);
-        var devices = devices_res.get_child_value (0);
-
-        for (int i = 0; i < devices.n_children (); i++) {
-            string dev_path = devices.get_child_value (i).get_string ();
-            string iface = (yield core.get_prop_dbus (
-                dev_path,
-                NM_DEVICE_IFACE,
-                "Interface",
-                cancellable
-            )).get_string ();
-            if (iface != interface_name) {
-                continue;
-            }
-
-            var dev = yield core.make_proxy (dev_path, NM_DEVICE_IFACE, cancellable);
-            yield core.call_dbus (dev, "Disconnect", null, cancellable);
-            return true;
+        var client = core.nm_client;
+        var dev = client.get_device_by_iface (interface_name);
+        if (dev == null) {
+            log_warning ("nm-ethernet-client", "Device not found for interface: " + interface_name);
+            throw new IOError.NOT_FOUND ("Device not found.");
         }
 
-        throw new IOError.NOT_FOUND ("Device not found.");
+        yield dev.disconnect_async (cancellable);
+        return true;
     }
 
     public async NetworkIpSettings get_device_ip_settings (
@@ -128,131 +60,169 @@ public class NmEthernetClient : Object {
         Cancellable? cancellable = null
     ) {
         var ip_settings = new NetworkIpSettings ();
+        var conn = resolve_connection (device);
 
-        if (device.connection.strip () != "") {
-            try {
-                string conn_path = yield resolve_connection_path (
-                    device,
-                    "Multiple Ethernet profiles share this name. Select by UUID.",
-                    "No saved Ethernet profile found.",
-                    cancellable
-                );
-                var conn = yield core.make_proxy (conn_path, NM_CONN_IFACE, cancellable);
-                var settings_res = yield core.call_dbus (conn, "GetSettings", null, cancellable);
-                var all_settings = settings_res.get_child_value (0);
-                NetworkManagerClient.fill_configured_ipv4_from_settings (all_settings, ip_settings);
-                NetworkManagerClient.fill_configured_ipv6_from_settings (all_settings, ip_settings);
-            } catch (Error e) {
-                core.debug_log ("ethernet_profile_read: saved settings lookup failed error=" + e.message);
+        if (conn != null) {
+            var s_ip4 = conn.get_setting_ip4_config ();
+            if (s_ip4 != null) {
+                ip_settings.ipv4_method = s_ip4.get_method ();
+                ip_settings.gateway_auto = true;
+                // Full config read requires matching NMSettingIPConfig details
+                if (s_ip4.get_num_addresses () > 0) {
+                    unowned NM.IPAddress addr = s_ip4.get_address (0);
+                    ip_settings.configured_address = addr.get_address ();
+                    ip_settings.configured_prefix = addr.get_prefix ();
+                }
+                ip_settings.configured_gateway = s_ip4.get_gateway ();
+                if (s_ip4.get_num_dns () > 0) {
+                    ip_settings.configured_dns = s_ip4.get_dns (0);
+                }
+            }
+            var s_ip6 = conn.get_setting_ip6_config ();
+            if (s_ip6 != null) {
+                ip_settings.ipv6_method = s_ip6.get_method ();
+                ip_settings.ipv6_gateway_auto = true;
+                if (s_ip6.get_num_addresses () > 0) {
+                    unowned NM.IPAddress addr = s_ip6.get_address (0);
+                    ip_settings.configured_ipv6_address = addr.get_address ();
+                    ip_settings.configured_ipv6_prefix = addr.get_prefix ();
+                }
+                ip_settings.configured_ipv6_gateway = s_ip6.get_gateway ();
+                if (s_ip6.get_num_dns () > 0) {
+                    ip_settings.configured_ipv6_dns = s_ip6.get_dns (0);
+                }
             }
         }
 
-        yield core.fill_runtime_ipv4_for_device_dbus (
-            device.device_path,
-            device.is_connected,
-            ip_settings,
-            cancellable
-        );
-        yield core.fill_runtime_ipv6_for_device_dbus (
-            device.device_path,
-            device.is_connected,
-            ip_settings,
-            cancellable
-        );
+        var client = core.nm_client;
+        var dev = client.get_device_by_path (device.device_path);
+        if (dev != null && dev.get_state () == NM_DEVICE_STATE_ACTIVATED) {
+            var ac = dev.get_active_connection ();
+            if (ac != null) {
+                var ip4 = ac.get_ip4_config ();
+                if (ip4 != null) {
+                    if (ip4.get_addresses ().length > 0) {
+                        unowned NM.IPAddress addr = ip4.get_addresses ().get (0);
+                        ip_settings.current_address = addr.get_address ();
+                        ip_settings.current_prefix = addr.get_prefix ();
+                    }
+                    ip_settings.current_gateway = ip4.get_gateway ();
+                    if (ip4.get_nameservers ().length > 0) {
+                        ip_settings.current_dns = ip4.get_nameservers ()[0];
+                    }
+                }
+                var ip6 = ac.get_ip6_config ();
+                if (ip6 != null) {
+                    if (ip6.get_addresses ().length > 0) {
+                        unowned NM.IPAddress addr = ip6.get_addresses ().get (0);
+                        ip_settings.current_ipv6_address = addr.get_address ();
+                        ip_settings.current_ipv6_prefix = addr.get_prefix ();
+                    }
+                    ip_settings.current_ipv6_gateway = ip6.get_gateway ();
+                    if (ip6.get_nameservers ().length > 0) {
+                        ip_settings.current_ipv6_dns = ip6.get_nameservers ()[0];
+                    }
+                }
+            }
+        }
         return ip_settings;
     }
 
-    public async bool update_device_settings (
-        NetworkDevice device,
-        NetworkIpUpdateRequest request,
-        Cancellable? cancellable = null
-    ) throws Error {
-        if (device.connection.strip () == "") {
-            throw new IOError.FAILED ("No Ethernet profile is available for this interface.");
-        }
-
-        string conn_path = yield resolve_connection_path (
-            device,
-            "Multiple Ethernet profiles share this name. Refusing ambiguous update.",
-            "No saved Ethernet profile found.",
-            cancellable
-        );
-
-        var ipv4 = request.get_ipv4_section ();
-        var ipv6 = request.get_ipv6_section ();
-
-        string ipv4_method = ipv4.normalized_method ();
-        string ipv6_method = ipv6.normalized_method ();
-
-        if (!ipv4.gateway_auto && ipv4.gateway == "") {
-            throw new IOError.FAILED ("Manual gateway requires a gateway address.");
-        }
-        if (!ipv4.gateway_auto && ipv4_method == "disabled") {
-            throw new IOError.FAILED ("Manual gateway is not supported when IPv4 method is Disabled.");
-        }
-        if (!ipv4.dns_auto && ipv4.dns_servers.length == 0) {
-            throw new IOError.FAILED ("Manual DNS requires at least one DNS server.");
-        }
-        if (ipv4_method == "manual") {
-            if (ipv4.address == "") {
-                throw new IOError.FAILED ("Manual IPv4 requires an address.");
+        public async bool update_device_settings (
+            NetworkDevice device,
+            NetworkIpUpdateRequest request,
+            Cancellable? cancellable = null
+        ) throws Error {
+            var conn = resolve_connection (device);
+            if (conn == null) throw new IOError.NOT_FOUND ("No saved Ethernet profile found.");
+            
+            var s_ip4 = conn.get_setting_ip4_config ();
+            if (s_ip4 == null) {
+                s_ip4 = new NM.SettingIP4Config ();
+                conn.add_setting (s_ip4);
             }
-            if (ipv4.prefix == 0 || ipv4.prefix > 32) {
-                throw new IOError.FAILED ("Manual IPv4 prefix must be between 1 and 32.");
+            apply_ipv4_settings (s_ip4, request.get_ipv4_section ());
+            
+            var s_ip6 = conn.get_setting_ip6_config ();
+            if (s_ip6 == null) {
+                s_ip6 = new NM.SettingIP6Config ();
+                conn.add_setting (s_ip6);
+            }
+            apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
+            
+            if (conn is NM.RemoteConnection) {
+                yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
+            }
+            return true;
+        }
+
+
+    private void apply_ipv4_settings (NM.SettingIP4Config s_ip4, Ipv4UpdateSection req) {
+        s_ip4.clear_addresses ();
+        s_ip4.clear_dns ();
+        
+        string method = req.normalized_method ();
+        if (method == "auto" || method == "") {
+            s_ip4.method = NM.SettingIP4Config.METHOD_AUTO;
+        } else if (method == "manual") {
+            s_ip4.method = NM.SettingIP4Config.METHOD_MANUAL;
+            if (req.address != "") {
+                try { var addr = new NM.IPAddress (2, req.address, req.prefix); s_ip4.add_address (addr); } catch (Error e) {}
+            }
+        } else if (method == "link-local") {
+            s_ip4.method = NM.SettingIP4Config.METHOD_LINK_LOCAL;
+        } else if (method == "shared") {
+            s_ip4.method = NM.SettingIP4Config.METHOD_SHARED;
+        } else if (method == "disabled") {
+            s_ip4.method = NM.SettingIP4Config.METHOD_DISABLED;
+        }
+
+        if (!req.gateway_auto && req.gateway != "") {
+            s_ip4.gateway = req.gateway;
+        } else if (req.gateway_auto) {
+            s_ip4.gateway = null;
+        }
+        
+        if (!req.dns_auto) {
+            foreach (var dns in req.dns_servers) {
+                if (dns != "") s_ip4.add_dns (dns);
             }
         }
-
-        if (!ipv6.gateway_auto && ipv6.gateway == "") {
-            throw new IOError.FAILED ("Manual IPv6 gateway requires a gateway address.");
-        }
-        if ((ipv6_method == "disabled" || ipv6_method == "ignore") && !ipv6.gateway_auto) {
-            throw new IOError.FAILED (
-                "Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore."
-            );
-        }
-        if (!ipv6.dns_auto && ipv6.dns_servers.length == 0) {
-            throw new IOError.FAILED ("Manual IPv6 DNS requires at least one DNS server.");
-        }
-        if (ipv6_method == "manual") {
-            if (ipv6.address == "") {
-                throw new IOError.FAILED ("Manual IPv6 requires an address.");
-            }
-            if (ipv6.prefix == 0 || ipv6.prefix > 128) {
-                throw new IOError.FAILED ("Manual IPv6 prefix must be between 1 and 128.");
-            }
-        }
-
-        var conn = yield core.make_proxy (conn_path, NM_CONN_IFACE, cancellable);
-        var settings_res = yield core.call_dbus (conn, "GetSettings", null, cancellable);
-        var all_settings = settings_res.get_child_value (0);
-
-        Variant updated_ipv4;
-        Variant updated_ipv6;
-        string builder_error = "";
-        if (!NmWifiSettingsBuilder.build_updated_ipv4_section (all_settings, ipv4,
-             out updated_ipv4, out builder_error)) {
-            throw new IOError.FAILED (builder_error);
-        }
-
-        if (!NmWifiSettingsBuilder.build_updated_ipv6_section (all_settings, ipv6, out updated_ipv6,
-             out builder_error)) {
-            throw new IOError.FAILED (builder_error);
-        }
-
-        Variant updated_settings = NmWifiSettingsBuilder.build_updated_connection_settings (
-            all_settings,
-            updated_ipv4,
-            updated_ipv6,
-            false,
-            ""
-        );
-
-        yield core.call_dbus (
-            conn,
-            "Update",
-            new Variant ("(@a{sa{sv}})", updated_settings),
-            cancellable
-        );
-        return true;
     }
+
+    private void apply_ipv6_settings (NM.SettingIP6Config s_ip6, Ipv6UpdateSection req) {
+        s_ip6.clear_addresses ();
+        s_ip6.clear_dns ();
+        
+        string method = req.normalized_method ();
+        if (method == "auto" || method == "") {
+            s_ip6.method = NM.SettingIP6Config.METHOD_AUTO;
+        } else if (method == "manual") {
+            s_ip6.method = NM.SettingIP6Config.METHOD_MANUAL;
+            if (req.address != "") {
+                try { var addr = new NM.IPAddress (10, req.address, req.prefix); s_ip6.add_address (addr); } catch (Error e) {}
+            }
+        } else if (method == "link-local") {
+            s_ip6.method = NM.SettingIP6Config.METHOD_LINK_LOCAL;
+        } else if (method == "shared") {
+            s_ip6.method = NM.SettingIP6Config.METHOD_SHARED;
+        } else if (method == "disabled") {
+            s_ip6.method = NM.SettingIP6Config.METHOD_DISABLED;
+        } else if (method == "ignore") {
+            s_ip6.method = NM.SettingIP6Config.METHOD_IGNORE;
+        }
+
+        if (!req.gateway_auto && req.gateway != "") {
+            s_ip6.gateway = req.gateway;
+        } else if (req.gateway_auto) {
+            s_ip6.gateway = null;
+        }
+        
+        if (!req.dns_auto) {
+            foreach (var dns in req.dns_servers) {
+                if (dns != "") s_ip6.add_dns (dns);
+            }
+        }
+    }
+
 }

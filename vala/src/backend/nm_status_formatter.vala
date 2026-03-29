@@ -1,6 +1,6 @@
 using GLib;
 
-public class NmStatusFormatter : Object {
+public class NmStatusFormatter : GLib.Object {
     public static void pick_status_fields (
         bool networking_on,
         bool wifi_on,

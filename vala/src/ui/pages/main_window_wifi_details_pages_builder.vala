@@ -122,6 +122,7 @@ public class MainWindowWifiEditPage : Gtk.Box {
 
     public signal void back ();
     public signal void apply ();
+    public signal void ok ();
     public signal void sync_sensitivity ();
 
     public MainWindowWifiEditPage () {
@@ -176,7 +177,7 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.password_entry.add_css_class ("nm-edit-field-entry");
         this.password_entry.add_css_class ("nm-edit-password-entry");
         this.password_entry.activate.connect (() => {
-            this.apply ();
+            this.ok ();
         });
         form.append (this.password_entry);
 
@@ -232,13 +233,20 @@ public class MainWindowWifiEditPage : Gtk.Box {
         actions.add_css_class ("nm-edit-actions");
         actions.add_css_class ("nm-edit-wifi-actions");
 
-        var save_btn = new Gtk.Button.with_label ("Apply");
-        save_btn.add_css_class ("nm-button");
-        save_btn.add_css_class ("suggested-action");
-        save_btn.clicked.connect (() => {
+        var apply_btn = new Gtk.Button.with_label ("Apply");
+        apply_btn.add_css_class ("nm-button");
+        apply_btn.clicked.connect (() => {
             this.apply ();
         });
-        actions.append (save_btn);
+        actions.append (apply_btn);
+
+        var ok_btn = new Gtk.Button.with_label ("OK");
+        ok_btn.add_css_class ("nm-button");
+        ok_btn.add_css_class ("suggested-action");
+        ok_btn.clicked.connect (() => {
+            this.ok ();
+        });
+        actions.append (ok_btn);
 
         form.append (actions);
 

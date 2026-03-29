@@ -494,11 +494,12 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
     }
 
-    private bool apply_wifi_edit () {
+    private bool apply_wifi_edit (bool close_after_apply) {
         return wifi_controller.apply_edit (
             ref selected_wifi_network,
             nm,
             wifi_edit_page,
+            close_after_apply,
             pending_wifi_connect,
             pending_wifi_seen_connecting,
             (message) => {
@@ -565,7 +566,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         });
 
         wifi_edit_page.apply.connect (() => {
-            apply_wifi_edit ();
+            apply_wifi_edit (false);
+        });
+
+        wifi_edit_page.ok.connect (() => {
+            apply_wifi_edit (true);
         });
 
         wifi_edit_page.sync_sensitivity.connect (() => {
@@ -805,6 +810,17 @@ public class MainWindow : Gtk.ApplicationWindow {
                         show_error (message);
                     }
                 );
+            },
+            (wifi_net, enabled) => {
+                nm_client.set_wifi_network_autoconnect.begin (wifi_net, enabled, 10, null, (obj, res) => {
+                    try {
+                        nm_client.set_wifi_network_autoconnect.end (res);
+                        refresh_after_action (false);
+                    } catch (Error e) {
+                        show_error ("Could not update auto-connect: " + e.message);
+                        refresh_wifi ();
+                    }
+                });
             },
             (revealer, entry) => {
                 active_wifi_password_row_id = get_wifi_row_id (net);

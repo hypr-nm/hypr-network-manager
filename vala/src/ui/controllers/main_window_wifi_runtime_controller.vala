@@ -6,12 +6,14 @@ public class MainWindowWifiRuntimeController : Object {
     private uint[] timeout_source_ids = {};
     private Cancellable? wifi_refresh_cancellable = null;
     private HashTable<string, string> wifi_row_signatures;
+    private HashTable<string, WifiNetwork> active_wifi_by_device;
     private string[] wifi_row_order = {};
     private bool wifi_refresh_in_flight = false;
     private bool wifi_refresh_queued = false;
 
     public MainWindowWifiRuntimeController () {
         wifi_row_signatures = new HashTable<string, string> (str_hash, str_equal);
+        active_wifi_by_device = new HashTable<string, WifiNetwork> (str_hash, str_equal);
     }
 
     public void on_page_leave () {
@@ -58,6 +60,7 @@ public class MainWindowWifiRuntimeController : Object {
         cancel_all_timeout_sources ();
         wifi_row_order = {};
         wifi_row_signatures.remove_all ();
+        active_wifi_by_device.remove_all ();
     }
 
     public bool is_updating_switches () {
@@ -313,6 +316,7 @@ public class MainWindowWifiRuntimeController : Object {
                 }
 
                 active_wifi_connections.remove_all ();
+                active_wifi_by_device.remove_all ();
                 foreach (var net in networks) {
                     if (!net.connected) {
                         continue;
@@ -326,6 +330,9 @@ public class MainWindowWifiRuntimeController : Object {
                     }
 
                     active_wifi_connections.insert (net.network_key, true);
+                    if (!active_wifi_by_device.contains (net.device_path)) {
+                        active_wifi_by_device.insert (net.device_path, net);
+                    }
                     if (primary_connected_ssid == null) {
                         primary_connected_ssid = net.ssid;
                     }
@@ -459,6 +466,10 @@ public class MainWindowWifiRuntimeController : Object {
         uint epoch = capture_ui_epoch ();
 
         string net_key = net.network_key;
+        WifiNetwork? fallback_network = active_wifi_by_device.lookup (net.device_path);
+        bool can_fallback_reconnect = fallback_network != null
+            && fallback_network.network_key != net_key;
+
         if (!active_wifi_connections.contains (net_key)) {
             pending_wifi_connect.insert (net_key, true);
             pending_wifi_seen_connecting.remove (net_key);
@@ -503,7 +514,38 @@ public class MainWindowWifiRuntimeController : Object {
                 }
                 pending_wifi_connect.remove (net_key);
                 pending_wifi_seen_connecting.remove (net_key);
-                on_error ("Connect failed: " + e.message);
+                string connect_error_message = e.message;
+
+                if (can_fallback_reconnect) {
+                    string fallback_key = fallback_network.network_key;
+                    pending_wifi_connect.insert (fallback_key, true);
+                    pending_wifi_seen_connecting.remove (fallback_key);
+
+                    nm.connect_wifi.begin (fallback_network, null, null, (obj2, res2) => {
+                        try {
+                            nm.connect_wifi.end (res2);
+                            if (!is_ui_epoch_valid (epoch)) {
+                                return;
+                            }
+                            on_refresh_after_action (true);
+                        } catch (Error fallback_error) {
+                            if (!is_ui_epoch_valid (epoch)) {
+                                return;
+                            }
+                            pending_wifi_connect.remove (fallback_key);
+                            pending_wifi_seen_connecting.remove (fallback_key);
+                            on_error (
+                                "Connect failed: %s. Reconnect to previous network failed: %s"
+                                    .printf (connect_error_message, fallback_error.message)
+                            );
+                            on_refresh_wifi ();
+                        }
+                    });
+                    return;
+                }
+
+                on_error ("Connect failed: " + connect_error_message);
+                on_refresh_wifi ();
             }
         });
     }

@@ -2,6 +2,7 @@ gtk_dep = dependency('gtk4')
 gio_dep = dependency('gio-2.0')
 layer_shell_dep = dependency('gtk4-layer-shell-0')
 json_glib_dep = dependency('json-glib-1.0')
+libnm_dep = dependency('libnm', version: '>= 1.0')
 
 executable(
   'hypr-network-manager',
@@ -16,9 +17,6 @@ executable(
     'src/models/network_ip_settings.vala',
     'src/models/network_device.vala',
     'src/models/vpn_connection.vala',
-    'src/backend/nm_client_utils.vala',
-    'src/backend/dbus_runner.vala',
-    'src/backend/nm_wifi_settings_builder.vala',
     'src/backend/nm_status_formatter.vala',
     'src/backend/nm_ethernet_client.vala',
     'src/backend/nm_wifi_client.vala',
@@ -43,6 +41,6 @@ executable(
     'src/app.vala',
     'src/main.vala',
   ],
-  dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep],
+  dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep, libnm_dep],
   install: true
 )
