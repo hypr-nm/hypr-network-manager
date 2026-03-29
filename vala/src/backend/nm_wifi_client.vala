@@ -144,7 +144,7 @@ public class NmWifiClient : GLib.Object {
             var s_ip4 = conn.get_setting_ip4_config ();
             if (s_ip4 != null) {
                 ip_settings.ipv4_method = s_ip4.get_method ();
-                ip_settings.gateway_auto = true;
+                ip_settings.gateway_auto = !s_ip4.ignore_auto_routes;
                 if (s_ip4.get_num_addresses () > 0) {
                     unowned NM.IPAddress addr = s_ip4.get_address (0);
                     ip_settings.configured_address = addr.get_address ();
@@ -163,7 +163,7 @@ public class NmWifiClient : GLib.Object {
             var s_ip6 = conn.get_setting_ip6_config ();
             if (s_ip6 != null) {
                 ip_settings.ipv6_method = s_ip6.get_method ();
-                ip_settings.ipv6_gateway_auto = true;
+                ip_settings.ipv6_gateway_auto = !s_ip6.ignore_auto_routes;
                 if (s_ip6.get_num_addresses () > 0) {
                     unowned NM.IPAddress addr = s_ip6.get_address (0);
                     ip_settings.configured_ipv6_address = addr.get_address ();
@@ -278,6 +278,7 @@ public class NmWifiClient : GLib.Object {
         } else if (req.gateway_auto) {
             s_ip4.gateway = null;
         }
+        s_ip4.ignore_auto_routes = !req.gateway_auto;
         
         s_ip4.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
@@ -314,6 +315,7 @@ public class NmWifiClient : GLib.Object {
         } else if (req.gateway_auto) {
             s_ip6.gateway = null;
         }
+        s_ip6.ignore_auto_routes = !req.gateway_auto;
         
         s_ip6.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
