@@ -789,11 +789,12 @@ public class MainWindow : Gtk.ApplicationWindow {
                     }
                 });
             },
-            (wifi_net, password) => {
+            (wifi_net, password, hidden_ssid) => {
                 wifi_controller_ref.connect_with_optional_password (
                     nm_client,
                     wifi_net,
                     password,
+                    hidden_ssid,
                     active_connections_ref,
                     pending_connect_ref,
                     pending_seen_connecting_ref,
@@ -873,6 +874,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             nm,
             net,
             password,
+            null,
             active_wifi_connections,
             pending_wifi_connect,
             pending_wifi_seen_connecting,

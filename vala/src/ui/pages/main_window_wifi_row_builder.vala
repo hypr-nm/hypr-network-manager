@@ -22,6 +22,7 @@ public class MainWindowWifiRowBuilder : Object {
         }
 
         bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
+        bool requires_hidden_ssid = net.is_hidden;
 
         var row_root = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
         row_root.add_css_class ("nm-row-root");
@@ -119,6 +120,19 @@ public class MainWindowWifiRowBuilder : Object {
         prompt_label.add_css_class ("nm-form-label");
         prompt_label.add_css_class ("nm-inline-password-label");
 
+        var hidden_ssid_label = new Gtk.Label ("SSID");
+        hidden_ssid_label.set_xalign (0.0f);
+        hidden_ssid_label.set_hexpand (true);
+        hidden_ssid_label.add_css_class ("nm-form-label");
+        hidden_ssid_label.add_css_class ("nm-inline-password-label");
+
+        var hidden_ssid_entry = new Gtk.Entry ();
+        hidden_ssid_entry.set_hexpand (true);
+        hidden_ssid_entry.set_placeholder_text ("Hidden network name");
+        hidden_ssid_entry.add_css_class ("nm-inline-password-entry");
+        hidden_ssid_label.set_visible (requires_hidden_ssid);
+        hidden_ssid_entry.set_visible (requires_hidden_ssid);
+
         var prompt_entry = new Gtk.Entry ();
         prompt_entry.set_hexpand (true);
         prompt_entry.set_visibility (false);
@@ -139,10 +153,18 @@ public class MainWindowWifiRowBuilder : Object {
         prompt_connect.add_css_class ("nm-inline-password-connect");
         prompt_connect.set_sensitive (false);
 
+        MainWindowActionCallback update_prompt_connect_sensitivity = () => {
+            bool has_hidden_ssid = !requires_hidden_ssid || hidden_ssid_entry.get_text ().strip () != "";
+            bool has_valid_password = !net.is_secured
+                || HiddenWifiSecurityModeUtils.is_password_valid (prompt_entry.get_text ());
+            prompt_connect.set_sensitive (has_hidden_ssid && has_valid_password);
+        };
+
         prompt_entry.changed.connect (() => {
-            prompt_connect.set_sensitive (
-                HiddenWifiSecurityModeUtils.is_password_valid (prompt_entry.get_text ())
-            );
+            update_prompt_connect_sensitivity ();
+        });
+        hidden_ssid_entry.changed.connect (() => {
+            update_prompt_connect_sensitivity ();
         });
 
         var prompt_actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
@@ -153,6 +175,8 @@ public class MainWindowWifiRowBuilder : Object {
 
         var prompt_inner = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
         prompt_inner.add_css_class ("nm-inline-password");
+        prompt_inner.append (hidden_ssid_label);
+        prompt_inner.append (hidden_ssid_entry);
         prompt_inner.append (prompt_label);
         prompt_inner.append (prompt_entry);
         prompt_inner.append (prompt_actions);
@@ -165,6 +189,7 @@ public class MainWindowWifiRowBuilder : Object {
         prompt_revealer.set_child (prompt_inner);
 
         prompt_cancel.clicked.connect (() => {
+            hidden_ssid_entry.set_text ("");
             on_hide_password_prompt (prompt_revealer, prompt_entry, null);
         });
 
@@ -173,7 +198,12 @@ public class MainWindowWifiRowBuilder : Object {
                 return;
             }
             on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
-            on_connect (net, prompt_entry.get_text ());
+            on_connect (
+                net,
+                prompt_entry.get_text (),
+                requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
+            );
+            hidden_ssid_entry.set_text ("");
         });
 
         prompt_entry.activate.connect (() => {
@@ -181,7 +211,31 @@ public class MainWindowWifiRowBuilder : Object {
                 return;
             }
             on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
-            on_connect (net, prompt_entry.get_text ());
+            on_connect (
+                net,
+                prompt_entry.get_text (),
+                requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
+            );
+            hidden_ssid_entry.set_text ("");
+        });
+
+        hidden_ssid_entry.activate.connect (() => {
+            if (net.is_secured) {
+                prompt_entry.grab_focus ();
+                return;
+            }
+
+            if (!prompt_connect.get_sensitive ()) {
+                return;
+            }
+
+            on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
+            on_connect (
+                net,
+                prompt_entry.get_text (),
+                hidden_ssid_entry.get_text ().strip ()
+            );
+            hidden_ssid_entry.set_text ("");
         });
 
         action.clicked.connect (() => {
@@ -192,10 +246,15 @@ public class MainWindowWifiRowBuilder : Object {
 
             if (net.is_secured && !has_resolvable_saved_profile) {
                 on_show_password_prompt (prompt_revealer, prompt_entry);
+                if (requires_hidden_ssid) {
+                    hidden_ssid_entry.grab_focus ();
+                }
             } else {
-                on_connect (net, null);
+                on_connect (net, null, null);
             }
         });
+
+        update_prompt_connect_sensitivity ();
 
         action_buttons.append (action);
         action_buttons.append (details_btn);

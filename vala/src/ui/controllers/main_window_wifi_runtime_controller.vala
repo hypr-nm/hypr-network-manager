@@ -476,6 +476,7 @@ public class MainWindowWifiRuntimeController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         string? password,
+        string? hidden_ssid,
         HashTable<string, bool> active_wifi_connections,
         HashTable<string, bool> pending_wifi_connect,
         HashTable<string, bool> pending_wifi_seen_connecting,
@@ -498,7 +499,30 @@ public class MainWindowWifiRuntimeController : Object {
             pending_wifi_seen_connecting.remove (net_key);
         }
 
-        nm.connect_wifi.begin (net, password, null, (obj, res) => {
+        WifiNetwork connect_target = net;
+        if (hidden_ssid != null && hidden_ssid.strip () != "") {
+            connect_target = new WifiNetwork () {
+                ssid = hidden_ssid.strip (),
+                saved_connection_uuid = net.saved_connection_uuid,
+                signal = net.signal,
+                connected = net.connected,
+                is_secured = net.is_secured,
+                is_hidden = net.is_hidden,
+                saved = net.saved,
+                autoconnect = net.autoconnect,
+                device_path = net.device_path,
+                ap_path = net.ap_path,
+                bssid = net.bssid,
+                frequency_mhz = net.frequency_mhz,
+                max_bitrate_kbps = net.max_bitrate_kbps,
+                mode = net.mode,
+                flags = net.flags,
+                wpa_flags = net.wpa_flags,
+                rsn_flags = net.rsn_flags
+            };
+        }
+
+        nm.connect_wifi.begin (connect_target, password, null, (obj, res) => {
             try {
                 nm.connect_wifi.end (res);
                 if (!is_ui_epoch_valid (epoch)) {

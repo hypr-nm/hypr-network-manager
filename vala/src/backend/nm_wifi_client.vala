@@ -38,6 +38,19 @@ public class NmWifiClient : GLib.Object {
             devices_out.append (d);
 
             var aps = wifidev.get_access_points ();
+            uint hidden_total = 0;
+            foreach (var ap in aps) {
+                var ssid_bytes = ap.get_ssid ();
+                string candidate_ssid = "";
+                if (ssid_bytes != null) {
+                    candidate_ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data ());
+                }
+                if (candidate_ssid.strip () == "") {
+                    hidden_total++;
+                }
+            }
+
+            uint hidden_index = 0;
             foreach (var ap in aps) {
                 var ssid_bytes = ap.get_ssid ();
                 string ssid = "";
@@ -45,8 +58,15 @@ public class NmWifiClient : GLib.Object {
                     ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data());
                 }
 
-                if (ssid == "") {
-                    ssid = ap.get_bssid ();
+                bool is_hidden = ssid.strip () == "";
+
+                if (is_hidden) {
+                    hidden_index++;
+                    if (hidden_total > 1) {
+                        ssid = "Hidden network %u".printf (hidden_index);
+                    } else {
+                        ssid = "Hidden network";
+                    }
                 }
 
                 bool is_secured = (ap.get_flags () != 0) || (ap.get_wpa_flags () != 0) || (ap.get_rsn_flags () != 0);
@@ -79,6 +99,7 @@ public class NmWifiClient : GLib.Object {
                     signal = ap.get_strength (),
                     connected = connected,
                     is_secured = is_secured,
+                    is_hidden = is_hidden,
                     saved = saved,
                     autoconnect = autoconnect,
                     device_path = ((NM.Object)dev).get_path (),
