@@ -7,33 +7,6 @@ public class NmWifiClient : GLib.Object {
         this.core = core;
     }
 
-    private string extract_bssid (NM.Connection conn) {
-        var setting = conn.get_setting_wireless ();
-        if (setting != null) {
-            string bssid = setting.get_bssid ();
-            if (bssid != null) {
-                return bssid.down ();
-            }
-        }
-        return "";
-    }
-
-    private string extract_ssid (NM.Connection conn) {
-        var setting = conn.get_setting_wireless ();
-        if (setting != null) {
-            var ssid_bytes = setting.get_ssid ();
-            if (ssid_bytes != null) {
-                return NM.Utils.ssid_to_utf8 (ssid_bytes.get_data());
-            }
-        }
-        return "";
-    }
-
-    private bool is_connection_secured (NM.Connection conn) {
-        var setting = conn.get_setting_wireless_security ();
-        return setting != null;
-    }
-
     public async WifiRefreshData get_refresh_data (Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
         var devices = client.get_devices ();
@@ -87,21 +60,14 @@ public class NmWifiClient : GLib.Object {
                     var s_wireless = conn.get_setting_wireless ();
                     if (s_wireless == null) continue;
 
-                    string conn_ssid = extract_ssid (conn);
-                    bool conn_secured = is_connection_secured (conn);
-                    string conn_key = conn_ssid + ":" + (conn_secured ? "secured" : "open");
-
-                    if (conn_key == network_key) {
-                        string conn_bssid = extract_bssid (conn);
-                        if (conn_bssid == "" || conn_bssid == ap.get_bssid ().down ()) {
-                            saved = true;
-                            saved_uuid = conn.get_uuid ();
-                            var s_conn = conn.get_setting_connection ();
-                            if (s_conn != null) {
-                                autoconnect = s_conn.autoconnect;
-                            }
-                            break;
+                    if (ap.connection_valid (conn)) {
+                        saved = true;
+                        saved_uuid = conn.get_uuid ();
+                        var s_conn = conn.get_setting_connection ();
+                        if (s_conn != null) {
+                            autoconnect = s_conn.autoconnect;
                         }
+                        break;
                     }
                 }
 
@@ -126,13 +92,19 @@ public class NmWifiClient : GLib.Object {
                     rsn_flags = ap.get_rsn_flags ()
                 };
 
-                // Deduplicate by network_key, keeping the best signal
+                // Deduplicate by network_key, keeping the best signal but prioritizing saved networks
                 if (!networks_map.contains (network_key)) {
                     networks_map.insert (network_key, net);
                 } else {
                     var existing = networks_map.get (network_key);
-                    if (net.connected || (!existing.connected && net.signal > existing.signal)) {
+                    if (net.connected) {
                         networks_map.insert (network_key, net);
+                    } else if (!existing.connected) {
+                        if (net.saved && !existing.saved) {
+                            networks_map.insert (network_key, net);
+                        } else if (net.saved == existing.saved && net.signal > existing.signal) {
+                            networks_map.insert (network_key, net);
+                        }
                     }
                 }
             }
