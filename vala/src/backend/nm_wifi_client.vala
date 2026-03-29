@@ -135,20 +135,72 @@ public class NmWifiClient : GLib.Object {
         var ip_settings = new NetworkIpSettings ();
         var client = core.nm_client;
         
-        NM.Connection? matching_conn = null;
+        NM.Connection? conn = null;
         if (network.saved_connection_uuid != "") {
-            matching_conn = client.get_connection_by_uuid (network.saved_connection_uuid);
+            conn = client.get_connection_by_uuid (network.saved_connection_uuid);
         }
 
-        if (matching_conn != null) {
-            var s_ip4 = matching_conn.get_setting_ip4_config ();
+        if (conn != null) {
+            var s_ip4 = conn.get_setting_ip4_config ();
             if (s_ip4 != null) {
                 ip_settings.ipv4_method = s_ip4.get_method ();
                 ip_settings.gateway_auto = true;
-                // Simplified, more config mapping needed if we had manual parsing
+                if (s_ip4.get_num_addresses () > 0) {
+                    unowned NM.IPAddress addr = s_ip4.get_address (0);
+                    ip_settings.configured_address = addr.get_address ();
+                    ip_settings.configured_prefix = addr.get_prefix ();
+                }
+                ip_settings.configured_gateway = s_ip4.get_gateway ();
+                if (s_ip4.get_num_dns () > 0) {
+                    ip_settings.configured_dns = s_ip4.get_dns (0);
+                }
+            }
+            var s_ip6 = conn.get_setting_ip6_config ();
+            if (s_ip6 != null) {
+                ip_settings.ipv6_method = s_ip6.get_method ();
+                ip_settings.ipv6_gateway_auto = true;
+                if (s_ip6.get_num_addresses () > 0) {
+                    unowned NM.IPAddress addr = s_ip6.get_address (0);
+                    ip_settings.configured_ipv6_address = addr.get_address ();
+                    ip_settings.configured_ipv6_prefix = addr.get_prefix ();
+                }
+                ip_settings.configured_ipv6_gateway = s_ip6.get_gateway ();
+                if (s_ip6.get_num_dns () > 0) {
+                    ip_settings.configured_ipv6_dns = s_ip6.get_dns (0);
+                }
             }
         }
-        
+
+        var dev = client.get_device_by_path (network.device_path);
+        if (dev != null && dev.get_state () == NM.DeviceState.ACTIVATED) {
+            var ac = dev.get_active_connection ();
+            if (ac != null) {
+                var ip4 = ac.get_ip4_config ();
+                if (ip4 != null) {
+                    if (ip4.get_addresses ().length > 0) {
+                        unowned NM.IPAddress addr = ip4.get_addresses ().get (0);
+                        ip_settings.current_address = addr.get_address ();
+                        ip_settings.current_prefix = addr.get_prefix ();
+                    }
+                    ip_settings.current_gateway = ip4.get_gateway ();
+                    if (ip4.get_nameservers ().length > 0) {
+                        ip_settings.current_dns = ip4.get_nameservers ()[0];
+                    }
+                }
+                var ip6 = ac.get_ip6_config ();
+                if (ip6 != null) {
+                    if (ip6.get_addresses ().length > 0) {
+                        unowned NM.IPAddress addr = ip6.get_addresses ().get (0);
+                        ip_settings.current_ipv6_address = addr.get_address ();
+                        ip_settings.current_ipv6_prefix = addr.get_prefix ();
+                    }
+                    ip_settings.current_ipv6_gateway = ip6.get_gateway ();
+                    if (ip6.get_nameservers ().length > 0) {
+                        ip_settings.current_ipv6_dns = ip6.get_nameservers ()[0];
+                    }
+                }
+            }
+        }
         return ip_settings;
     }
 
@@ -177,7 +229,7 @@ public class NmWifiClient : GLib.Object {
         }
         apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
         
-        if (request.password != null) {
+        if (request.password != null && request.password != "") {
             var s_sec = conn.get_setting_wireless_security ();
             if (s_sec != null) {
                 s_sec.psk = request.password;
