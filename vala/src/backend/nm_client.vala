@@ -554,40 +554,12 @@ public class NetworkManagerClient : Object {
 
     public async bool update_wifi_network_settings (
         WifiNetwork network,
-        string password,
-        string ipv4_method,
-        string ipv4_address,
-        uint32 ipv4_prefix,
-        bool gateway_auto,
-        string ipv4_gateway,
-        bool dns_auto,
-        string[] ipv4_dns_servers,
-        string ipv6_method,
-        string ipv6_address,
-        uint32 ipv6_prefix,
-        bool ipv6_gateway_auto,
-        string ipv6_gateway,
-        bool ipv6_dns_auto,
-        string[] ipv6_dns_servers,
+        WifiNetworkUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
         return yield wifi_client.update_network_settings (
             network,
-            password,
-            ipv4_method,
-            ipv4_address,
-            ipv4_prefix,
-            gateway_auto,
-            ipv4_gateway,
-            dns_auto,
-            ipv4_dns_servers,
-            ipv6_method,
-            ipv6_address,
-            ipv6_prefix,
-            ipv6_gateway_auto,
-            ipv6_gateway,
-            ipv6_dns_auto,
-            ipv6_dns_servers,
+            request,
             cancellable
         );
     }
@@ -615,38 +587,12 @@ public class NetworkManagerClient : Object {
 
     public async bool update_ethernet_device_settings (
         NetworkDevice device,
-        string ipv4_method,
-        string ipv4_address,
-        uint32 ipv4_prefix,
-        bool gateway_auto,
-        string ipv4_gateway,
-        bool dns_auto,
-        string[] ipv4_dns_servers,
-        string ipv6_method,
-        string ipv6_address,
-        uint32 ipv6_prefix,
-        bool ipv6_gateway_auto,
-        string ipv6_gateway,
-        bool ipv6_dns_auto,
-        string[] ipv6_dns_servers,
+        NetworkIpUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
         return yield ethernet_client.update_device_settings (
             device,
-            ipv4_method,
-            ipv4_address,
-            ipv4_prefix,
-            gateway_auto,
-            ipv4_gateway,
-            dns_auto,
-            ipv4_dns_servers,
-            ipv6_method,
-            ipv6_address,
-            ipv6_prefix,
-            ipv6_gateway_auto,
-            ipv6_gateway,
-            ipv6_dns_auto,
-            ipv6_dns_servers,
+            request,
             cancellable
         );
     }

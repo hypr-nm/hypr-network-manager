@@ -534,25 +534,25 @@ public class MainWindowWifiDetailsEditController : Object {
             return false;
         }
 
-        nm.update_wifi_network_settings.begin (
-            net,
-            password,
-            method,
-            ipv4_address,
-            ipv4_prefix,
-            gateway_auto,
-            ipv4_gateway,
-            dns_auto,
-            dns_servers,
-            method6,
-            ipv6_address,
-            ipv6_prefix,
-            ipv6_gateway_auto,
-            ipv6_gateway,
-            true,
-            {},
-            null,
-            (obj, res) => {
+        var request = new WifiNetworkUpdateRequest () {
+            password = password,
+            ipv4_method = method,
+            ipv4_address = ipv4_address,
+            ipv4_prefix = ipv4_prefix,
+            ipv4_gateway_auto = gateway_auto,
+            ipv4_gateway = ipv4_gateway,
+            ipv4_dns_auto = dns_auto,
+            ipv4_dns_servers = dns_servers,
+            ipv6_method = method6,
+            ipv6_address = ipv6_address,
+            ipv6_prefix = ipv6_prefix,
+            ipv6_gateway_auto = ipv6_gateway_auto,
+            ipv6_gateway = ipv6_gateway,
+            ipv6_dns_auto = true,
+            ipv6_dns_servers = {}
+        };
+
+        nm.update_wifi_network_settings.begin (net, request, null, (obj, res) => {
                 try {
                     nm.update_wifi_network_settings.end (res);
                 } catch (Error e) {
@@ -600,8 +600,7 @@ public class MainWindowWifiDetailsEditController : Object {
                         0
                     );
                 });
-            }
-        );
+        });
 
         if (!is_ui_epoch_valid (epoch)) {
             return false;

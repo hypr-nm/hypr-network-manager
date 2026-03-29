@@ -164,20 +164,7 @@ public class NmEthernetClient : Object {
 
     public async bool update_device_settings (
         NetworkDevice device,
-        string ipv4_method,
-        string ipv4_address,
-        uint32 ipv4_prefix,
-        bool gateway_auto,
-        string ipv4_gateway,
-        bool dns_auto,
-        string[] ipv4_dns_servers,
-        string ipv6_method,
-        string ipv6_address,
-        uint32 ipv6_prefix,
-        bool ipv6_gateway_auto,
-        string ipv6_gateway,
-        bool ipv6_dns_auto,
-        string[] ipv6_dns_servers,
+        NetworkIpUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
         if (device.connection.strip () == "") {
@@ -191,47 +178,46 @@ public class NmEthernetClient : Object {
             cancellable
         );
 
-        string method = NetworkManagerClient.normalize_ipv4_method (ipv4_method);
-        string address = ipv4_address.strip ();
-        string gateway = ipv4_gateway.strip ();
-        string method6 = NetworkManagerClient.normalize_ipv6_method (ipv6_method);
-        string address6 = ipv6_address.strip ();
-        string gateway6 = ipv6_gateway.strip ();
+        var ipv4 = request.get_ipv4_section ();
+        var ipv6 = request.get_ipv6_section ();
 
-        if (!gateway_auto && gateway == "") {
+        string ipv4_method = ipv4.normalized_method ();
+        string ipv6_method = ipv6.normalized_method ();
+
+        if (!ipv4.gateway_auto && ipv4.gateway == "") {
             throw new IOError.FAILED ("Manual gateway requires a gateway address.");
         }
-        if (!gateway_auto && method == "disabled") {
+        if (!ipv4.gateway_auto && ipv4_method == "disabled") {
             throw new IOError.FAILED ("Manual gateway is not supported when IPv4 method is Disabled.");
         }
-        if (!dns_auto && ipv4_dns_servers.length == 0) {
+        if (!ipv4.dns_auto && ipv4.dns_servers.length == 0) {
             throw new IOError.FAILED ("Manual DNS requires at least one DNS server.");
         }
-        if (method == "manual") {
-            if (address == "") {
+        if (ipv4_method == "manual") {
+            if (ipv4.address == "") {
                 throw new IOError.FAILED ("Manual IPv4 requires an address.");
             }
-            if (ipv4_prefix == 0 || ipv4_prefix > 32) {
+            if (ipv4.prefix == 0 || ipv4.prefix > 32) {
                 throw new IOError.FAILED ("Manual IPv4 prefix must be between 1 and 32.");
             }
         }
 
-        if (!ipv6_gateway_auto && gateway6 == "") {
+        if (!ipv6.gateway_auto && ipv6.gateway == "") {
             throw new IOError.FAILED ("Manual IPv6 gateway requires a gateway address.");
         }
-        if ((method6 == "disabled" || method6 == "ignore") && !ipv6_gateway_auto) {
+        if ((ipv6_method == "disabled" || ipv6_method == "ignore") && !ipv6.gateway_auto) {
             throw new IOError.FAILED (
                 "Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore."
             );
         }
-        if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
+        if (!ipv6.dns_auto && ipv6.dns_servers.length == 0) {
             throw new IOError.FAILED ("Manual IPv6 DNS requires at least one DNS server.");
         }
-        if (method6 == "manual") {
-            if (address6 == "") {
+        if (ipv6_method == "manual") {
+            if (ipv6.address == "") {
                 throw new IOError.FAILED ("Manual IPv6 requires an address.");
             }
-            if (ipv6_prefix == 0 || ipv6_prefix > 128) {
+            if (ipv6.prefix == 0 || ipv6.prefix > 128) {
                 throw new IOError.FAILED ("Manual IPv6 prefix must be between 1 and 128.");
             }
         }
@@ -243,33 +229,11 @@ public class NmEthernetClient : Object {
         Variant updated_ipv4;
         Variant updated_ipv6;
         string builder_error = "";
-        if (!NmWifiSettingsBuilder.build_updated_ipv4_section (
-            all_settings,
-            method,
-            address,
-            ipv4_prefix,
-            gateway_auto,
-            gateway,
-            dns_auto,
-            ipv4_dns_servers,
-            out updated_ipv4,
-            out builder_error
-        )) {
+        if (!NmWifiSettingsBuilder.build_updated_ipv4_section (all_settings, ipv4, out updated_ipv4, out builder_error)) {
             throw new IOError.FAILED (builder_error);
         }
 
-        if (!NmWifiSettingsBuilder.build_updated_ipv6_section (
-            all_settings,
-            method6,
-            address6,
-            ipv6_prefix,
-            ipv6_gateway_auto,
-            gateway6,
-            ipv6_dns_auto,
-            ipv6_dns_servers,
-            out updated_ipv6,
-            out builder_error
-        )) {
+        if (!NmWifiSettingsBuilder.build_updated_ipv6_section (all_settings, ipv6, out updated_ipv6, out builder_error)) {
             throw new IOError.FAILED (builder_error);
         }
 

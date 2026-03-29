@@ -546,24 +546,24 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
-        nm.update_ethernet_device_settings.begin (
-            dev,
-            method,
-            ipv4_address,
-            ipv4_prefix,
-            gateway_auto,
-            ipv4_gateway,
-            dns_auto,
-            dns_servers,
-            method6,
-            ipv6_address,
-            ipv6_prefix,
-            ipv6_gateway_auto,
-            ipv6_gateway,
-            true,
-            {},
-            null,
-            (obj, res) => {
+        var request = new NetworkIpUpdateRequest () {
+            ipv4_method = method,
+            ipv4_address = ipv4_address,
+            ipv4_prefix = ipv4_prefix,
+            ipv4_gateway_auto = gateway_auto,
+            ipv4_gateway = ipv4_gateway,
+            ipv4_dns_auto = dns_auto,
+            ipv4_dns_servers = dns_servers,
+            ipv6_method = method6,
+            ipv6_address = ipv6_address,
+            ipv6_prefix = ipv6_prefix,
+            ipv6_gateway_auto = ipv6_gateway_auto,
+            ipv6_gateway = ipv6_gateway,
+            ipv6_dns_auto = true,
+            ipv6_dns_servers = {}
+        };
+
+        nm.update_ethernet_device_settings.begin (dev, request, null, (obj, res) => {
                 try {
                     nm.update_ethernet_device_settings.end (res);
                 } catch (Error e) {
@@ -617,8 +617,7 @@ public class MainWindowEthernetController : Object {
                         on_set_popup_text_input_mode (false);
                     });
                 });
-            }
-        );
+        });
     }
 
     private Gtk.ListBoxRow build_row (NetworkDevice dev) {

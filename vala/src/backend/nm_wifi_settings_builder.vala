@@ -122,17 +122,15 @@ public class NmWifiSettingsBuilder : Object {
 
     public static bool build_updated_ipv4_section (
         Variant all_settings,
-        string method,
-        string address,
-        uint32 ipv4_prefix,
-        bool gateway_auto,
-        string gateway,
-        bool dns_auto,
-        string[] ipv4_dns_servers,
+        Ipv4UpdateSection ipv4,
         out Variant updated_ipv4,
         out string error_message
     ) {
         error_message = "";
+
+        string method = ipv4.normalized_method ();
+        string address = ipv4.address;
+        string gateway = ipv4.gateway;
 
         Variant? existing_ipv4 = all_settings.lookup_value ("ipv4", new VariantType ("a{sv}"));
         Variant base_ipv4 = existing_ipv4 != null
@@ -141,11 +139,11 @@ public class NmWifiSettingsBuilder : Object {
         var ipv4_dict = new VariantDict (base_ipv4);
 
         ipv4_dict.insert_value ("method", new Variant.string (method));
-        ipv4_dict.insert_value ("ignore-auto-routes", new Variant.boolean (!gateway_auto));
-        ipv4_dict.insert_value ("ignore-auto-dns", new Variant.boolean (!dns_auto));
+        ipv4_dict.insert_value ("ignore-auto-routes", new Variant.boolean (!ipv4.gateway_auto));
+        ipv4_dict.insert_value ("ignore-auto-dns", new Variant.boolean (!ipv4.dns_auto));
 
         uint32 gateway_legacy = 0;
-        if (!gateway_auto && !NmClientUtils.parse_ipv4_to_uint32 (gateway, out gateway_legacy)) {
+        if (!ipv4.gateway_auto && !NmClientUtils.parse_ipv4_to_uint32 (gateway, out gateway_legacy)) {
             error_message = "Invalid IPv4 gateway address.";
             updated_ipv4 = new VariantBuilder (new VariantType ("a{sv}")).end ();
             return false;
@@ -162,7 +160,7 @@ public class NmWifiSettingsBuilder : Object {
             var addresses = new VariantBuilder (new VariantType ("aa{sv}"));
             var addr_entry = new VariantBuilder (new VariantType ("a{sv}"));
             addr_entry.add ("{sv}", "address", new Variant.string (address));
-            addr_entry.add ("{sv}", "prefix", new Variant.uint32 (ipv4_prefix));
+            addr_entry.add ("{sv}", "prefix", new Variant.uint32 (ipv4.prefix));
             addresses.add_value (addr_entry.end ());
             ipv4_dict.insert_value ("address-data", addresses.end ());
 
@@ -170,7 +168,7 @@ public class NmWifiSettingsBuilder : Object {
             var legacy_addresses = new VariantBuilder (new VariantType ("aau"));
             var legacy_addr_entry = new VariantBuilder (new VariantType ("au"));
             legacy_addr_entry.add ("u", address_legacy);
-            legacy_addr_entry.add ("u", ipv4_prefix);
+            legacy_addr_entry.add ("u", ipv4.prefix);
             legacy_addr_entry.add ("u", gateway_legacy);
             legacy_addresses.add_value (legacy_addr_entry.end ());
             ipv4_dict.insert_value ("addresses", legacy_addresses.end ());
@@ -179,7 +177,7 @@ public class NmWifiSettingsBuilder : Object {
             ipv4_dict.remove ("addresses");
         }
 
-        if (!gateway_auto) {
+        if (!ipv4.gateway_auto) {
             if (method == "manual") {
                 ipv4_dict.insert_value ("gateway", new Variant.string (gateway));
                 ipv4_dict.remove ("route-data");
@@ -199,8 +197,8 @@ public class NmWifiSettingsBuilder : Object {
             ipv4_dict.remove ("routes");
         }
 
-        if (!dns_auto) {
-            if (!apply_manual_dns (ipv4_dict, existing_ipv4, ipv4_dns_servers, out error_message)) {
+        if (!ipv4.dns_auto) {
+            if (!apply_manual_dns (ipv4_dict, existing_ipv4, ipv4.dns_servers, out error_message)) {
                 updated_ipv4 = new VariantBuilder (new VariantType ("a{sv}")).end ();
                 return false;
             }
@@ -215,17 +213,15 @@ public class NmWifiSettingsBuilder : Object {
 
     public static bool build_updated_ipv6_section (
         Variant all_settings,
-        string method,
-        string address,
-        uint32 ipv6_prefix,
-        bool gateway_auto,
-        string gateway,
-        bool dns_auto,
-        string[] ipv6_dns_servers,
+        Ipv6UpdateSection ipv6,
         out Variant updated_ipv6,
         out string error_message
     ) {
         error_message = "";
+
+        string method = ipv6.normalized_method ();
+        string address = ipv6.address;
+        string gateway = ipv6.gateway;
 
         Variant? existing_ipv6 = all_settings.lookup_value ("ipv6", new VariantType ("a{sv}"));
         Variant base_ipv6 = existing_ipv6 != null
@@ -241,8 +237,8 @@ public class NmWifiSettingsBuilder : Object {
         ipv6_dict.remove ("routes");
 
         ipv6_dict.insert_value ("method", new Variant.string (method));
-        ipv6_dict.insert_value ("ignore-auto-routes", new Variant.boolean (!gateway_auto));
-        ipv6_dict.insert_value ("ignore-auto-dns", new Variant.boolean (!dns_auto));
+        ipv6_dict.insert_value ("ignore-auto-routes", new Variant.boolean (!ipv6.gateway_auto));
+        ipv6_dict.insert_value ("ignore-auto-dns", new Variant.boolean (!ipv6.dns_auto));
 
         if (method == "manual") {
             if (address.strip () == "") {
@@ -250,7 +246,7 @@ public class NmWifiSettingsBuilder : Object {
                 updated_ipv6 = new VariantBuilder (new VariantType ("a{sv}")).end ();
                 return false;
             }
-            if (ipv6_prefix == 0 || ipv6_prefix > 128) {
+            if (ipv6.prefix == 0 || ipv6.prefix > 128) {
                 error_message = "Manual IPv6 prefix must be between 1 and 128.";
                 updated_ipv6 = new VariantBuilder (new VariantType ("a{sv}")).end ();
                 return false;
@@ -259,14 +255,14 @@ public class NmWifiSettingsBuilder : Object {
             var addresses = new VariantBuilder (new VariantType ("aa{sv}"));
             var addr_entry = new VariantBuilder (new VariantType ("a{sv}"));
             addr_entry.add ("{sv}", "address", new Variant.string (address.strip ()));
-            addr_entry.add ("{sv}", "prefix", new Variant.uint32 (ipv6_prefix));
+            addr_entry.add ("{sv}", "prefix", new Variant.uint32 (ipv6.prefix));
             addresses.add_value (addr_entry.end ());
             ipv6_dict.insert_value ("address-data", addresses.end ());
         } else {
             ipv6_dict.remove ("address-data");
         }
 
-        if (!gateway_auto) {
+        if (!ipv6.gateway_auto) {
             if (method == "disabled" || method == "ignore") {
                 error_message = "Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore.";
                 updated_ipv6 = new VariantBuilder (new VariantType ("a{sv}")).end ();
@@ -277,11 +273,11 @@ public class NmWifiSettingsBuilder : Object {
             ipv6_dict.remove ("gateway");
         }
 
-        if (!dns_auto) {
+        if (!ipv6.dns_auto) {
             if (!apply_manual_dns_ipv6 (
                 ipv6_dict,
                 existing_ipv6,
-                ipv6_dns_servers,
+                ipv6.dns_servers,
                 out error_message
             )) {
                 updated_ipv6 = new VariantBuilder (new VariantType ("a{sv}")).end ();
