@@ -204,7 +204,7 @@ public class MainWindowWifiRowBuilder : Object {
         if (has_resolvable_saved_profile) {
             var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
             auto_connect.add_css_class ("nm-row-autoconnect-check");
-            auto_connect.set_active (true);
+            auto_connect.set_active (net.autoconnect);
             auto_connect.set_sensitive (!is_connecting);
             auto_connect.toggled.connect (() => {
                 on_set_auto_connect (net, auto_connect.get_active ());

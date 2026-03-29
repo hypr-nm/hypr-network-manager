@@ -5,6 +5,7 @@ public class WifiNetwork : Object {
     public bool connected { get; construct set; }
     public bool is_secured { get; construct set; }
     public bool saved { get; construct set; }
+    public bool autoconnect { get; construct set; }
     public string device_path { get; construct set; }
     public string ap_path { get; construct set; }
     public string bssid { get; construct set; }

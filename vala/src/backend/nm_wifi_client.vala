@@ -81,6 +81,7 @@ public class NmWifiClient : GLib.Object {
 
                 bool saved = false;
                 string saved_uuid = "";
+                bool autoconnect = true;
 
                 foreach (var conn in connections) {
                     var s_wireless = conn.get_setting_wireless ();
@@ -95,6 +96,10 @@ public class NmWifiClient : GLib.Object {
                         if (conn_bssid == "" || conn_bssid == ap.get_bssid ().down ()) {
                             saved = true;
                             saved_uuid = conn.get_uuid ();
+                            var s_conn = conn.get_setting_connection ();
+                            if (s_conn != null) {
+                                autoconnect = s_conn.autoconnect;
+                            }
                             break;
                         }
                     }
@@ -109,6 +114,7 @@ public class NmWifiClient : GLib.Object {
                     connected = connected,
                     is_secured = is_secured,
                     saved = saved,
+                    autoconnect = autoconnect,
                     device_path = ((NM.Object)dev).get_path (),
                     ap_path = ((NM.Object)ap).get_path (),
                     bssid = ap.get_bssid (),
@@ -296,10 +302,14 @@ public class NmWifiClient : GLib.Object {
         }
 
         var s_conn = conn.get_setting_connection ();
-        s_conn.set_property ("autoconnect", enabled);
-        s_conn.set_property ("autoconnect-priority", priority);
-        
-        yield conn.commit_changes_async (true, cancellable);
+        if (s_conn != null) {
+            s_conn.autoconnect = enabled;
+            s_conn.autoconnect_priority = priority;
+            
+            if (conn is NM.RemoteConnection) {
+                yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
+            }
+        }
         return true;
     }
 
