@@ -139,6 +139,8 @@ public class MainWindowEthernetEditPage : Gtk.Box {
     public Gtk.Entry ipv6_prefix_entry { get; private set; }
     public Gtk.Switch ipv6_gateway_auto_switch { get; private set; }
     public Gtk.Entry ipv6_gateway_entry { get; private set; }
+    public Gtk.Switch ipv6_dns_auto_switch { get; private set; }
+    public Gtk.Entry ipv6_dns_entry { get; private set; }
 
     public signal void back ();
     public signal void apply ();
@@ -208,7 +210,8 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         this.ipv4_dns_entry = v4_dns;
 
         Gtk.DropDown v6_method;
-        Gtk.Entry v6_address, v6_prefix, v6_gw;
+        Gtk.Entry v6_address, v6_prefix, v6_gw, v6_dns;
+        Gtk.Switch v6_dns_auto;
         Gtk.Switch v6_gw_auto;
 
         MainWindowIpEditFormBuilder.append_ipv6_section (
@@ -218,6 +221,8 @@ public class MainWindowEthernetEditPage : Gtk.Box {
             out v6_prefix,
             out v6_gw_auto,
             out v6_gw,
+            out v6_dns_auto,
+            out v6_dns,
             () => {
                 this.sync_sensitivity ();
             },
@@ -229,6 +234,8 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         this.ipv6_prefix_entry = v6_prefix;
         this.ipv6_gateway_auto_switch = v6_gw_auto;
         this.ipv6_gateway_entry = v6_gw;
+        this.ipv6_dns_auto_switch = v6_dns_auto;
+        this.ipv6_dns_entry = v6_dns;
 
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
         var save_btn = new Gtk.Button.with_label ("Apply");

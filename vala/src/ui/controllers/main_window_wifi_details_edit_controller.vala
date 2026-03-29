@@ -392,6 +392,8 @@ public class MainWindowWifiDetailsEditController : Object {
         page.ipv6_prefix_entry.set_text ("");
         page.ipv6_gateway_auto_switch.set_active (true);
         page.ipv6_gateway_entry.set_text ("");
+        page.ipv6_dns_auto_switch.set_active (true);
+        page.ipv6_dns_entry.set_text ("");
         sync_sensitivity ();
 
         nm.get_wifi_network_ip_settings.begin (net, null, (obj, res) => {
@@ -425,6 +427,8 @@ public class MainWindowWifiDetailsEditController : Object {
             );
             page.ipv6_gateway_auto_switch.set_active (ip_settings.ipv6_gateway_auto);
             page.ipv6_gateway_entry.set_text (ip_settings.configured_ipv6_gateway);
+            page.ipv6_dns_auto_switch.set_active (ip_settings.ipv6_dns_auto);
+            page.ipv6_dns_entry.set_text (ip_settings.configured_ipv6_dns);
             sync_sensitivity ();
         });
     }
@@ -455,6 +459,8 @@ public class MainWindowWifiDetailsEditController : Object {
         string ipv6_address = page.ipv6_address_entry.get_text ().strip ();
         bool ipv6_gateway_auto = page.ipv6_gateway_auto_switch.get_active ();
         string ipv6_gateway = page.ipv6_gateway_entry.get_text ().strip ();
+        bool ipv6_dns_auto = page.ipv6_dns_auto_switch.get_active ();
+        string ipv6_dns_csv = page.ipv6_dns_entry.get_text ().strip ();
 
         if (method == "disabled") {
             gateway_auto = true;
@@ -463,6 +469,7 @@ public class MainWindowWifiDetailsEditController : Object {
 
         if (method6 == "disabled" || method6 == "ignore") {
             ipv6_gateway_auto = true;
+            ipv6_dns_auto = true;
         }
 
         uint32 ipv4_prefix;
@@ -535,6 +542,12 @@ public class MainWindowWifiDetailsEditController : Object {
             return false;
         }
 
+        string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
+        if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
+            on_error ("Manual IPv6 DNS is enabled; provide at least one DNS server.");
+            return false;
+        }
+
         var request = new WifiNetworkUpdateRequest () {
             password = password,
             ipv4_method = method,
@@ -549,8 +562,8 @@ public class MainWindowWifiDetailsEditController : Object {
             ipv6_prefix = ipv6_prefix,
             ipv6_gateway_auto = ipv6_gateway_auto,
             ipv6_gateway = ipv6_gateway,
-            ipv6_dns_auto = true,
-            ipv6_dns_servers = {}
+            ipv6_dns_auto = ipv6_dns_auto,
+            ipv6_dns_servers = ipv6_dns_servers
         };
 
         nm.update_wifi_network_settings.begin (net, request, null, (obj, res) => {

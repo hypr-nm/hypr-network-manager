@@ -28,7 +28,9 @@ public class MainWindowWifiController : Object {
         Gtk.Switch? wifi_edit_dns_auto_switch,
         Gtk.DropDown? wifi_edit_ipv6_method_dropdown,
         Gtk.Entry? wifi_edit_ipv6_gateway_entry,
-        Gtk.Switch? wifi_edit_ipv6_gateway_auto_switch
+        Gtk.Switch? wifi_edit_ipv6_gateway_auto_switch,
+        Gtk.Entry? wifi_edit_ipv6_dns_entry,
+        Gtk.Switch? wifi_edit_ipv6_dns_auto_switch
     ) {
         if (wifi_edit_ipv4_method_dropdown != null && wifi_edit_ipv4_method_dropdown.get_selected () == 2) {
             if (wifi_edit_gateway_auto_switch != null) {
@@ -45,6 +47,9 @@ public class MainWindowWifiController : Object {
                 if (wifi_edit_ipv6_gateway_auto_switch != null) {
                     wifi_edit_ipv6_gateway_auto_switch.set_active (true);
                 }
+                if (wifi_edit_ipv6_dns_auto_switch != null) {
+                    wifi_edit_ipv6_dns_auto_switch.set_active (true);
+                }
             }
         }
 
@@ -58,6 +63,10 @@ public class MainWindowWifiController : Object {
 
         if (wifi_edit_ipv6_gateway_entry != null && wifi_edit_ipv6_gateway_auto_switch != null) {
             wifi_edit_ipv6_gateway_entry.set_sensitive (!wifi_edit_ipv6_gateway_auto_switch.get_active ());
+        }
+
+        if (wifi_edit_ipv6_dns_entry != null && wifi_edit_ipv6_dns_auto_switch != null) {
+            wifi_edit_ipv6_dns_entry.set_sensitive (!wifi_edit_ipv6_dns_auto_switch.get_active ());
         }
     }
 

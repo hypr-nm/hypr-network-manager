@@ -74,8 +74,13 @@ public class NmEthernetClient : GLib.Object {
                     ip_settings.configured_prefix = addr.get_prefix ();
                 }
                 ip_settings.configured_gateway = s_ip4.get_gateway ();
+                ip_settings.dns_auto = !s_ip4.ignore_auto_dns;
                 if (s_ip4.get_num_dns () > 0) {
-                    ip_settings.configured_dns = s_ip4.get_dns (0);
+                    string[] dns_list = {};
+                    for (int i = 0; i < s_ip4.get_num_dns (); i++) {
+                        dns_list += s_ip4.get_dns (i);
+                    }
+                    ip_settings.configured_dns = string.joinv (", ", dns_list);
                 }
             }
             var s_ip6 = conn.get_setting_ip6_config ();
@@ -88,8 +93,13 @@ public class NmEthernetClient : GLib.Object {
                     ip_settings.configured_ipv6_prefix = addr.get_prefix ();
                 }
                 ip_settings.configured_ipv6_gateway = s_ip6.get_gateway ();
+                ip_settings.ipv6_dns_auto = !s_ip6.ignore_auto_dns;
                 if (s_ip6.get_num_dns () > 0) {
-                    ip_settings.configured_ipv6_dns = s_ip6.get_dns (0);
+                    string[] dns_list = {};
+                    for (int i = 0; i < s_ip6.get_num_dns (); i++) {
+                        dns_list += s_ip6.get_dns (i);
+                    }
+                    ip_settings.configured_ipv6_dns = string.joinv (", ", dns_list);
                 }
             }
         }
@@ -183,6 +193,7 @@ public class NmEthernetClient : GLib.Object {
             s_ip4.gateway = null;
         }
         
+        s_ip4.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
             foreach (var dns in req.dns_servers) {
                 if (dns != "") s_ip4.add_dns (dns);
@@ -218,6 +229,7 @@ public class NmEthernetClient : GLib.Object {
             s_ip6.gateway = null;
         }
         
+        s_ip6.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
             foreach (var dns in req.dns_servers) {
                 if (dns != "") s_ip6.add_dns (dns);
