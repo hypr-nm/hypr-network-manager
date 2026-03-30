@@ -232,14 +232,14 @@ public class MainWindowEthernetController : Object {
 
     private void populate_details (NetworkDevice dev) {
         uint epoch = capture_ui_epoch ();
-        ethernet_details_page.details_title.set_text (dev.name);
+        ethernet_details_page.details_title.set_text (MainWindowHelpers.safe_text (dev.name));
 
         MainWindowHelpers.clear_box (ethernet_details_page.basic_rows);
         MainWindowHelpers.clear_box (ethernet_details_page.advanced_rows);
         MainWindowHelpers.clear_box (ethernet_details_page.ip_rows);
 
-        string profile_name = dev.connection.strip () != "" ? dev.connection : "n/a";
-        bool has_profile = dev.connection.strip () != "";
+        string profile_name = MainWindowHelpers.display_text_or_na (dev.connection);
+        bool has_profile = MainWindowHelpers.safe_text (dev.connection).strip () != "";
         bool pending = pending_ethernet_action.contains (dev.name);
 
         ethernet_details_page.basic_rows.append (MainWindowHelpers.build_details_row ("Interface", dev.name));
@@ -290,13 +290,13 @@ public class MainWindowEthernetController : Object {
             ethernet_details_page.ip_rows.append (
                 MainWindowHelpers.build_details_row (
                     "Configured Gateway",
-                    ip_settings.configured_gateway.strip () != "" ? ip_settings.configured_gateway : "n/a"
+                    MainWindowHelpers.display_text_or_na (ip_settings.configured_gateway)
                 )
             );
             ethernet_details_page.ip_rows.append (
                 MainWindowHelpers.build_details_row (
                     "Configured DNS",
-                    ip_settings.configured_dns.strip () != "" ? ip_settings.configured_dns : "n/a"
+                    MainWindowHelpers.display_text_or_na (ip_settings.configured_dns)
                 )
             );
             ethernet_details_page.ip_rows.append (
@@ -317,9 +317,7 @@ public class MainWindowEthernetController : Object {
             ethernet_details_page.ip_rows.append (
                 MainWindowHelpers.build_details_row (
                     "Configured IPv6 Gateway",
-                    ip_settings.configured_ipv6_gateway.strip () != ""
-                        ? ip_settings.configured_ipv6_gateway
-                        : "n/a"
+                    MainWindowHelpers.display_text_or_na (ip_settings.configured_ipv6_gateway)
                 )
             );
 
@@ -336,13 +334,13 @@ public class MainWindowEthernetController : Object {
                 ethernet_details_page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current Gateway",
-                        ip_settings.current_gateway.strip () != "" ? ip_settings.current_gateway : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_gateway)
                     )
                 );
                 ethernet_details_page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current DNS",
-                        ip_settings.current_dns.strip () != "" ? ip_settings.current_dns : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_dns)
                     )
                 );
                 ethernet_details_page.ip_rows.append (
@@ -357,13 +355,13 @@ public class MainWindowEthernetController : Object {
                 ethernet_details_page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current IPv6 Gateway",
-                        ip_settings.current_ipv6_gateway.strip () != "" ? ip_settings.current_ipv6_gateway : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_ipv6_gateway)
                     )
                 );
                 ethernet_details_page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current IPv6 DNS",
-                        ip_settings.current_ipv6_dns.strip () != "" ? ip_settings.current_ipv6_dns : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_ipv6_dns)
                     )
                 );
             }
@@ -393,7 +391,7 @@ public class MainWindowEthernetController : Object {
     }
 
     private void open_edit (NetworkDevice dev) {
-        if (dev.connection.strip () == "") {
+        if (MainWindowHelpers.safe_text (dev.connection).strip () == "") {
             on_error ("This interface has no saved Ethernet profile to edit.");
             return;
         }
@@ -423,23 +421,23 @@ public class MainWindowEthernetController : Object {
             ethernet_edit_page.ipv4_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)
             );
-            ethernet_edit_page.ipv4_address_entry.set_text (ip_settings.configured_address);
+            ethernet_edit_page.ipv4_address_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_address));
             ethernet_edit_page.ipv4_prefix_entry.set_text (
                 ip_settings.configured_prefix > 0 ? "%u".printf (ip_settings.configured_prefix) : ""
             );
-            ethernet_edit_page.ipv4_gateway_entry.set_text (ip_settings.configured_gateway);
+            ethernet_edit_page.ipv4_gateway_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_gateway));
             ethernet_edit_page.dns_auto_switch.set_active (ip_settings.dns_auto);
-            ethernet_edit_page.ipv4_dns_entry.set_text (ip_settings.configured_dns);
+            ethernet_edit_page.ipv4_dns_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_dns));
             ethernet_edit_page.ipv6_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv6_method_dropdown_index (ip_settings.ipv6_method)
             );
-            ethernet_edit_page.ipv6_address_entry.set_text (ip_settings.configured_ipv6_address);
+            ethernet_edit_page.ipv6_address_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_address));
             ethernet_edit_page.ipv6_prefix_entry.set_text (
                 ip_settings.configured_ipv6_prefix > 0 ? "%u".printf (ip_settings.configured_ipv6_prefix) : ""
             );
-            ethernet_edit_page.ipv6_gateway_entry.set_text (ip_settings.configured_ipv6_gateway);
+            ethernet_edit_page.ipv6_gateway_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_gateway));
             ethernet_edit_page.ipv6_dns_auto_switch.set_active (ip_settings.ipv6_dns_auto);
-            ethernet_edit_page.ipv6_dns_entry.set_text (ip_settings.configured_ipv6_dns);
+            ethernet_edit_page.ipv6_dns_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_dns));
 
             sync_edit_gateway_dns_sensitivity ();
             ethernet_edit_page.ipv4_address_entry.grab_focus ();
@@ -674,7 +672,7 @@ public class MainWindowEthernetController : Object {
             can_toggle = false;
         } else if (dev.is_connected) {
             action_label = "Disconnect";
-        } else if (dev.connection.strip () != "") {
+        } else if (MainWindowHelpers.safe_text (dev.connection).strip () != "") {
             action_label = "Connect";
         } else {
             action_label = "No Profile";

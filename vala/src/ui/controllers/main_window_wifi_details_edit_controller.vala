@@ -188,7 +188,7 @@ public class MainWindowWifiDetailsEditController : Object {
     ) {
         uint epoch = capture_ui_epoch ();
 
-        page.details_title.set_text (net.ssid);
+        page.details_title.set_text (MainWindowHelpers.safe_text (net.ssid));
         bool is_connected_now = active_wifi_connections.contains (net.network_key);
         bool can_manage_saved_profile = net.saved;
         page.action_row.set_visible (can_manage_saved_profile);
@@ -233,7 +233,7 @@ public class MainWindowWifiDetailsEditController : Object {
             MainWindowHelpers.build_details_row ("Band", band != "" ? band : "n/a")
         );
         page.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("BSSID", net.bssid != "" ? net.bssid : "n/a")
+            MainWindowHelpers.build_details_row ("BSSID", MainWindowHelpers.display_text_or_na (net.bssid))
         );
         page.advanced_rows.append (
             MainWindowHelpers.build_details_row (
@@ -281,13 +281,13 @@ public class MainWindowWifiDetailsEditController : Object {
             page.ip_rows.append (
                 MainWindowHelpers.build_details_row (
                     "Configured Gateway",
-                    ip_settings.configured_gateway.strip () != "" ? ip_settings.configured_gateway : "n/a"
+                    MainWindowHelpers.display_text_or_na (ip_settings.configured_gateway)
                 )
             );
             page.ip_rows.append (
                 MainWindowHelpers.build_details_row (
                     "Configured DNS",
-                    ip_settings.configured_dns.strip () != "" ? ip_settings.configured_dns : "n/a"
+                    MainWindowHelpers.display_text_or_na (ip_settings.configured_dns)
                 )
             );
             page.ip_rows.append (
@@ -308,9 +308,7 @@ public class MainWindowWifiDetailsEditController : Object {
             page.ip_rows.append (
                 MainWindowHelpers.build_details_row (
                     "Configured IPv6 Gateway",
-                    ip_settings.configured_ipv6_gateway.strip () != ""
-                        ? ip_settings.configured_ipv6_gateway
-                        : "n/a"
+                    MainWindowHelpers.display_text_or_na (ip_settings.configured_ipv6_gateway)
                 )
             );
 
@@ -327,13 +325,13 @@ public class MainWindowWifiDetailsEditController : Object {
                 page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current Gateway",
-                        ip_settings.current_gateway.strip () != "" ? ip_settings.current_gateway : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_gateway)
                     )
                 );
                 page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current DNS",
-                        ip_settings.current_dns.strip () != "" ? ip_settings.current_dns : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_dns)
                     )
                 );
                 page.ip_rows.append (
@@ -348,13 +346,13 @@ public class MainWindowWifiDetailsEditController : Object {
                 page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current IPv6 Gateway",
-                        ip_settings.current_ipv6_gateway.strip () != "" ? ip_settings.current_ipv6_gateway : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_ipv6_gateway)
                     )
                 );
                 page.ip_rows.append (
                     MainWindowHelpers.build_details_row (
                         "Current IPv6 DNS",
-                        ip_settings.current_ipv6_dns.strip () != "" ? ip_settings.current_ipv6_dns : "n/a"
+                        MainWindowHelpers.display_text_or_na (ip_settings.current_ipv6_dns)
                     )
                 );
             }
@@ -419,27 +417,27 @@ public class MainWindowWifiDetailsEditController : Object {
                 MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)
             );
             if (net.is_secured) {
-                page.password_entry.set_text (ip_settings.configured_password);
+                page.password_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_password));
             } else {
                 page.password_entry.set_text ("");
             }
-            page.ipv4_address_entry.set_text (ip_settings.configured_address);
+            page.ipv4_address_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_address));
             page.ipv4_prefix_entry.set_text (
                 ip_settings.configured_prefix > 0 ? "%u".printf (ip_settings.configured_prefix) : ""
             );
-            page.ipv4_gateway_entry.set_text (ip_settings.configured_gateway);
+            page.ipv4_gateway_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_gateway));
             page.dns_auto_switch.set_active (ip_settings.dns_auto);
-            page.ipv4_dns_entry.set_text (ip_settings.configured_dns);
+            page.ipv4_dns_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_dns));
             page.ipv6_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv6_method_dropdown_index (ip_settings.ipv6_method)
             );
-            page.ipv6_address_entry.set_text (ip_settings.configured_ipv6_address);
+            page.ipv6_address_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_address));
             page.ipv6_prefix_entry.set_text (
                 ip_settings.configured_ipv6_prefix > 0 ? "%u".printf (ip_settings.configured_ipv6_prefix) : ""
             );
-            page.ipv6_gateway_entry.set_text (ip_settings.configured_ipv6_gateway);
+            page.ipv6_gateway_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_gateway));
             page.ipv6_dns_auto_switch.set_active (ip_settings.ipv6_dns_auto);
-            page.ipv6_dns_entry.set_text (ip_settings.configured_ipv6_dns);
+            page.ipv6_dns_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_dns));
             sync_sensitivity ();
         });
     }

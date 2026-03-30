@@ -74,7 +74,10 @@ public class MainWindowWifiRowBuilder : Object {
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 1);
         info.set_hexpand (true);
         info.add_css_class ("nm-row-info");
-        var ssid_lbl = new Gtk.Label (net.ssid);
+        string ssid_text = MainWindowHelpers.safe_text (net.ssid);
+        string bssid_text = MainWindowHelpers.safe_text (net.bssid);
+
+        var ssid_lbl = new Gtk.Label (ssid_text);
         ssid_lbl.set_xalign (0.0f);
         ssid_lbl.add_css_class ("nm-ssid-label");
         info.append (ssid_lbl);
@@ -94,8 +97,8 @@ public class MainWindowWifiRowBuilder : Object {
                     subtitle += " - %s".printf (band);
                 }
             }
-            if (show_bssid && net.bssid != "") {
-                subtitle += " - %s".printf (net.bssid);
+            if (show_bssid && bssid_text != "") {
+                subtitle += " - %s".printf (bssid_text);
             }
         }
 

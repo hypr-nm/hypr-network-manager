@@ -503,7 +503,7 @@ public class NmWifiClient : GLib.Object {
         if (conn != null) {
             var s_sec = conn.get_setting_wireless_security ();
             if (s_sec != null && s_sec.psk != null) {
-                ip_settings.configured_password = s_sec.psk;
+                ip_settings.configured_password = s_sec.psk ?? "";
             }
 
             if (ip_settings.configured_password == "" && conn is NM.RemoteConnection) {

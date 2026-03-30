@@ -22,14 +22,14 @@ public class NmIpConfigHelper : GLib.Object {
     public static void populate_configured_ip_settings (NetworkIpSettings ip_settings, NM.Connection conn) {
         NM.SettingIPConfig? s_ip4 = (NM.SettingIPConfig?) conn.get_setting (typeof (NM.SettingIP4Config));
         if (s_ip4 != null) {
-            ip_settings.ipv4_method = s_ip4.get_method ();
+            ip_settings.ipv4_method = s_ip4.get_method () ?? "auto";
             ip_settings.gateway_auto = !s_ip4.ignore_auto_routes;
             if (s_ip4.get_num_addresses () > 0) {
                 unowned NM.IPAddress addr = s_ip4.get_address (0);
-                ip_settings.configured_address = addr.get_address ();
+                ip_settings.configured_address = addr.get_address () ?? "";
                 ip_settings.configured_prefix = addr.get_prefix ();
             }
-            ip_settings.configured_gateway = s_ip4.get_gateway ();
+            ip_settings.configured_gateway = s_ip4.get_gateway () ?? "";
             ip_settings.dns_auto = !s_ip4.ignore_auto_dns;
             if (s_ip4.get_num_dns () > 0) {
                 string[] dns_list = {};
@@ -42,14 +42,14 @@ public class NmIpConfigHelper : GLib.Object {
 
         NM.SettingIPConfig? s_ip6 = (NM.SettingIPConfig?) conn.get_setting (typeof (NM.SettingIP6Config));
         if (s_ip6 != null) {
-            ip_settings.ipv6_method = s_ip6.get_method ();
+            ip_settings.ipv6_method = s_ip6.get_method () ?? "auto";
             ip_settings.ipv6_gateway_auto = !s_ip6.ignore_auto_routes;
             if (s_ip6.get_num_addresses () > 0) {
                 unowned NM.IPAddress addr = s_ip6.get_address (0);
-                ip_settings.configured_ipv6_address = addr.get_address ();
+                ip_settings.configured_ipv6_address = addr.get_address () ?? "";
                 ip_settings.configured_ipv6_prefix = addr.get_prefix ();
             }
-            ip_settings.configured_ipv6_gateway = s_ip6.get_gateway ();
+            ip_settings.configured_ipv6_gateway = s_ip6.get_gateway () ?? "";
             ip_settings.ipv6_dns_auto = !s_ip6.ignore_auto_dns;
             if (s_ip6.get_num_dns () > 0) {
                 string[] dns_list = {};
@@ -75,10 +75,10 @@ public class NmIpConfigHelper : GLib.Object {
         if (ip4 != null) {
             if (ip4.get_addresses ().length > 0) {
                 unowned NM.IPAddress addr = ip4.get_addresses ().get (0);
-                ip_settings.current_address = addr.get_address ();
+                ip_settings.current_address = addr.get_address () ?? "";
                 ip_settings.current_prefix = addr.get_prefix ();
             }
-            ip_settings.current_gateway = ip4.get_gateway ();
+            ip_settings.current_gateway = ip4.get_gateway () ?? "";
             foreach (unowned string nameserver in ip4.get_nameservers ()) {
                 ip_settings.current_dns = nameserver;
                 break;
@@ -89,10 +89,10 @@ public class NmIpConfigHelper : GLib.Object {
         if (ip6 != null) {
             if (ip6.get_addresses ().length > 0) {
                 unowned NM.IPAddress addr = ip6.get_addresses ().get (0);
-                ip_settings.current_ipv6_address = addr.get_address ();
+                ip_settings.current_ipv6_address = addr.get_address () ?? "";
                 ip_settings.current_ipv6_prefix = addr.get_prefix ();
             }
-            ip_settings.current_ipv6_gateway = ip6.get_gateway ();
+            ip_settings.current_ipv6_gateway = ip6.get_gateway () ?? "";
             foreach (unowned string nameserver in ip6.get_nameservers ()) {
                 ip_settings.current_ipv6_dns = nameserver;
                 break;

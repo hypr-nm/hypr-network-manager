@@ -3,6 +3,15 @@ using Gtk;
 using Gdk;
 
 public class MainWindowHelpers : Object {
+    public static string safe_text (string? value) {
+        return value != null ? value : "";
+    }
+
+    public static string display_text_or_na (string? value) {
+        string normalized = safe_text (value).strip ();
+        return normalized != "" ? normalized : "n/a";
+    }
+
     public static Gtk.Button build_back_button (MainWindowActionCallback on_back) {
         var back_btn = new Gtk.Button ();
         back_btn.add_css_class ("nm-button");
@@ -111,19 +120,22 @@ public class MainWindowHelpers : Object {
         return net.signal_icon_name;
     }
 
-    public static Gtk.Widget build_details_row (string key, string value) {
+    public static Gtk.Widget build_details_row (string? key, string? value) {
         var row = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
         row.add_css_class ("nm-details-row");
         row.add_css_class ("nm-details-item");
 
-        var key_label = new Gtk.Label (key);
+        string key_text = display_text_or_na (key);
+        string value_text = display_text_or_na (value);
+
+        var key_label = new Gtk.Label (key_text);
         key_label.set_xalign (0.0f);
         key_label.set_halign (Gtk.Align.START);
         key_label.set_hexpand (false);
         key_label.add_css_class ("nm-details-key");
         key_label.add_css_class ("nm-details-item-key");
 
-        var value_label = new Gtk.Label (value);
+        var value_label = new Gtk.Label (value_text);
         value_label.set_xalign (0.0f);
         value_label.set_halign (Gtk.Align.START);
         value_label.set_wrap (true);
@@ -155,8 +167,8 @@ public class MainWindowHelpers : Object {
         return section;
     }
 
-    public static string get_ipv4_method_label (string method) {
-        switch (method.strip ().down ()) {
+    public static string get_ipv4_method_label (string? method) {
+        switch (safe_text (method).strip ().down ()) {
         case "manual":
             return "Manual";
         case "disabled":
@@ -167,8 +179,8 @@ public class MainWindowHelpers : Object {
         }
     }
 
-    public static string get_ipv6_method_label (string method) {
-        switch (method.strip ().down ()) {
+    public static string get_ipv6_method_label (string? method) {
+        switch (safe_text (method).strip ().down ()) {
         case "manual":
             return "Manual";
         case "disabled":
@@ -187,8 +199,8 @@ public class MainWindowHelpers : Object {
         }
     }
 
-    public static uint get_ipv4_method_dropdown_index (string method) {
-        switch (method.strip ().down ()) {
+    public static uint get_ipv4_method_dropdown_index (string? method) {
+        switch (safe_text (method).strip ().down ()) {
         case "manual":
             return 1;
         case "disabled":
@@ -199,8 +211,8 @@ public class MainWindowHelpers : Object {
         }
     }
 
-    public static uint get_ipv6_method_dropdown_index (string method) {
-        switch (method.strip ().down ()) {
+    public static uint get_ipv6_method_dropdown_index (string? method) {
+        switch (safe_text (method).strip ().down ()) {
         case "manual":
             return 1;
         case "disabled":
@@ -213,8 +225,8 @@ public class MainWindowHelpers : Object {
         }
     }
 
-    public static string format_ip_with_prefix (string address, uint32 prefix) {
-        string ip = address.strip ();
+    public static string format_ip_with_prefix (string? address, uint32 prefix) {
+        string ip = safe_text (address).strip ();
         if (ip == "") {
             return "n/a";
         }
