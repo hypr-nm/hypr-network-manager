@@ -1,4 +1,36 @@
 public class MainWindowWifiRowBuilder : Object {
+    private static void collapse_row (Gtk.ListBoxRow row) {
+        var revealer = row.get_data<Gtk.Revealer> ("actions-revealer");
+        if (revealer != null) {
+            revealer.set_reveal_child (false);
+            row.set_data<bool> ("nm-actions-expanded", false);
+        }
+    }
+
+    private static void collapse_other_expanded_rows (Gtk.ListBoxRow row) {
+        var parent = row.get_parent () as Gtk.ListBox;
+        if (parent == null) {
+            return;
+        }
+
+        for (Gtk.Widget? child = parent.get_first_child (); child != null; child = child.get_next_sibling ()) {
+            if (child == row) {
+                continue;
+            }
+
+            var other_row = child as Gtk.ListBoxRow;
+            if (other_row == null) {
+                continue;
+            }
+
+            if (!other_row.get_data<bool> ("nm-actions-expanded")) {
+                continue;
+            }
+
+            collapse_row (other_row);
+        }
+    }
+
     public static Gtk.ListBoxRow build_row (
         WifiNetwork net,
         bool is_connected_now,
@@ -275,7 +307,7 @@ public class MainWindowWifiRowBuilder : Object {
             spacer.set_hexpand (true);
             actions_panel.append (spacer);
         }
-        
+
         actions_panel.append (action_buttons);
 
         var actions_revealer = new Gtk.Revealer ();
@@ -284,37 +316,16 @@ public class MainWindowWifiRowBuilder : Object {
         actions_revealer.set_transition_duration (220);
         actions_revealer.set_reveal_child (false);
         actions_revealer.set_child (actions_panel);
+        row.set_data<Gtk.Revealer> ("actions-revealer", actions_revealer);
 
-                var click = new Gtk.GestureClick ();
+        var click = new Gtk.GestureClick ();
         click.released.connect ((n_press, x, y) => {
             bool expanded = !actions_revealer.get_reveal_child ();
-            
+
             if (expanded) {
-                var parent = row.get_parent () as Gtk.ListBox;
-                if (parent != null) {
-                    for (Gtk.Widget? child = parent.get_first_child(); child != null; child = child.get_next_sibling()) {
-                        if (child != row) {
-                            var other_row = child as Gtk.ListBoxRow;
-                            if (other_row != null && other_row.get_data<bool> ("nm-actions-expanded")) {
-                                // Collapse other row
-                                for (Gtk.Widget? rchild = other_row.get_first_child(); rchild != null; rchild = rchild.get_next_sibling()) {
-                                    var box = rchild as Gtk.Box;
-                                    if (box != null) {
-                                        for (Gtk.Widget? bchild = box.get_first_child(); bchild != null; bchild = bchild.get_next_sibling()) {
-                                            var rev = bchild as Gtk.Revealer;
-                                            if (rev != null && rev.has_css_class ("nm-row-actions-revealer")) {
-                                                rev.set_reveal_child (false);
-                                                other_row.set_data<bool> ("nm-actions-expanded", false);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                collapse_other_expanded_rows (row);
             }
-            
+
             actions_revealer.set_reveal_child (expanded);
             row.set_data<bool> ("nm-actions-expanded", expanded);
             if (!expanded) {
