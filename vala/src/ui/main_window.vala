@@ -739,7 +739,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         return wifi_saved_flow.apply_saved_edit ();
     }
 
-    private MainWindowWifiRowActionCallbacks create_wifi_row_action_callbacks (WifiNetwork net) {
+    private Gtk.ListBoxRow build_wifi_row (WifiNetwork net) {
         var nm_client = nm;
         var wifi_controller_ref = wifi_controller;
         var active_connections_ref = active_wifi_connections;
@@ -747,17 +747,23 @@ public class MainWindow : Gtk.ApplicationWindow {
         var pending_seen_connecting_ref = pending_wifi_seen_connecting;
         uint pending_timeout_ms = pending_wifi_connect_timeout_ms;
         bool should_close_on_connect = close_on_connect;
+        string net_key = net.network_key;
+        bool is_connected_now = active_wifi_connections.contains (net_key);
+        bool is_connecting = pending_wifi_connect.contains (net_key);
 
-        return new MainWindowWifiRowActionCallbacks (
-            (wifi_net) => {
-                open_wifi_details (wifi_net);
-            },
+        return wifi_controller.build_row (
+            net,
+            is_connected_now,
+            is_connecting,
+            show_frequency,
+            show_band,
+            show_bssid,
+            resolve_wifi_row_icon_name (net),
+            open_wifi_details,
             (wifi_net) => {
                 forget_wifi_network (wifi_net);
             },
-            (wifi_net) => {
-                disconnect_wifi_network (wifi_net);
-            },
+            disconnect_wifi_network,
             (wifi_net, password, hidden_ssid) => {
                 wifi_controller_ref.connect_with_optional_password (
                     nm_client,
@@ -791,33 +797,7 @@ public class MainWindow : Gtk.ApplicationWindow {
                 active_wifi_password_row_id = get_wifi_row_id (net);
                 show_wifi_password_prompt (revealer, entry);
             },
-            (revealer, entry, value) => {
-                hide_wifi_password_prompt (revealer, entry, value);
-            }
-        );
-    }
-
-    private Gtk.ListBoxRow build_wifi_row (WifiNetwork net) {
-        var actions = create_wifi_row_action_callbacks (net);
-        string net_key = net.network_key;
-        bool is_connected_now = active_wifi_connections.contains (net_key);
-        bool is_connecting = pending_wifi_connect.contains (net_key);
-
-        return wifi_controller.build_row (
-            net,
-            is_connected_now,
-            is_connecting,
-            show_frequency,
-            show_band,
-            show_bssid,
-            resolve_wifi_row_icon_name (net),
-            actions.on_open_details,
-            actions.on_forget_saved_network,
-            actions.on_disconnect,
-            actions.on_connect,
-            actions.on_set_auto_connect,
-            actions.on_show_password_prompt,
-            actions.on_hide_password_prompt
+            hide_wifi_password_prompt
         );
     }
 
@@ -985,7 +965,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void dispose_lifecycle_owners () {
-        refresh_coordinator.dispose ();
+        refresh_coordinator.stop ();
         wifi_controller.dispose_controller ();
         ethernet_controller.dispose_controller ();
         vpn_controller.dispose_controller ();

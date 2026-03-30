@@ -76,7 +76,7 @@ public class MainWindowRefreshCoordinator : Object {
         );
     }
 
-    public void dispose () {
+    public void stop () {
         if (signal_refresh_source_id != 0) {
             Source.remove (signal_refresh_source_id);
             signal_refresh_source_id = 0;
