@@ -79,18 +79,24 @@ public class MainWindowWifiRowBuilder : Object {
         ssid_lbl.add_css_class ("nm-ssid-label");
         info.append (ssid_lbl);
 
-        string subtitle = "%s (%u%%)".printf (net.signal_label, net.signal);
-        if (show_frequency && net.frequency_mhz > 0) {
-            subtitle += " - %u MHz".printf (net.frequency_mhz);
-        }
-        if (show_band && net.frequency_mhz > 0) {
-            string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
-            if (band != "") {
-                subtitle += " - %s".printf (band);
+        bool is_saved_only = net.saved && net.ap_path.has_prefix ("saved:");
+        string subtitle;
+        if (is_saved_only) {
+            subtitle = "Saved network";
+        } else {
+            subtitle = "%s (%u%%)".printf (net.signal_label, net.signal);
+            if (show_frequency && net.frequency_mhz > 0) {
+                subtitle += " - %u MHz".printf (net.frequency_mhz);
             }
-        }
-        if (show_bssid && net.bssid != "") {
-            subtitle += " - %s".printf (net.bssid);
+            if (show_band && net.frequency_mhz > 0) {
+                string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
+                if (band != "") {
+                    subtitle += " - %s".printf (band);
+                }
+            }
+            if (show_bssid && net.bssid != "") {
+                subtitle += " - %s".printf (net.bssid);
+            }
         }
 
         var sub = new Gtk.Label (subtitle);

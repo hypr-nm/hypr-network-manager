@@ -41,6 +41,8 @@ public class MainWindow : Gtk.ApplicationWindow {
     private WifiNetwork? selected_wifi_network = null;
     private MainWindowWifiDetailsPage wifi_details_page;
     private MainWindowWifiEditPage wifi_edit_page;
+    private MainWindowWifiSavedPage wifi_saved_page;
+    private MainWindowWifiSavedEditPage wifi_saved_edit_page;
     private Gtk.Entry wifi_add_ssid_entry;
     private Gtk.DropDown wifi_add_security_dropdown;
     private Gtk.Entry wifi_add_password_entry;
@@ -308,12 +310,15 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         bool keep_input_for_wifi_edit = wifi_stack != null
             && wifi_stack.get_visible_child_name () == "edit";
+        bool keep_input_for_saved_wifi_edit = wifi_stack != null
+            && wifi_stack.get_visible_child_name () == "saved-edit";
         bool keep_input_for_wifi_add = wifi_stack != null
             && wifi_stack.get_visible_child_name () == "add";
         bool keep_input_for_inline_prompt = active_wifi_password_revealer != null
             && active_wifi_password_revealer.get_reveal_child ();
 
-        if (keep_input_for_wifi_edit || keep_input_for_wifi_add || keep_input_for_inline_prompt) {
+        if (keep_input_for_wifi_edit || keep_input_for_saved_wifi_edit || keep_input_for_wifi_add ||
+            keep_input_for_inline_prompt) {
             GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.ON_DEMAND);
             return;
         }
@@ -365,6 +370,8 @@ public class MainWindow : Gtk.ApplicationWindow {
             build_wifi_details_page (),
             build_wifi_edit_page (),
             build_wifi_add_page (),
+            build_wifi_saved_page (),
+            build_wifi_saved_edit_page (),
             () => {
                 refresh_wifi ();
             },
@@ -378,6 +385,10 @@ public class MainWindow : Gtk.ApplicationWindow {
                         set_popup_text_input_mode (enabled);
                     }
                 );
+            },
+            () => {
+                refresh_saved_networks ();
+                wifi_stack.set_visible_child_name ("saved");
             },
             () => {
                 on_wifi_switch_changed ();
@@ -737,6 +748,279 @@ public class MainWindow : Gtk.ApplicationWindow {
         return page;
     }
 
+    private void sync_saved_wifi_edit_gateway_dns_sensitivity () {
+        if (wifi_saved_edit_page == null) {
+            return;
+        }
+
+        wifi_controller.sync_edit_gateway_dns_sensitivity (
+            wifi_saved_edit_page.ipv4_method_dropdown,
+            wifi_saved_edit_page.ipv4_gateway_entry,
+            wifi_saved_edit_page.ipv4_dns_entry,
+            wifi_saved_edit_page.dns_auto_switch,
+            wifi_saved_edit_page.ipv6_method_dropdown,
+            wifi_saved_edit_page.ipv6_gateway_entry,
+            wifi_saved_edit_page.ipv6_dns_entry,
+            wifi_saved_edit_page.ipv6_dns_auto_switch
+        );
+    }
+
+    private Gtk.Widget build_wifi_saved_page () {
+        wifi_saved_page = new MainWindowWifiSavedPage ();
+
+        wifi_saved_page.back.connect (() => {
+            wifi_stack.set_visible_child_name ("list");
+        });
+
+        wifi_saved_page.refresh.connect (() => {
+            refresh_saved_networks ();
+        });
+
+        wifi_saved_page.open_profile.connect ((net) => {
+            open_saved_wifi_edit (net);
+        });
+
+        wifi_saved_page.delete_profile.connect ((net) => {
+            string profile_uuid = net.saved_connection_uuid.strip ();
+            string network_key = net.network_key;
+            nm.forget_network.begin (profile_uuid, network_key, null, (obj, res) => {
+                try {
+                    nm.forget_network.end (res);
+                    refresh_after_action (true);
+                    refresh_saved_networks ();
+                } catch (Error e) {
+                    show_error ("Delete failed: " + e.message);
+                }
+            });
+        });
+
+        return wifi_saved_page;
+    }
+
+    private Gtk.Widget build_wifi_saved_edit_page () {
+        wifi_saved_edit_page = new MainWindowWifiSavedEditPage ();
+
+        wifi_saved_edit_page.back.connect (() => {
+            set_popup_text_input_mode (false);
+            wifi_stack.set_visible_child_name ("saved");
+        });
+
+        wifi_saved_edit_page.save.connect (() => {
+            apply_saved_wifi_edit ();
+        });
+
+        wifi_saved_edit_page.sync_sensitivity.connect (() => {
+            sync_saved_wifi_edit_gateway_dns_sensitivity ();
+        });
+
+        return wifi_saved_edit_page;
+    }
+
+    private void refresh_saved_networks () {
+        nm.get_saved_wifi_networks.begin (null, (obj, res) => {
+            try {
+                var saved_networks = nm.get_saved_wifi_networks.end (res);
+                wifi_saved_page.set_networks (saved_networks);
+            } catch (Error e) {
+                show_error ("Could not load saved networks: " + e.message);
+            }
+        });
+    }
+
+    private void open_saved_wifi_edit (WifiNetwork net) {
+        selected_wifi_network = net;
+        wifi_saved_edit_page.title_label.set_text ("Saved Profile: %s".printf (net.ssid));
+        set_popup_text_input_mode (true);
+        wifi_stack.set_visible_child_name ("saved-edit");
+        populate_saved_wifi_edit (net);
+    }
+
+    private void populate_saved_wifi_edit (WifiNetwork net) {
+        nm.get_saved_wifi_profile_settings.begin (net, null, (obj, res) => {
+            try {
+                var settings = nm.get_saved_wifi_profile_settings.end (res);
+
+                wifi_saved_edit_page.profile_name_entry.set_text (settings.profile_name);
+                wifi_saved_edit_page.ssid_entry.set_text (settings.ssid);
+                wifi_saved_edit_page.bssid_entry.set_text (settings.bssid);
+                wifi_saved_edit_page.set_selected_security_mode_key (settings.security_mode);
+                wifi_saved_edit_page.autoconnect_check.set_active (settings.autoconnect);
+                wifi_saved_edit_page.all_users_check.set_active (settings.available_to_all_users);
+                wifi_saved_edit_page.password_entry.set_text (settings.configured_password);
+
+                wifi_saved_edit_page.ipv4_method_dropdown.set_selected (
+                    MainWindowHelpers.get_ipv4_method_dropdown_index (settings.ipv4_method)
+                );
+                wifi_saved_edit_page.ipv4_address_entry.set_text (settings.configured_address);
+                wifi_saved_edit_page.ipv4_prefix_entry.set_text (
+                    settings.configured_prefix > 0 ? "%u".printf (settings.configured_prefix) : ""
+                );
+                wifi_saved_edit_page.ipv4_gateway_entry.set_text (settings.configured_gateway);
+                wifi_saved_edit_page.dns_auto_switch.set_active (settings.dns_auto);
+                wifi_saved_edit_page.ipv4_dns_entry.set_text (settings.configured_dns);
+
+                wifi_saved_edit_page.ipv6_method_dropdown.set_selected (
+                    MainWindowHelpers.get_ipv6_method_dropdown_index (settings.ipv6_method)
+                );
+                wifi_saved_edit_page.ipv6_address_entry.set_text (settings.configured_ipv6_address);
+                wifi_saved_edit_page.ipv6_prefix_entry.set_text (
+                    settings.configured_ipv6_prefix > 0 ? "%u".printf (settings.configured_ipv6_prefix) : ""
+                );
+                wifi_saved_edit_page.ipv6_gateway_entry.set_text (settings.configured_ipv6_gateway);
+                wifi_saved_edit_page.ipv6_dns_auto_switch.set_active (settings.ipv6_dns_auto);
+                wifi_saved_edit_page.ipv6_dns_entry.set_text (settings.configured_ipv6_dns);
+
+                sync_saved_wifi_edit_gateway_dns_sensitivity ();
+            } catch (Error e) {
+                show_error ("Could not load saved profile settings: " + e.message);
+            }
+        });
+    }
+
+    private bool apply_saved_wifi_edit () {
+        if (selected_wifi_network == null) {
+            return false;
+        }
+
+        var net = selected_wifi_network;
+        string password = wifi_saved_edit_page.password_entry.get_text ().strip ();
+
+        string method = MainWindowWifiEditUtils.get_selected_ipv4_method (wifi_saved_edit_page.ipv4_method_dropdown);
+        string ipv4_address = wifi_saved_edit_page.ipv4_address_entry.get_text ().strip ();
+        string ipv4_gateway = wifi_saved_edit_page.ipv4_gateway_entry.get_text ().strip ();
+        bool gateway_auto = method != "manual";
+        bool dns_auto = wifi_saved_edit_page.dns_auto_switch.get_active ();
+        string dns_csv = wifi_saved_edit_page.ipv4_dns_entry.get_text ().strip ();
+
+        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method (wifi_saved_edit_page.ipv6_method_dropdown);
+        string ipv6_address = wifi_saved_edit_page.ipv6_address_entry.get_text ().strip ();
+        string ipv6_gateway = wifi_saved_edit_page.ipv6_gateway_entry.get_text ().strip ();
+        bool ipv6_gateway_auto = method6 != "manual";
+        bool ipv6_dns_auto = wifi_saved_edit_page.ipv6_dns_auto_switch.get_active ();
+        string ipv6_dns_csv = wifi_saved_edit_page.ipv6_dns_entry.get_text ().strip ();
+
+        if (method == "disabled") {
+            dns_auto = true;
+        }
+        if (method6 == "disabled" || method6 == "ignore") {
+            ipv6_dns_auto = true;
+        }
+
+        uint32 ipv4_prefix;
+        string prefix_error;
+        if (!MainWindowWifiEditUtils.try_parse_prefix (
+            wifi_saved_edit_page.ipv4_prefix_entry.get_text (),
+            out ipv4_prefix,
+            out prefix_error
+        )) {
+            show_error (prefix_error);
+            return false;
+        }
+
+        uint32 ipv6_prefix;
+        string prefix6_error;
+        if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix (
+            wifi_saved_edit_page.ipv6_prefix_entry.get_text (),
+            out ipv6_prefix,
+            out prefix6_error
+        )) {
+            show_error (prefix6_error);
+            return false;
+        }
+
+        if (method == "manual") {
+            if (ipv4_address == "") {
+                show_error ("Manual IPv4 requires an address.");
+                return false;
+            }
+            if (ipv4_prefix == 0) {
+                show_error ("Manual IPv4 requires a prefix between 1 and 32.");
+                return false;
+            }
+            if (ipv4_gateway == "") {
+                show_error ("Manual IPv4 requires a gateway address.");
+                return false;
+            }
+        }
+
+        string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
+        if (!dns_auto && dns_servers.length == 0) {
+            show_error ("Manual DNS is enabled; provide at least one DNS server.");
+            return false;
+        }
+
+        if (method6 == "manual") {
+            if (ipv6_address == "") {
+                show_error ("Manual IPv6 requires an address.");
+                return false;
+            }
+            if (ipv6_prefix == 0) {
+                show_error ("Manual IPv6 requires a prefix between 1 and 128.");
+                return false;
+            }
+            if (ipv6_gateway == "") {
+                show_error ("Manual IPv6 requires a gateway address.");
+                return false;
+            }
+        }
+
+        string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
+        if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
+            show_error ("Manual IPv6 DNS is enabled; provide at least one DNS server.");
+            return false;
+        }
+
+        var profile_request = new WifiSavedProfileUpdateRequest () {
+            profile_name = wifi_saved_edit_page.profile_name_entry.get_text ().strip (),
+            ssid = wifi_saved_edit_page.ssid_entry.get_text ().strip (),
+            bssid = wifi_saved_edit_page.bssid_entry.get_text ().strip (),
+            security_mode = wifi_saved_edit_page.get_selected_security_mode_key (),
+            autoconnect = wifi_saved_edit_page.autoconnect_check.get_active (),
+            available_to_all_users = wifi_saved_edit_page.all_users_check.get_active ()
+        };
+
+        var network_request = new WifiNetworkUpdateRequest () {
+            password = password,
+            ipv4_method = method,
+            ipv4_address = ipv4_address,
+            ipv4_prefix = ipv4_prefix,
+            ipv4_gateway_auto = gateway_auto,
+            ipv4_gateway = ipv4_gateway,
+            ipv4_dns_auto = dns_auto,
+            ipv4_dns_servers = dns_servers,
+            ipv6_method = method6,
+            ipv6_address = ipv6_address,
+            ipv6_prefix = ipv6_prefix,
+            ipv6_gateway_auto = ipv6_gateway_auto,
+            ipv6_gateway = ipv6_gateway,
+            ipv6_dns_auto = ipv6_dns_auto,
+            ipv6_dns_servers = ipv6_dns_servers
+        };
+
+        nm.update_saved_wifi_profile_settings.begin (net, profile_request, null, (obj, res) => {
+            try {
+                nm.update_saved_wifi_profile_settings.end (res);
+            } catch (Error e) {
+                show_error ("Save profile failed: " + e.message);
+                return;
+            }
+
+            nm.update_wifi_network_settings.begin (net, network_request, null, (obj2, res2) => {
+                try {
+                    nm.update_wifi_network_settings.end (res2);
+                    refresh_after_action (false);
+                    refresh_saved_networks ();
+                    set_popup_text_input_mode (false);
+                    wifi_stack.set_visible_child_name ("saved");
+                } catch (Error e) {
+                    show_error ("Save network settings failed: " + e.message);
+                }
+            });
+        });
+
+        return true;
+    }
+
     private Gtk.ListBoxRow build_wifi_row (WifiNetwork net) {
         var nm_client = nm;
         var wifi_controller_ref = wifi_controller;
@@ -903,6 +1187,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void refresh_all () {
         refresh_wifi ();
+        refresh_saved_networks ();
         refresh_ethernet_section ();
         refresh_vpn_section ();
     }

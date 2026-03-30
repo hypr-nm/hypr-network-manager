@@ -24,3 +24,12 @@ public class NetworkIpSettings : Object {
     public string current_ipv6_gateway { get; set; default = ""; }
     public string current_ipv6_dns { get; set; default = ""; }
 }
+
+public class WifiSavedProfileSettings : NetworkIpSettings {
+    public string profile_name { get; set; default = ""; }
+    public string ssid { get; set; default = ""; }
+    public string bssid { get; set; default = ""; }
+    public string security_mode { get; set; default = "open"; }
+    public bool autoconnect { get; set; default = true; }
+    public bool available_to_all_users { get; set; default = true; }
+}

@@ -8,8 +8,11 @@ public class MainWindowWifiPageBuilder : Object {
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
         Gtk.Widget add_page,
+        Gtk.Widget saved_page,
+        Gtk.Widget saved_edit_page,
         MainWindowActionCallback on_refresh,
         MainWindowActionCallback on_add_network,
+        MainWindowActionCallback on_open_saved_networks,
         MainWindowActionCallback on_switch_changed
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
@@ -41,6 +44,19 @@ public class MainWindowWifiPageBuilder : Object {
             on_add_network ();
         });
         toolbar.append (add_btn);
+
+        var saved_btn = new Gtk.Button ();
+        saved_btn.add_css_class ("nm-button");
+        saved_btn.add_css_class ("nm-icon-button");
+        var saved_icon = new Gtk.Image.from_icon_name ("document-open-recent-symbolic");
+        saved_icon.add_css_class ("nm-toolbar-icon");
+        saved_icon.add_css_class ("nm-wifi-saved-icon");
+        saved_btn.set_child (saved_icon);
+        saved_btn.set_tooltip_text ("Saved Networks");
+        saved_btn.clicked.connect (() => {
+            on_open_saved_networks ();
+        });
+        toolbar.append (saved_btn);
 
         var refresh_btn = new Gtk.Button ();
         refresh_btn.add_css_class ("nm-button");
@@ -93,6 +109,8 @@ public class MainWindowWifiPageBuilder : Object {
         wifi_stack.add_css_class ("nm-content-stack");
         wifi_stack.add_named (scroll, "list");
         wifi_stack.add_named (wifi_placeholder, "empty");
+        wifi_stack.add_named (saved_page, "saved");
+        wifi_stack.add_named (saved_edit_page, "saved-edit");
         wifi_stack.add_named (details_page, "details");
         wifi_stack.add_named (edit_page, "edit");
         wifi_stack.add_named (add_page, "add");

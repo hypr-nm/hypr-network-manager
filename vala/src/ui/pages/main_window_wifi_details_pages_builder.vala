@@ -176,32 +176,31 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.password_entry.add_css_class ("nm-edit-field-control");
         this.password_entry.add_css_class ("nm-edit-field-entry");
         this.password_entry.add_css_class ("nm-edit-password-entry");
+        this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
+        this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
+        MainWindowActionCallback update_password_visibility_icon = () => {
+            bool reveal = this.password_entry.get_visibility ();
+            this.password_entry.set_icon_from_icon_name (
+                Gtk.EntryIconPosition.SECONDARY,
+                reveal ? "view-conceal-symbolic" : "view-reveal-symbolic"
+            );
+            this.password_entry.set_icon_tooltip_text (
+                Gtk.EntryIconPosition.SECONDARY,
+                reveal ? "Hide password" : "Show password"
+            );
+        };
+        update_password_visibility_icon ();
+        this.password_entry.icon_press.connect ((icon_pos) => {
+            if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
+                return;
+            }
+            this.password_entry.set_visibility (!this.password_entry.get_visibility ());
+            update_password_visibility_icon ();
+        });
         this.password_entry.activate.connect (() => {
             this.ok ();
         });
-
-        var password_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-        password_row.add_css_class ("nm-edit-password-row");
-
-        var password_toggle = new Gtk.Button ();
-        password_toggle.add_css_class ("nm-button");
-        password_toggle.add_css_class ("nm-menu-button");
-        password_toggle.add_css_class ("nm-edit-password-toggle");
-        password_toggle.set_tooltip_text ("Show password");
-
-        var password_toggle_icon = new Gtk.Image.from_icon_name ("view-reveal-symbolic");
-        password_toggle.set_child (password_toggle_icon);
-        password_toggle.clicked.connect (() => {
-            bool reveal = !this.password_entry.get_visibility ();
-            this.password_entry.set_visibility (reveal);
-            password_toggle_icon.set_from_icon_name (reveal ? "view-conceal-symbolic" : "view-reveal-symbolic");
-            password_toggle.set_tooltip_text (reveal ? "Hide password" : "Show password");
-        });
-
-        this.password_entry.set_hexpand (true);
-        password_row.append (this.password_entry);
-        password_row.append (password_toggle);
-        form.append (password_row);
+        form.append (this.password_entry);
 
         Gtk.DropDown v4_method;
         Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;

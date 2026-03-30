@@ -174,6 +174,9 @@ public class MainWindowWifiRuntimeController : Object {
         string[] scan_order = {};
 
         foreach (var net in networks) {
+            if (net.ap_path.has_prefix ("saved:")) {
+                continue;
+            }
             string row_id = get_wifi_row_id (net);
             networks_by_row_id.insert (row_id, net);
             scan_order += row_id;
@@ -420,7 +423,8 @@ public class MainWindowWifiRuntimeController : Object {
                     on_build_wifi_row
                 );
 
-                if (current_view == "details" || current_view == "edit" || current_view == "add") {
+                if (current_view == "details" || current_view == "edit" || current_view == "add" ||
+                    current_view == "saved" || current_view == "saved-edit") {
                     // Avoid touching ref parameters from async callbacks.
                     wifi_stack.set_visible_child_name (current_view);
                 } else {

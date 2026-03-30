@@ -158,6 +158,10 @@ public class NetworkManagerClient : GLib.Object {
         return yield wifi_client.get_refresh_data (cancellable);
     }
 
+    public async WifiNetwork[] get_saved_wifi_networks (Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.get_saved_networks (cancellable);
+    }
+
     public async NetworkIpSettings get_wifi_network_ip_settings (
         WifiNetwork network,
         Cancellable? cancellable = null
@@ -175,6 +179,21 @@ public class NetworkManagerClient : GLib.Object {
             request,
             cancellable
         );
+    }
+
+    public async WifiSavedProfileSettings get_saved_wifi_profile_settings (
+        WifiNetwork network,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield wifi_client.get_saved_profile_settings (network, cancellable);
+    }
+
+    public async bool update_saved_wifi_profile_settings (
+        WifiNetwork network,
+        WifiSavedProfileUpdateRequest request,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield wifi_client.update_saved_profile_settings (network, request, cancellable);
     }
 
     public async bool connect_ethernet_device (
