@@ -39,7 +39,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.ListBox wifi_listbox;
     private Gtk.Stack wifi_stack;
     private WifiNetwork? selected_wifi_network = null;
-    private WifiSavedProfile? selected_wifi_saved_profile = null;
+    private MainWindowProfileAdapter? wifi_saved_flow = null;
     private MainWindowWifiDetailsPage wifi_details_page;
     private MainWindowWifiEditPage wifi_edit_page;
     private MainWindowWifiSavedPage wifi_saved_page;
@@ -364,7 +364,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_wifi_page () {
-        return MainWindowWifiPageBuilder.build_page (
+        var page = MainWindowWifiPageBuilder.build_page (
             out wifi_switch,
             out wifi_listbox,
             out wifi_stack,
@@ -393,6 +393,44 @@ public class MainWindow : Gtk.ApplicationWindow {
             },
             () => {
                 on_wifi_switch_changed ();
+            }
+        );
+
+        wifi_saved_flow = new MainWindowProfileAdapter (
+            nm,
+            wifi_controller,
+            wifi_stack,
+            wifi_saved_page,
+            wifi_saved_edit_page,
+            (message) => {
+                show_error (message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            },
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
+            }
+        );
+
+        return page;
+    }
+
+    private void submit_add_hidden_network () {
+        wifi_controller.apply_add_network (
+            nm,
+            wifi_stack,
+            wifi_add_ssid_entry,
+            wifi_add_security_dropdown,
+            wifi_add_password_entry,
+            (message) => {
+                show_error (message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            },
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
             }
         );
     }
@@ -694,22 +732,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             if (!save_btn.get_sensitive ()) {
                 return;
             }
-            wifi_controller.apply_add_network (
-                nm,
-                wifi_stack,
-                wifi_add_ssid_entry,
-                wifi_add_security_dropdown,
-                wifi_add_password_entry,
-                (message) => {
-                    show_error (message);
-                },
-                (request_wifi_scan) => {
-                    refresh_after_action (request_wifi_scan);
-                },
-                (enabled) => {
-                    set_popup_text_input_mode (enabled);
-                }
-            );
+            submit_add_hidden_network ();
         });
         form.append (wifi_add_password_entry);
 
@@ -723,22 +746,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         actions.add_css_class ("nm-edit-actions");
 
         save_btn.clicked.connect (() => {
-            wifi_controller.apply_add_network (
-                nm,
-                wifi_stack,
-                wifi_add_ssid_entry,
-                wifi_add_security_dropdown,
-                wifi_add_password_entry,
-                (message) => {
-                    show_error (message);
-                },
-                (request_wifi_scan) => {
-                    refresh_after_action (request_wifi_scan);
-                },
-                (enabled) => {
-                    set_popup_text_input_mode (enabled);
-                }
-            );
+            submit_add_hidden_network ();
         });
         actions.append (save_btn);
 
@@ -749,20 +757,10 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void sync_saved_wifi_edit_gateway_dns_sensitivity () {
-        if (wifi_saved_edit_page == null) {
+        if (wifi_saved_flow == null) {
             return;
         }
-
-        wifi_controller.sync_edit_gateway_dns_sensitivity (
-            wifi_saved_edit_page.ipv4_method_dropdown,
-            wifi_saved_edit_page.ipv4_gateway_entry,
-            wifi_saved_edit_page.ipv4_dns_entry,
-            wifi_saved_edit_page.dns_auto_switch,
-            wifi_saved_edit_page.ipv6_method_dropdown,
-            wifi_saved_edit_page.ipv6_gateway_entry,
-            wifi_saved_edit_page.ipv6_dns_entry,
-            wifi_saved_edit_page.ipv6_dns_auto_switch
-        );
+        wifi_saved_flow.on_sync_sensitivity_requested ();
     }
 
     private Gtk.Widget build_wifi_saved_page () {
@@ -781,23 +779,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         });
 
         wifi_saved_page.delete_profile.connect ((net) => {
-            wifi_controller.forget_wifi_network (
-                nm,
-                new WifiNetwork () {
-                    saved_connection_uuid = net.saved_connection_uuid,
-                    ssid = net.ssid,
-                    device_path = net.device_path,
-                    ap_path = "saved:" + net.saved_connection_uuid,
-                    saved = true
-                },
-                (message) => {
-                    show_error (message.replace ("Forget", "Delete"));
-                },
-                (request_wifi_scan) => {
-                    refresh_after_action (request_wifi_scan);
-                    refresh_saved_networks ();
-                }
-            );
+            if (wifi_saved_flow != null) {
+                wifi_saved_flow.delete_profile (net);
+            }
         });
 
         return wifi_saved_page;
@@ -807,8 +791,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_saved_edit_page = new MainWindowWifiSavedEditPage ();
 
         wifi_saved_edit_page.back.connect (() => {
-            set_popup_text_input_mode (false);
-            wifi_stack.set_visible_child_name ("saved");
+            if (wifi_saved_flow != null) {
+                wifi_saved_flow.on_saved_edit_back ();
+            }
         });
 
         wifi_saved_edit_page.save.connect (() => {
@@ -823,77 +808,22 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_saved_networks () {
-        wifi_controller.refresh_saved_wifi_profiles (
-            nm,
-            wifi_saved_page,
-            (message) => {
-                show_error (message);
-            }
-        );
+        if (wifi_saved_flow != null) {
+            wifi_saved_flow.refresh_saved_networks ();
+        }
     }
 
     private void open_saved_wifi_edit (WifiSavedProfile profile) {
-        selected_wifi_saved_profile = profile;
-        string title_name = MainWindowHelpers.safe_text (profile.profile_name).strip ();
-        if (title_name == "") {
-            title_name = MainWindowHelpers.safe_text (profile.ssid).strip ();
+        if (wifi_saved_flow != null) {
+            wifi_saved_flow.open_saved_edit (profile);
         }
-        wifi_saved_edit_page.title_label.set_text ("Saved Profile: %s".printf (title_name));
-        set_popup_text_input_mode (true);
-        wifi_stack.set_visible_child_name ("saved-edit");
-        populate_saved_wifi_edit (profile);
-    }
-
-    private void populate_saved_wifi_edit (WifiSavedProfile profile) {
-        wifi_controller.load_saved_wifi_profile_settings (
-            nm,
-            profile,
-            wifi_saved_edit_page,
-            () => {
-                sync_saved_wifi_edit_gateway_dns_sensitivity ();
-            },
-            (message) => {
-                show_error (message);
-            }
-        );
     }
 
     private bool apply_saved_wifi_edit () {
-        if (selected_wifi_saved_profile == null) {
+        if (wifi_saved_flow == null) {
             return false;
         }
-
-        var profile = selected_wifi_saved_profile;
-        WifiSavedProfileUpdateRequest profile_request;
-        WifiNetworkUpdateRequest network_request;
-        string error_message;
-        if (!MainWindowWifiSavedProfileFormUtils.build_update_requests (
-            wifi_saved_edit_page,
-            out profile_request,
-            out network_request,
-            out error_message
-        )) {
-            show_error (error_message);
-            return false;
-        }
-
-        wifi_controller.apply_saved_wifi_profile_updates (
-            nm,
-            profile,
-            profile_request,
-            network_request,
-            (message) => {
-                show_error (message);
-            },
-            () => {
-                refresh_after_action (false);
-                refresh_saved_networks ();
-                set_popup_text_input_mode (false);
-                wifi_stack.set_visible_child_name ("saved");
-            }
-        );
-
-        return true;
+        return wifi_saved_flow.apply_saved_edit ();
     }
 
     private Gtk.ListBoxRow build_wifi_row (WifiNetwork net) {
