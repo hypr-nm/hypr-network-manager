@@ -1,5 +1,5 @@
-public class MainWindowWifiRowBuilder : Object {
-    private static void collapse_row (Gtk.ListBoxRow row) {
+namespace MainWindowWifiRowBuilder {
+    private void collapse_row (Gtk.ListBoxRow row) {
         var revealer = row.get_data<Gtk.Revealer> ("actions-revealer");
         if (revealer != null) {
             revealer.set_reveal_child (false);
@@ -7,7 +7,7 @@ public class MainWindowWifiRowBuilder : Object {
         }
     }
 
-    private static void collapse_other_expanded_rows (Gtk.ListBoxRow row) {
+    private void collapse_other_expanded_rows (Gtk.ListBoxRow row) {
         var parent = row.get_parent () as Gtk.ListBox;
         if (parent == null) {
             return;
@@ -31,7 +31,7 @@ public class MainWindowWifiRowBuilder : Object {
         }
     }
 
-    public static Gtk.ListBoxRow build_row (
+    public Gtk.ListBoxRow build_row (
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting,

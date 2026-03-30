@@ -251,8 +251,8 @@ public class MainWindowEthernetEditPage : Gtk.Box {
     }
 }
 
-public class MainWindowEthernetPageBuilder : Object {
-    public static Gtk.Widget build_page (
+namespace MainWindowEthernetPageBuilder {
+    public Gtk.Widget build_page (
         out Gtk.ListBox ethernet_listbox,
         out Gtk.Stack ethernet_stack,
         Gtk.Widget details_page,

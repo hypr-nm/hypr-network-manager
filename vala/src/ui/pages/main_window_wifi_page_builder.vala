@@ -1,7 +1,7 @@
 using Gtk;
 
-public class MainWindowWifiPageBuilder : Object {
-    public static Gtk.Widget build_page (
+namespace MainWindowWifiPageBuilder {
+    public Gtk.Widget build_page (
         out Gtk.Switch wifi_switch,
         out Gtk.ListBox wifi_listbox,
         out Gtk.Stack wifi_stack,

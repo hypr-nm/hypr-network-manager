@@ -1,7 +1,7 @@
 using Gtk;
 
-public class MainWindowIpEditFormBuilder : Object {
-    private static Gtk.Label build_label (string text, bool with_extra_classes, string? extra_class = null) {
+namespace MainWindowIpEditFormBuilder {
+    private Gtk.Label build_label (string text, bool with_extra_classes, string? extra_class = null) {
         var label = new Gtk.Label (text);
         label.set_xalign (0.0f);
         label.add_css_class ("nm-form-label");
@@ -14,7 +14,7 @@ public class MainWindowIpEditFormBuilder : Object {
         return label;
     }
 
-    private static void apply_control_classes (Gtk.Widget widget, bool with_extra_classes, string? extra_class = null) {
+    private void apply_control_classes (Gtk.Widget widget, bool with_extra_classes, string? extra_class = null) {
         if (!with_extra_classes) {
             return;
         }
@@ -25,7 +25,7 @@ public class MainWindowIpEditFormBuilder : Object {
         }
     }
 
-    private static void set_collapsible_state (
+    private void set_collapsible_state (
         Gtk.Box container,
         Gtk.Button toggle_button,
         Gtk.Revealer content_revealer,
@@ -43,7 +43,7 @@ public class MainWindowIpEditFormBuilder : Object {
         }
     }
 
-    private static Gtk.Box build_collapsible_section (
+    private Gtk.Box build_collapsible_section (
         string title,
         bool with_extra_classes,
         string css_class,
@@ -114,7 +114,7 @@ public class MainWindowIpEditFormBuilder : Object {
         return container;
     }
 
-    public static void append_ipv4_section (
+    public void append_ipv4_section (
         Gtk.Box form,
         out Gtk.DropDown ipv4_method_dropdown,
         out Gtk.Entry ipv4_address_entry,
@@ -317,7 +317,7 @@ public class MainWindowIpEditFormBuilder : Object {
         sync_compact_visibility ();
     }
 
-    public static void append_ipv6_section (
+    public void append_ipv6_section (
         Gtk.Box form,
         out Gtk.DropDown ipv6_method_dropdown,
         out Gtk.Entry ipv6_address_entry,
