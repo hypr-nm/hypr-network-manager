@@ -131,13 +131,52 @@ public class NmWifiClient : GLib.Object {
             }
         }
 
-        var networks_arr = new WifiNetwork[networks_map.size ()];
-        int i = 0;
+        // collapse entries that point to the same BSSID so hidden placeholders
+        // do not appear alongside the actual connected network for the same AP.
+        var deduped_map = new HashTable<string, WifiNetwork> (str_hash, str_equal);
         var iter = HashTableIter<string, WifiNetwork> (networks_map);
         string k;
         WifiNetwork v;
         while (iter.next (out k, out v)) {
-            networks_arr[i++] = v;
+            string dedupe_key = v.bssid.strip ().down ();
+            if (dedupe_key == "") {
+                dedupe_key = "key:" + k;
+            }
+
+            if (!deduped_map.contains (dedupe_key)) {
+                deduped_map.insert (dedupe_key, v);
+                continue;
+            }
+
+            var existing = deduped_map.get (dedupe_key);
+            bool replace = false;
+
+            if (v.connected && !existing.connected) {
+                replace = true;
+            } else if (v.connected == existing.connected) {
+                if (!v.is_hidden && existing.is_hidden) {
+                    replace = true;
+                } else if (v.is_hidden == existing.is_hidden) {
+                    if (v.saved && !existing.saved) {
+                        replace = true;
+                    } else if (v.saved == existing.saved && v.signal > existing.signal) {
+                        replace = true;
+                    }
+                }
+            }
+
+            if (replace) {
+                deduped_map.insert (dedupe_key, v);
+            }
+        }
+
+        var networks_arr = new WifiNetwork[deduped_map.size ()];
+        int i = 0;
+        var deduped_iter = HashTableIter<string, WifiNetwork> (deduped_map);
+        string dk;
+        WifiNetwork dv;
+        while (deduped_iter.next (out dk, out dv)) {
+            networks_arr[i++] = dv;
         }
 
         var devices_arr = new NetworkDevice[devices_out.length ()];
