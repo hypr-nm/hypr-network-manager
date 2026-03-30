@@ -87,12 +87,21 @@ public class MainWindowWifiSavedPage : Gtk.Box {
 
             var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
             info.set_hexpand (true);
-            var ssid_lbl = new Gtk.Label (row_net.ssid);
-            ssid_lbl.set_xalign (0.0f);
-            ssid_lbl.add_css_class ("nm-ssid-label");
-            info.append (ssid_lbl);
+            string profile_name = MainWindowHelpers.safe_text (row_net.profile_name).strip ();
+            string ssid = MainWindowHelpers.safe_text (row_net.ssid).strip ();
+            string primary = profile_name != "" ? profile_name : (ssid != "" ? ssid : "Saved profile");
 
-            var sub = new Gtk.Label ("Saved profile");
+            var primary_lbl = new Gtk.Label (primary);
+            primary_lbl.set_xalign (0.0f);
+            primary_lbl.add_css_class ("nm-ssid-label");
+            info.append (primary_lbl);
+
+            string subtitle = "Saved profile";
+            if (ssid != "" && ssid != primary) {
+                subtitle = "SSID: %s".printf (ssid);
+            }
+
+            var sub = new Gtk.Label (subtitle);
             sub.set_xalign (0.0f);
             sub.add_css_class ("nm-sub-label");
             info.append (sub);

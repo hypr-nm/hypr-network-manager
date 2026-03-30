@@ -38,6 +38,14 @@ public class NmWifiClient : GLib.Object {
         return true;
     }
 
+    private static string resolve_profile_name (NM.Connection conn, string fallback) {
+        var s_conn = conn.get_setting_connection ();
+        if (s_conn != null && s_conn.id != null && s_conn.id.strip () != "") {
+            return s_conn.id.strip ();
+        }
+        return fallback;
+    }
+
     private static WifiNetwork? build_saved_network (
         NM.Connection conn,
         string wifi_device_path,
@@ -54,10 +62,12 @@ public class NmWifiClient : GLib.Object {
         }
 
         string ssid = resolve_saved_ssid (conn, s_wireless);
+        string profile_name = resolve_profile_name (conn, ssid);
         bool is_secured = conn.get_setting_wireless_security () != null;
 
         return new WifiNetwork () {
             ssid = ssid,
+            profile_name = profile_name,
             saved_connection_uuid = uuid,
             signal = 0,
             connected = active_uuid != "" && active_uuid == uuid,
@@ -203,6 +213,7 @@ public class NmWifiClient : GLib.Object {
 
                 bool saved = false;
                 string saved_uuid = "";
+                string profile_name = "";
                 bool autoconnect = true;
 
                 var valid_conns = ap.filter_connections (connections);
@@ -210,6 +221,7 @@ public class NmWifiClient : GLib.Object {
                     var conn = (NM.Connection) valid_conns[0];
                     saved = true;
                     saved_uuid = conn.get_uuid ();
+                    profile_name = resolve_profile_name (conn, ssid);
                     if (saved_uuid != "") {
                         seen_saved_uuids.insert (saved_uuid, true);
                     }
@@ -223,6 +235,7 @@ public class NmWifiClient : GLib.Object {
 
                 var net = new WifiNetwork () {
                     ssid = ssid,
+                    profile_name = profile_name,
                     saved_connection_uuid = saved_uuid,
                     signal = ap.get_strength (),
                     connected = connected,
