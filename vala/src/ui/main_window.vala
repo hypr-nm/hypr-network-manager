@@ -51,6 +51,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Entry? active_wifi_password_entry = null;
     private string? active_wifi_password_row_id = null;
     private MainWindowWifiController wifi_controller;
+    private MainWindowRefreshCoordinator refresh_coordinator;
     private MainWindowEthernetController ethernet_controller;
     private MainWindowVpnController vpn_controller;
     private Gtk.ListBox vpn_listbox;
@@ -59,12 +60,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private HashTable<string, bool> pending_wifi_seen_connecting;
     private HashTable<string, bool> active_wifi_connections;
     private Gtk.EventControllerKey key_controller;
-    private uint periodic_refresh_source_id = 0;
-    private uint signal_refresh_source_id = 0;
-    private ulong nm_events_changed_handler_id = 0;
-    private bool nm_events_subscription_enabled = false;
     private bool layer_shell_active = false;
-    private bool periodic_scan_failure_reported = false;
 
     public MainWindow (
         Gtk.Application app,
@@ -122,6 +118,17 @@ public class MainWindow : Gtk.ApplicationWindow {
                 refresh_after_action (request_wifi_scan);
             }
         );
+        refresh_coordinator = new MainWindowRefreshCoordinator (
+            nm,
+            wifi_controller,
+            refresh_interval_seconds,
+            () => {
+                refresh_all ();
+            },
+            (message) => {
+                debug_log (message);
+            }
+        );
         pending_wifi_connect = new HashTable<string, bool> (str_hash, str_equal);
         pending_wifi_seen_connecting = new HashTable<string, bool> (str_hash, str_equal);
         active_wifi_connections = new HashTable<string, bool> (str_hash, str_equal);
@@ -134,32 +141,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         build_ui ();
         configure_key_handling ();
         refresh_all ();
-        configure_nm_signal_refresh ();
-        periodic_refresh_source_id = Timeout.add_seconds (refresh_interval_seconds, () => {
-            nm.scan_wifi.begin (null, (obj, res) => {
-                try {
-                    nm.scan_wifi.end (res);
-                    periodic_scan_failure_reported = false;
-                } catch (Error e) {
-                    string message = e.message;
-                    debug_log ("wifi_scan: periodic request failed error=" + message + "; outcome=continuing");
-                    if (!periodic_scan_failure_reported) {
-                        log_warn (
-                            "gui",
-                            "wifi_scan: periodic request failed; outcome=continuing (additional failures muted until" +
-                                "recovery)"
-                        );
-                        periodic_scan_failure_reported = true;
-                    }
-                }
-            });
-
-            // Keep periodic polling as a fallback when D-Bus signal subscription is unavailable.
-            if (!nm_events_subscription_enabled) {
-                refresh_all ();
-            }
-            return true;
-        });
+        refresh_coordinator.start ();
 
         this.close_request.connect (() => {
             dispose_lifecycle_owners ();
@@ -240,42 +222,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         key_controller.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
         ((Gtk.Widget) this).add_controller (key_controller);
         key_controller.key_pressed.connect (key_press_event_cb);
-    }
-
-    private void schedule_signal_refresh () {
-        if (signal_refresh_source_id != 0) {
-            return;
-        }
-
-        signal_refresh_source_id = Timeout.add (200, () => {
-            signal_refresh_source_id = 0;
-            refresh_all ();
-            return false;
-        });
-    }
-
-    private void configure_nm_signal_refresh () {
-        nm.subscribe_network_events_dbus.begin (null, (obj, res) => {
-            try {
-                nm_events_subscription_enabled = nm.subscribe_network_events_dbus.end (res);
-            } catch (Error e) {
-                nm_events_subscription_enabled = false;
-                debug_log ("nm_events_subscribe: failed error=" + e.message + "; outcome=polling fallback");
-                log_warn ("gui", "nm_events_subscribe: failed; outcome=polling fallback enabled");
-                return;
-            }
-            if (!nm_events_subscription_enabled) {
-                debug_log ("nm_events_subscribe: unavailable; outcome=polling fallback");
-                log_warn ("gui", "nm_events_subscribe: unavailable; outcome=polling fallback enabled");
-                return;
-            }
-
-            nm_events_changed_handler_id = nm.network_events_changed.connect (() => {
-                schedule_signal_refresh ();
-            });
-
-            log_info ("gui", "nm_events_subscribe: enabled signal-driven refresh");
-        });
     }
 
     private bool key_press_event_cb (uint keyval, uint keycode, Gdk.ModifierType state) {
@@ -826,7 +772,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         return wifi_saved_flow.apply_saved_edit ();
     }
 
-    private Gtk.ListBoxRow build_wifi_row (WifiNetwork net) {
+    private MainWindowWifiRowActionCallbacks create_wifi_row_action_callbacks (WifiNetwork net) {
         var nm_client = nm;
         var wifi_controller_ref = wifi_controller;
         var active_connections_ref = active_wifi_connections;
@@ -834,18 +780,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         var pending_seen_connecting_ref = pending_wifi_seen_connecting;
         uint pending_timeout_ms = pending_wifi_connect_timeout_ms;
         bool should_close_on_connect = close_on_connect;
-        string net_key = net.network_key;
-        bool is_connected_now = active_wifi_connections.contains (net_key);
-        bool is_connecting = pending_wifi_connect.contains (net_key);
 
-        return wifi_controller.build_row (
-            net,
-            is_connected_now,
-            is_connecting,
-            show_frequency,
-            show_band,
-            show_bssid,
-            resolve_wifi_row_icon_name (net),
+        return new MainWindowWifiRowActionCallbacks (
             (wifi_net) => {
                 open_wifi_details (wifi_net);
             },
@@ -926,6 +862,30 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
     }
 
+    private Gtk.ListBoxRow build_wifi_row (WifiNetwork net) {
+        var actions = create_wifi_row_action_callbacks (net);
+        string net_key = net.network_key;
+        bool is_connected_now = active_wifi_connections.contains (net_key);
+        bool is_connecting = pending_wifi_connect.contains (net_key);
+
+        return wifi_controller.build_row (
+            net,
+            is_connected_now,
+            is_connecting,
+            show_frequency,
+            show_band,
+            show_bssid,
+            resolve_wifi_row_icon_name (net),
+            actions.on_open_details,
+            actions.on_forget_saved_network,
+            actions.on_disconnect,
+            actions.on_connect,
+            actions.on_set_auto_connect,
+            actions.on_show_password_prompt,
+            actions.on_hide_password_prompt
+        );
+    }
+
     private string get_wifi_row_id (WifiNetwork net) {
         return "%s|%s".printf (net.device_path, net.ap_path);
     }
@@ -976,27 +936,11 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_after_action (bool request_wifi_scan) {
-        wifi_controller.refresh_after_action (
-            nm,
-            request_wifi_scan,
-            () => {
-                refresh_all ();
-            },
-            (message) => {
-                debug_log (message);
-            }
-        );
+        refresh_coordinator.refresh_after_action (request_wifi_scan);
     }
 
     private void refresh_switch_states () {
-        wifi_controller.refresh_switch_states (
-            nm,
-            wifi_switch,
-            networking_switch,
-            (message) => {
-                debug_log (message);
-            }
-        );
+        refresh_coordinator.refresh_switch_states (wifi_switch, networking_switch);
     }
 
     private void on_wifi_switch_changed () {
@@ -1132,23 +1076,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void dispose_lifecycle_owners () {
-        if (signal_refresh_source_id != 0) {
-            Source.remove (signal_refresh_source_id);
-            signal_refresh_source_id = 0;
-        }
-
-        if (nm_events_changed_handler_id != 0) {
-            SignalHandler.disconnect (nm, nm_events_changed_handler_id);
-            nm_events_changed_handler_id = 0;
-        }
-
-        nm.unsubscribe_network_events ();
-        nm_events_subscription_enabled = false;
-
-        if (periodic_refresh_source_id != 0) {
-            Source.remove (periodic_refresh_source_id);
-            periodic_refresh_source_id = 0;
-        }
+        refresh_coordinator.dispose ();
         wifi_controller.dispose_controller ();
         ethernet_controller.dispose_controller ();
         vpn_controller.dispose_controller ();
