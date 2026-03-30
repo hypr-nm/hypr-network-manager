@@ -501,14 +501,28 @@ public class MainWindowWifiRuntimeController : Object {
 
         WifiNetwork connect_target = net;
         if (hidden_ssid != null && hidden_ssid.strip () != "") {
+            string resolved_hidden_ssid = hidden_ssid.strip ();
+            log_debug (
+                "gui",
+                "hidden_connect_input: row_ssid='%s' entered_ssid='%s' saved=%s uuid=%s"
+                    .printf (
+                        redact_ssid (net.ssid),
+                        redact_ssid (resolved_hidden_ssid),
+                        net.saved ? "true" : "false",
+                        redact_uuid (net.saved_connection_uuid)
+                    )
+            );
+
             connect_target = new WifiNetwork () {
-                ssid = hidden_ssid.strip (),
-                saved_connection_uuid = net.saved_connection_uuid,
+                ssid = resolved_hidden_ssid,
+                // Force hidden connect flow to use entered SSID rather than reusing
+                // an unrelated saved profile that may have been matched to placeholder rows.
+                saved_connection_uuid = "",
                 signal = net.signal,
                 connected = net.connected,
                 is_secured = net.is_secured,
                 is_hidden = net.is_hidden,
-                saved = net.saved,
+                saved = false,
                 autoconnect = net.autoconnect,
                 device_path = net.device_path,
                 ap_path = net.ap_path,

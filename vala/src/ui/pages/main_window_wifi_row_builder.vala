@@ -244,7 +244,7 @@ public class MainWindowWifiRowBuilder : Object {
                 return;
             }
 
-            if (net.is_secured && !has_resolvable_saved_profile) {
+            if ((net.is_secured && !has_resolvable_saved_profile) || requires_hidden_ssid) {
                 on_show_password_prompt (prompt_revealer, prompt_entry);
                 if (requires_hidden_ssid) {
                     hidden_ssid_entry.grab_focus ();

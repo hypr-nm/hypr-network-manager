@@ -418,20 +418,41 @@ public class NmWifiClient : GLib.Object {
 
         if (password != null && password != "") {
             var s_sec = new NM.SettingWirelessSecurity ();
+            HiddenWifiSecurityMode resolved_hidden_mode = security_mode;
+
+            // Hidden APs discovered from scan don't include a user-picked security mode,
+            // so infer it from AP flags when mode is still OPEN.
+            if (is_hidden && resolved_hidden_mode == HiddenWifiSecurityMode.OPEN) {
+                bool supports_sae = (rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_SAE) != 0;
+                bool supports_psk = (rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_PSK) != 0
+                    || (wpa_flags & NM.80211ApSecurityFlags.KEY_MGMT_PSK) != 0;
+
+                if (supports_sae && supports_psk) {
+                    resolved_hidden_mode = HiddenWifiSecurityMode.WPA_PSK_SAE;
+                } else if (supports_sae) {
+                    resolved_hidden_mode = HiddenWifiSecurityMode.SAE;
+                } else if (supports_psk) {
+                    resolved_hidden_mode = HiddenWifiSecurityMode.WPA_PSK;
+                }
+            }
             
             if (is_hidden) {
-                if (security_mode == HiddenWifiSecurityMode.WPA_PSK) {
+                if (resolved_hidden_mode == HiddenWifiSecurityMode.WPA_PSK) {
                     s_sec.key_mgmt = "wpa-psk";
                     s_sec.psk = password;
-                } else if (security_mode == HiddenWifiSecurityMode.WEP) {
+                } else if (resolved_hidden_mode == HiddenWifiSecurityMode.WEP) {
                     s_sec.key_mgmt = "none";
                     s_sec.wep_key0 = password;
                     s_sec.wep_key_type = NM.WepKeyType.PASSPHRASE;
-                } else if (security_mode == HiddenWifiSecurityMode.SAE) {
+                } else if (resolved_hidden_mode == HiddenWifiSecurityMode.SAE) {
                     s_sec.key_mgmt = "sae";
                     s_sec.psk = password;
-                } else if (security_mode == HiddenWifiSecurityMode.WPA_PSK_SAE) {
+                } else if (resolved_hidden_mode == HiddenWifiSecurityMode.WPA_PSK_SAE) {
                     s_sec.key_mgmt = "sae";
+                    s_sec.psk = password;
+                } else {
+                    // Fallback for hidden-but-secured APs where flags are sparse.
+                    s_sec.key_mgmt = "wpa-psk";
                     s_sec.psk = password;
                 }
             } else {
@@ -472,6 +493,18 @@ public class NmWifiClient : GLib.Object {
         Cancellable? cancellable = null
     ) throws Error {
         var client = core.nm_client;
+        log_debug (
+            "nm-wifi-client",
+            "connect_decision: ssid='%s' hidden=%s saved=%s uuid=%s password_supplied=%s"
+                .printf (
+                    redact_ssid (network.ssid),
+                    network.is_hidden ? "true" : "false",
+                    network.saved ? "true" : "false",
+                    redact_uuid (network.saved_connection_uuid),
+                    (password != null && password.strip () != "") ? "true" : "false"
+                )
+        );
+
         var dev = client.get_device_by_path (network.device_path);
         if (dev == null) {
             log_warn ("nm-wifi-client", "Device not found for path: " + network.device_path);
@@ -493,12 +526,38 @@ public class NmWifiClient : GLib.Object {
                     }
                 }
                 yield client.activate_connection_async (existing_conn, dev, network.ap_path, cancellable);
+                log_info (
+                    "nm-wifi-client",
+                    "connect_path: activated existing saved profile for ssid='%s'"
+                        .printf (redact_ssid (network.ssid))
+                );
                 return true;
             }
         }
 
-        var conn = create_wifi_connection (network.ssid, password, false, HiddenWifiSecurityMode.OPEN, network.rsn_flags, network.wpa_flags);
-        yield client.add_and_activate_connection_async (conn, dev, network.ap_path, cancellable);
+        if (network.is_hidden && network.ssid.strip () == "") {
+            throw new IOError.FAILED ("Hidden network requires an SSID.");
+        }
+
+        var conn = create_wifi_connection (
+            network.ssid,
+            password,
+            network.is_hidden,
+            HiddenWifiSecurityMode.OPEN,
+            network.rsn_flags,
+            network.wpa_flags
+        );
+        string? specific_object = network.is_hidden ? null : network.ap_path;
+        yield client.add_and_activate_connection_async (conn, dev, specific_object, cancellable);
+        log_info (
+            "nm-wifi-client",
+            "connect_path: add-and-activate for ssid='%s' hidden=%s specific_object=%s"
+                .printf (
+                    redact_ssid (network.ssid),
+                    network.is_hidden ? "true" : "false",
+                    specific_object != null ? redact_object_path (specific_object) : "<none>"
+                )
+        );
         return true;
     }
 
