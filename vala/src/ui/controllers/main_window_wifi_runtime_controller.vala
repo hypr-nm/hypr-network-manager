@@ -99,11 +99,11 @@ public class MainWindowWifiRuntimeController : Object {
         timeout_source_ids = {};
     }
 
-    private static string get_wifi_row_id (WifiNetwork net) {
+    private string get_wifi_row_id (WifiNetwork net) {
         return "%s|%s".printf (net.device_path, net.ap_path);
     }
 
-    private static string build_wifi_row_signature (
+    private string build_wifi_row_signature (
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting
@@ -134,7 +134,7 @@ public class MainWindowWifiRuntimeController : Object {
         );
     }
 
-    private static bool contains_value (string[] values, string candidate) {
+    private bool contains_value (string[] values, string candidate) {
         foreach (var value in values) {
             if (value == candidate) {
                 return true;

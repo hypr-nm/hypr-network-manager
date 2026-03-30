@@ -163,7 +163,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
     public signal void save ();
     public signal void sync_sensitivity ();
 
-    private static Gtk.Box build_section (string title, out Gtk.Box section_content) {
+    private Gtk.Box build_section (string title, out Gtk.Box section_content) {
         var section = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
         section.add_css_class ("nm-edit-collapsible");
 
