@@ -1151,32 +1151,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         );
     }
 
-    private void connect_wifi_with_optional_password (WifiNetwork net, string? password) {
-        wifi_controller.connect_with_optional_password (
-            nm,
-            net,
-            password,
-            null,
-            active_wifi_connections,
-            pending_wifi_connect,
-            pending_wifi_seen_connecting,
-            pending_wifi_connect_timeout_ms,
-            close_on_connect,
-            () => {
-                this.close ();
-            },
-            (request_wifi_scan) => {
-                refresh_after_action (request_wifi_scan);
-            },
-            () => {
-                refresh_wifi ();
-            },
-            (message) => {
-                show_error (message);
-            }
-        );
-    }
-
     private void refresh_ethernet_section () {
         ethernet_controller.refresh ();
     }
