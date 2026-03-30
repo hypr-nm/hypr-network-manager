@@ -33,24 +33,12 @@ int main (string[] args) {
         log_info ("cli", "mode_select: status mode");
         var nm = new NetworkManagerClient ();
         string status_json = "";
-        int status_exit_code = 0;
-        string status_error = "";
         var loop = new MainLoop ();
         nm.get_status_json_dbus.begin (null, (obj, res) => {
-            try {
-                status_json = nm.get_status_json_dbus.end (res);
-            } catch (Error e) {
-                status_exit_code = 1;
-                status_error = e.message;
-            }
+            status_json = nm.get_status_json_dbus.end (res);
             loop.quit ();
         });
         loop.run ();
-
-        if (status_exit_code != 0) {
-            log_error ("cli", "status_query: failed error=" + status_error);
-            return status_exit_code;
-        }
 
         stdout.printf ("%s\n", status_json);
         return 0;
