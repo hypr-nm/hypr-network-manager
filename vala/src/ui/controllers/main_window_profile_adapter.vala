@@ -55,9 +55,7 @@ public class MainWindowProfileAdapter : Object {
         wifi_controller.refresh_saved_wifi_profiles (
             nm,
             wifi_saved_page,
-            (message) => {
-                on_error (message);
-            }
+            on_error
         );
     }
 
@@ -79,9 +77,7 @@ public class MainWindowProfileAdapter : Object {
             () => {
                 sync_gateway_dns_sensitivity ();
             },
-            (message) => {
-                on_error (message);
-            }
+            on_error
         );
     }
 
@@ -134,9 +130,7 @@ public class MainWindowProfileAdapter : Object {
             profile,
             profile_request,
             network_request,
-            (message) => {
-                on_error (message);
-            },
+            on_error,
             () => {
                 on_refresh_after_action (false);
                 refresh_saved_networks ();
