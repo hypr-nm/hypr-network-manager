@@ -306,16 +306,7 @@ public class MainWindowWifiDetailsEditController : Object {
                 return;
             }
 
-            NetworkIpSettings ip_settings;
-            try {
-                ip_settings = nm.get_wifi_network_ip_settings.end (res);
-            } catch (Error e) {
-                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
-                    return;
-                }
-                log_debug ("Wi-Fi details IP load failed: " + e.message);
-                return;
-            }
+            NetworkIpSettings ip_settings = nm.get_wifi_network_ip_settings.end (res);
 
             MainWindowHelpers.clear_box (page.ip_rows);
             page.ip_rows.append (
@@ -469,16 +460,7 @@ public class MainWindowWifiDetailsEditController : Object {
                 return;
             }
 
-            NetworkIpSettings ip_settings;
-            try {
-                ip_settings = nm.get_wifi_network_ip_settings.end (res);
-            } catch (Error e) {
-                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
-                    return;
-                }
-                log_debug ("Wi-Fi edit IP load failed: " + e.message);
-                return;
-            }
+            NetworkIpSettings ip_settings = nm.get_wifi_network_ip_settings.end (res);
 
             page.ipv4_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)

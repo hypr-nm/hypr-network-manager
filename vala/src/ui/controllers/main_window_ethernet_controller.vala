@@ -308,16 +308,7 @@ public class MainWindowEthernetController : Object {
                 return;
             }
 
-            NetworkIpSettings ip_settings;
-            try {
-                ip_settings = nm.get_ethernet_device_ip_settings.end (res);
-            } catch (Error e) {
-                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
-                    return;
-                }
-                on_error ("Ethernet details IP read failed: " + e.message);
-                return;
-            }
+            NetworkIpSettings ip_settings = nm.get_ethernet_device_ip_settings.end (res);
 
             MainWindowHelpers.clear_box (ethernet_details_page.ip_rows);
             ethernet_details_page.ip_rows.append (
@@ -468,16 +459,7 @@ public class MainWindowEthernetController : Object {
                 return;
             }
 
-            NetworkIpSettings ip_settings;
-            try {
-                ip_settings = nm.get_ethernet_device_ip_settings.end (res);
-            } catch (Error e) {
-                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
-                    return;
-                }
-                on_error ("Ethernet edit data load failed: " + e.message);
-                return;
-            }
+            NetworkIpSettings ip_settings = nm.get_ethernet_device_ip_settings.end (res);
 
             ethernet_edit_page.ipv4_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)
