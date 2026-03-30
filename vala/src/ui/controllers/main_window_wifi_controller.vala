@@ -3,21 +3,17 @@ using Gtk;
 
 public class MainWindowWifiController : Object {
     private MainWindowWifiRuntimeController runtime_controller;
-    private MainWindowWifiDetailsEditController details_edit_controller;
 
     public MainWindowWifiController () {
         runtime_controller = new MainWindowWifiRuntimeController ();
-        details_edit_controller = new MainWindowWifiDetailsEditController ();
     }
 
     public void on_page_leave () {
         runtime_controller.on_page_leave ();
-        details_edit_controller.on_page_leave ();
     }
 
     public void dispose_controller () {
         runtime_controller.dispose_controller ();
-        details_edit_controller.dispose_controller ();
     }
 
     public void sync_edit_gateway_dns_sensitivity (
@@ -63,26 +59,11 @@ public class MainWindowWifiController : Object {
         Gtk.Entry? wifi_add_password_entry,
         Gtk.Button? wifi_add_connect_button = null
     ) {
-        if (wifi_add_security_dropdown == null || wifi_add_password_entry == null) {
-            return;
-        }
-
-        HiddenWifiSecurityMode mode = HiddenWifiSecurityModeUtils.from_dropdown_index (
-            wifi_add_security_dropdown.get_selected ()
+        runtime_controller.sync_add_network_sensitivity (
+            wifi_add_security_dropdown,
+            wifi_add_password_entry,
+            wifi_add_connect_button
         );
-        bool secured = HiddenWifiSecurityModeUtils.requires_password (mode);
-        wifi_add_password_entry.set_sensitive (secured);
-        if (!secured) {
-            wifi_add_password_entry.set_text ("");
-        }
-
-        if (wifi_add_connect_button != null) {
-            bool can_connect = HiddenWifiSecurityModeUtils.is_password_valid_for_mode (
-                mode,
-                wifi_add_password_entry.get_text ()
-            );
-            wifi_add_connect_button.set_sensitive (can_connect);
-        }
     }
 
     public void open_add_network (
@@ -92,19 +73,13 @@ public class MainWindowWifiController : Object {
         Gtk.Entry wifi_add_password_entry,
         MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
-        wifi_add_ssid_entry.set_text ("");
-        wifi_add_security_dropdown.set_selected (
-            HiddenWifiSecurityModeUtils.to_dropdown_index (HiddenWifiSecurityMode.WPA_PSK)
-        );
-        wifi_add_password_entry.set_text ("");
-        sync_add_network_sensitivity (
+        runtime_controller.open_add_network (
+            wifi_stack,
+            wifi_add_ssid_entry,
             wifi_add_security_dropdown,
-            wifi_add_password_entry
+            wifi_add_password_entry,
+            on_set_popup_text_input_mode
         );
-
-        wifi_stack.set_visible_child_name ("add");
-        on_set_popup_text_input_mode (true);
-        wifi_add_ssid_entry.grab_focus ();
     }
 
     public void apply_add_network (
@@ -117,36 +92,16 @@ public class MainWindowWifiController : Object {
         MainWindowRefreshActionCallback on_refresh_after_action,
         MainWindowBoolCallback on_set_popup_text_input_mode
     ) {
-        string ssid = wifi_add_ssid_entry.get_text ().strip ();
-        HiddenWifiSecurityMode security_mode = HiddenWifiSecurityModeUtils.from_dropdown_index (
-            wifi_add_security_dropdown.get_selected ()
+        runtime_controller.apply_add_network (
+            nm,
+            wifi_stack,
+            wifi_add_ssid_entry,
+            wifi_add_security_dropdown,
+            wifi_add_password_entry,
+            on_error,
+            on_refresh_after_action,
+            on_set_popup_text_input_mode
         );
-        string password = wifi_add_password_entry.get_text ().strip ();
-
-        if (ssid == "") {
-            on_error ("SSID is required.");
-            return;
-        }
-
-        if (!HiddenWifiSecurityModeUtils.is_password_valid_for_mode (security_mode, password)) {
-            on_error (
-                "Password must be at least %d characters for the selected security mode.".printf (
-                    HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH
-                )
-            );
-            return;
-        }
-
-        nm.connect_hidden_wifi.begin (ssid, security_mode, password, null, (obj, res) => {
-            try {
-                nm.connect_hidden_wifi.end (res);
-                on_refresh_after_action (true);
-                wifi_stack.set_visible_child_name ("list");
-                on_set_popup_text_input_mode (false);
-            } catch (Error e) {
-                on_error ("Add hidden network failed: " + e.message);
-            }
-        });
     }
 
     public void populate_details (
@@ -156,7 +111,7 @@ public class MainWindowWifiController : Object {
         MainWindowWifiDetailsPage page,
         MainWindowLogCallback on_log
     ) {
-        details_edit_controller.populate_wifi_details (
+        runtime_controller.populate_wifi_details (
             nm,
             net,
             active_wifi_connections,
@@ -191,7 +146,7 @@ public class MainWindowWifiController : Object {
         }
 
         selected_wifi_network = net;
-        details_edit_controller.open_wifi_edit (
+        runtime_controller.open_wifi_edit (
             nm,
             net,
             page,
@@ -219,7 +174,7 @@ public class MainWindowWifiController : Object {
         }
 
         var net = selected_wifi_network;
-        return details_edit_controller.apply_wifi_edit (
+        return runtime_controller.apply_wifi_edit (
             nm,
             net,
             page,
@@ -436,6 +391,93 @@ public class MainWindowWifiController : Object {
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry,
             on_set_popup_text_input_mode
+        );
+    }
+
+    public void forget_wifi_network (
+        NetworkManagerClient nm,
+        WifiNetwork net,
+        MainWindowErrorCallback on_error,
+        MainWindowRefreshActionCallback on_refresh_after_action
+    ) {
+        runtime_controller.forget_wifi_network (nm, net, on_error, on_refresh_after_action);
+    }
+
+    public void disconnect_wifi_network (
+        NetworkManagerClient nm,
+        WifiNetwork net,
+        HashTable<string, bool> pending_wifi_connect,
+        HashTable<string, bool> pending_wifi_seen_connecting,
+        MainWindowErrorCallback on_error,
+        MainWindowRefreshActionCallback on_refresh_after_action
+    ) {
+        runtime_controller.disconnect_wifi_network (
+            nm,
+            net,
+            pending_wifi_connect,
+            pending_wifi_seen_connecting,
+            on_error,
+            on_refresh_after_action
+        );
+    }
+
+    public void set_wifi_network_autoconnect (
+        NetworkManagerClient nm,
+        WifiNetwork net,
+        bool enabled,
+        MainWindowErrorCallback on_error,
+        MainWindowRefreshActionCallback on_refresh_after_action,
+        MainWindowActionCallback on_refresh_wifi
+    ) {
+        runtime_controller.set_wifi_network_autoconnect (
+            nm,
+            net,
+            enabled,
+            on_error,
+            on_refresh_after_action,
+            on_refresh_wifi
+        );
+    }
+
+    public void refresh_saved_wifi_profiles (
+        NetworkManagerClient nm,
+        MainWindowWifiSavedPage page,
+        MainWindowErrorCallback on_error
+    ) {
+        runtime_controller.refresh_saved_wifi_profiles (nm, page, on_error);
+    }
+
+    public void load_saved_wifi_profile_settings (
+        NetworkManagerClient nm,
+        WifiSavedProfile profile,
+        MainWindowWifiSavedEditPage page,
+        MainWindowActionCallback on_sync_sensitivity,
+        MainWindowErrorCallback on_error
+    ) {
+        runtime_controller.load_saved_wifi_profile_settings (
+            nm,
+            profile,
+            page,
+            on_sync_sensitivity,
+            on_error
+        );
+    }
+
+    public void apply_saved_wifi_profile_updates (
+        NetworkManagerClient nm,
+        WifiSavedProfile profile,
+        WifiSavedProfileUpdateRequest profile_request,
+        WifiNetworkUpdateRequest network_request,
+        MainWindowErrorCallback on_error,
+        MainWindowActionCallback on_success
+    ) {
+        runtime_controller.apply_saved_wifi_profile_updates (
+            nm,
+            profile,
+            profile_request,
+            network_request,
+            on_error,
+            on_success
         );
     }
 }

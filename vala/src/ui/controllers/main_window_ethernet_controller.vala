@@ -5,6 +5,9 @@ public class MainWindowEthernetController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
+    private Cancellable? refresh_cancellable = null;
+    private Cancellable? details_ip_cancellable = null;
+    private Cancellable? edit_ip_cancellable = null;
 
     private NetworkManagerClient nm;
     private MainWindowErrorCallback on_error;
@@ -60,7 +63,39 @@ public class MainWindowEthernetController : Object {
         if (ui_epoch == 0) {
             ui_epoch = 1;
         }
+        cancel_all_requests ();
         cancel_all_timeout_sources ();
+    }
+
+    private bool is_cancelled_error (Error e) {
+        return e is IOError.CANCELLED;
+    }
+
+    private void cancel_refresh_request () {
+        if (refresh_cancellable != null) {
+            refresh_cancellable.cancel ();
+            refresh_cancellable = null;
+        }
+    }
+
+    private void cancel_details_request () {
+        if (details_ip_cancellable != null) {
+            details_ip_cancellable.cancel ();
+            details_ip_cancellable = null;
+        }
+    }
+
+    private void cancel_edit_request () {
+        if (edit_ip_cancellable != null) {
+            edit_ip_cancellable.cancel ();
+            edit_ip_cancellable = null;
+        }
+    }
+
+    private void cancel_all_requests () {
+        cancel_refresh_request ();
+        cancel_details_request ();
+        cancel_edit_request ();
     }
 
     private void track_timeout_source (uint source_id) {
@@ -122,6 +157,7 @@ public class MainWindowEthernetController : Object {
     }
 
     public void on_edit_back_requested () {
+        cancel_edit_request ();
         on_set_popup_text_input_mode (false);
         if (selected_ethernet_device != null) {
             open_details (selected_ethernet_device);
@@ -232,6 +268,9 @@ public class MainWindowEthernetController : Object {
 
     private void populate_details (NetworkDevice dev) {
         uint epoch = capture_ui_epoch ();
+        cancel_details_request ();
+        details_ip_cancellable = new Cancellable ();
+        var details_request = details_ip_cancellable;
         ethernet_details_page.details_title.set_text (MainWindowHelpers.safe_text (dev.name));
 
         MainWindowHelpers.clear_box (ethernet_details_page.basic_rows);
@@ -258,7 +297,7 @@ public class MainWindowEthernetController : Object {
 
         ethernet_details_page.ip_rows.append (MainWindowHelpers.build_details_row ("Loading", "Reading IP settings…"));
 
-        nm.get_ethernet_device_ip_settings.begin (dev, null, (obj, res) => {
+        nm.get_ethernet_device_ip_settings.begin (dev, details_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
@@ -269,7 +308,16 @@ public class MainWindowEthernetController : Object {
                 return;
             }
 
-            var ip_settings = nm.get_ethernet_device_ip_settings.end (res);
+            NetworkIpSettings ip_settings;
+            try {
+                ip_settings = nm.get_ethernet_device_ip_settings.end (res);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
+                    return;
+                }
+                on_error ("Ethernet details IP read failed: " + e.message);
+                return;
+            }
 
             MainWindowHelpers.clear_box (ethernet_details_page.ip_rows);
             ethernet_details_page.ip_rows.append (
@@ -396,8 +444,12 @@ public class MainWindowEthernetController : Object {
             return;
         }
 
+        cancel_details_request ();
+        cancel_edit_request ();
         selected_ethernet_device = dev;
         uint epoch = capture_ui_epoch ();
+        edit_ip_cancellable = new Cancellable ();
+        var edit_request = edit_ip_cancellable;
         ethernet_edit_page.edit_title.set_text ("Edit: %s".printf (dev.name));
         ethernet_edit_page.note_label.set_text ("Update IPv4 and IPv6 settings for profile:" +
             "%s".printf (dev.connection));
@@ -405,7 +457,7 @@ public class MainWindowEthernetController : Object {
         ethernet_stack.set_visible_child_name ("edit");
         on_set_popup_text_input_mode (true);
 
-        nm.get_ethernet_device_ip_settings.begin (dev, null, (obj, res) => {
+        nm.get_ethernet_device_ip_settings.begin (dev, edit_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
@@ -416,7 +468,16 @@ public class MainWindowEthernetController : Object {
                 return;
             }
 
-            var ip_settings = nm.get_ethernet_device_ip_settings.end (res);
+            NetworkIpSettings ip_settings;
+            try {
+                ip_settings = nm.get_ethernet_device_ip_settings.end (res);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
+                    return;
+                }
+                on_error ("Ethernet edit data load failed: " + e.message);
+                return;
+            }
 
             ethernet_edit_page.ipv4_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)
@@ -695,8 +756,11 @@ public class MainWindowEthernetController : Object {
 
     public void refresh () {
         uint epoch = capture_ui_epoch ();
+        cancel_refresh_request ();
+        refresh_cancellable = new Cancellable ();
+        var refresh_request = refresh_cancellable;
         string current_view = ethernet_stack.get_visible_child_name ();
-        nm.get_devices.begin (null, (obj, res) => {
+        nm.get_devices.begin (refresh_request, (obj, res) => {
             try {
                 var devices = nm.get_devices.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
@@ -759,6 +823,9 @@ public class MainWindowEthernetController : Object {
                 ethernet_stack.set_visible_child_name (ethernet_devices.length () > 0 ? "list" : "empty");
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch)) {
+                    return;
+                }
+                if (is_cancelled_error (e)) {
                     return;
                 }
                 on_error ("Ethernet refresh failed: " + e.message);

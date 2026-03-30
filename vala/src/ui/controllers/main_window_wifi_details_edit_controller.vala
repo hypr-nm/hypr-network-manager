@@ -8,6 +8,9 @@ public class MainWindowWifiDetailsEditController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
+    private Cancellable? details_request_cancellable = null;
+    private Cancellable? edit_request_cancellable = null;
+    private Cancellable? action_request_cancellable = null;
 
     public MainWindowWifiDetailsEditController () {
     }
@@ -32,11 +35,43 @@ public class MainWindowWifiDetailsEditController : Object {
         return !is_disposed && epoch == ui_epoch;
     }
 
+    private bool is_cancelled_error (Error e) {
+        return e is IOError.CANCELLED;
+    }
+
+    private void cancel_details_request () {
+        if (details_request_cancellable != null) {
+            details_request_cancellable.cancel ();
+            details_request_cancellable = null;
+        }
+    }
+
+    private void cancel_edit_request () {
+        if (edit_request_cancellable != null) {
+            edit_request_cancellable.cancel ();
+            edit_request_cancellable = null;
+        }
+    }
+
+    private void cancel_action_request () {
+        if (action_request_cancellable != null) {
+            action_request_cancellable.cancel ();
+            action_request_cancellable = null;
+        }
+    }
+
+    private void cancel_all_requests () {
+        cancel_details_request ();
+        cancel_edit_request ();
+        cancel_action_request ();
+    }
+
     private void invalidate_ui_state () {
         ui_epoch++;
         if (ui_epoch == 0) {
             ui_epoch = 1;
         }
+        cancel_all_requests ();
         cancel_all_timeout_sources ();
     }
 
@@ -92,7 +127,8 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowActionCallback on_open_details,
         MainWindowActionCallback disable_popup_text_input,
         uint epoch,
-        uint waited_ms
+        uint waited_ms,
+        Cancellable request_cancellable
     ) {
         string net_key = net.network_key;
 
@@ -100,7 +136,7 @@ public class MainWindowWifiDetailsEditController : Object {
             return;
         }
 
-        nm.get_devices.begin (null, (obj, res) => {
+        nm.get_devices.begin (request_cancellable, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
@@ -117,12 +153,15 @@ public class MainWindowWifiDetailsEditController : Object {
                     break;
                 }
             } catch (Error e) {
+                if (is_cancelled_error (e)) {
+                    return;
+                }
                 // Treat transient D-Bus/read errors as not-ready and retry until timeout.
                 ready_to_reconnect = false;
             }
 
             if (ready_to_reconnect) {
-                nm.connect_wifi.begin (net, null, null, (obj2, res2) => {
+                nm.connect_wifi.begin (net, null, request_cancellable, (obj2, res2) => {
                     try {
                         nm.connect_wifi.end (res2);
                         if (!is_ui_epoch_valid (epoch)) {
@@ -135,6 +174,9 @@ public class MainWindowWifiDetailsEditController : Object {
                         on_refresh_after_action (true);
                     } catch (Error e) {
                         if (!is_ui_epoch_valid (epoch)) {
+                            return;
+                        }
+                        if (is_cancelled_error (e)) {
                             return;
                         }
                         pending_wifi_connect.remove (net_key);
@@ -171,7 +213,8 @@ public class MainWindowWifiDetailsEditController : Object {
                     on_open_details,
                     disable_popup_text_input,
                     epoch,
-                    next_waited_ms
+                    next_waited_ms,
+                    request_cancellable
                 );
                 return false;
             });
@@ -187,6 +230,9 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowLogCallback log_debug
     ) {
         uint epoch = capture_ui_epoch ();
+        cancel_details_request ();
+        details_request_cancellable = new Cancellable ();
+        var details_request = details_request_cancellable;
 
         page.details_title.set_text (MainWindowHelpers.safe_text (net.ssid));
         bool is_connected_now = active_wifi_connections.contains (net.network_key);
@@ -251,7 +297,7 @@ public class MainWindowWifiDetailsEditController : Object {
             MainWindowHelpers.build_details_row ("Loading", "Reading IP settings…")
         );
 
-        nm.get_wifi_network_ip_settings.begin (net, null, (obj, res) => {
+        nm.get_wifi_network_ip_settings.begin (net, details_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
@@ -260,7 +306,16 @@ public class MainWindowWifiDetailsEditController : Object {
                 return;
             }
 
-            var ip_settings = nm.get_wifi_network_ip_settings.end (res);
+            NetworkIpSettings ip_settings;
+            try {
+                ip_settings = nm.get_wifi_network_ip_settings.end (res);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
+                    return;
+                }
+                log_debug ("Wi-Fi details IP load failed: " + e.message);
+                return;
+            }
 
             MainWindowHelpers.clear_box (page.ip_rows);
             page.ip_rows.append (
@@ -369,6 +424,9 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowLogCallback log_debug
     ) {
         uint epoch = capture_ui_epoch ();
+        cancel_edit_request ();
+        edit_request_cancellable = new Cancellable ();
+        var edit_request = edit_request_cancellable;
 
         page.edit_title.set_text ("Edit: %s".printf (net.ssid));
         page.password_entry.set_text ("");
@@ -402,7 +460,7 @@ public class MainWindowWifiDetailsEditController : Object {
         page.ipv6_dns_entry.set_text ("");
         sync_sensitivity ();
 
-        nm.get_wifi_network_ip_settings.begin (net, null, (obj, res) => {
+        nm.get_wifi_network_ip_settings.begin (net, edit_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
                 return;
             }
@@ -411,7 +469,16 @@ public class MainWindowWifiDetailsEditController : Object {
                 return;
             }
 
-            var ip_settings = nm.get_wifi_network_ip_settings.end (res);
+            NetworkIpSettings ip_settings;
+            try {
+                ip_settings = nm.get_wifi_network_ip_settings.end (res);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
+                    return;
+                }
+                log_debug ("Wi-Fi edit IP load failed: " + e.message);
+                return;
+            }
 
             page.ipv4_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)
@@ -455,6 +522,9 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowActionCallback disable_popup_text_input
     ) {
         uint epoch = capture_ui_epoch ();
+        cancel_action_request ();
+        action_request_cancellable = new Cancellable ();
+        var action_request = action_request_cancellable;
         string net_key = net.network_key;
         string password = page.password_entry.get_text ().strip ();
 
@@ -561,11 +631,14 @@ public class MainWindowWifiDetailsEditController : Object {
             ipv6_dns_servers = ipv6_dns_servers
         };
 
-        nm.update_wifi_network_settings.begin (net, request, null, (obj, res) => {
+        nm.update_wifi_network_settings.begin (net, request, action_request, (obj, res) => {
                 try {
                     nm.update_wifi_network_settings.end (res);
                 } catch (Error e) {
                     if (!is_ui_epoch_valid (epoch)) {
+                        return;
+                    }
+                    if (is_cancelled_error (e)) {
                         return;
                     }
                     on_error ("Apply failed: " + e.message);
@@ -584,11 +657,14 @@ public class MainWindowWifiDetailsEditController : Object {
                     return;
                 }
 
-                nm.disconnect_wifi.begin (net, null, (obj2, res2) => {
+                nm.disconnect_wifi.begin (net, action_request, (obj2, res2) => {
                     try {
                         nm.disconnect_wifi.end (res2);
                     } catch (Error e) {
                         if (!is_ui_epoch_valid (epoch)) {
+                            return;
+                        }
+                        if (is_cancelled_error (e)) {
                             return;
                         }
                         on_error ("Disconnect before reconnect failed: " + e.message);
@@ -609,7 +685,8 @@ public class MainWindowWifiDetailsEditController : Object {
                         on_open_details,
                         disable_popup_text_input,
                         epoch,
-                        0
+                        0,
+                        action_request
                     );
                 });
         });

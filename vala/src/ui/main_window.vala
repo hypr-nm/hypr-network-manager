@@ -532,7 +532,6 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_wifi_details_page () {
-        var nm_client = nm;
         wifi_details_page = new MainWindowWifiDetailsPage ();
 
         wifi_details_page.back.connect (() => {
@@ -543,17 +542,17 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         wifi_details_page.forget.connect (() => {
             if (selected_wifi_network == null) return;
-            string profile_uuid = selected_wifi_network.saved_connection_uuid.strip ();
-            string network_key = selected_wifi_network.network_key;
-            nm_client.forget_network.begin (profile_uuid, network_key, null, (obj, res) => {
-                try {
-                    nm_client.forget_network.end (res);
-                    refresh_after_action (true);
+            wifi_controller.forget_wifi_network (
+                nm,
+                selected_wifi_network,
+                (message) => {
+                    show_error (message);
+                },
+                (request_wifi_scan) => {
+                    refresh_after_action (request_wifi_scan);
                     wifi_stack.set_visible_child_name ("list");
-                } catch (Error e) {
-                    show_error ("Forget failed: " + e.message);
                 }
-            });
+            );
         });
 
         wifi_details_page.edit.connect (() => {
@@ -782,16 +781,23 @@ public class MainWindow : Gtk.ApplicationWindow {
         });
 
         wifi_saved_page.delete_profile.connect ((net) => {
-            string profile_uuid = net.saved_connection_uuid.strip ();
-            nm.forget_network.begin (profile_uuid, "", null, (obj, res) => {
-                try {
-                    nm.forget_network.end (res);
-                    refresh_after_action (true);
+            wifi_controller.forget_wifi_network (
+                nm,
+                new WifiNetwork () {
+                    saved_connection_uuid = net.saved_connection_uuid,
+                    ssid = net.ssid,
+                    device_path = net.device_path,
+                    ap_path = "saved:" + net.saved_connection_uuid,
+                    saved = true
+                },
+                (message) => {
+                    show_error (message.replace ("Forget", "Delete"));
+                },
+                (request_wifi_scan) => {
+                    refresh_after_action (request_wifi_scan);
                     refresh_saved_networks ();
-                } catch (Error e) {
-                    show_error ("Delete failed: " + e.message);
                 }
-            });
+            );
         });
 
         return wifi_saved_page;
@@ -817,14 +823,13 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_saved_networks () {
-        nm.get_saved_wifi_profiles.begin (null, (obj, res) => {
-            try {
-                var saved_profiles = nm.get_saved_wifi_profiles.end (res);
-                wifi_saved_page.set_networks (saved_profiles);
-            } catch (Error e) {
-                show_error ("Could not load saved networks: " + e.message);
+        wifi_controller.refresh_saved_wifi_profiles (
+            nm,
+            wifi_saved_page,
+            (message) => {
+                show_error (message);
             }
-        });
+        );
     }
 
     private void open_saved_wifi_edit (WifiSavedProfile profile) {
@@ -840,45 +845,17 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void populate_saved_wifi_edit (WifiSavedProfile profile) {
-        nm.get_saved_wifi_profile_settings.begin (profile, null, (obj, res) => {
-            try {
-                var settings = nm.get_saved_wifi_profile_settings.end (res);
-
-                wifi_saved_edit_page.profile_name_entry.set_text (settings.profile_name);
-                wifi_saved_edit_page.ssid_entry.set_text (settings.ssid);
-                wifi_saved_edit_page.bssid_entry.set_text (settings.bssid);
-                wifi_saved_edit_page.set_selected_security_mode_key (settings.security_mode);
-                wifi_saved_edit_page.autoconnect_check.set_active (settings.autoconnect);
-                wifi_saved_edit_page.all_users_check.set_active (settings.available_to_all_users);
-                wifi_saved_edit_page.password_entry.set_text (settings.configured_password);
-
-                wifi_saved_edit_page.ipv4_method_dropdown.set_selected (
-                    MainWindowHelpers.get_ipv4_method_dropdown_index (settings.ipv4_method)
-                );
-                wifi_saved_edit_page.ipv4_address_entry.set_text (settings.configured_address);
-                wifi_saved_edit_page.ipv4_prefix_entry.set_text (
-                    settings.configured_prefix > 0 ? "%u".printf (settings.configured_prefix) : ""
-                );
-                wifi_saved_edit_page.ipv4_gateway_entry.set_text (settings.configured_gateway);
-                wifi_saved_edit_page.dns_auto_switch.set_active (settings.dns_auto);
-                wifi_saved_edit_page.ipv4_dns_entry.set_text (settings.configured_dns);
-
-                wifi_saved_edit_page.ipv6_method_dropdown.set_selected (
-                    MainWindowHelpers.get_ipv6_method_dropdown_index (settings.ipv6_method)
-                );
-                wifi_saved_edit_page.ipv6_address_entry.set_text (settings.configured_ipv6_address);
-                wifi_saved_edit_page.ipv6_prefix_entry.set_text (
-                    settings.configured_ipv6_prefix > 0 ? "%u".printf (settings.configured_ipv6_prefix) : ""
-                );
-                wifi_saved_edit_page.ipv6_gateway_entry.set_text (settings.configured_ipv6_gateway);
-                wifi_saved_edit_page.ipv6_dns_auto_switch.set_active (settings.ipv6_dns_auto);
-                wifi_saved_edit_page.ipv6_dns_entry.set_text (settings.configured_ipv6_dns);
-
+        wifi_controller.load_saved_wifi_profile_settings (
+            nm,
+            profile,
+            wifi_saved_edit_page,
+            () => {
                 sync_saved_wifi_edit_gateway_dns_sensitivity ();
-            } catch (Error e) {
-                show_error ("Could not load saved profile settings: " + e.message);
+            },
+            (message) => {
+                show_error (message);
             }
-        });
+        );
     }
 
     private bool apply_saved_wifi_edit () {
@@ -1001,26 +978,21 @@ public class MainWindow : Gtk.ApplicationWindow {
             ipv6_dns_servers = ipv6_dns_servers
         };
 
-        nm.update_saved_wifi_profile_settings.begin (profile, profile_request, null, (obj, res) => {
-            try {
-                nm.update_saved_wifi_profile_settings.end (res);
-            } catch (Error e) {
-                show_error ("Save profile failed: " + e.message);
-                return;
+        wifi_controller.apply_saved_wifi_profile_updates (
+            nm,
+            profile,
+            profile_request,
+            network_request,
+            (message) => {
+                show_error (message);
+            },
+            () => {
+                refresh_after_action (false);
+                refresh_saved_networks ();
+                set_popup_text_input_mode (false);
+                wifi_stack.set_visible_child_name ("saved");
             }
-
-            nm.update_saved_wifi_profile_network_settings.begin (profile, network_request, null, (obj2, res2) => {
-                try {
-                    nm.update_saved_wifi_profile_network_settings.end (res2);
-                    refresh_after_action (false);
-                    refresh_saved_networks ();
-                    set_popup_text_input_mode (false);
-                    wifi_stack.set_visible_child_name ("saved");
-                } catch (Error e) {
-                    show_error ("Save network settings failed: " + e.message);
-                }
-            });
-        });
+        );
 
         return true;
     }
@@ -1049,31 +1021,30 @@ public class MainWindow : Gtk.ApplicationWindow {
                 open_wifi_details (wifi_net);
             },
             (wifi_net) => {
-                string profile_uuid = wifi_net.saved_connection_uuid.strip ();
-                string network_key = wifi_net.network_key;
-
-                nm_client.forget_network.begin (profile_uuid, network_key, null, (obj, res) => {
-                    try {
-                        nm_client.forget_network.end (res);
-                        refresh_after_action (true);
-                    } catch (Error e) {
-                        show_error ("Forget failed: " + e.message);
+                wifi_controller_ref.forget_wifi_network (
+                    nm_client,
+                    wifi_net,
+                    (message) => {
+                        show_error (message);
+                    },
+                    (request_wifi_scan) => {
+                        refresh_after_action (request_wifi_scan);
                     }
-                });
+                );
             },
             (wifi_net) => {
-                string wifi_key = wifi_net.network_key;
-                pending_wifi_connect.remove (wifi_key);
-                pending_wifi_seen_connecting.remove (wifi_key);
-                nm_client.disconnect_wifi.begin (wifi_net, null, (obj, res) => {
-                    try {
-                        nm_client.disconnect_wifi.end (res);
-                        refresh_after_action (false);
-                    } catch (Error e) {
-                        show_error ("Disconnect failed: " + e.message);
-                        refresh_after_action (false);
+                wifi_controller_ref.disconnect_wifi_network (
+                    nm_client,
+                    wifi_net,
+                    pending_wifi_connect,
+                    pending_wifi_seen_connecting,
+                    (message) => {
+                        show_error (message);
+                    },
+                    (request_wifi_scan) => {
+                        refresh_after_action (request_wifi_scan);
                     }
-                });
+                );
             },
             (wifi_net, password, hidden_ssid) => {
                 wifi_controller_ref.connect_with_optional_password (
@@ -1101,15 +1072,20 @@ public class MainWindow : Gtk.ApplicationWindow {
                 );
             },
             (wifi_net, enabled) => {
-                nm_client.set_wifi_network_autoconnect.begin (wifi_net, enabled, 10, null, (obj, res) => {
-                    try {
-                        nm_client.set_wifi_network_autoconnect.end (res);
-                        refresh_after_action (false);
-                    } catch (Error e) {
-                        show_error ("Could not update auto-connect: " + e.message);
+                wifi_controller_ref.set_wifi_network_autoconnect (
+                    nm_client,
+                    wifi_net,
+                    enabled,
+                    (message) => {
+                        show_error (message);
+                    },
+                    (request_wifi_scan) => {
+                        refresh_after_action (request_wifi_scan);
+                    },
+                    () => {
                         refresh_wifi ();
                     }
-                });
+                );
             },
             (revealer, entry) => {
                 active_wifi_password_row_id = get_wifi_row_id (net);
