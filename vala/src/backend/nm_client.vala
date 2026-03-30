@@ -158,8 +158,8 @@ public class NetworkManagerClient : GLib.Object {
         return yield wifi_client.get_refresh_data (cancellable);
     }
 
-    public async WifiNetwork[] get_saved_wifi_networks (Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.get_saved_networks (cancellable);
+    public async WifiSavedProfile[] get_saved_wifi_profiles (Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.get_saved_profiles (cancellable);
     }
 
     public async NetworkIpSettings get_wifi_network_ip_settings (
@@ -182,18 +182,26 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public async WifiSavedProfileSettings get_saved_wifi_profile_settings (
-        WifiNetwork network,
+        WifiSavedProfile profile,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.get_saved_profile_settings (network, cancellable);
+        return yield wifi_client.get_saved_profile_settings (profile, cancellable);
     }
 
     public async bool update_saved_wifi_profile_settings (
-        WifiNetwork network,
+        WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.update_saved_profile_settings (network, request, cancellable);
+        return yield wifi_client.update_saved_profile_settings (profile, request, cancellable);
+    }
+
+    public async bool update_saved_wifi_profile_network_settings (
+        WifiSavedProfile profile,
+        WifiNetworkUpdateRequest request,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield wifi_client.update_saved_profile_network_settings (profile, request, cancellable);
     }
 
     public async bool connect_ethernet_device (

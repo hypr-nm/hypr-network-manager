@@ -5,8 +5,8 @@ public class MainWindowWifiSavedPage : Gtk.Box {
 
     public signal void back ();
     public signal void refresh ();
-    public signal void open_profile (WifiNetwork net);
-    public signal void delete_profile (WifiNetwork net);
+    public signal void open_profile (WifiSavedProfile profile);
+    public signal void delete_profile (WifiSavedProfile profile);
 
     public MainWindowWifiSavedPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
@@ -58,14 +58,14 @@ public class MainWindowWifiSavedPage : Gtk.Box {
         this.append (scroll);
     }
 
-    public void set_networks (WifiNetwork[] networks) {
+    public void set_networks (WifiSavedProfile[] profiles) {
         for (Gtk.Widget? child = this.saved_listbox.get_first_child (); child != null;) {
             Gtk.Widget? next = child.get_next_sibling ();
             this.saved_listbox.remove (child);
             child = next;
         }
 
-        if (networks.length == 0) {
+        if (profiles.length == 0) {
             var row = new Gtk.ListBoxRow ();
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
             box.add_css_class ("nm-empty-state");
@@ -77,8 +77,8 @@ public class MainWindowWifiSavedPage : Gtk.Box {
             return;
         }
 
-        foreach (var net in networks) {
-            var row_net = net;
+        foreach (var profile in profiles) {
+            var row_profile = profile;
             var row = new Gtk.ListBoxRow ();
             row.add_css_class ("nm-wifi-row");
 
@@ -87,8 +87,8 @@ public class MainWindowWifiSavedPage : Gtk.Box {
 
             var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
             info.set_hexpand (true);
-            string profile_name = MainWindowHelpers.safe_text (row_net.profile_name).strip ();
-            string ssid = MainWindowHelpers.safe_text (row_net.ssid).strip ();
+            string profile_name = MainWindowHelpers.safe_text (row_profile.profile_name).strip ();
+            string ssid = MainWindowHelpers.safe_text (row_profile.ssid).strip ();
             string primary = profile_name != "" ? profile_name : (ssid != "" ? ssid : "Saved profile");
 
             var primary_lbl = new Gtk.Label (primary);
@@ -111,13 +111,13 @@ public class MainWindowWifiSavedPage : Gtk.Box {
             delete_btn.add_css_class ("nm-button");
             delete_btn.add_css_class ("nm-action-button");
             delete_btn.clicked.connect (() => {
-                this.delete_profile (row_net);
+                this.delete_profile (row_profile);
             });
             root.append (delete_btn);
 
             var click = new Gtk.GestureClick ();
             click.released.connect ((n_press, x, y) => {
-                this.open_profile (row_net);
+                this.open_profile (row_profile);
             });
             info.add_controller (click);
 

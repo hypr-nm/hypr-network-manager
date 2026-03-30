@@ -16,6 +16,7 @@ executable(
     'src/constants.vala',
     'src/models/config.vala',
     'src/models/wifi_network.vala',
+    'src/models/wifi_saved_profile.vala',
     'src/models/wifi_security_mode.vala',
     'src/models/wifi_signal_levels.vala',
     'src/models/network_update_requests.vala',

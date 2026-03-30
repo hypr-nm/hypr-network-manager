@@ -62,12 +62,10 @@ public class NmWifiClient : GLib.Object {
         }
 
         string ssid = resolve_saved_ssid (conn, s_wireless);
-        string profile_name = resolve_profile_name (conn, ssid);
         bool is_secured = conn.get_setting_wireless_security () != null;
 
         return new WifiNetwork () {
             ssid = ssid,
-            profile_name = profile_name,
             saved_connection_uuid = uuid,
             signal = 0,
             connected = active_uuid != "" && active_uuid == uuid,
@@ -213,7 +211,6 @@ public class NmWifiClient : GLib.Object {
 
                 bool saved = false;
                 string saved_uuid = "";
-                string profile_name = "";
                 bool autoconnect = true;
 
                 var valid_conns = ap.filter_connections (connections);
@@ -221,7 +218,6 @@ public class NmWifiClient : GLib.Object {
                     var conn = (NM.Connection) valid_conns[0];
                     saved = true;
                     saved_uuid = conn.get_uuid ();
-                    profile_name = resolve_profile_name (conn, ssid);
                     if (saved_uuid != "") {
                         seen_saved_uuids.insert (saved_uuid, true);
                     }
@@ -235,7 +231,6 @@ public class NmWifiClient : GLib.Object {
 
                 var net = new WifiNetwork () {
                     ssid = ssid,
-                    profile_name = profile_name,
                     saved_connection_uuid = saved_uuid,
                     signal = ap.get_strength (),
                     connected = connected,
@@ -360,7 +355,37 @@ public class NmWifiClient : GLib.Object {
         return new WifiRefreshData (networks_arr, devices_arr);
     }
 
-    public async WifiNetwork[] get_saved_networks (Cancellable? cancellable = null) throws Error {
+    private static WifiSavedProfile? build_saved_profile (
+        NM.Connection conn,
+        string wifi_device_path,
+        string active_uuid
+    ) {
+        var s_wireless = conn.get_setting_wireless ();
+        if (s_wireless == null) {
+            return null;
+        }
+
+        string uuid = conn.get_uuid ().strip ();
+        if (uuid == "") {
+            return null;
+        }
+
+        string ssid = resolve_saved_ssid (conn, s_wireless);
+        string profile_name = resolve_profile_name (conn, ssid);
+
+        return new WifiSavedProfile () {
+            profile_name = profile_name,
+            ssid = ssid,
+            saved_connection_uuid = uuid,
+            connected = active_uuid != "" && active_uuid == uuid,
+            is_secured = conn.get_setting_wireless_security () != null,
+            is_hidden = s_wireless.hidden,
+            autoconnect = resolve_autoconnect (conn),
+            device_path = wifi_device_path
+        };
+    }
+
+    public async WifiSavedProfile[] get_saved_profiles (Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
         var connections = client.get_connections ();
         var devices = client.get_devices ();
@@ -380,31 +405,31 @@ public class NmWifiClient : GLib.Object {
             break;
         }
 
-        var out_list = new List<WifiNetwork> ();
+        var out_list = new List<WifiSavedProfile> ();
         foreach (var conn in connections) {
-            var net = build_saved_network (conn, wifi_device_path, active_uuid);
-            if (net != null) {
-                out_list.append (net);
+            var profile = build_saved_profile (conn, wifi_device_path, active_uuid);
+            if (profile != null) {
+                out_list.append (profile);
             }
         }
 
-        var networks_arr = new WifiNetwork[out_list.length ()];
+        var profiles_arr = new WifiSavedProfile[out_list.length ()];
         int i = 0;
-        foreach (var net in out_list) {
-            networks_arr[i++] = net;
+        foreach (var profile in out_list) {
+            profiles_arr[i++] = profile;
         }
 
-        return networks_arr;
+        return profiles_arr;
     }
 
     public async WifiSavedProfileSettings get_saved_profile_settings (
-        WifiNetwork network,
+        WifiSavedProfile profile,
         Cancellable? cancellable = null
     ) throws Error {
         var settings = new WifiSavedProfileSettings ();
         var client = core.nm_client;
 
-        var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
+        var conn = client.get_connection_by_uuid (profile.saved_connection_uuid);
         if (conn == null) {
             throw new IOError.NOT_FOUND ("Connection not found");
         }
@@ -424,7 +449,11 @@ public class NmWifiClient : GLib.Object {
 
         settings.security_mode = infer_security_mode (conn.get_setting_wireless_security ());
 
-        var ip_settings = yield get_network_ip_settings (network, cancellable);
+        var ip_settings = yield get_ip_settings_by_connection_uuid_and_device_path (
+            profile.saved_connection_uuid,
+            profile.device_path,
+            cancellable
+        );
         settings.configured_password = ip_settings.configured_password;
         settings.ipv4_method = ip_settings.ipv4_method;
         settings.ipv6_method = ip_settings.ipv6_method;
@@ -445,12 +474,12 @@ public class NmWifiClient : GLib.Object {
     }
 
     public async bool update_saved_profile_settings (
-        WifiNetwork network,
+        WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
         var client = core.nm_client;
-        var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
+        var conn = client.get_connection_by_uuid (profile.saved_connection_uuid);
         if (conn == null) {
             throw new IOError.NOT_FOUND ("Connection not found");
         }
@@ -501,16 +530,48 @@ public class NmWifiClient : GLib.Object {
         return true;
     }
 
-    public async NetworkIpSettings get_network_ip_settings (
-        WifiNetwork network,
+    public async bool update_saved_profile_network_settings (
+        WifiSavedProfile profile,
+        WifiNetworkUpdateRequest request,
+        Cancellable? cancellable = null
+    ) throws Error {
+        var client = core.nm_client;
+        var conn = client.get_connection_by_uuid (profile.saved_connection_uuid);
+        if (conn == null) {
+            log_warn ("nm-wifi-client", "Connection not found for UUID: " + profile.saved_connection_uuid);
+            throw new IOError.NOT_FOUND ("Connection not found");
+        }
+
+        var s_ip4 = NmIpConfigHelper.ensure_ip4_setting (conn);
+        NmIpConfigHelper.apply_ipv4_settings (s_ip4, request.get_ipv4_section ());
+
+        var s_ip6 = NmIpConfigHelper.ensure_ip6_setting (conn);
+        NmIpConfigHelper.apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
+
+        if (request.password != null && request.password != "") {
+            var s_sec = conn.get_setting_wireless_security ();
+            if (s_sec != null) {
+                s_sec.psk = request.password;
+            }
+        }
+
+        if (conn is NM.RemoteConnection) {
+            yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
+        }
+        return true;
+    }
+
+    private async NetworkIpSettings get_ip_settings_by_connection_uuid_and_device_path (
+        string connection_uuid,
+        string device_path,
         Cancellable? cancellable = null
     ) {
         var ip_settings = new NetworkIpSettings ();
         var client = core.nm_client;
 
         NM.Connection? conn = null;
-        if (network.saved_connection_uuid != "") {
-            conn = client.get_connection_by_uuid (network.saved_connection_uuid);
+        if (connection_uuid != "") {
+            conn = client.get_connection_by_uuid (connection_uuid);
         }
 
         if (conn != null) {
@@ -548,9 +609,20 @@ public class NmWifiClient : GLib.Object {
             NmIpConfigHelper.populate_configured_ip_settings (ip_settings, conn);
         }
 
-        var dev = client.get_device_by_path (network.device_path);
+        var dev = client.get_device_by_path (device_path);
         NmIpConfigHelper.populate_runtime_ip_settings (ip_settings, dev);
         return ip_settings;
+    }
+
+    public async NetworkIpSettings get_network_ip_settings (
+        WifiNetwork network,
+        Cancellable? cancellable = null
+    ) {
+        return yield get_ip_settings_by_connection_uuid_and_device_path (
+            network.saved_connection_uuid,
+            network.device_path,
+            cancellable
+        );
     }
 
     public async bool update_network_settings (

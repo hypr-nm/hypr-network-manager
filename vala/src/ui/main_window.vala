@@ -39,6 +39,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.ListBox wifi_listbox;
     private Gtk.Stack wifi_stack;
     private WifiNetwork? selected_wifi_network = null;
+    private WifiSavedProfile? selected_wifi_saved_profile = null;
     private MainWindowWifiDetailsPage wifi_details_page;
     private MainWindowWifiEditPage wifi_edit_page;
     private MainWindowWifiSavedPage wifi_saved_page;
@@ -782,8 +783,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         wifi_saved_page.delete_profile.connect ((net) => {
             string profile_uuid = net.saved_connection_uuid.strip ();
-            string network_key = net.network_key;
-            nm.forget_network.begin (profile_uuid, network_key, null, (obj, res) => {
+            nm.forget_network.begin (profile_uuid, "", null, (obj, res) => {
                 try {
                     nm.forget_network.end (res);
                     refresh_after_action (true);
@@ -817,26 +817,30 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void refresh_saved_networks () {
-        nm.get_saved_wifi_networks.begin (null, (obj, res) => {
+        nm.get_saved_wifi_profiles.begin (null, (obj, res) => {
             try {
-                var saved_networks = nm.get_saved_wifi_networks.end (res);
-                wifi_saved_page.set_networks (saved_networks);
+                var saved_profiles = nm.get_saved_wifi_profiles.end (res);
+                wifi_saved_page.set_networks (saved_profiles);
             } catch (Error e) {
                 show_error ("Could not load saved networks: " + e.message);
             }
         });
     }
 
-    private void open_saved_wifi_edit (WifiNetwork net) {
-        selected_wifi_network = net;
-        wifi_saved_edit_page.title_label.set_text ("Saved Profile: %s".printf (net.ssid));
+    private void open_saved_wifi_edit (WifiSavedProfile profile) {
+        selected_wifi_saved_profile = profile;
+        string title_name = MainWindowHelpers.safe_text (profile.profile_name).strip ();
+        if (title_name == "") {
+            title_name = MainWindowHelpers.safe_text (profile.ssid).strip ();
+        }
+        wifi_saved_edit_page.title_label.set_text ("Saved Profile: %s".printf (title_name));
         set_popup_text_input_mode (true);
         wifi_stack.set_visible_child_name ("saved-edit");
-        populate_saved_wifi_edit (net);
+        populate_saved_wifi_edit (profile);
     }
 
-    private void populate_saved_wifi_edit (WifiNetwork net) {
-        nm.get_saved_wifi_profile_settings.begin (net, null, (obj, res) => {
+    private void populate_saved_wifi_edit (WifiSavedProfile profile) {
+        nm.get_saved_wifi_profile_settings.begin (profile, null, (obj, res) => {
             try {
                 var settings = nm.get_saved_wifi_profile_settings.end (res);
 
@@ -878,11 +882,11 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private bool apply_saved_wifi_edit () {
-        if (selected_wifi_network == null) {
+        if (selected_wifi_saved_profile == null) {
             return false;
         }
 
-        var net = selected_wifi_network;
+        var profile = selected_wifi_saved_profile;
         string password = wifi_saved_edit_page.password_entry.get_text ().strip ();
 
         string method = MainWindowWifiEditUtils.get_selected_ipv4_method (wifi_saved_edit_page.ipv4_method_dropdown);
@@ -997,7 +1001,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             ipv6_dns_servers = ipv6_dns_servers
         };
 
-        nm.update_saved_wifi_profile_settings.begin (net, profile_request, null, (obj, res) => {
+        nm.update_saved_wifi_profile_settings.begin (profile, profile_request, null, (obj, res) => {
             try {
                 nm.update_saved_wifi_profile_settings.end (res);
             } catch (Error e) {
@@ -1005,9 +1009,9 @@ public class MainWindow : Gtk.ApplicationWindow {
                 return;
             }
 
-            nm.update_wifi_network_settings.begin (net, network_request, null, (obj2, res2) => {
+            nm.update_saved_wifi_profile_network_settings.begin (profile, network_request, null, (obj2, res2) => {
                 try {
-                    nm.update_wifi_network_settings.end (res2);
+                    nm.update_saved_wifi_profile_network_settings.end (res2);
                     refresh_after_action (false);
                     refresh_saved_networks ();
                     set_popup_text_input_mode (false);
