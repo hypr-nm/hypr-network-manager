@@ -43,7 +43,10 @@ public class NmWifiClient : GLib.Object {
                 var ssid_bytes = ap.get_ssid ();
                 string candidate_ssid = "";
                 if (ssid_bytes != null) {
-                    candidate_ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data ());
+                    string? converted_ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data ());
+                    if (converted_ssid != null) {
+                        candidate_ssid = converted_ssid;
+                    }
                 }
                 if (candidate_ssid.strip () == "") {
                     hidden_total++;
@@ -55,7 +58,10 @@ public class NmWifiClient : GLib.Object {
                 var ssid_bytes = ap.get_ssid ();
                 string ssid = "";
                 if (ssid_bytes != null) {
-                    ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data ());
+                    string? converted_ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data ());
+                    if (converted_ssid != null) {
+                        ssid = converted_ssid;
+                    }
                 }
 
                 bool is_hidden = ssid.strip () == "";
@@ -138,7 +144,8 @@ public class NmWifiClient : GLib.Object {
         string k;
         WifiNetwork v;
         while (iter.next (out k, out v)) {
-            string dedupe_key = v.bssid.strip ().down ();
+            string bssid = v.bssid != null ? v.bssid : "";
+            string dedupe_key = bssid.strip ().down ();
             if (dedupe_key == "") {
                 dedupe_key = "key:" + k;
             }

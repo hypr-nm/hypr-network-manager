@@ -151,6 +151,7 @@ public class MainWindowWifiRowBuilder : Object {
         prompt_label.set_hexpand (true);
         prompt_label.add_css_class ("nm-form-label");
         prompt_label.add_css_class ("nm-inline-password-label");
+        prompt_label.set_visible (net.is_secured);
 
         var hidden_ssid_label = new Gtk.Label ("SSID");
         hidden_ssid_label.set_xalign (0.0f);
@@ -174,6 +175,7 @@ public class MainWindowWifiRowBuilder : Object {
         );
         prompt_entry.add_css_class ("nm-password-entry");
         prompt_entry.add_css_class ("nm-inline-password-entry");
+        prompt_entry.set_visible (net.is_secured);
 
         MainWindowActionCallback update_prompt_password_visibility_icon = () => {
             bool reveal = prompt_entry.get_visibility ();
@@ -257,7 +259,7 @@ public class MainWindowWifiRowBuilder : Object {
             on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
             on_connect (
                 net,
-                prompt_entry.get_text (),
+                net.is_secured ? prompt_entry.get_text () : null,
                 requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
             );
             hidden_ssid_entry.set_text ("");
@@ -270,7 +272,7 @@ public class MainWindowWifiRowBuilder : Object {
             on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
             on_connect (
                 net,
-                prompt_entry.get_text (),
+                net.is_secured ? prompt_entry.get_text () : null,
                 requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
             );
             hidden_ssid_entry.set_text ("");
@@ -289,7 +291,7 @@ public class MainWindowWifiRowBuilder : Object {
             on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
             on_connect (
                 net,
-                prompt_entry.get_text (),
+                null,
                 hidden_ssid_entry.get_text ().strip ()
             );
             hidden_ssid_entry.set_text ("");

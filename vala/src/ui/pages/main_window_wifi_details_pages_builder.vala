@@ -173,7 +173,7 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.password_entry = new Gtk.Entry ();
         this.password_entry.set_visibility (false);
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
-        this.password_entry.set_placeholder_text ("New password");
+        this.password_entry.set_placeholder_text ("Password");
         this.password_entry.add_css_class ("nm-password-entry");
         this.password_entry.add_css_class ("nm-edit-field-control");
         this.password_entry.add_css_class ("nm-edit-field-entry");
@@ -181,7 +181,29 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.password_entry.activate.connect (() => {
             this.ok ();
         });
-        form.append (this.password_entry);
+
+        var password_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+        password_row.add_css_class ("nm-edit-password-row");
+
+        var password_toggle = new Gtk.Button ();
+        password_toggle.add_css_class ("nm-button");
+        password_toggle.add_css_class ("nm-menu-button");
+        password_toggle.add_css_class ("nm-edit-password-toggle");
+        password_toggle.set_tooltip_text ("Show password");
+
+        var password_toggle_icon = new Gtk.Image.from_icon_name ("view-reveal-symbolic");
+        password_toggle.set_child (password_toggle_icon);
+        password_toggle.clicked.connect (() => {
+            bool reveal = !this.password_entry.get_visibility ();
+            this.password_entry.set_visibility (reveal);
+            password_toggle_icon.set_from_icon_name (reveal ? "view-conceal-symbolic" : "view-reveal-symbolic");
+            password_toggle.set_tooltip_text (reveal ? "Hide password" : "Show password");
+        });
+
+        this.password_entry.set_hexpand (true);
+        password_row.append (this.password_entry);
+        password_row.append (password_toggle);
+        form.append (password_row);
 
         Gtk.DropDown v4_method;
         Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;
