@@ -242,10 +242,12 @@ public class MainWindowWifiRuntimeController : Object {
                 rebuilt_row.set_data<string> ("nm-row-id", row_id);
 
                 if (was_expanded) {
-                    for (Gtk.Widget? child = rebuilt_row.get_first_child(); child != null; child = child.get_next_sibling()) {
+                    for (Gtk.Widget? child = rebuilt_row.get_first_child ();
+                     child != null; child = child.get_next_sibling ()) {
                         var box = child as Gtk.Box;
                         if (box != null) {
-                            for (Gtk.Widget? bchild = box.get_first_child(); bchild != null; bchild = bchild.get_next_sibling()) {
+                            for (Gtk.Widget? bchild = box.get_first_child ();
+                             bchild != null; bchild = bchild.get_next_sibling ()) {
                                 var rev = bchild as Gtk.Revealer;
                                 if (rev != null && rev.has_css_class ("nm-row-actions-revealer")) {
                                     rev.set_reveal_child (true);

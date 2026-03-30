@@ -29,7 +29,8 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public static string normalize_ipv6_method (string value) {
-        if (value == "auto" || value == "manual" || value == "ignore" || value == "shared" || value == "disabled" || value == "link-local") {
+        if (value == "auto" || value == "manual" || value == "ignore" || value == "shared" || value == "disabled" |
+            value == "link-local") {
             return value;
         }
         return "auto";
@@ -74,7 +75,7 @@ public class NetworkManagerClient : GLib.Object {
                 });
             }
         });
-        
+
         nm_client.device_removed.connect ((dev) => {
             emit_nm_change_event ("DeviceRemoved (" + dev.get_iface () + ")");
         });

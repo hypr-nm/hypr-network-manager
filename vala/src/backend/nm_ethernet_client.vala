@@ -144,21 +144,21 @@ public class NmEthernetClient : GLib.Object {
         ) throws Error {
             var conn = resolve_connection (device);
             if (conn == null) throw new IOError.NOT_FOUND ("No saved Ethernet profile found.");
-            
+
             var s_ip4 = conn.get_setting_ip4_config ();
             if (s_ip4 == null) {
                 s_ip4 = new NM.SettingIP4Config ();
                 conn.add_setting (s_ip4);
             }
             apply_ipv4_settings (s_ip4, request.get_ipv4_section ());
-            
+
             var s_ip6 = conn.get_setting_ip6_config ();
             if (s_ip6 == null) {
                 s_ip6 = new NM.SettingIP6Config ();
                 conn.add_setting (s_ip6);
             }
             apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
-            
+
             if (conn is NM.RemoteConnection) {
                 yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
             }
@@ -169,14 +169,15 @@ public class NmEthernetClient : GLib.Object {
     private void apply_ipv4_settings (NM.SettingIP4Config s_ip4, Ipv4UpdateSection req) {
         s_ip4.clear_addresses ();
         s_ip4.clear_dns ();
-        
+
         string method = req.normalized_method ();
         if (method == "auto" || method == "") {
             s_ip4.method = NM.SettingIP4Config.METHOD_AUTO;
         } else if (method == "manual") {
             s_ip4.method = NM.SettingIP4Config.METHOD_MANUAL;
             if (req.address != "") {
-                try { var addr = new NM.IPAddress (2, req.address, req.prefix); s_ip4.add_address (addr); } catch (Error e) {}
+                try { var addr = new NM.IPAddress (2, req.address,
+                    req.prefix); s_ip4.add_address (addr); } catch (Error e) {}
             }
         } else if (method == "link-local") {
             s_ip4.method = NM.SettingIP4Config.METHOD_LINK_LOCAL;
@@ -192,7 +193,7 @@ public class NmEthernetClient : GLib.Object {
             s_ip4.gateway = null;
         }
         s_ip4.ignore_auto_routes = !req.gateway_auto;
-        
+
         s_ip4.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
             foreach (var dns in req.dns_servers) {
@@ -204,14 +205,15 @@ public class NmEthernetClient : GLib.Object {
     private void apply_ipv6_settings (NM.SettingIP6Config s_ip6, Ipv6UpdateSection req) {
         s_ip6.clear_addresses ();
         s_ip6.clear_dns ();
-        
+
         string method = req.normalized_method ();
         if (method == "auto" || method == "") {
             s_ip6.method = NM.SettingIP6Config.METHOD_AUTO;
         } else if (method == "manual") {
             s_ip6.method = NM.SettingIP6Config.METHOD_MANUAL;
             if (req.address != "") {
-                try { var addr = new NM.IPAddress (10, req.address, req.prefix); s_ip6.add_address (addr); } catch (Error e) {}
+                try { var addr = new NM.IPAddress (10, req.address,
+                    req.prefix); s_ip6.add_address (addr); } catch (Error e) {}
             }
         } else if (method == "link-local") {
             s_ip6.method = NM.SettingIP6Config.METHOD_LINK_LOCAL;
@@ -229,7 +231,7 @@ public class NmEthernetClient : GLib.Object {
             s_ip6.gateway = null;
         }
         s_ip6.ignore_auto_routes = !req.gateway_auto;
-        
+
         s_ip6.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
             foreach (var dns in req.dns_servers) {

@@ -55,7 +55,7 @@ public class NmWifiClient : GLib.Object {
                 var ssid_bytes = ap.get_ssid ();
                 string ssid = "";
                 if (ssid_bytes != null) {
-                    ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data());
+                    ssid = NM.Utils.ssid_to_utf8 (ssid_bytes.get_data ());
                 }
 
                 bool is_hidden = ssid.strip () == "";
@@ -91,7 +91,7 @@ public class NmWifiClient : GLib.Object {
                     }
                 }
 
-                bool connected = (active_ap != null && active_ap.get_path() == ap.get_path());
+                bool connected = (active_ap != null && active_ap.get_path () == ap.get_path ());
 
                 var net = new WifiNetwork () {
                     ssid = ssid,
@@ -194,7 +194,7 @@ public class NmWifiClient : GLib.Object {
     ) {
         var ip_settings = new NetworkIpSettings ();
         var client = core.nm_client;
-        
+
         NM.Connection? conn = null;
         if (network.saved_connection_uuid != "") {
             conn = client.get_connection_by_uuid (network.saved_connection_uuid);
@@ -291,21 +291,21 @@ public class NmWifiClient : GLib.Object {
             conn.add_setting (s_ip4);
         }
         apply_ipv4_settings (s_ip4, request.get_ipv4_section ());
-        
+
         var s_ip6 = conn.get_setting_ip6_config ();
         if (s_ip6 == null) {
             s_ip6 = new NM.SettingIP6Config ();
             conn.add_setting (s_ip6);
         }
         apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
-        
+
         if (request.password != null && request.password != "") {
             var s_sec = conn.get_setting_wireless_security ();
             if (s_sec != null) {
                 s_sec.psk = request.password;
             }
         }
-        
+
         if (conn is NM.RemoteConnection) {
             yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
         }
@@ -316,14 +316,15 @@ public class NmWifiClient : GLib.Object {
     private void apply_ipv4_settings (NM.SettingIP4Config s_ip4, Ipv4UpdateSection req) {
         s_ip4.clear_addresses ();
         s_ip4.clear_dns ();
-        
+
         string method = req.normalized_method ();
         if (method == "auto" || method == "") {
             s_ip4.method = NM.SettingIP4Config.METHOD_AUTO;
         } else if (method == "manual") {
             s_ip4.method = NM.SettingIP4Config.METHOD_MANUAL;
             if (req.address != "") {
-                try { var addr = new NM.IPAddress (2, req.address, req.prefix); s_ip4.add_address (addr); } catch (Error e) {}
+                try { var addr = new NM.IPAddress (2, req.address,
+                    req.prefix); s_ip4.add_address (addr); } catch (Error e) {}
             }
         } else if (method == "link-local") {
             s_ip4.method = NM.SettingIP4Config.METHOD_LINK_LOCAL;
@@ -339,7 +340,7 @@ public class NmWifiClient : GLib.Object {
             s_ip4.gateway = null;
         }
         s_ip4.ignore_auto_routes = !req.gateway_auto;
-        
+
         s_ip4.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
             foreach (var dns in req.dns_servers) {
@@ -351,14 +352,15 @@ public class NmWifiClient : GLib.Object {
     private void apply_ipv6_settings (NM.SettingIP6Config s_ip6, Ipv6UpdateSection req) {
         s_ip6.clear_addresses ();
         s_ip6.clear_dns ();
-        
+
         string method = req.normalized_method ();
         if (method == "auto" || method == "") {
             s_ip6.method = NM.SettingIP6Config.METHOD_AUTO;
         } else if (method == "manual") {
             s_ip6.method = NM.SettingIP6Config.METHOD_MANUAL;
             if (req.address != "") {
-                try { var addr = new NM.IPAddress (10, req.address, req.prefix); s_ip6.add_address (addr); } catch (Error e) {}
+                try { var addr = new NM.IPAddress (10, req.address,
+                    req.prefix); s_ip6.add_address (addr); } catch (Error e) {}
             }
         } else if (method == "link-local") {
             s_ip6.method = NM.SettingIP6Config.METHOD_LINK_LOCAL;
@@ -376,7 +378,7 @@ public class NmWifiClient : GLib.Object {
             s_ip6.gateway = null;
         }
         s_ip6.ignore_auto_routes = !req.gateway_auto;
-        
+
         s_ip6.ignore_auto_dns = !req.dns_auto;
         if (!req.dns_auto) {
             foreach (var dns in req.dns_servers) {
@@ -403,7 +405,7 @@ public class NmWifiClient : GLib.Object {
         if (s_conn != null) {
             s_conn.autoconnect = enabled;
             s_conn.autoconnect_priority = priority;
-            
+
             if (conn is NM.RemoteConnection) {
                 yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
             }
@@ -418,18 +420,18 @@ public class NmWifiClient : GLib.Object {
             log_warn ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
             throw new IOError.NOT_FOUND ("Connection not found");
         }
-        
+
         var dev = client.get_device_by_path (network.device_path);
         if (dev == null) {
             log_warn ("nm-wifi-client", "Device not found for path: " + network.device_path);
             throw new IOError.NOT_FOUND ("Device not found");
         }
-        
+
         yield client.activate_connection_async (conn, dev, network.ap_path, cancellable);
         return true;
     }
 
-    
+
     private NM.Connection create_wifi_connection (
         string ssid,
         string? password,
@@ -439,14 +441,14 @@ public class NmWifiClient : GLib.Object {
         uint32 wpa_flags = 0
     ) {
         var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
-        
+
         var s_con = new NM.SettingConnection ();
         s_con.id = ssid;
         s_con.type = "802-11-wireless";
         s_con.uuid = NM.Utils.uuid_generate ();
         s_con.autoconnect = true;
         conn.add_setting (s_con);
-        
+
         var s_wifi = new NM.SettingWireless ();
         uint8[] ssid_arr = ssid.data;
         s_wifi.ssid = new Bytes (ssid_arr);
@@ -474,7 +476,7 @@ public class NmWifiClient : GLib.Object {
                     resolved_hidden_mode = HiddenWifiSecurityMode.WPA_PSK;
                 }
             }
-            
+
             if (is_hidden) {
                 if (resolved_hidden_mode == HiddenWifiSecurityMode.WPA_PSK) {
                     s_sec.key_mgmt = "wpa-psk";
@@ -513,16 +515,16 @@ public class NmWifiClient : GLib.Object {
             }
             conn.add_setting (s_sec);
         }
-        
+
         // Add default IP configs
         var s_ip4 = new NM.SettingIP4Config ();
         s_ip4.method = "auto";
         conn.add_setting (s_ip4);
-        
+
         var s_ip6 = new NM.SettingIP6Config ();
         s_ip6.method = "auto";
         conn.add_setting (s_ip6);
-        
+
         return conn;
     }
 
