@@ -140,12 +140,8 @@ public class MainWindowEthernetController : Object {
 
     private void sync_edit_gateway_dns_sensitivity () {
         if (ethernet_edit_page.ipv4_method_dropdown != null) {
-            bool ipv4_manual = ethernet_edit_page.ipv4_method_dropdown.get_selected () == 1;
             bool ipv4_disabled = ethernet_edit_page.ipv4_method_dropdown.get_selected () == 2;
-            if (!ipv4_manual && ipv4_disabled) {
-                if (ethernet_edit_page.gateway_auto_switch != null) {
-                    ethernet_edit_page.gateway_auto_switch.set_active (true);
-                }
+            if (ipv4_disabled) {
                 if (ethernet_edit_page.dns_auto_switch != null) {
                     ethernet_edit_page.dns_auto_switch.set_active (true);
                 }
@@ -153,29 +149,17 @@ public class MainWindowEthernetController : Object {
         }
 
         if (ethernet_edit_page.ipv6_method_dropdown != null) {
-            bool ipv6_manual = ethernet_edit_page.ipv6_method_dropdown.get_selected () == 1;
             uint selected = ethernet_edit_page.ipv6_method_dropdown.get_selected ();
             bool ipv6_disabled_or_ignore = selected == 2 || selected == 3;
-            if (!ipv6_manual && ipv6_disabled_or_ignore) {
-                if (ethernet_edit_page.ipv6_gateway_auto_switch != null) {
-                    ethernet_edit_page.ipv6_gateway_auto_switch.set_active (true);
-                }
+            if (ipv6_disabled_or_ignore) {
                 if (ethernet_edit_page.ipv6_dns_auto_switch != null) {
                     ethernet_edit_page.ipv6_dns_auto_switch.set_active (true);
                 }
             }
         }
 
-        if (ethernet_edit_page.ipv4_gateway_entry != null && ethernet_edit_page.gateway_auto_switch != null) {
-            ethernet_edit_page.ipv4_gateway_entry.set_sensitive (!ethernet_edit_page.gateway_auto_switch.get_active ());
-        }
         if (ethernet_edit_page.ipv4_dns_entry != null && ethernet_edit_page.dns_auto_switch != null) {
             ethernet_edit_page.ipv4_dns_entry.set_sensitive (!ethernet_edit_page.dns_auto_switch.get_active ());
-        }
-        if (ethernet_edit_page.ipv6_gateway_entry != null && ethernet_edit_page.ipv6_gateway_auto_switch != null) {
-            ethernet_edit_page.ipv6_gateway_entry.set_sensitive (
-                !ethernet_edit_page.ipv6_gateway_auto_switch.get_active ()
-            );
         }
         if (ethernet_edit_page.ipv6_dns_entry != null && ethernet_edit_page.ipv6_dns_auto_switch != null) {
             ethernet_edit_page.ipv6_dns_entry.set_sensitive (
@@ -443,7 +427,6 @@ public class MainWindowEthernetController : Object {
             ethernet_edit_page.ipv4_prefix_entry.set_text (
                 ip_settings.configured_prefix > 0 ? "%u".printf (ip_settings.configured_prefix) : ""
             );
-            ethernet_edit_page.gateway_auto_switch.set_active (ip_settings.gateway_auto);
             ethernet_edit_page.ipv4_gateway_entry.set_text (ip_settings.configured_gateway);
             ethernet_edit_page.dns_auto_switch.set_active (ip_settings.dns_auto);
             ethernet_edit_page.ipv4_dns_entry.set_text (ip_settings.configured_dns);
@@ -454,7 +437,6 @@ public class MainWindowEthernetController : Object {
             ethernet_edit_page.ipv6_prefix_entry.set_text (
                 ip_settings.configured_ipv6_prefix > 0 ? "%u".printf (ip_settings.configured_ipv6_prefix) : ""
             );
-            ethernet_edit_page.ipv6_gateway_auto_switch.set_active (ip_settings.ipv6_gateway_auto);
             ethernet_edit_page.ipv6_gateway_entry.set_text (ip_settings.configured_ipv6_gateway);
             ethernet_edit_page.ipv6_dns_auto_switch.set_active (ip_settings.ipv6_dns_auto);
             ethernet_edit_page.ipv6_dns_entry.set_text (ip_settings.configured_ipv6_dns);
@@ -475,26 +457,24 @@ public class MainWindowEthernetController : Object {
             ethernet_edit_page.ipv4_method_dropdown
         );
         string ipv4_address = ethernet_edit_page.ipv4_address_entry.get_text ().strip ();
-        bool gateway_auto = ethernet_edit_page.gateway_auto_switch.get_active ();
         string ipv4_gateway = ethernet_edit_page.ipv4_gateway_entry.get_text ().strip ();
+        bool gateway_auto = method != "manual";
         bool dns_auto = ethernet_edit_page.dns_auto_switch.get_active ();
         string dns_csv = ethernet_edit_page.ipv4_dns_entry.get_text ().strip ();
         string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method (
             ethernet_edit_page.ipv6_method_dropdown
         );
         string ipv6_address = ethernet_edit_page.ipv6_address_entry.get_text ().strip ();
-        bool ipv6_gateway_auto = ethernet_edit_page.ipv6_gateway_auto_switch.get_active ();
         string ipv6_gateway = ethernet_edit_page.ipv6_gateway_entry.get_text ().strip ();
+        bool ipv6_gateway_auto = method6 != "manual";
         bool ipv6_dns_auto = ethernet_edit_page.ipv6_dns_auto_switch.get_active ();
         string ipv6_dns_csv = ethernet_edit_page.ipv6_dns_entry.get_text ().strip ();
 
         if (method == "disabled") {
-            gateway_auto = true;
             dns_auto = true;
         }
 
         if (method6 == "disabled" || method6 == "ignore") {
-            ipv6_gateway_auto = true;
             ipv6_dns_auto = true;
         }
 
@@ -529,16 +509,10 @@ public class MainWindowEthernetController : Object {
                 on_error ("Manual IPv4 requires a prefix between 1 and 32.");
                 return;
             }
-        }
-
-        if (!gateway_auto && ipv4_gateway == "") {
-            on_error ("Manual gateway is enabled; please provide a gateway address.");
-            return;
-        }
-
-        if (!gateway_auto && method == "disabled") {
-            on_error ("Manual gateway is not supported when IPv4 method is Disabled.");
-            return;
+            if (ipv4_gateway == "") {
+                on_error ("Manual IPv4 requires a gateway address.");
+                return;
+            }
         }
 
         string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
@@ -556,16 +530,10 @@ public class MainWindowEthernetController : Object {
                 on_error ("Manual IPv6 requires a prefix between 1 and 128.");
                 return;
             }
-        }
-
-        if (!ipv6_gateway_auto && ipv6_gateway == "") {
-            on_error ("Manual IPv6 gateway is enabled; please provide a gateway address.");
-            return;
-        }
-
-        if (!ipv6_gateway_auto && (method6 == "disabled" || method6 == "ignore")) {
-            on_error ("Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore.");
-            return;
+            if (ipv6_gateway == "") {
+                on_error ("Manual IPv6 requires a gateway address.");
+                return;
+            }
         }
 
         string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);

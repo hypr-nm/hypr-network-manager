@@ -109,14 +109,12 @@ public class MainWindowWifiEditPage : Gtk.Box {
     public Gtk.Label note_label { get; private set; }
     public Gtk.DropDown ipv4_method_dropdown { get; private set; }
     public Gtk.Entry ipv4_address_entry { get; private set; }
-    public Gtk.Switch gateway_auto_switch { get; private set; }
     public Gtk.Entry ipv4_prefix_entry { get; private set; }
     public Gtk.Entry ipv4_gateway_entry { get; private set; }
     public Gtk.Switch dns_auto_switch { get; private set; }
     public Gtk.Entry ipv4_dns_entry { get; private set; }
     public Gtk.DropDown ipv6_method_dropdown { get; private set; }
     public Gtk.Entry ipv6_address_entry { get; private set; }
-    public Gtk.Switch ipv6_gateway_auto_switch { get; private set; }
     public Gtk.Entry ipv6_prefix_entry { get; private set; }
     public Gtk.Entry ipv6_gateway_entry { get; private set; }
     public Gtk.Switch ipv6_dns_auto_switch { get; private set; }
@@ -207,14 +205,13 @@ public class MainWindowWifiEditPage : Gtk.Box {
 
         Gtk.DropDown v4_method;
         Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;
-        Gtk.Switch v4_gw_auto, v4_dns_auto;
+        Gtk.Switch v4_dns_auto;
 
         MainWindowIpEditFormBuilder.append_ipv4_section (
             form,
             out v4_method,
             out v4_address,
             out v4_prefix,
-            out v4_gw_auto,
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
@@ -225,7 +222,6 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.ipv4_method_dropdown = v4_method;
         this.ipv4_address_entry = v4_address;
         this.ipv4_prefix_entry = v4_prefix;
-        this.gateway_auto_switch = v4_gw_auto;
         this.ipv4_gateway_entry = v4_gw;
         this.dns_auto_switch = v4_dns_auto;
         this.ipv4_dns_entry = v4_dns;
@@ -233,14 +229,12 @@ public class MainWindowWifiEditPage : Gtk.Box {
         Gtk.DropDown v6_method;
         Gtk.Entry v6_address, v6_prefix, v6_gw, v6_dns;
         Gtk.Switch v6_dns_auto;
-        Gtk.Switch v6_gw_auto;
 
         MainWindowIpEditFormBuilder.append_ipv6_section (
             form,
             out v6_method,
             out v6_address,
             out v6_prefix,
-            out v6_gw_auto,
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
@@ -251,7 +245,6 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.ipv6_method_dropdown = v6_method;
         this.ipv6_address_entry = v6_address;
         this.ipv6_prefix_entry = v6_prefix;
-        this.ipv6_gateway_auto_switch = v6_gw_auto;
         this.ipv6_gateway_entry = v6_gw;
         this.ipv6_dns_auto_switch = v6_dns_auto;
         this.ipv6_dns_entry = v6_dns;

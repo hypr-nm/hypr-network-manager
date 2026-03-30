@@ -119,7 +119,6 @@ public class MainWindowIpEditFormBuilder : Object {
         out Gtk.DropDown ipv4_method_dropdown,
         out Gtk.Entry ipv4_address_entry,
         out Gtk.Entry ipv4_prefix_entry,
-        out Gtk.Switch gateway_auto_switch,
         out Gtk.Entry ipv4_gateway_entry,
         out Gtk.Switch dns_auto_switch,
         out Gtk.Entry ipv4_dns_entry,
@@ -208,6 +207,24 @@ public class MainWindowIpEditFormBuilder : Object {
         }
         manual_fields.append (ipv4_prefix_entry);
 
+        manual_fields.append (build_label (
+            "Gateway",
+            with_extra_classes,
+            with_extra_classes ? "nm-edit-gateway-label" : null
+        ));
+
+        ipv4_gateway_entry = new Gtk.Entry ();
+        ipv4_gateway_entry.set_placeholder_text ("192.168.1.1");
+        apply_control_classes (
+            ipv4_gateway_entry,
+            with_extra_classes,
+            with_extra_classes ? "nm-edit-gateway-entry" : null
+        );
+        if (with_extra_classes) {
+            ipv4_gateway_entry.add_css_class ("nm-edit-field-entry");
+        }
+        manual_fields.append (ipv4_gateway_entry);
+
         var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
         if (with_extra_classes) {
             override_fields.add_css_class ("nm-edit-ip-advanced");
@@ -221,57 +238,6 @@ public class MainWindowIpEditFormBuilder : Object {
         override_revealer.add_css_class ("nm-edit-ipv4-overrides-revealer");
         override_revealer.set_child (override_fields);
         section.append (override_revealer);
-
-        override_fields.append (build_label (
-            "Gateway",
-            with_extra_classes,
-            with_extra_classes ? "nm-edit-gateway-label" : null
-        ));
-
-        var gateway_mode_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
-        gateway_mode_row.set_halign (Gtk.Align.FILL);
-        gateway_mode_row.set_hexpand (true);
-        if (with_extra_classes) {
-            gateway_mode_row.add_css_class ("nm-edit-mode-row");
-            gateway_mode_row.add_css_class ("nm-edit-gateway-mode-row");
-        }
-
-        var gateway_mode_label = new Gtk.Label ("Automatic gateway");
-        gateway_mode_label.set_xalign (0.0f);
-        gateway_mode_label.set_hexpand (true);
-        gateway_mode_label.set_valign (Gtk.Align.CENTER);
-        if (with_extra_classes) {
-            gateway_mode_label.add_css_class ("nm-edit-mode-label");
-            gateway_mode_label.add_css_class ("nm-edit-gateway-mode-label");
-        }
-        gateway_mode_row.append (gateway_mode_label);
-
-        gateway_auto_switch = new Gtk.Switch ();
-        gateway_auto_switch.set_valign (Gtk.Align.CENTER);
-        gateway_auto_switch.set_active (true);
-        if (with_extra_classes) {
-            gateway_auto_switch.add_css_class ("nm-switch");
-            gateway_auto_switch.add_css_class ("nm-edit-field-control");
-            gateway_auto_switch.add_css_class ("nm-edit-mode-switch");
-            gateway_auto_switch.add_css_class ("nm-edit-gateway-mode-switch");
-        }
-        gateway_auto_switch.notify["active"].connect (() => {
-            on_sync_sensitivity ();
-        });
-        gateway_mode_row.append (gateway_auto_switch);
-        override_fields.append (gateway_mode_row);
-
-        ipv4_gateway_entry = new Gtk.Entry ();
-        ipv4_gateway_entry.set_placeholder_text ("192.168.1.1");
-        apply_control_classes (
-            ipv4_gateway_entry,
-            with_extra_classes,
-            with_extra_classes ? "nm-edit-gateway-entry" : null
-        );
-        if (with_extra_classes) {
-            ipv4_gateway_entry.add_css_class ("nm-edit-field-entry");
-        }
-        override_fields.append (ipv4_gateway_entry);
 
         override_fields.append (build_label (
             "DNS Servers (comma-separated)",
@@ -325,7 +291,6 @@ public class MainWindowIpEditFormBuilder : Object {
         override_fields.append (ipv4_dns_entry);
 
         Gtk.DropDown local_ipv4_method_dropdown = ipv4_method_dropdown;
-        Gtk.Switch local_gateway_auto_switch = gateway_auto_switch;
         Gtk.Switch local_dns_auto_switch = dns_auto_switch;
 
         MainWindowActionCallback sync_compact_visibility = () => {
@@ -338,9 +303,6 @@ public class MainWindowIpEditFormBuilder : Object {
             override_revealer.set_reveal_child (is_auto || is_manual);
 
             if (is_disabled) {
-                if (!local_gateway_auto_switch.get_active ()) {
-                    local_gateway_auto_switch.set_active (true);
-                }
                 if (!local_dns_auto_switch.get_active ()) {
                     local_dns_auto_switch.set_active (true);
                 }
@@ -360,7 +322,6 @@ public class MainWindowIpEditFormBuilder : Object {
         out Gtk.DropDown ipv6_method_dropdown,
         out Gtk.Entry ipv6_address_entry,
         out Gtk.Entry ipv6_prefix_entry,
-        out Gtk.Switch ipv6_gateway_auto_switch,
         out Gtk.Entry ipv6_gateway_entry,
         out Gtk.Switch ipv6_dns_auto_switch,
         out Gtk.Entry ipv6_dns_entry,
@@ -450,6 +411,24 @@ public class MainWindowIpEditFormBuilder : Object {
         }
         manual_fields.append (ipv6_prefix_entry);
 
+        manual_fields.append (build_label (
+            "IPv6 Gateway",
+            with_extra_classes,
+            with_extra_classes ? "nm-edit-ipv6-gateway-label" : null
+        ));
+
+        ipv6_gateway_entry = new Gtk.Entry ();
+        ipv6_gateway_entry.set_placeholder_text ("fe80::1");
+        apply_control_classes (
+            ipv6_gateway_entry,
+            with_extra_classes,
+            with_extra_classes ? "nm-edit-ipv6-gateway-entry" : null
+        );
+        if (with_extra_classes) {
+            ipv6_gateway_entry.add_css_class ("nm-edit-field-entry");
+        }
+        manual_fields.append (ipv6_gateway_entry);
+
         var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
         if (with_extra_classes) {
             override_fields.add_css_class ("nm-edit-ip-advanced");
@@ -463,57 +442,6 @@ public class MainWindowIpEditFormBuilder : Object {
         override_revealer.add_css_class ("nm-edit-ipv6-overrides-revealer");
         override_revealer.set_child (override_fields);
         section.append (override_revealer);
-
-        override_fields.append (build_label (
-            "IPv6 Gateway",
-            with_extra_classes,
-            with_extra_classes ? "nm-edit-ipv6-gateway-label" : null
-        ));
-
-        var gateway_mode_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
-        gateway_mode_row.set_halign (Gtk.Align.FILL);
-        gateway_mode_row.set_hexpand (true);
-        if (with_extra_classes) {
-            gateway_mode_row.add_css_class ("nm-edit-mode-row");
-            gateway_mode_row.add_css_class ("nm-edit-ipv6-gateway-mode-row");
-        }
-
-        var gateway_mode_label = new Gtk.Label ("Automatic IPv6 gateway");
-        gateway_mode_label.set_xalign (0.0f);
-        gateway_mode_label.set_hexpand (true);
-        gateway_mode_label.set_valign (Gtk.Align.CENTER);
-        if (with_extra_classes) {
-            gateway_mode_label.add_css_class ("nm-edit-mode-label");
-            gateway_mode_label.add_css_class ("nm-edit-ipv6-gateway-mode-label");
-        }
-        gateway_mode_row.append (gateway_mode_label);
-
-        ipv6_gateway_auto_switch = new Gtk.Switch ();
-        ipv6_gateway_auto_switch.set_valign (Gtk.Align.CENTER);
-        ipv6_gateway_auto_switch.set_active (true);
-        if (with_extra_classes) {
-            ipv6_gateway_auto_switch.add_css_class ("nm-switch");
-            ipv6_gateway_auto_switch.add_css_class ("nm-edit-field-control");
-            ipv6_gateway_auto_switch.add_css_class ("nm-edit-mode-switch");
-            ipv6_gateway_auto_switch.add_css_class ("nm-edit-ipv6-gateway-mode-switch");
-        }
-        ipv6_gateway_auto_switch.notify["active"].connect (() => {
-            on_sync_sensitivity ();
-        });
-        gateway_mode_row.append (ipv6_gateway_auto_switch);
-        override_fields.append (gateway_mode_row);
-
-        ipv6_gateway_entry = new Gtk.Entry ();
-        ipv6_gateway_entry.set_placeholder_text ("fe80::1");
-        apply_control_classes (
-            ipv6_gateway_entry,
-            with_extra_classes,
-            with_extra_classes ? "nm-edit-ipv6-gateway-entry" : null
-        );
-        if (with_extra_classes) {
-            ipv6_gateway_entry.add_css_class ("nm-edit-field-entry");
-        }
-        override_fields.append (ipv6_gateway_entry);
 
         override_fields.append (build_label (
             "IPv6 DNS",
@@ -567,7 +495,6 @@ public class MainWindowIpEditFormBuilder : Object {
         override_fields.append (ipv6_dns_entry);
 
         Gtk.DropDown local_ipv6_method_dropdown = ipv6_method_dropdown;
-        Gtk.Switch local_ipv6_gateway_auto_switch = ipv6_gateway_auto_switch;
         Gtk.Switch local_ipv6_dns_auto_switch = ipv6_dns_auto_switch;
 
         MainWindowActionCallback sync_compact_visibility = () => {
@@ -580,9 +507,6 @@ public class MainWindowIpEditFormBuilder : Object {
             override_revealer.set_reveal_child (is_auto || is_manual);
 
             if (is_disabled_or_ignore) {
-                if (!local_ipv6_gateway_auto_switch.get_active ()) {
-                    local_ipv6_gateway_auto_switch.set_active (true);
-                }
                 if (!local_ipv6_dns_auto_switch.get_active ()) {
                     local_ipv6_dns_auto_switch.set_active (true);
                 }

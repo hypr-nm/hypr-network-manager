@@ -23,46 +23,34 @@ public class MainWindowWifiController : Object {
     public void sync_edit_gateway_dns_sensitivity (
         Gtk.DropDown? wifi_edit_ipv4_method_dropdown,
         Gtk.Entry? wifi_edit_ipv4_gateway_entry,
-        Gtk.Switch? wifi_edit_gateway_auto_switch,
         Gtk.Entry? wifi_edit_ipv4_dns_entry,
         Gtk.Switch? wifi_edit_dns_auto_switch,
         Gtk.DropDown? wifi_edit_ipv6_method_dropdown,
         Gtk.Entry? wifi_edit_ipv6_gateway_entry,
-        Gtk.Switch? wifi_edit_ipv6_gateway_auto_switch,
         Gtk.Entry? wifi_edit_ipv6_dns_entry,
         Gtk.Switch? wifi_edit_ipv6_dns_auto_switch
     ) {
-        if (wifi_edit_ipv4_method_dropdown != null && wifi_edit_ipv4_method_dropdown.get_selected () == 2) {
-            if (wifi_edit_gateway_auto_switch != null) {
-                wifi_edit_gateway_auto_switch.set_active (true);
-            }
-            if (wifi_edit_dns_auto_switch != null) {
-                wifi_edit_dns_auto_switch.set_active (true);
+        if (wifi_edit_ipv4_method_dropdown != null) {
+            bool ipv4_disabled = wifi_edit_ipv4_method_dropdown.get_selected () == 2;
+            if (ipv4_disabled) {
+                if (wifi_edit_dns_auto_switch != null) {
+                    wifi_edit_dns_auto_switch.set_active (true);
+                }
             }
         }
 
         if (wifi_edit_ipv6_method_dropdown != null) {
             uint selected = wifi_edit_ipv6_method_dropdown.get_selected ();
-            if (selected == 2 || selected == 3) {
-                if (wifi_edit_ipv6_gateway_auto_switch != null) {
-                    wifi_edit_ipv6_gateway_auto_switch.set_active (true);
-                }
+            bool ipv6_disabled_or_ignore = selected == 2 || selected == 3;
+            if (ipv6_disabled_or_ignore) {
                 if (wifi_edit_ipv6_dns_auto_switch != null) {
                     wifi_edit_ipv6_dns_auto_switch.set_active (true);
                 }
             }
         }
 
-        if (wifi_edit_ipv4_gateway_entry != null && wifi_edit_gateway_auto_switch != null) {
-            wifi_edit_ipv4_gateway_entry.set_sensitive (!wifi_edit_gateway_auto_switch.get_active ());
-        }
-
         if (wifi_edit_ipv4_dns_entry != null && wifi_edit_dns_auto_switch != null) {
             wifi_edit_ipv4_dns_entry.set_sensitive (!wifi_edit_dns_auto_switch.get_active ());
-        }
-
-        if (wifi_edit_ipv6_gateway_entry != null && wifi_edit_ipv6_gateway_auto_switch != null) {
-            wifi_edit_ipv6_gateway_entry.set_sensitive (!wifi_edit_ipv6_gateway_auto_switch.get_active ());
         }
 
         if (wifi_edit_ipv6_dns_entry != null && wifi_edit_ipv6_dns_auto_switch != null) {

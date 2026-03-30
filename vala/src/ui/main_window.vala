@@ -443,12 +443,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller.sync_edit_gateway_dns_sensitivity (
             wifi_edit_page.ipv4_method_dropdown,
             wifi_edit_page.ipv4_gateway_entry,
-            wifi_edit_page.gateway_auto_switch,
             wifi_edit_page.ipv4_dns_entry,
             wifi_edit_page.dns_auto_switch,
             wifi_edit_page.ipv6_method_dropdown,
             wifi_edit_page.ipv6_gateway_entry,
-            wifi_edit_page.ipv6_gateway_auto_switch,
             wifi_edit_page.ipv6_dns_entry,
             wifi_edit_page.ipv6_dns_auto_switch
         );

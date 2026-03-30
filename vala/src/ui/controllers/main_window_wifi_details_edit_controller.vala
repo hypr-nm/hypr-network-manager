@@ -393,14 +393,12 @@ public class MainWindowWifiDetailsEditController : Object {
         page.ipv4_method_dropdown.set_selected (0);
         page.ipv4_address_entry.set_text ("");
         page.ipv4_prefix_entry.set_text ("");
-        page.gateway_auto_switch.set_active (true);
         page.ipv4_gateway_entry.set_text ("");
         page.dns_auto_switch.set_active (true);
         page.ipv4_dns_entry.set_text ("");
         page.ipv6_method_dropdown.set_selected (0);
         page.ipv6_address_entry.set_text ("");
         page.ipv6_prefix_entry.set_text ("");
-        page.ipv6_gateway_auto_switch.set_active (true);
         page.ipv6_gateway_entry.set_text ("");
         page.ipv6_dns_auto_switch.set_active (true);
         page.ipv6_dns_entry.set_text ("");
@@ -429,7 +427,6 @@ public class MainWindowWifiDetailsEditController : Object {
             page.ipv4_prefix_entry.set_text (
                 ip_settings.configured_prefix > 0 ? "%u".printf (ip_settings.configured_prefix) : ""
             );
-            page.gateway_auto_switch.set_active (ip_settings.gateway_auto);
             page.ipv4_gateway_entry.set_text (ip_settings.configured_gateway);
             page.dns_auto_switch.set_active (ip_settings.dns_auto);
             page.ipv4_dns_entry.set_text (ip_settings.configured_dns);
@@ -440,7 +437,6 @@ public class MainWindowWifiDetailsEditController : Object {
             page.ipv6_prefix_entry.set_text (
                 ip_settings.configured_ipv6_prefix > 0 ? "%u".printf (ip_settings.configured_ipv6_prefix) : ""
             );
-            page.ipv6_gateway_auto_switch.set_active (ip_settings.ipv6_gateway_auto);
             page.ipv6_gateway_entry.set_text (ip_settings.configured_ipv6_gateway);
             page.ipv6_dns_auto_switch.set_active (ip_settings.ipv6_dns_auto);
             page.ipv6_dns_entry.set_text (ip_settings.configured_ipv6_dns);
@@ -466,24 +462,22 @@ public class MainWindowWifiDetailsEditController : Object {
 
         string method = MainWindowWifiEditUtils.get_selected_ipv4_method (page.ipv4_method_dropdown);
         string ipv4_address = page.ipv4_address_entry.get_text ().strip ();
-        bool gateway_auto = page.gateway_auto_switch.get_active ();
         string ipv4_gateway = page.ipv4_gateway_entry.get_text ().strip ();
+        bool gateway_auto = method != "manual";
         bool dns_auto = page.dns_auto_switch.get_active ();
         string dns_csv = page.ipv4_dns_entry.get_text ().strip ();
         string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method (page.ipv6_method_dropdown);
         string ipv6_address = page.ipv6_address_entry.get_text ().strip ();
-        bool ipv6_gateway_auto = page.ipv6_gateway_auto_switch.get_active ();
         string ipv6_gateway = page.ipv6_gateway_entry.get_text ().strip ();
+        bool ipv6_gateway_auto = method6 != "manual";
         bool ipv6_dns_auto = page.ipv6_dns_auto_switch.get_active ();
         string ipv6_dns_csv = page.ipv6_dns_entry.get_text ().strip ();
 
         if (method == "disabled") {
-            gateway_auto = true;
             dns_auto = true;
         }
 
         if (method6 == "disabled" || method6 == "ignore") {
-            ipv6_gateway_auto = true;
             ipv6_dns_auto = true;
         }
 
@@ -518,16 +512,10 @@ public class MainWindowWifiDetailsEditController : Object {
                 on_error ("Manual IPv4 requires a prefix between 1 and 32.");
                 return false;
             }
-        }
-
-        if (!gateway_auto && ipv4_gateway == "") {
-            on_error ("Manual gateway is enabled; please provide a gateway address.");
-            return false;
-        }
-
-        if (!gateway_auto && method == "disabled") {
-            on_error ("Manual gateway is not supported when IPv4 method is Disabled.");
-            return false;
+            if (ipv4_gateway == "") {
+                on_error ("Manual IPv4 requires a gateway address.");
+                return false;
+            }
         }
 
         string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
@@ -545,16 +533,10 @@ public class MainWindowWifiDetailsEditController : Object {
                 on_error ("Manual IPv6 requires a prefix between 1 and 128.");
                 return false;
             }
-        }
-
-        if (!ipv6_gateway_auto && ipv6_gateway == "") {
-            on_error ("Manual IPv6 gateway is enabled; please provide a gateway address.");
-            return false;
-        }
-
-        if (!ipv6_gateway_auto && (method6 == "disabled" || method6 == "ignore")) {
-            on_error ("Manual IPv6 gateway is not supported when IPv6 method is Disabled or Ignore.");
-            return false;
+            if (ipv6_gateway == "") {
+                on_error ("Manual IPv6 requires a gateway address.");
+                return false;
+            }
         }
 
         string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
