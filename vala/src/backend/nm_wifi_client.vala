@@ -16,6 +16,67 @@ public class NmWifiClient : GLib.Object {
         return GLib.Variant.is_object_path (path);
     }
 
+    private static string resolve_saved_ssid (NM.Connection conn, NM.SettingWireless s_wireless) {
+        string ssid = bytes_to_ssid (s_wireless.ssid).strip ();
+        if (ssid != "") {
+            return ssid;
+        }
+
+        var s_conn = conn.get_setting_connection ();
+        if (s_conn != null && s_conn.id != null && s_conn.id.strip () != "") {
+            return s_conn.id.strip ();
+        }
+
+        return "Saved network";
+    }
+
+    private static bool resolve_autoconnect (NM.Connection conn) {
+        var s_conn = conn.get_setting_connection ();
+        if (s_conn != null) {
+            return s_conn.autoconnect;
+        }
+        return true;
+    }
+
+    private static WifiNetwork? build_saved_network (
+        NM.Connection conn,
+        string wifi_device_path,
+        string active_uuid
+    ) {
+        var s_wireless = conn.get_setting_wireless ();
+        if (s_wireless == null) {
+            return null;
+        }
+
+        string uuid = conn.get_uuid ().strip ();
+        if (uuid == "") {
+            return null;
+        }
+
+        string ssid = resolve_saved_ssid (conn, s_wireless);
+        bool is_secured = conn.get_setting_wireless_security () != null;
+
+        return new WifiNetwork () {
+            ssid = ssid,
+            saved_connection_uuid = uuid,
+            signal = 0,
+            connected = active_uuid != "" && active_uuid == uuid,
+            is_secured = is_secured,
+            is_hidden = s_wireless.hidden,
+            saved = true,
+            autoconnect = resolve_autoconnect (conn),
+            device_path = wifi_device_path,
+            ap_path = "saved:" + uuid,
+            bssid = "",
+            frequency_mhz = 0,
+            max_bitrate_kbps = 0,
+            mode = 0,
+            flags = 0,
+            wpa_flags = 0,
+            rsn_flags = 0
+        };
+    }
+
     private static string infer_security_mode (NM.SettingWirelessSecurity? s_sec) {
         if (s_sec == null) {
             return "open";
@@ -198,70 +259,30 @@ public class NmWifiClient : GLib.Object {
             }
         }
 
+        string primary_active_uuid = "";
+        if (primary_wifi_device_path != "") {
+            var primary_wifi_device = client.get_device_by_path (primary_wifi_device_path);
+            if (primary_wifi_device != null) {
+                var ac = primary_wifi_device.get_active_connection ();
+                if (ac != null) {
+                    primary_active_uuid = ac.get_uuid ();
+                }
+            }
+        }
+
         // Include saved Wi-Fi profiles even when the AP is not currently visible.
         foreach (var conn in connections) {
-            var s_wireless = conn.get_setting_wireless ();
-            if (s_wireless == null) {
-                continue;
-            }
-
             string uuid = conn.get_uuid ();
             if (uuid == "" || seen_saved_uuids.contains (uuid)) {
                 continue;
             }
 
-            string ssid = bytes_to_ssid (s_wireless.ssid).strip ();
-            if (ssid == "") {
-                var s_conn = conn.get_setting_connection ();
-                if (s_conn != null && s_conn.id != null && s_conn.id.strip () != "") {
-                    ssid = s_conn.id.strip ();
-                } else {
-                    ssid = "Saved network";
-                }
+            var net = build_saved_network (conn, primary_wifi_device_path, primary_active_uuid);
+            if (net == null) {
+                continue;
             }
 
-            bool is_secured = conn.get_setting_wireless_security () != null;
-            bool autoconnect = true;
-            var s_conn = conn.get_setting_connection ();
-            if (s_conn != null) {
-                autoconnect = s_conn.autoconnect;
-            }
-
-            bool is_connected = false;
-            string connection_uuid = "";
-            if (primary_wifi_device_path != "") {
-                var primary_wifi_device = client.get_device_by_path (primary_wifi_device_path);
-                if (primary_wifi_device != null) {
-                    var ac = primary_wifi_device.get_active_connection ();
-                    if (ac != null) {
-                        connection_uuid = ac.get_uuid ();
-                    }
-                }
-            }
-            if (connection_uuid != "" && connection_uuid == uuid) {
-                is_connected = true;
-            }
-
-            string network_key = ssid + ":" + (is_secured ? "secured" : "open");
-            var net = new WifiNetwork () {
-                ssid = ssid,
-                saved_connection_uuid = uuid,
-                signal = 0,
-                connected = is_connected,
-                is_secured = is_secured,
-                is_hidden = s_wireless.hidden,
-                saved = true,
-                autoconnect = autoconnect,
-                device_path = primary_wifi_device_path,
-                ap_path = "saved:" + uuid,
-                bssid = "",
-                frequency_mhz = 0,
-                max_bitrate_kbps = 0,
-                mode = 0,
-                flags = 0,
-                wpa_flags = 0,
-                rsn_flags = 0
-            };
+            string network_key = net.ssid + ":" + (net.is_secured ? "secured" : "open");
 
             if (!networks_map.contains (network_key)) {
                 networks_map.insert (network_key, net);
@@ -348,52 +369,10 @@ public class NmWifiClient : GLib.Object {
 
         var out_list = new List<WifiNetwork> ();
         foreach (var conn in connections) {
-            var s_wireless = conn.get_setting_wireless ();
-            if (s_wireless == null) {
-                continue;
+            var net = build_saved_network (conn, wifi_device_path, active_uuid);
+            if (net != null) {
+                out_list.append (net);
             }
-
-            string uuid = conn.get_uuid ();
-            if (uuid.strip () == "") {
-                continue;
-            }
-
-            string ssid = bytes_to_ssid (s_wireless.ssid).strip ();
-            if (ssid == "") {
-                var s_conn_fallback = conn.get_setting_connection ();
-                if (s_conn_fallback != null && s_conn_fallback.id != null && s_conn_fallback.id.strip () != "") {
-                    ssid = s_conn_fallback.id.strip ();
-                } else {
-                    ssid = "Saved network";
-                }
-            }
-
-            bool is_secured = conn.get_setting_wireless_security () != null;
-            bool autoconnect = true;
-            var s_conn = conn.get_setting_connection ();
-            if (s_conn != null) {
-                autoconnect = s_conn.autoconnect;
-            }
-
-            out_list.append (new WifiNetwork () {
-                ssid = ssid,
-                saved_connection_uuid = uuid,
-                signal = 0,
-                connected = active_uuid != "" && active_uuid == uuid,
-                is_secured = is_secured,
-                is_hidden = s_wireless.hidden,
-                saved = true,
-                autoconnect = autoconnect,
-                device_path = wifi_device_path,
-                ap_path = "saved:" + uuid,
-                bssid = "",
-                frequency_mhz = 0,
-                max_bitrate_kbps = 0,
-                mode = 0,
-                flags = 0,
-                wpa_flags = 0,
-                rsn_flags = 0
-            });
         }
 
         var networks_arr = new WifiNetwork[out_list.length ()];
@@ -553,80 +532,15 @@ public class NmWifiClient : GLib.Object {
                 }
             }
 
-            var s_ip4 = conn.get_setting_ip4_config ();
-            if (s_ip4 != null) {
-                ip_settings.ipv4_method = s_ip4.get_method ();
-                ip_settings.gateway_auto = !s_ip4.ignore_auto_routes;
-                if (s_ip4.get_num_addresses () > 0) {
-                    unowned NM.IPAddress addr = s_ip4.get_address (0);
-                    ip_settings.configured_address = addr.get_address ();
-                    ip_settings.configured_prefix = addr.get_prefix ();
-                }
-                ip_settings.configured_gateway = s_ip4.get_gateway ();
-                ip_settings.dns_auto = !s_ip4.ignore_auto_dns;
-                if (s_ip4.get_num_dns () > 0) {
-                    string[] dns_list = {};
-                    for (int i = 0; i < s_ip4.get_num_dns (); i++) {
-                        dns_list += s_ip4.get_dns (i);
-                    }
-                    ip_settings.configured_dns = string.joinv (", ", dns_list);
-                }
-            }
-            var s_ip6 = conn.get_setting_ip6_config ();
-            if (s_ip6 != null) {
-                ip_settings.ipv6_method = s_ip6.get_method ();
-                ip_settings.ipv6_gateway_auto = !s_ip6.ignore_auto_routes;
-                if (s_ip6.get_num_addresses () > 0) {
-                    unowned NM.IPAddress addr = s_ip6.get_address (0);
-                    ip_settings.configured_ipv6_address = addr.get_address ();
-                    ip_settings.configured_ipv6_prefix = addr.get_prefix ();
-                }
-                ip_settings.configured_ipv6_gateway = s_ip6.get_gateway ();
-                ip_settings.ipv6_dns_auto = !s_ip6.ignore_auto_dns;
-                if (s_ip6.get_num_dns () > 0) {
-                    string[] dns_list = {};
-                    for (int i = 0; i < s_ip6.get_num_dns (); i++) {
-                        dns_list += s_ip6.get_dns (i);
-                    }
-                    ip_settings.configured_ipv6_dns = string.joinv (", ", dns_list);
-                }
-            }
+            NmIpConfigHelper.populate_configured_ip_settings (ip_settings, conn);
         }
 
         var dev = client.get_device_by_path (network.device_path);
-        if (dev != null && dev.get_state () == NM.DeviceState.ACTIVATED) {
-            var ac = dev.get_active_connection ();
-            if (ac != null) {
-                var ip4 = ac.get_ip4_config ();
-                if (ip4 != null) {
-                    if (ip4.get_addresses ().length > 0) {
-                        unowned NM.IPAddress addr = ip4.get_addresses ().get (0);
-                        ip_settings.current_address = addr.get_address ();
-                        ip_settings.current_prefix = addr.get_prefix ();
-                    }
-                    ip_settings.current_gateway = ip4.get_gateway ();
-                    if (ip4.get_nameservers ().length > 0) {
-                        ip_settings.current_dns = ip4.get_nameservers ()[0];
-                    }
-                }
-                var ip6 = ac.get_ip6_config ();
-                if (ip6 != null) {
-                    if (ip6.get_addresses ().length > 0) {
-                        unowned NM.IPAddress addr = ip6.get_addresses ().get (0);
-                        ip_settings.current_ipv6_address = addr.get_address ();
-                        ip_settings.current_ipv6_prefix = addr.get_prefix ();
-                    }
-                    ip_settings.current_ipv6_gateway = ip6.get_gateway ();
-                    if (ip6.get_nameservers ().length > 0) {
-                        ip_settings.current_ipv6_dns = ip6.get_nameservers ()[0];
-                    }
-                }
-            }
-        }
+        NmIpConfigHelper.populate_runtime_ip_settings (ip_settings, dev);
         return ip_settings;
     }
 
-        public async bool update_network_settings (
+    public async bool update_network_settings (
         WifiNetwork network,
         WifiNetworkUpdateRequest request,
         Cancellable? cancellable = null
@@ -637,19 +551,11 @@ public class NmWifiClient : GLib.Object {
             log_warn ("nm-wifi-client", "Connection not found for UUID: " + network.saved_connection_uuid);
              throw new IOError.NOT_FOUND ("Connection not found");
         }
-        var s_ip4 = conn.get_setting_ip4_config ();
-        if (s_ip4 == null) {
-            s_ip4 = new NM.SettingIP4Config ();
-            conn.add_setting (s_ip4);
-        }
-        apply_ipv4_settings (s_ip4, request.get_ipv4_section ());
+        var s_ip4 = NmIpConfigHelper.ensure_ip4_setting (conn);
+        NmIpConfigHelper.apply_ipv4_settings (s_ip4, request.get_ipv4_section ());
 
-        var s_ip6 = conn.get_setting_ip6_config ();
-        if (s_ip6 == null) {
-            s_ip6 = new NM.SettingIP6Config ();
-            conn.add_setting (s_ip6);
-        }
-        apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
+        var s_ip6 = NmIpConfigHelper.ensure_ip6_setting (conn);
+        NmIpConfigHelper.apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
 
         if (request.password != null && request.password != "") {
             var s_sec = conn.get_setting_wireless_security ();
@@ -662,81 +568,6 @@ public class NmWifiClient : GLib.Object {
             yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
         }
         return true;
-    }
-
-
-    private void apply_ipv4_settings (NM.SettingIP4Config s_ip4, Ipv4UpdateSection req) {
-        s_ip4.clear_addresses ();
-        s_ip4.clear_dns ();
-
-        string method = req.normalized_method ();
-        if (method == "auto" || method == "") {
-            s_ip4.method = NM.SettingIP4Config.METHOD_AUTO;
-        } else if (method == "manual") {
-            s_ip4.method = NM.SettingIP4Config.METHOD_MANUAL;
-            if (req.address != "") {
-                try { var addr = new NM.IPAddress (2, req.address,
-                    req.prefix); s_ip4.add_address (addr); } catch (Error e) {}
-            }
-        } else if (method == "link-local") {
-            s_ip4.method = NM.SettingIP4Config.METHOD_LINK_LOCAL;
-        } else if (method == "shared") {
-            s_ip4.method = NM.SettingIP4Config.METHOD_SHARED;
-        } else if (method == "disabled") {
-            s_ip4.method = NM.SettingIP4Config.METHOD_DISABLED;
-        }
-
-        if (!req.gateway_auto && req.gateway != "") {
-            s_ip4.gateway = req.gateway;
-        } else if (req.gateway_auto) {
-            s_ip4.gateway = null;
-        }
-        s_ip4.ignore_auto_routes = !req.gateway_auto;
-
-        s_ip4.ignore_auto_dns = !req.dns_auto;
-        if (!req.dns_auto) {
-            foreach (var dns in req.dns_servers) {
-                if (dns != "") s_ip4.add_dns (dns);
-            }
-        }
-    }
-
-    private void apply_ipv6_settings (NM.SettingIP6Config s_ip6, Ipv6UpdateSection req) {
-        s_ip6.clear_addresses ();
-        s_ip6.clear_dns ();
-
-        string method = req.normalized_method ();
-        if (method == "auto" || method == "") {
-            s_ip6.method = NM.SettingIP6Config.METHOD_AUTO;
-        } else if (method == "manual") {
-            s_ip6.method = NM.SettingIP6Config.METHOD_MANUAL;
-            if (req.address != "") {
-                try { var addr = new NM.IPAddress (10, req.address,
-                    req.prefix); s_ip6.add_address (addr); } catch (Error e) {}
-            }
-        } else if (method == "link-local") {
-            s_ip6.method = NM.SettingIP6Config.METHOD_LINK_LOCAL;
-        } else if (method == "shared") {
-            s_ip6.method = NM.SettingIP6Config.METHOD_SHARED;
-        } else if (method == "disabled") {
-            s_ip6.method = NM.SettingIP6Config.METHOD_DISABLED;
-        } else if (method == "ignore") {
-            s_ip6.method = NM.SettingIP6Config.METHOD_IGNORE;
-        }
-
-        if (!req.gateway_auto && req.gateway != "") {
-            s_ip6.gateway = req.gateway;
-        } else if (req.gateway_auto) {
-            s_ip6.gateway = null;
-        }
-        s_ip6.ignore_auto_routes = !req.gateway_auto;
-
-        s_ip6.ignore_auto_dns = !req.dns_auto;
-        if (!req.dns_auto) {
-            foreach (var dns in req.dns_servers) {
-                if (dns != "") s_ip6.add_dns (dns);
-            }
-        }
     }
 
 
