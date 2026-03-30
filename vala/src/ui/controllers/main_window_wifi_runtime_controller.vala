@@ -707,35 +707,7 @@ public class MainWindowWifiRuntimeController : Object {
                     return;
                 }
 
-                page.profile_name_entry.set_text (settings.profile_name);
-                page.ssid_entry.set_text (settings.ssid);
-                page.bssid_entry.set_text (settings.bssid);
-                page.set_selected_security_mode_key (settings.security_mode);
-                page.autoconnect_check.set_active (settings.autoconnect);
-                page.all_users_check.set_active (settings.available_to_all_users);
-                page.password_entry.set_text (settings.configured_password);
-
-                page.ipv4_method_dropdown.set_selected (
-                    MainWindowHelpers.get_ipv4_method_dropdown_index (settings.ipv4_method)
-                );
-                page.ipv4_address_entry.set_text (settings.configured_address);
-                page.ipv4_prefix_entry.set_text (
-                    settings.configured_prefix > 0 ? "%u".printf (settings.configured_prefix) : ""
-                );
-                page.ipv4_gateway_entry.set_text (settings.configured_gateway);
-                page.dns_auto_switch.set_active (settings.dns_auto);
-                page.ipv4_dns_entry.set_text (settings.configured_dns);
-
-                page.ipv6_method_dropdown.set_selected (
-                    MainWindowHelpers.get_ipv6_method_dropdown_index (settings.ipv6_method)
-                );
-                page.ipv6_address_entry.set_text (settings.configured_ipv6_address);
-                page.ipv6_prefix_entry.set_text (
-                    settings.configured_ipv6_prefix > 0 ? "%u".printf (settings.configured_ipv6_prefix) : ""
-                );
-                page.ipv6_gateway_entry.set_text (settings.configured_ipv6_gateway);
-                page.ipv6_dns_auto_switch.set_active (settings.ipv6_dns_auto);
-                page.ipv6_dns_entry.set_text (settings.configured_ipv6_dns);
+                MainWindowWifiSavedProfileFormUtils.apply_settings_to_edit_page (page, settings);
 
                 on_sync_sensitivity ();
             } catch (Error e) {

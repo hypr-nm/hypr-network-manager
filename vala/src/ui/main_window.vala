@@ -864,119 +864,18 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
 
         var profile = selected_wifi_saved_profile;
-        string password = wifi_saved_edit_page.password_entry.get_text ().strip ();
-
-        string method = MainWindowWifiEditUtils.get_selected_ipv4_method (wifi_saved_edit_page.ipv4_method_dropdown);
-        string ipv4_address = wifi_saved_edit_page.ipv4_address_entry.get_text ().strip ();
-        string ipv4_gateway = wifi_saved_edit_page.ipv4_gateway_entry.get_text ().strip ();
-        bool gateway_auto = method != "manual";
-        bool dns_auto = wifi_saved_edit_page.dns_auto_switch.get_active ();
-        string dns_csv = wifi_saved_edit_page.ipv4_dns_entry.get_text ().strip ();
-
-        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method (wifi_saved_edit_page.ipv6_method_dropdown);
-        string ipv6_address = wifi_saved_edit_page.ipv6_address_entry.get_text ().strip ();
-        string ipv6_gateway = wifi_saved_edit_page.ipv6_gateway_entry.get_text ().strip ();
-        bool ipv6_gateway_auto = method6 != "manual";
-        bool ipv6_dns_auto = wifi_saved_edit_page.ipv6_dns_auto_switch.get_active ();
-        string ipv6_dns_csv = wifi_saved_edit_page.ipv6_dns_entry.get_text ().strip ();
-
-        if (method == "disabled") {
-            dns_auto = true;
-        }
-        if (method6 == "disabled" || method6 == "ignore") {
-            ipv6_dns_auto = true;
-        }
-
-        uint32 ipv4_prefix;
-        string prefix_error;
-        if (!MainWindowWifiEditUtils.try_parse_prefix (
-            wifi_saved_edit_page.ipv4_prefix_entry.get_text (),
-            out ipv4_prefix,
-            out prefix_error
+        WifiSavedProfileUpdateRequest profile_request;
+        WifiNetworkUpdateRequest network_request;
+        string error_message;
+        if (!MainWindowWifiSavedProfileFormUtils.build_update_requests (
+            wifi_saved_edit_page,
+            out profile_request,
+            out network_request,
+            out error_message
         )) {
-            show_error (prefix_error);
+            show_error (error_message);
             return false;
         }
-
-        uint32 ipv6_prefix;
-        string prefix6_error;
-        if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix (
-            wifi_saved_edit_page.ipv6_prefix_entry.get_text (),
-            out ipv6_prefix,
-            out prefix6_error
-        )) {
-            show_error (prefix6_error);
-            return false;
-        }
-
-        if (method == "manual") {
-            if (ipv4_address == "") {
-                show_error ("Manual IPv4 requires an address.");
-                return false;
-            }
-            if (ipv4_prefix == 0) {
-                show_error ("Manual IPv4 requires a prefix between 1 and 32.");
-                return false;
-            }
-            if (ipv4_gateway == "") {
-                show_error ("Manual IPv4 requires a gateway address.");
-                return false;
-            }
-        }
-
-        string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
-        if (!dns_auto && dns_servers.length == 0) {
-            show_error ("Manual DNS is enabled; provide at least one DNS server.");
-            return false;
-        }
-
-        if (method6 == "manual") {
-            if (ipv6_address == "") {
-                show_error ("Manual IPv6 requires an address.");
-                return false;
-            }
-            if (ipv6_prefix == 0) {
-                show_error ("Manual IPv6 requires a prefix between 1 and 128.");
-                return false;
-            }
-            if (ipv6_gateway == "") {
-                show_error ("Manual IPv6 requires a gateway address.");
-                return false;
-            }
-        }
-
-        string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
-        if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
-            show_error ("Manual IPv6 DNS is enabled; provide at least one DNS server.");
-            return false;
-        }
-
-        var profile_request = new WifiSavedProfileUpdateRequest () {
-            profile_name = wifi_saved_edit_page.profile_name_entry.get_text ().strip (),
-            ssid = wifi_saved_edit_page.ssid_entry.get_text ().strip (),
-            bssid = wifi_saved_edit_page.bssid_entry.get_text ().strip (),
-            security_mode = wifi_saved_edit_page.get_selected_security_mode_key (),
-            autoconnect = wifi_saved_edit_page.autoconnect_check.get_active (),
-            available_to_all_users = wifi_saved_edit_page.all_users_check.get_active ()
-        };
-
-        var network_request = new WifiNetworkUpdateRequest () {
-            password = password,
-            ipv4_method = method,
-            ipv4_address = ipv4_address,
-            ipv4_prefix = ipv4_prefix,
-            ipv4_gateway_auto = gateway_auto,
-            ipv4_gateway = ipv4_gateway,
-            ipv4_dns_auto = dns_auto,
-            ipv4_dns_servers = dns_servers,
-            ipv6_method = method6,
-            ipv6_address = ipv6_address,
-            ipv6_prefix = ipv6_prefix,
-            ipv6_gateway_auto = ipv6_gateway_auto,
-            ipv6_gateway = ipv6_gateway,
-            ipv6_dns_auto = ipv6_dns_auto,
-            ipv6_dns_servers = ipv6_dns_servers
-        };
 
         wifi_controller.apply_saved_wifi_profile_updates (
             nm,
