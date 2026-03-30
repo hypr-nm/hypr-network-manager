@@ -3,7 +3,7 @@ using GLib;
 public class NmWifiClient : GLib.Object {
     private NetworkManagerClient core;
 
-    private static string bytes_to_ssid (Bytes? value) {
+    private string bytes_to_ssid (Bytes? value) {
         if (value == null) {
             return "";
         }
@@ -12,11 +12,11 @@ public class NmWifiClient : GLib.Object {
         return converted != null ? converted : "";
     }
 
-    private static bool is_valid_specific_object (string path) {
+    private bool is_valid_specific_object (string path) {
         return GLib.Variant.is_object_path (path);
     }
 
-    private static string resolve_saved_ssid (NM.Connection conn, NM.SettingWireless s_wireless) {
+    private string resolve_saved_ssid (NM.Connection conn, NM.SettingWireless s_wireless) {
         string ssid = bytes_to_ssid (s_wireless.ssid).strip ();
         if (ssid != "") {
             return ssid;
@@ -30,7 +30,7 @@ public class NmWifiClient : GLib.Object {
         return "Saved network";
     }
 
-    private static bool resolve_autoconnect (NM.Connection conn) {
+    private bool resolve_autoconnect (NM.Connection conn) {
         var s_conn = conn.get_setting_connection ();
         if (s_conn != null) {
             return s_conn.autoconnect;
@@ -38,7 +38,7 @@ public class NmWifiClient : GLib.Object {
         return true;
     }
 
-    private static string resolve_profile_name (NM.Connection conn, string fallback) {
+    private string resolve_profile_name (NM.Connection conn, string fallback) {
         var s_conn = conn.get_setting_connection ();
         if (s_conn != null && s_conn.id != null && s_conn.id.strip () != "") {
             return s_conn.id.strip ();
@@ -46,7 +46,7 @@ public class NmWifiClient : GLib.Object {
         return fallback;
     }
 
-    private static WifiNetwork? build_saved_network (
+    private WifiNetwork? build_saved_network (
         NM.Connection conn,
         string wifi_device_path,
         string active_uuid
@@ -85,7 +85,7 @@ public class NmWifiClient : GLib.Object {
         };
     }
 
-    private static string infer_security_mode (NM.SettingWirelessSecurity? s_sec) {
+    private string infer_security_mode (NM.SettingWirelessSecurity? s_sec) {
         if (s_sec == null) {
             return "open";
         }
@@ -108,7 +108,7 @@ public class NmWifiClient : GLib.Object {
         return "wpa-psk";
     }
 
-    private static void apply_security_mode (NM.Connection conn, string security_mode) {
+    private void apply_security_mode (NM.Connection conn, string security_mode) {
         string mode = security_mode.strip ().down ();
         if (mode == "") {
             mode = "open";
@@ -355,7 +355,7 @@ public class NmWifiClient : GLib.Object {
         return new WifiRefreshData (networks_arr, devices_arr);
     }
 
-    private static WifiSavedProfile? build_saved_profile (
+    private WifiSavedProfile? build_saved_profile (
         NM.Connection conn,
         string wifi_device_path,
         string active_uuid
