@@ -374,10 +374,11 @@ public class MainWindowWifiDetailsEditController : Object {
 
         page.edit_title.set_text ("Edit: %s".printf (net.ssid));
         page.password_entry.set_text ("");
+        page.password_entry.set_visibility (false);
 
         if (net.is_secured) {
             page.note_label.set_text (
-                "Leave password empty to keep current credentials.\n"
+                "Current password is prefilled when available.\n"
                 + "IPv4 and IPv6 settings can be changed below (auto/manual/disabled)."
             );
         } else {
@@ -419,6 +420,11 @@ public class MainWindowWifiDetailsEditController : Object {
             page.ipv4_method_dropdown.set_selected (
                 MainWindowHelpers.get_ipv4_method_dropdown_index (ip_settings.ipv4_method)
             );
+            if (net.is_secured) {
+                page.password_entry.set_text (ip_settings.configured_password);
+            } else {
+                page.password_entry.set_text ("");
+            }
             page.ipv4_address_entry.set_text (ip_settings.configured_address);
             page.ipv4_prefix_entry.set_text (
                 ip_settings.configured_prefix > 0 ? "%u".printf (ip_settings.configured_prefix) : ""

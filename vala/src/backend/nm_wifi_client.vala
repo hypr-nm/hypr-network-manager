@@ -201,6 +201,37 @@ public class NmWifiClient : GLib.Object {
         }
 
         if (conn != null) {
+            var s_sec = conn.get_setting_wireless_security ();
+            if (s_sec != null && s_sec.psk != null) {
+                ip_settings.configured_password = s_sec.psk;
+            }
+
+            if (ip_settings.configured_password == "" && conn is NM.RemoteConnection) {
+                try {
+                    var secrets = yield ((NM.RemoteConnection) conn).get_secrets_async (
+                        "802-11-wireless-security",
+                        cancellable
+                    );
+                    if (secrets != null) {
+                        Variant? sec_dict = secrets.lookup_value (
+                            "802-11-wireless-security",
+                            new VariantType ("a{sv}")
+                        );
+                        if (sec_dict != null) {
+                            Variant? psk_value = sec_dict.lookup_value ("psk", new VariantType ("s"));
+                            if (psk_value != null) {
+                                ip_settings.configured_password = psk_value.get_string ();
+                            }
+                        }
+                    }
+                } catch (Error e) {
+                    log_debug (
+                        "nm-wifi-client",
+                        "get_network_ip_settings: unable to read wireless secrets: " + e.message
+                    );
+                }
+            }
+
             var s_ip4 = conn.get_setting_ip4_config ();
             if (s_ip4 != null) {
                 ip_settings.ipv4_method = s_ip4.get_method ();

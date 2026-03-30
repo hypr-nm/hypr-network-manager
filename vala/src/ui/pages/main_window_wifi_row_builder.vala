@@ -175,6 +175,31 @@ public class MainWindowWifiRowBuilder : Object {
         prompt_entry.add_css_class ("nm-password-entry");
         prompt_entry.add_css_class ("nm-inline-password-entry");
 
+        MainWindowActionCallback update_prompt_password_visibility_icon = () => {
+            bool reveal = prompt_entry.get_visibility ();
+            prompt_entry.set_icon_from_icon_name (
+                Gtk.EntryIconPosition.SECONDARY,
+                reveal ? "view-conceal-symbolic" : "view-reveal-symbolic"
+            );
+            prompt_entry.set_icon_tooltip_text (
+                Gtk.EntryIconPosition.SECONDARY,
+                reveal ? "Hide password" : "Show password"
+            );
+        };
+
+        if (net.is_secured) {
+            prompt_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
+            prompt_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
+            update_prompt_password_visibility_icon ();
+            prompt_entry.icon_press.connect ((icon_pos) => {
+                if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
+                    return;
+                }
+                prompt_entry.set_visibility (!prompt_entry.get_visibility ());
+                update_prompt_password_visibility_icon ();
+            });
+        }
+
         var prompt_cancel = new Gtk.Button.with_label ("Cancel");
         prompt_cancel.add_css_class ("nm-button");
         prompt_cancel.add_css_class ("nm-inline-password-cancel");

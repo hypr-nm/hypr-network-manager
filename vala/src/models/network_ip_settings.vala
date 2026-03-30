@@ -1,4 +1,5 @@
 public class NetworkIpSettings : Object {
+    public string configured_password { get; set; default = ""; }
     public string ipv4_method { get; set; default = "auto"; }
     public string ipv6_method { get; set; default = "auto"; }
     public bool gateway_auto { get; set; default = true; }
