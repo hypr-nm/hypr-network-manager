@@ -44,6 +44,7 @@ executable(
     'src/ui/pages/main_window_wifi_saved_pages_builder.vala',
     'src/ui/utils/main_window_ip_edit_form_builder.vala',
     'src/ui/utils/main_window_helpers.vala',
+    'src/ui/utils/main_window_helpers_formatting.vala',
     'src/ui/utils/main_window_wifi_edit_utils.vala',
     'src/ui/main_window.vala',
     'src/app.vala',

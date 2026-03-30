@@ -1,8 +1,8 @@
 using GLib;
 using Gtk;
 
-public class MainWindowWifiEditUtils : Object {
-    public static string get_selected_ipv4_method (Gtk.DropDown dropdown) {
+namespace MainWindowWifiEditUtils {
+    public string get_selected_ipv4_method (Gtk.DropDown dropdown) {
         switch (dropdown.get_selected ()) {
         case 1:
             return "manual";
@@ -14,7 +14,7 @@ public class MainWindowWifiEditUtils : Object {
         }
     }
 
-    public static string get_selected_ipv6_method (Gtk.DropDown dropdown) {
+    public string get_selected_ipv6_method (Gtk.DropDown dropdown) {
         switch (dropdown.get_selected ()) {
         case 1:
             return "manual";
@@ -28,7 +28,7 @@ public class MainWindowWifiEditUtils : Object {
         }
     }
 
-    public static bool try_parse_prefix (string prefix_text, out uint32 ipv4_prefix, out string error_message) {
+    public bool try_parse_prefix (string prefix_text, out uint32 ipv4_prefix, out string error_message) {
         ipv4_prefix = 0;
         error_message = "";
 
@@ -47,7 +47,7 @@ public class MainWindowWifiEditUtils : Object {
         return true;
     }
 
-    public static bool try_parse_ipv6_prefix (string prefix_text, out uint32 ipv6_prefix, out string error_message) {
+    public bool try_parse_ipv6_prefix (string prefix_text, out uint32 ipv6_prefix, out string error_message) {
         ipv6_prefix = 0;
         error_message = "";
 
@@ -66,7 +66,7 @@ public class MainWindowWifiEditUtils : Object {
         return true;
     }
 
-    public static string[] parse_dns_csv (string dns_csv) {
+    public string[] parse_dns_csv (string dns_csv) {
         string[] dns_servers = {};
         foreach (string token in dns_csv.split (",")) {
             string item = token.strip ();
