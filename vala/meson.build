@@ -4,6 +4,11 @@ layer_shell_dep = dependency('gtk4-layer-shell-0')
 json_glib_dep = dependency('json-glib-1.0')
 libnm_dep = dependency('libnm', version: '>= 1.0')
 
+add_project_arguments(
+  '-w',
+  language: 'c'
+)
+
 executable(
   'hypr-network-manager',
   [

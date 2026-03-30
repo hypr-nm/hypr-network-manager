@@ -1,8 +1,8 @@
 using GLib;
 
 public class NmIpConfigHelper : GLib.Object {
-    public static NM.SettingIP4Config ensure_ip4_setting (NM.Connection conn) {
-        var s_ip4 = conn.get_setting_ip4_config ();
+    public static NM.SettingIPConfig ensure_ip4_setting (NM.Connection conn) {
+        NM.SettingIPConfig? s_ip4 = (NM.SettingIPConfig?) conn.get_setting (typeof (NM.SettingIP4Config));
         if (s_ip4 == null) {
             s_ip4 = new NM.SettingIP4Config ();
             conn.add_setting (s_ip4);
@@ -10,8 +10,8 @@ public class NmIpConfigHelper : GLib.Object {
         return s_ip4;
     }
 
-    public static NM.SettingIP6Config ensure_ip6_setting (NM.Connection conn) {
-        var s_ip6 = conn.get_setting_ip6_config ();
+    public static NM.SettingIPConfig ensure_ip6_setting (NM.Connection conn) {
+        NM.SettingIPConfig? s_ip6 = (NM.SettingIPConfig?) conn.get_setting (typeof (NM.SettingIP6Config));
         if (s_ip6 == null) {
             s_ip6 = new NM.SettingIP6Config ();
             conn.add_setting (s_ip6);
@@ -20,7 +20,7 @@ public class NmIpConfigHelper : GLib.Object {
     }
 
     public static void populate_configured_ip_settings (NetworkIpSettings ip_settings, NM.Connection conn) {
-        var s_ip4 = conn.get_setting_ip4_config ();
+        NM.SettingIPConfig? s_ip4 = (NM.SettingIPConfig?) conn.get_setting (typeof (NM.SettingIP4Config));
         if (s_ip4 != null) {
             ip_settings.ipv4_method = s_ip4.get_method ();
             ip_settings.gateway_auto = !s_ip4.ignore_auto_routes;
@@ -40,7 +40,7 @@ public class NmIpConfigHelper : GLib.Object {
             }
         }
 
-        var s_ip6 = conn.get_setting_ip6_config ();
+        NM.SettingIPConfig? s_ip6 = (NM.SettingIPConfig?) conn.get_setting (typeof (NM.SettingIP6Config));
         if (s_ip6 != null) {
             ip_settings.ipv6_method = s_ip6.get_method ();
             ip_settings.ipv6_gateway_auto = !s_ip6.ignore_auto_routes;
@@ -79,8 +79,9 @@ public class NmIpConfigHelper : GLib.Object {
                 ip_settings.current_prefix = addr.get_prefix ();
             }
             ip_settings.current_gateway = ip4.get_gateway ();
-            if (ip4.get_nameservers ().length > 0) {
-                ip_settings.current_dns = ip4.get_nameservers ()[0];
+            foreach (unowned string nameserver in ip4.get_nameservers ()) {
+                ip_settings.current_dns = nameserver;
+                break;
             }
         }
 
@@ -92,13 +93,14 @@ public class NmIpConfigHelper : GLib.Object {
                 ip_settings.current_ipv6_prefix = addr.get_prefix ();
             }
             ip_settings.current_ipv6_gateway = ip6.get_gateway ();
-            if (ip6.get_nameservers ().length > 0) {
-                ip_settings.current_ipv6_dns = ip6.get_nameservers ()[0];
+            foreach (unowned string nameserver in ip6.get_nameservers ()) {
+                ip_settings.current_ipv6_dns = nameserver;
+                break;
             }
         }
     }
 
-    public static void apply_ipv4_settings (NM.SettingIP4Config s_ip4, Ipv4UpdateSection req) {
+    public static void apply_ipv4_settings (NM.SettingIPConfig s_ip4, Ipv4UpdateSection req) {
         s_ip4.clear_addresses ();
         s_ip4.clear_dns ();
 
@@ -139,7 +141,7 @@ public class NmIpConfigHelper : GLib.Object {
         }
     }
 
-    public static void apply_ipv6_settings (NM.SettingIP6Config s_ip6, Ipv6UpdateSection req) {
+    public static void apply_ipv6_settings (NM.SettingIPConfig s_ip6, Ipv6UpdateSection req) {
         s_ip6.clear_addresses ();
         s_ip6.clear_dns ();
 
