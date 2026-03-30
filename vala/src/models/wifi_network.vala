@@ -1,6 +1,5 @@
 public class WifiNetwork : Object {
     public string ssid { get; construct set; }
-    public string profile_name { get; construct set; default = ""; }
     public string saved_connection_uuid { get; construct set; }
     public uint8 signal { get; construct set; }
     public bool connected { get; construct set; }
