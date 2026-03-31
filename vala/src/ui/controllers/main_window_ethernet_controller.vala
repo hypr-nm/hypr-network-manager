@@ -20,6 +20,8 @@ public class MainWindowEthernetController : Object {
 
     private MainWindowEthernetDetailsPage ethernet_details_page;
     private MainWindowEthernetEditPage ethernet_edit_page;
+    private bool profile_edit_mode = false;
+    private MainWindowActionCallback? on_profile_edit_exit = null;
 
     private HashTable<string, bool> pending_ethernet_action;
     private HashTable<string, bool> pending_ethernet_target_connected;
@@ -152,6 +154,8 @@ public class MainWindowEthernetController : Object {
 
     public void on_details_edit_requested () {
         if (selected_ethernet_device != null) {
+            profile_edit_mode = false;
+            on_profile_edit_exit = null;
             open_edit (selected_ethernet_device);
         }
     }
@@ -159,6 +163,16 @@ public class MainWindowEthernetController : Object {
     public void on_edit_back_requested () {
         cancel_edit_request ();
         on_set_popup_text_input_mode (false);
+        if (profile_edit_mode) {
+            profile_edit_mode = false;
+            selected_ethernet_device = null;
+            ethernet_stack.set_visible_child_name ("list");
+            if (on_profile_edit_exit != null) {
+                on_profile_edit_exit ();
+            }
+            on_profile_edit_exit = null;
+            return;
+        }
         if (selected_ethernet_device != null) {
             open_details (selected_ethernet_device);
         } else {
@@ -634,8 +648,18 @@ public class MainWindowEthernetController : Object {
                         return;
                     }
                     on_refresh_after_action (false);
-                    open_details (dev);
                     on_set_popup_text_input_mode (false);
+                    if (profile_edit_mode) {
+                        profile_edit_mode = false;
+                        selected_ethernet_device = null;
+                        ethernet_stack.set_visible_child_name ("list");
+                        if (on_profile_edit_exit != null) {
+                            on_profile_edit_exit ();
+                        }
+                        on_profile_edit_exit = null;
+                    } else {
+                        open_details (dev);
+                    }
                     return;
                 }
 
@@ -668,8 +692,18 @@ public class MainWindowEthernetController : Object {
                             on_error ("Reconnect after edit failed: " + reconnect_error);
                         }
                         on_refresh_after_action (false);
-                        open_details (dev);
                         on_set_popup_text_input_mode (false);
+                        if (profile_edit_mode) {
+                            profile_edit_mode = false;
+                            selected_ethernet_device = null;
+                            ethernet_stack.set_visible_child_name ("list");
+                            if (on_profile_edit_exit != null) {
+                                on_profile_edit_exit ();
+                            }
+                            on_profile_edit_exit = null;
+                        } else {
+                            open_details (dev);
+                        }
                     });
                 });
         });
@@ -757,7 +791,9 @@ public class MainWindowEthernetController : Object {
         return row;
     }
 
-    public void open_profile_edit (NetworkDevice dev) {
+    public void open_profile_edit (NetworkDevice dev, owned MainWindowActionCallback? on_exit = null) {
+        profile_edit_mode = on_exit != null;
+        on_profile_edit_exit = (owned) on_exit;
         open_edit (dev);
     }
 

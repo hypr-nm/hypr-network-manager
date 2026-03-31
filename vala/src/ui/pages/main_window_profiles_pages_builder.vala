@@ -10,6 +10,9 @@ public class MainWindowProfilesPage : Gtk.Box {
     public signal void delete_profile (WifiSavedProfile profile);
     public signal void open_ethernet_profile (NetworkDevice device);
 
+    private Gtk.ScrolledWindow scroll;
+    private double saved_scroll_value = 0.0;
+
     public MainWindowProfilesPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
@@ -47,7 +50,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         this.append (header);
 
-        var scroll = new Gtk.ScrolledWindow ();
+        scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
         scroll.add_css_class ("nm-scroll");
         scroll.set_vexpand (true);
@@ -193,13 +196,19 @@ public class MainWindowProfilesPage : Gtk.Box {
             info.append (sub);
             root.append (info);
 
-            var edit_btn = new Gtk.Button.with_label ("Edit");
-            edit_btn.add_css_class ("nm-button");
-            edit_btn.add_css_class ("nm-action-button");
-            edit_btn.clicked.connect (() => {
+            var details_btn = new Gtk.Button.with_label ("Details");
+            details_btn.add_css_class ("nm-button");
+            details_btn.add_css_class ("nm-action-button");
+            details_btn.clicked.connect (() => {
                 this.open_ethernet_profile (row_device);
             });
-            root.append (edit_btn);
+            root.append (details_btn);
+
+            var click = new Gtk.GestureClick ();
+            click.released.connect ((n_press, x, y) => {
+                this.open_ethernet_profile (row_device);
+            });
+            info.add_controller (click);
 
             row.set_child (root);
             this.ethernet_saved_listbox.append (row);
@@ -212,6 +221,153 @@ public class MainWindowProfilesPage : Gtk.Box {
 
     public void focus_ethernet_section () {
         this.ethernet_saved_listbox.grab_focus ();
+    }
+
+    public void remember_scroll_position () {
+        var adj = scroll.get_vadjustment ();
+        if (adj != null) {
+            saved_scroll_value = adj.get_value ();
+        }
+    }
+
+    public void restore_scroll_position () {
+        var adj = scroll.get_vadjustment ();
+        if (adj != null) {
+            double target = saved_scroll_value;
+            Idle.add (() => {
+                adj.set_value (target);
+                return false;
+            });
+        }
+    }
+}
+
+public class MainWindowProfilesDetailsPage : Gtk.Box {
+    public Gtk.Label title_label { get; private set; }
+    public Gtk.Label subtitle_label { get; private set; }
+    public Gtk.Box rows { get; private set; }
+    public Gtk.Button edit_button { get; private set; }
+    public Gtk.Button delete_button { get; private set; }
+
+    public signal void back ();
+    public signal void edit ();
+    public signal void delete_profile ();
+
+    public MainWindowProfilesDetailsPage () {
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+
+        this.set_margin_start (12);
+        this.set_margin_end (12);
+        this.set_margin_top (12);
+        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-network-details");
+
+        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+        nav_row.add_css_class ("nm-details-nav-row");
+
+        var back_btn = MainWindowHelpers.build_back_button (() => {
+            this.back ();
+        });
+        nav_row.append (back_btn);
+        this.append (nav_row);
+
+        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
+        this.title_label = new Gtk.Label ("Profile");
+        this.title_label.set_xalign (0.0f);
+        this.title_label.add_css_class ("nm-section-title");
+        header.append (this.title_label);
+
+        this.subtitle_label = new Gtk.Label ("");
+        this.subtitle_label.set_xalign (0.0f);
+        this.subtitle_label.add_css_class ("nm-sub-label");
+        header.append (this.subtitle_label);
+
+        this.append (header);
+
+        var action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        action_row.add_css_class ("nm-details-action-row");
+
+        this.edit_button = new Gtk.Button.with_label ("Edit");
+        this.edit_button.add_css_class ("nm-button");
+        this.edit_button.add_css_class ("nm-action-button");
+        this.edit_button.add_css_class ("nm-details-action-button");
+        this.edit_button.clicked.connect (() => {
+            this.edit ();
+        });
+        action_row.append (this.edit_button);
+
+        this.delete_button = new Gtk.Button.with_label ("Delete");
+        this.delete_button.add_css_class ("nm-button");
+        this.delete_button.add_css_class ("nm-action-button");
+        this.delete_button.add_css_class ("nm-details-action-button");
+        this.delete_button.clicked.connect (() => {
+            this.delete_profile ();
+        });
+        action_row.append (this.delete_button);
+
+        this.append (action_row);
+
+        var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
+        sep.add_css_class ("nm-separator");
+        this.append (sep);
+
+        Gtk.Box rows_out;
+        this.append (MainWindowHelpers.build_details_section ("Details", out rows_out));
+        this.rows = rows_out;
+    }
+
+    public void set_wifi_profile (WifiSavedProfile profile) {
+        MainWindowHelpers.clear_box (this.rows);
+
+        string profile_name = MainWindowHelpers.safe_text (profile.profile_name).strip ();
+        string ssid = MainWindowHelpers.safe_text (profile.ssid).strip ();
+        string title = profile_name != "" ? profile_name : (ssid != "" ? ssid : "Saved Wi-Fi Profile");
+        this.title_label.set_text (title);
+        this.subtitle_label.set_text ("Wi-Fi profile");
+
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Profile Name",
+            MainWindowHelpers.display_text_or_na (profile.profile_name)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "SSID",
+            MainWindowHelpers.display_text_or_na (profile.ssid)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "UUID",
+            MainWindowHelpers.display_text_or_na (profile.saved_connection_uuid)
+        ));
+
+        this.delete_button.set_visible (true);
+        this.edit_button.set_visible (true);
+    }
+
+    public void set_ethernet_profile (NetworkDevice device) {
+        MainWindowHelpers.clear_box (this.rows);
+
+        this.title_label.set_text (MainWindowHelpers.display_text_or_na (device.name));
+        this.subtitle_label.set_text ("Ethernet profile");
+
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Interface",
+            MainWindowHelpers.display_text_or_na (device.name)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Profile",
+            MainWindowHelpers.display_text_or_na (device.connection)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "State",
+            MainWindowHelpers.display_text_or_na (device.state_label)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "UUID",
+            MainWindowHelpers.display_text_or_na (device.connection_uuid)
+        ));
+
+        this.delete_button.set_visible (false);
+        this.edit_button.set_visible (true);
     }
 }
 

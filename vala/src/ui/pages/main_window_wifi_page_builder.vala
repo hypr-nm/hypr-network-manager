@@ -9,6 +9,7 @@ namespace MainWindowWifiPageBuilder {
         Gtk.Widget edit_page,
         Gtk.Widget add_page,
         Gtk.Widget saved_page,
+        Gtk.Widget saved_details_page,
         Gtk.Widget saved_edit_page,
         MainWindowActionCallback on_refresh,
         MainWindowActionCallback on_add_network,
@@ -96,6 +97,7 @@ namespace MainWindowWifiPageBuilder {
         wifi_stack.add_named (scroll, "list");
         wifi_stack.add_named (wifi_placeholder, "empty");
         wifi_stack.add_named (saved_page, "saved");
+        wifi_stack.add_named (saved_details_page, "saved-details");
         wifi_stack.add_named (saved_edit_page, "saved-edit");
         wifi_stack.add_named (details_page, "details");
         wifi_stack.add_named (edit_page, "edit");
