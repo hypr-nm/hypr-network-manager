@@ -97,6 +97,19 @@ namespace MainWindowWifiPageBuilder {
         wifi_stack.add_named (edit_page, "edit");
         wifi_stack.add_named (add_page, "add");
         wifi_stack.set_visible_child_name ("empty");
+        var wifi_stack_ref = wifi_stack;
+
+        MainWindowActionCallback sync_toolbar_visibility = () => {
+            string page_name = wifi_stack_ref.get_visible_child_name ();
+            bool show_toolbar = page_name == "list" || page_name == "empty";
+            toolbar.set_visible (show_toolbar);
+        };
+
+        wifi_stack_ref.notify["visible-child-name"].connect (() => {
+            sync_toolbar_visibility ();
+        });
+
+        sync_toolbar_visibility ();
 
         page.append (wifi_stack);
 

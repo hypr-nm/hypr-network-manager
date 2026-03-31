@@ -32,12 +32,15 @@ public class MainWindow : Gtk.ApplicationWindow {
     private bool show_frequency;
     private bool show_band;
     private NetworkManagerClient nm;
+    private Gtk.Widget status_bar;
+    private Gtk.Widget status_separator;
     private Gtk.Label status_label;
     private Gtk.Image status_icon;
     private Gtk.Switch networking_switch;
     private Gtk.Switch wifi_switch;
     private Gtk.ListBox wifi_listbox;
     private Gtk.Stack wifi_stack;
+    private Gtk.Stack ethernet_stack;
     private WifiNetwork? selected_wifi_network = null;
     private MainWindowProfileAdapter? wifi_saved_flow = null;
     private MainWindowWifiDetailsPage wifi_details_page;
@@ -404,10 +407,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         });
 
         Gtk.ListBox ethernet_listbox;
-        Gtk.Stack ethernet_stack;
+        Gtk.Stack ethernet_stack_local;
         var page = MainWindowEthernetPageBuilder.build_page (
             out ethernet_listbox,
-            out ethernet_stack,
+            out ethernet_stack_local,
             ethernet_details_page,
             ethernet_edit_page,
             () => {
@@ -418,14 +421,54 @@ public class MainWindow : Gtk.ApplicationWindow {
         var ethernet_view_context = new MainWindowEthernetViewContext (
             page,
             ethernet_listbox,
-            ethernet_stack,
+            ethernet_stack_local,
             ethernet_details_page,
             ethernet_edit_page
         );
 
+        this.ethernet_stack = ethernet_view_context.stack;
+
         ethernet_controller.configure_page (ethernet_view_context);
 
         return ethernet_view_context.page;
+    }
+
+    private bool is_focus_mode_active () {
+        if (content_stack == null || notebook == null) {
+            return false;
+        }
+
+        string root_page = content_stack.get_visible_child_name ();
+        if (root_page == "profiles") {
+            return true;
+        }
+
+        int current_tab = notebook.get_current_page ();
+        if (current_tab == 0 && wifi_stack != null) {
+            string wifi_page = wifi_stack.get_visible_child_name ();
+            return wifi_page == "details" || wifi_page == "edit" || wifi_page == "add";
+        }
+
+        if (current_tab == 1 && ethernet_stack != null) {
+            string ethernet_page = ethernet_stack.get_visible_child_name ();
+            return ethernet_page == "details" || ethernet_page == "edit";
+        }
+
+        return false;
+    }
+
+    private void update_main_chrome_visibility () {
+        bool focus_mode = is_focus_mode_active ();
+
+        if (status_bar != null) {
+            status_bar.set_visible (!focus_mode);
+        }
+        if (status_separator != null) {
+            status_separator.set_visible (!focus_mode);
+        }
+        if (notebook != null) {
+            notebook.set_show_tabs (!focus_mode);
+        }
     }
 
     private string resolve_wifi_row_icon_name (WifiNetwork net) {
@@ -1140,10 +1183,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         root.add_css_class ("nm-root");
         set_child (root);
 
-        root.append (build_status_bar ());
-        var status_sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        status_sep.add_css_class ("nm-separator");
-        root.append (status_sep);
+        status_bar = build_status_bar ();
+        root.append (status_bar);
+        status_separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
+        status_separator.add_css_class ("nm-separator");
+        root.append (status_separator);
 
         content_stack = new Gtk.Stack ();
         content_stack.set_vexpand (true);
@@ -1162,6 +1206,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             if (page_num != 2) {
                 vpn_controller.on_page_leave ();
             }
+            update_main_chrome_visibility ();
         });
 
         var profiles_root_page = build_profiles_root_page ();
@@ -1193,6 +1238,21 @@ public class MainWindow : Gtk.ApplicationWindow {
         content_stack.add_named (notebook, "main");
         content_stack.add_named (profiles_root_page, "profiles");
         content_stack.set_visible_child_name ("main");
+        content_stack.notify["visible-child-name"].connect (() => {
+            update_main_chrome_visibility ();
+        });
+
+        if (wifi_stack != null) {
+            wifi_stack.notify["visible-child-name"].connect (() => {
+                update_main_chrome_visibility ();
+            });
+        }
+
+        if (ethernet_stack != null) {
+            ethernet_stack.notify["visible-child-name"].connect (() => {
+                update_main_chrome_visibility ();
+            });
+        }
 
         var tabs_menu_popover = new Gtk.Popover ();
         tabs_menu_popover.add_css_class ("nm-tabs-menu-popover");
@@ -1230,6 +1290,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         notebook.set_action_widget (tabs_menu_button, Gtk.PackType.END);
 
         root.append (content_stack);
+
+        update_main_chrome_visibility ();
     }
 
     private void dispose_lifecycle_owners () {
