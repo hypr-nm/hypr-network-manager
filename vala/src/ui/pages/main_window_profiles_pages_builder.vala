@@ -272,20 +272,29 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         nav_row.append (back_btn);
         this.append (nav_row);
 
-        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
+        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        header.set_halign (Gtk.Align.CENTER);
+        header.add_css_class ("nm-details-header");
+
+        var icon = new Gtk.Image.from_icon_name ("avatar-default-symbolic");
+        icon.set_pixel_size (28);
+        icon.add_css_class ("nm-details-network-icon");
+        header.append (icon);
+
         this.title_label = new Gtk.Label ("Profile");
-        this.title_label.set_xalign (0.0f);
-        this.title_label.add_css_class ("nm-section-title");
+        this.title_label.set_xalign (0.5f);
+        this.title_label.set_halign (Gtk.Align.CENTER);
+        this.title_label.add_css_class ("nm-details-network-title");
         header.append (this.title_label);
 
         this.subtitle_label = new Gtk.Label ("");
-        this.subtitle_label.set_xalign (0.0f);
+        this.subtitle_label.set_xalign (0.5f);
+        this.subtitle_label.set_halign (Gtk.Align.CENTER);
         this.subtitle_label.add_css_class ("nm-sub-label");
         header.append (this.subtitle_label);
 
-        this.append (header);
-
         var action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        action_row.set_halign (Gtk.Align.CENTER);
         action_row.add_css_class ("nm-details-action-row");
 
         this.edit_button = new Gtk.Button.with_label ("Edit");
@@ -306,15 +315,28 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         });
         action_row.append (this.delete_button);
 
-        this.append (action_row);
+        header.append (action_row);
+        this.append (header);
 
         var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
         sep.add_css_class ("nm-separator");
         this.append (sep);
 
+        var scroll = new Gtk.ScrolledWindow ();
+        scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class ("nm-scroll");
+        scroll.set_vexpand (true);
+
+        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
+        body.set_margin_top (4);
+        body.set_margin_bottom (4);
+
         Gtk.Box rows_out;
-        this.append (MainWindowHelpers.build_details_section ("Details", out rows_out));
+        body.append (MainWindowHelpers.build_details_section ("Details", out rows_out));
         this.rows = rows_out;
+
+        scroll.set_child (body);
+        this.append (scroll);
     }
 
     public void set_wifi_profile (WifiSavedProfile profile) {
@@ -337,6 +359,10 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         this.rows.append (MainWindowHelpers.build_details_row (
             "UUID",
             MainWindowHelpers.display_text_or_na (profile.saved_connection_uuid)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "IP",
+            "Loading…"
         ));
 
         this.delete_button.set_visible (true);
@@ -365,9 +391,122 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
             "UUID",
             MainWindowHelpers.display_text_or_na (device.connection_uuid)
         ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "IP",
+            "Loading…"
+        ));
 
         this.delete_button.set_visible (false);
         this.edit_button.set_visible (true);
+    }
+
+    public void apply_wifi_ip_settings (WifiSavedProfileSettings settings) {
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Security",
+            MainWindowHelpers.display_text_or_na (settings.security_mode.up ())
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Auto-connect",
+            settings.autoconnect ? "Yes" : "No"
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "All users",
+            settings.available_to_all_users ? "Yes" : "No"
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4",
+            MainWindowHelpers.get_ipv4_method_label (settings.ipv4_method)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4 Address",
+            MainWindowHelpers.format_ip_with_prefix (settings.configured_address, settings.configured_prefix)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4 Gateway",
+            MainWindowHelpers.display_text_or_na (settings.configured_gateway)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4 DNS",
+            MainWindowHelpers.display_text_or_na (settings.configured_dns)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6",
+            MainWindowHelpers.get_ipv6_method_label (settings.ipv6_method)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6 Address",
+            MainWindowHelpers.format_ip_with_prefix (settings.configured_ipv6_address, settings.configured_ipv6_prefix)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6 Gateway",
+            MainWindowHelpers.display_text_or_na (settings.configured_ipv6_gateway)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6 DNS",
+            MainWindowHelpers.display_text_or_na (settings.configured_ipv6_dns)
+        ));
+    }
+
+    public void apply_ethernet_ip_settings (NetworkIpSettings settings, bool is_connected) {
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4",
+            MainWindowHelpers.get_ipv4_method_label (settings.ipv4_method)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4 Address",
+            MainWindowHelpers.format_ip_with_prefix (settings.configured_address, settings.configured_prefix)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4 Gateway",
+            MainWindowHelpers.display_text_or_na (settings.configured_gateway)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv4 DNS",
+            MainWindowHelpers.display_text_or_na (settings.configured_dns)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6",
+            MainWindowHelpers.get_ipv6_method_label (settings.ipv6_method)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6 Address",
+            MainWindowHelpers.format_ip_with_prefix (settings.configured_ipv6_address, settings.configured_ipv6_prefix)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6 Gateway",
+            MainWindowHelpers.display_text_or_na (settings.configured_ipv6_gateway)
+        ));
+        this.rows.append (MainWindowHelpers.build_details_row (
+            "Configured IPv6 DNS",
+            MainWindowHelpers.display_text_or_na (settings.configured_ipv6_dns)
+        ));
+
+        if (is_connected) {
+            this.rows.append (MainWindowHelpers.build_details_row (
+                "Current IPv4 Address",
+                MainWindowHelpers.format_ip_with_prefix (settings.current_address, settings.current_prefix)
+            ));
+            this.rows.append (MainWindowHelpers.build_details_row (
+                "Current IPv4 Gateway",
+                MainWindowHelpers.display_text_or_na (settings.current_gateway)
+            ));
+            this.rows.append (MainWindowHelpers.build_details_row (
+                "Current IPv4 DNS",
+                MainWindowHelpers.display_text_or_na (settings.current_dns)
+            ));
+            this.rows.append (MainWindowHelpers.build_details_row (
+                "Current IPv6 Address",
+                MainWindowHelpers.format_ip_with_prefix (settings.current_ipv6_address, settings.current_ipv6_prefix)
+            ));
+            this.rows.append (MainWindowHelpers.build_details_row (
+                "Current IPv6 Gateway",
+                MainWindowHelpers.display_text_or_na (settings.current_ipv6_gateway)
+            ));
+            this.rows.append (MainWindowHelpers.build_details_row (
+                "Current IPv6 DNS",
+                MainWindowHelpers.display_text_or_na (settings.current_ipv6_dns)
+            ));
+        }
     }
 }
 
