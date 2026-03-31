@@ -397,10 +397,15 @@ public class MainWindowWifiController : Object {
     public void forget_wifi_network (
         NetworkManagerClient nm,
         WifiNetwork net,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action
+        owned MainWindowErrorCallback on_error,
+        owned MainWindowRefreshActionCallback on_refresh_after_action
     ) {
-        runtime_controller.forget_wifi_network (nm, net, on_error, on_refresh_after_action);
+        runtime_controller.forget_wifi_network (
+            nm,
+            net,
+            (owned) on_error,
+            (owned) on_refresh_after_action
+        );
     }
 
     public void disconnect_wifi_network (

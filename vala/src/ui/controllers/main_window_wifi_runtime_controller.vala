@@ -581,8 +581,8 @@ public class MainWindowWifiRuntimeController : Object {
     public void forget_wifi_network (
         NetworkManagerClient nm,
         WifiNetwork net,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action
+        owned MainWindowErrorCallback on_error,
+        owned MainWindowRefreshActionCallback on_refresh_after_action
     ) {
         uint epoch = capture_ui_epoch ();
         string profile_uuid = net.saved_connection_uuid.strip ();

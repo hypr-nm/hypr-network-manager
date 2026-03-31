@@ -99,21 +99,35 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller = new MainWindowWifiController ();
         ethernet_controller = new MainWindowEthernetController (
             nm,
-            show_error,
-            refresh_after_action,
-            set_popup_text_input_mode
+            (message) => {
+                show_error (message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            },
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
+            }
         );
         vpn_controller = new MainWindowVpnController (
             nm,
-            show_error,
-            refresh_after_action
+            (message) => {
+                show_error (message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            }
         );
         refresh_coordinator = new MainWindowRefreshCoordinator (
             nm,
             wifi_controller,
             refresh_interval_seconds,
-            refresh_all,
-            debug_log
+            () => {
+                refresh_all ();
+            },
+            (message) => {
+                debug_log (message);
+            }
         );
         pending_wifi_connect = new HashTable<string, bool> (str_hash, str_equal);
         pending_wifi_seen_connecting = new HashTable<string, bool> (str_hash, str_equal);
@@ -312,7 +326,9 @@ public class MainWindow : Gtk.ApplicationWindow {
                     wifi_add_ssid_entry,
                     wifi_add_security_dropdown,
                     wifi_add_password_entry,
-                    set_popup_text_input_mode
+                    (enabled) => {
+                        set_popup_text_input_mode (enabled);
+                    }
                 );
             },
             () => {
@@ -330,9 +346,15 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_stack,
             wifi_saved_page,
             wifi_saved_edit_page,
-            show_error,
-            refresh_after_action,
-            set_popup_text_input_mode
+            (message) => {
+                show_error (message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            },
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
+            }
         );
 
         return page;
@@ -345,9 +367,15 @@ public class MainWindow : Gtk.ApplicationWindow {
             wifi_add_ssid_entry,
             wifi_add_security_dropdown,
             wifi_add_password_entry,
-            show_error,
-            refresh_after_action,
-            set_popup_text_input_mode
+            (message) => {
+                show_error (message);
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            },
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
+            }
         );
     }
 
@@ -424,7 +452,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             net,
             active_wifi_connections,
             wifi_details_page,
-            debug_log
+            (message) => {
+                debug_log (message);
+            }
         );
     }
 
@@ -433,7 +463,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             ref selected_wifi_network,
             net,
             wifi_stack,
-            populate_wifi_details
+            (wifi_net) => {
+                populate_wifi_details (wifi_net);
+            }
         );
     }
 
@@ -759,11 +791,15 @@ public class MainWindow : Gtk.ApplicationWindow {
             show_band,
             show_bssid,
             resolve_wifi_row_icon_name (net),
-            open_wifi_details,
+            (wifi_net) => {
+                open_wifi_details (wifi_net);
+            },
             (wifi_net) => {
                 forget_wifi_network (wifi_net);
             },
-            disconnect_wifi_network,
+            (wifi_net) => {
+                disconnect_wifi_network (wifi_net);
+            },
             (wifi_net, password, hidden_ssid) => {
                 wifi_controller_ref.connect_with_optional_password (
                     nm_client,
@@ -778,9 +814,15 @@ public class MainWindow : Gtk.ApplicationWindow {
                     () => {
                         this.close ();
                     },
-                    refresh_after_action,
-                    refresh_wifi,
-                    show_error
+                    (request_wifi_scan) => {
+                        refresh_after_action (request_wifi_scan);
+                    },
+                    () => {
+                        refresh_wifi ();
+                    },
+                    (message) => {
+                        show_error (message);
+                    }
                 );
             },
             (wifi_net, enabled) => {
@@ -788,16 +830,24 @@ public class MainWindow : Gtk.ApplicationWindow {
                     nm_client,
                     wifi_net,
                     enabled,
-                    show_error,
-                    refresh_after_action,
-                    refresh_wifi
+                    (message) => {
+                        show_error (message);
+                    },
+                    (request_wifi_scan) => {
+                        refresh_after_action (request_wifi_scan);
+                    },
+                    () => {
+                        refresh_wifi ();
+                    }
                 );
             },
             (revealer, entry) => {
                 active_wifi_password_row_id = get_wifi_row_id (net);
                 show_wifi_password_prompt (revealer, entry);
             },
-            hide_wifi_password_prompt
+            (revealer, entry, value) => {
+                hide_wifi_password_prompt (revealer, entry, value);
+            }
         );
     }
 
@@ -820,10 +870,18 @@ public class MainWindow : Gtk.ApplicationWindow {
             pending_wifi_seen_connecting,
             active_wifi_password_row_id,
             has_active_prompt_open,
-            hide_active_wifi_password_prompt,
-            refresh_switch_states,
-            build_wifi_row,
-            debug_log
+            () => {
+                hide_active_wifi_password_prompt ();
+            },
+            () => {
+                refresh_switch_states ();
+            },
+            (net) => {
+                return build_wifi_row (net);
+            },
+            (message) => {
+                debug_log (message);
+            }
         );
     }
 
@@ -854,9 +912,15 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller.on_wifi_switch_changed (
             nm,
             wifi_switch,
-            show_error,
-            refresh_switch_states,
-            refresh_after_action
+            (message) => {
+                show_error (message);
+            },
+            () => {
+                refresh_switch_states ();
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            }
         );
     }
 
@@ -864,9 +928,15 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller.on_networking_switch_changed (
             nm,
             networking_switch,
-            show_error,
-            refresh_switch_states,
-            refresh_after_action
+            (message) => {
+                show_error (message);
+            },
+            () => {
+                refresh_switch_states ();
+            },
+            (request_wifi_scan) => {
+                refresh_after_action (request_wifi_scan);
+            }
         );
     }
 
@@ -876,7 +946,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             ref active_wifi_password_entry,
             revealer,
             entry,
-            set_popup_text_input_mode
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
+            }
         );
     }
 
@@ -887,7 +959,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             revealer,
             entry,
             value,
-            set_popup_text_input_mode
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
+            }
         );
 
         if (active_wifi_password_revealer == null) {
@@ -899,7 +973,9 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller.hide_active_wifi_password_prompt (
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry,
-            set_popup_text_input_mode
+            (enabled) => {
+                set_popup_text_input_mode (enabled);
+            }
         );
         active_wifi_password_row_id = null;
     }

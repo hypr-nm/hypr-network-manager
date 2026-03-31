@@ -62,8 +62,12 @@ public class MainWindowRefreshCoordinator : Object {
         wifi_controller.refresh_after_action (
             nm,
             request_wifi_scan,
-            on_refresh_all,
-            on_log
+            () => {
+                on_refresh_all ();
+            },
+            (message) => {
+                on_log (message);
+            }
         );
     }
 
@@ -72,7 +76,9 @@ public class MainWindowRefreshCoordinator : Object {
             nm,
             wifi_switch,
             networking_switch,
-            on_log
+            (message) => {
+                on_log (message);
+            }
         );
     }
 
