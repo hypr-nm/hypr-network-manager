@@ -60,6 +60,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private MainWindowVpnController vpn_controller;
     private Gtk.ListBox vpn_listbox;
     private Gtk.Stack vpn_stack;
+    private Gtk.Stack content_stack;
     private Gtk.Notebook notebook;
     private HashTable<string, bool> pending_wifi_connect;
     private HashTable<string, bool> pending_wifi_seen_connecting;
@@ -733,7 +734,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void wire_profiles_page_signals () {
         profiles_page.back.connect (() => {
-            notebook.set_current_page (0);
+            content_stack.set_visible_child_name ("main");
             wifi_stack.set_visible_child_name ("list");
             set_popup_text_input_mode (false);
         });
@@ -766,8 +767,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             if (selected_saved_ethernet_profile != null) {
                 var selected_dev = selected_saved_ethernet_profile;
                 notebook.set_current_page (1);
+                content_stack.set_visible_child_name ("main");
                 ethernet_controller.open_profile_edit (selected_dev, () => {
-                    notebook.set_current_page (3);
+                    content_stack.set_visible_child_name ("profiles");
                     profiles_stack.set_visible_child_name ("list");
                     profiles_page.restore_scroll_position ();
                     set_popup_text_input_mode (false);
@@ -846,7 +848,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void open_profiles_page (bool focus_ethernet_section = false) {
-        notebook.set_current_page (3);
+        content_stack.set_visible_child_name ("profiles");
         selected_saved_wifi_profile = null;
         selected_saved_ethernet_profile = null;
         refresh_saved_profiles ();
@@ -1143,6 +1145,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         status_sep.add_css_class ("nm-separator");
         root.append (status_sep);
 
+        content_stack = new Gtk.Stack ();
+        content_stack.set_vexpand (true);
+        content_stack.add_css_class ("nm-content-stack");
+
         notebook = new Gtk.Notebook ();
         notebook.set_show_border (false);
         notebook.add_css_class ("nm-notebook");
@@ -1184,9 +1190,9 @@ public class MainWindow : Gtk.ApplicationWindow {
             vpn_tab
         );
 
-        var profiles_tab = new Gtk.Label ("Profiles");
-        profiles_tab.add_css_class ("nm-tab-label");
-        notebook.append_page (profiles_root_page, profiles_tab);
+        content_stack.add_named (notebook, "main");
+        content_stack.add_named (profiles_root_page, "profiles");
+        content_stack.set_visible_child_name ("main");
 
         var tabs_menu_popover = new Gtk.Popover ();
         tabs_menu_popover.add_css_class ("nm-tabs-menu-popover");
@@ -1223,7 +1229,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         notebook.set_action_widget (tabs_menu_button, Gtk.PackType.END);
 
-        root.append (notebook);
+        root.append (content_stack);
     }
 
     private void dispose_lifecycle_owners () {
