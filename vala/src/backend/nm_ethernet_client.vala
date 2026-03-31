@@ -101,6 +101,19 @@ public class NmEthernetClient : GLib.Object {
         return ip_settings;
     }
 
+    public async NetworkIpSettings get_device_configured_ip_settings (
+        NetworkDevice device,
+        Cancellable? cancellable = null
+    ) {
+        var ip_settings = new NetworkIpSettings ();
+        var conn = resolve_connection (device);
+
+        if (conn != null) {
+            NmIpConfigHelper.populate_configured_ip_settings (ip_settings, conn);
+        }
+        return ip_settings;
+    }
+
     public async bool update_device_settings (
         NetworkDevice device,
         NetworkIpUpdateRequest request,

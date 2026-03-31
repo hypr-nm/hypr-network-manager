@@ -900,14 +900,14 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void load_saved_ethernet_profile_ip_settings (NetworkDevice device) {
-        nm.get_ethernet_device_ip_settings.begin (device, null, (obj, res) => {
-            var ip_settings = nm.get_ethernet_device_ip_settings.end (res);
+        nm.get_ethernet_device_configured_ip_settings.begin (device, null, (obj, res) => {
+            var ip_settings = nm.get_ethernet_device_configured_ip_settings.end (res);
             if (selected_saved_ethernet_profile == null
                 || (selected_saved_ethernet_profile.device_path != device.device_path
                     && selected_saved_ethernet_profile.name != device.name)) {
                 return;
             }
-            profiles_details_page.apply_ethernet_ip_settings (ip_settings, device.is_connected);
+            profiles_details_page.apply_ethernet_ip_settings (ip_settings);
         });
     }
 

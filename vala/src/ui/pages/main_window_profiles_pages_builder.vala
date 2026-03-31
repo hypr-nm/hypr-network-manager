@@ -360,10 +360,6 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
             "UUID",
             MainWindowHelpers.display_text_or_na (profile.saved_connection_uuid)
         ));
-        this.rows.append (MainWindowHelpers.build_details_row (
-            "IP",
-            "Loading…"
-        ));
 
         this.delete_button.set_visible (true);
         this.edit_button.set_visible (true);
@@ -390,10 +386,6 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         this.rows.append (MainWindowHelpers.build_details_row (
             "UUID",
             MainWindowHelpers.display_text_or_na (device.connection_uuid)
-        ));
-        this.rows.append (MainWindowHelpers.build_details_row (
-            "IP",
-            "Loading…"
         ));
 
         this.delete_button.set_visible (false);
@@ -447,7 +439,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         ));
     }
 
-    public void apply_ethernet_ip_settings (NetworkIpSettings settings, bool is_connected) {
+    public void apply_ethernet_ip_settings (NetworkIpSettings settings) {
         this.rows.append (MainWindowHelpers.build_details_row (
             "Configured IPv4",
             MainWindowHelpers.get_ipv4_method_label (settings.ipv4_method)
@@ -480,33 +472,6 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
             "Configured IPv6 DNS",
             MainWindowHelpers.display_text_or_na (settings.configured_ipv6_dns)
         ));
-
-        if (is_connected) {
-            this.rows.append (MainWindowHelpers.build_details_row (
-                "Current IPv4 Address",
-                MainWindowHelpers.format_ip_with_prefix (settings.current_address, settings.current_prefix)
-            ));
-            this.rows.append (MainWindowHelpers.build_details_row (
-                "Current IPv4 Gateway",
-                MainWindowHelpers.display_text_or_na (settings.current_gateway)
-            ));
-            this.rows.append (MainWindowHelpers.build_details_row (
-                "Current IPv4 DNS",
-                MainWindowHelpers.display_text_or_na (settings.current_dns)
-            ));
-            this.rows.append (MainWindowHelpers.build_details_row (
-                "Current IPv6 Address",
-                MainWindowHelpers.format_ip_with_prefix (settings.current_ipv6_address, settings.current_ipv6_prefix)
-            ));
-            this.rows.append (MainWindowHelpers.build_details_row (
-                "Current IPv6 Gateway",
-                MainWindowHelpers.display_text_or_na (settings.current_ipv6_gateway)
-            ));
-            this.rows.append (MainWindowHelpers.build_details_row (
-                "Current IPv6 DNS",
-                MainWindowHelpers.display_text_or_na (settings.current_ipv6_dns)
-            ));
-        }
     }
 }
 

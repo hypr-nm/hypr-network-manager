@@ -263,6 +263,13 @@ public class NetworkManagerClient : GLib.Object {
         return yield ethernet_client.get_device_ip_settings (device, cancellable);
     }
 
+    public async NetworkIpSettings get_ethernet_device_configured_ip_settings (
+        NetworkDevice device,
+        Cancellable? cancellable = null
+    ) {
+        return yield ethernet_client.get_device_configured_ip_settings (device, cancellable);
+    }
+
     public async bool update_ethernet_device_settings (
         NetworkDevice device,
         NetworkIpUpdateRequest request,
