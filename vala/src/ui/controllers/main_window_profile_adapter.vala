@@ -4,7 +4,7 @@ using Gtk;
 public class MainWindowProfileAdapter : Object {
     private NetworkManagerClient nm;
     private MainWindowWifiController wifi_controller;
-    private Gtk.Stack wifi_stack;
+    private Gtk.Stack profiles_stack;
     private MainWindowProfilesPage profiles_page;
     private MainWindowWifiSavedEditPage wifi_saved_edit_page;
 
@@ -17,7 +17,7 @@ public class MainWindowProfileAdapter : Object {
     public MainWindowProfileAdapter (
         NetworkManagerClient nm,
         MainWindowWifiController wifi_controller,
-        Gtk.Stack wifi_stack,
+        Gtk.Stack profiles_stack,
         MainWindowProfilesPage profiles_page,
         MainWindowWifiSavedEditPage wifi_saved_edit_page,
         owned MainWindowErrorCallback on_error,
@@ -26,7 +26,7 @@ public class MainWindowProfileAdapter : Object {
     ) {
         this.nm = nm;
         this.wifi_controller = wifi_controller;
-        this.wifi_stack = wifi_stack;
+        this.profiles_stack = profiles_stack;
         this.profiles_page = profiles_page;
         this.wifi_saved_edit_page = wifi_saved_edit_page;
         this.on_error = (owned) on_error;
@@ -70,7 +70,7 @@ public class MainWindowProfileAdapter : Object {
         }
         wifi_saved_edit_page.title_label.set_text ("Saved Profile: %s".printf (title_name));
         on_set_popup_text_input_mode (true);
-        wifi_stack.set_visible_child_name ("saved-edit");
+        profiles_stack.set_visible_child_name ("edit");
 
         wifi_controller.load_saved_wifi_profile_settings (
             nm,
@@ -106,7 +106,7 @@ public class MainWindowProfileAdapter : Object {
 
     public void on_saved_edit_back () {
         on_set_popup_text_input_mode (false);
-        wifi_stack.set_visible_child_name ("saved");
+        profiles_stack.set_visible_child_name ("list");
     }
 
     public bool apply_saved_edit () {
@@ -139,7 +139,7 @@ public class MainWindowProfileAdapter : Object {
             () => {
                 on_refresh_after_action (false);
                 on_set_popup_text_input_mode (false);
-                wifi_stack.set_visible_child_name ("saved");
+                profiles_stack.set_visible_child_name ("list");
             }
         );
 
