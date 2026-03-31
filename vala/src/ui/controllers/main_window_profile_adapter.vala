@@ -5,7 +5,7 @@ public class MainWindowProfileAdapter : Object {
     private NetworkManagerClient nm;
     private MainWindowWifiController wifi_controller;
     private Gtk.Stack wifi_stack;
-    private MainWindowWifiSavedPage wifi_saved_page;
+    private MainWindowProfilesPage profiles_page;
     private MainWindowWifiSavedEditPage wifi_saved_edit_page;
 
     private MainWindowErrorCallback on_error;
@@ -18,7 +18,7 @@ public class MainWindowProfileAdapter : Object {
         NetworkManagerClient nm,
         MainWindowWifiController wifi_controller,
         Gtk.Stack wifi_stack,
-        MainWindowWifiSavedPage wifi_saved_page,
+        MainWindowProfilesPage profiles_page,
         MainWindowWifiSavedEditPage wifi_saved_edit_page,
         owned MainWindowErrorCallback on_error,
         owned MainWindowRefreshActionCallback on_refresh_after_action,
@@ -27,7 +27,7 @@ public class MainWindowProfileAdapter : Object {
         this.nm = nm;
         this.wifi_controller = wifi_controller;
         this.wifi_stack = wifi_stack;
-        this.wifi_saved_page = wifi_saved_page;
+        this.profiles_page = profiles_page;
         this.wifi_saved_edit_page = wifi_saved_edit_page;
         this.on_error = (owned) on_error;
         this.on_refresh_after_action = (owned) on_refresh_after_action;
@@ -54,7 +54,7 @@ public class MainWindowProfileAdapter : Object {
     public void refresh_saved_networks () {
         wifi_controller.refresh_saved_wifi_profiles (
             nm,
-            wifi_saved_page,
+            profiles_page,
             (message) => {
                 on_error (message);
             }

@@ -174,6 +174,10 @@ public class MainWindowEthernetController : Object {
         sync_edit_gateway_dns_sensitivity ();
     }
 
+    private bool has_saved_profile (NetworkDevice dev) {
+        return nm.has_ethernet_profile_for_device (dev);
+    }
+
     private void sync_edit_gateway_dns_sensitivity () {
         if (ethernet_edit_page.ipv4_method_dropdown != null) {
             bool ipv4_disabled = ethernet_edit_page.ipv4_method_dropdown.get_selected () == 2;
@@ -278,7 +282,7 @@ public class MainWindowEthernetController : Object {
         MainWindowHelpers.clear_box (ethernet_details_page.ip_rows);
 
         string profile_name = MainWindowHelpers.display_text_or_na (dev.connection);
-        bool has_profile = MainWindowHelpers.safe_text (dev.connection).strip () != "";
+        bool has_profile = has_saved_profile (dev);
         bool pending = pending_ethernet_action.contains (dev.name);
 
         ethernet_details_page.basic_rows.append (MainWindowHelpers.build_details_row ("Interface", dev.name));
@@ -430,7 +434,7 @@ public class MainWindowEthernetController : Object {
     }
 
     private void open_edit (NetworkDevice dev) {
-        if (MainWindowHelpers.safe_text (dev.connection).strip () == "") {
+        if (!has_saved_profile (dev)) {
             on_error ("This interface has no saved Ethernet profile to edit.");
             return;
         }
@@ -442,8 +446,11 @@ public class MainWindowEthernetController : Object {
         edit_ip_cancellable = new Cancellable ();
         var edit_request = edit_ip_cancellable;
         ethernet_edit_page.edit_title.set_text ("Edit: %s".printf (dev.name));
-        ethernet_edit_page.note_label.set_text ("Update IPv4 and IPv6 settings for profile:" +
-            "%s".printf (dev.connection));
+        string profile_display = MainWindowHelpers.safe_text (dev.connection).strip ();
+        if (profile_display == "") {
+            profile_display = "Profile %s".printf (MainWindowHelpers.safe_text (dev.connection_uuid));
+        }
+        ethernet_edit_page.note_label.set_text ("Update IPv4 and IPv6 settings for profile: %s".printf (profile_display));
 
         ethernet_stack.set_visible_child_name ("edit");
         on_set_popup_text_input_mode (true);
@@ -715,7 +722,7 @@ public class MainWindowEthernetController : Object {
             can_toggle = false;
         } else if (dev.is_connected) {
             action_label = "Disconnect";
-        } else if (MainWindowHelpers.safe_text (dev.connection).strip () != "") {
+        } else if (has_saved_profile (dev)) {
             action_label = "Connect";
         } else {
             action_label = "No Profile";
@@ -734,6 +741,10 @@ public class MainWindowEthernetController : Object {
 
         row.set_child (content);
         return row;
+    }
+
+    public void open_profile_edit (NetworkDevice dev) {
+        open_edit (dev);
     }
 
     public void refresh () {

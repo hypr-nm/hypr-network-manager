@@ -12,7 +12,6 @@ namespace MainWindowWifiPageBuilder {
         Gtk.Widget saved_edit_page,
         MainWindowActionCallback on_refresh,
         MainWindowActionCallback on_add_network,
-        MainWindowActionCallback on_open_saved_networks,
         MainWindowActionCallback on_switch_changed
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
@@ -44,19 +43,6 @@ namespace MainWindowWifiPageBuilder {
             on_add_network ();
         });
         toolbar.append (add_btn);
-
-        var saved_btn = new Gtk.Button ();
-        saved_btn.add_css_class ("nm-button");
-        saved_btn.add_css_class ("nm-icon-button");
-        var saved_icon = new Gtk.Image.from_icon_name ("document-open-recent-symbolic");
-        saved_icon.add_css_class ("nm-toolbar-icon");
-        saved_icon.add_css_class ("nm-wifi-saved-icon");
-        saved_btn.set_child (saved_icon);
-        saved_btn.set_tooltip_text ("Saved Networks");
-        saved_btn.clicked.connect (() => {
-            on_open_saved_networks ();
-        });
-        toolbar.append (saved_btn);
 
         var refresh_btn = new Gtk.Button ();
         refresh_btn.add_css_class ("nm-button");

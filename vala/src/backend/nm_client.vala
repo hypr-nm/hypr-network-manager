@@ -56,6 +56,38 @@ public class NetworkManagerClient : GLib.Object {
         network_events_changed ();
     }
 
+    private NM.Connection? find_saved_ethernet_profile_for_iface (string iface_name) {
+        NM.Connection? generic_candidate = null;
+
+        foreach (var conn in nm_client.get_connections ()) {
+            if (conn.get_setting_wired () == null) {
+                continue;
+            }
+
+            var s_conn = conn.get_setting_connection ();
+            if (s_conn == null) {
+                continue;
+            }
+
+            string bound_iface = s_conn.interface_name != null ? s_conn.interface_name.strip () : "";
+            if (bound_iface == iface_name) {
+                return conn;
+            }
+
+            if (bound_iface == "") {
+                if (generic_candidate == null) {
+                    generic_candidate = conn;
+                }
+            }
+        }
+
+        return generic_candidate;
+    }
+
+    public bool has_ethernet_profile_for_device (NetworkDevice device) {
+        return ethernet_client.has_profile (device);
+    }
+
     public async bool subscribe_network_events_dbus (Cancellable? cancellable = null) throws Error {
         if (nm_signals_active || nm_client == null) {
             return true;
@@ -148,6 +180,12 @@ public class NetworkManagerClient : GLib.Object {
             if (ac != null) {
                 d.connection = ac.get_id ();
                 d.connection_uuid = ac.get_uuid ();
+            } else if (d.is_ethernet) {
+                var saved_profile = find_saved_ethernet_profile_for_iface (d.name);
+                if (saved_profile != null) {
+                    d.connection = saved_profile.get_id ();
+                    d.connection_uuid = saved_profile.get_uuid ();
+                }
             }
             devices_out.append (d);
         }

@@ -13,13 +13,42 @@ public class NmEthernetClient : GLib.Object {
             var c = client.get_connection_by_uuid (device.connection_uuid);
             if (c != null) return c;
         }
+
+        NM.Connection? generic_candidate = null;
         foreach (var conn in client.get_connections ()) {
             var s_eth = conn.get_setting_wired ();
-            if (s_eth != null && conn.get_id () == device.connection) {
+            if (s_eth == null) {
+                continue;
+            }
+
+            if (device.connection != "" && conn.get_id () == device.connection) {
                 return conn;
             }
+
+            var s_conn = conn.get_setting_connection ();
+            if (s_conn == null) {
+                continue;
+            }
+
+            string bound_iface = s_conn.interface_name != null ? s_conn.interface_name.strip () : "";
+            if (bound_iface != "" && bound_iface == device.name) {
+                return conn;
+            }
+
+            if (bound_iface == "" && generic_candidate == null) {
+                generic_candidate = conn;
+            }
         }
+
+        if (generic_candidate != null) {
+            return generic_candidate;
+        }
+
         return null;
+    }
+
+    public bool has_profile (NetworkDevice device) {
+        return resolve_connection (device) != null;
     }
 
     public async bool connect_device (

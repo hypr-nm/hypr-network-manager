@@ -662,7 +662,7 @@ public class MainWindowWifiRuntimeController : Object {
 
     public void refresh_saved_wifi_profiles (
         NetworkManagerClient nm,
-        MainWindowWifiSavedPage page,
+        MainWindowProfilesPage page,
         MainWindowErrorCallback on_error
     ) {
         uint epoch = capture_ui_epoch ();
@@ -676,7 +676,7 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch) || saved_profiles_cancellable != list_request) {
                     return;
                 }
-                page.set_networks (saved_profiles);
+                page.set_wifi_networks (saved_profiles);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch)
                     || saved_profiles_cancellable != list_request

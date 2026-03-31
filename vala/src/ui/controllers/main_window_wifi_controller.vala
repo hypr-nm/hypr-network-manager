@@ -446,7 +446,7 @@ public class MainWindowWifiController : Object {
 
     public void refresh_saved_wifi_profiles (
         NetworkManagerClient nm,
-        MainWindowWifiSavedPage page,
+        MainWindowProfilesPage page,
         MainWindowErrorCallback on_error
     ) {
         runtime_controller.refresh_saved_wifi_profiles (nm, page, on_error);

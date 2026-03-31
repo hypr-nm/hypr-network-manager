@@ -42,7 +42,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private MainWindowProfileAdapter? wifi_saved_flow = null;
     private MainWindowWifiDetailsPage wifi_details_page;
     private MainWindowWifiEditPage wifi_edit_page;
-    private MainWindowWifiSavedPage wifi_saved_page;
+    private MainWindowProfilesPage profiles_page;
     private MainWindowWifiSavedEditPage wifi_saved_edit_page;
     private Gtk.Entry wifi_add_ssid_entry;
     private Gtk.DropDown wifi_add_security_dropdown;
@@ -56,6 +56,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private MainWindowVpnController vpn_controller;
     private Gtk.ListBox vpn_listbox;
     private Gtk.Stack vpn_stack;
+    private Gtk.Notebook notebook;
     private HashTable<string, bool> pending_wifi_connect;
     private HashTable<string, bool> pending_wifi_seen_connecting;
     private HashTable<string, bool> active_wifi_connections;
@@ -317,7 +318,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             build_wifi_details_page (),
             build_wifi_edit_page (),
             build_wifi_add_page (),
-            build_wifi_saved_page (),
+            build_profiles_page (),
             build_wifi_saved_edit_page (),
             refresh_wifi,
             () => {
@@ -332,10 +333,6 @@ public class MainWindow : Gtk.ApplicationWindow {
                 );
             },
             () => {
-                refresh_saved_networks ();
-                wifi_stack.set_visible_child_name ("saved");
-            },
-            () => {
                 on_wifi_switch_changed ();
             }
         );
@@ -344,7 +341,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             nm,
             wifi_controller,
             wifi_stack,
-            wifi_saved_page,
+            profiles_page,
             wifi_saved_edit_page,
             (message) => {
                 show_error (message);
@@ -712,24 +709,29 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_saved_flow.on_sync_sensitivity_requested ();
     }
 
-    private Gtk.Widget build_wifi_saved_page () {
-        wifi_saved_page = new MainWindowWifiSavedPage ();
+    private Gtk.Widget build_profiles_page () {
+        profiles_page = new MainWindowProfilesPage ();
 
-        wifi_saved_page.back.connect (() => {
+        profiles_page.back.connect (() => {
             wifi_stack.set_visible_child_name ("list");
         });
 
-        wifi_saved_page.refresh.connect (refresh_saved_networks);
+        profiles_page.refresh.connect (refresh_saved_profiles);
 
-        wifi_saved_page.open_profile.connect (open_saved_wifi_edit);
+        profiles_page.open_profile.connect (open_saved_wifi_edit);
 
-        wifi_saved_page.delete_profile.connect ((net) => {
+        profiles_page.delete_profile.connect ((net) => {
             if (wifi_saved_flow != null) {
                 wifi_saved_flow.delete_profile (net);
             }
         });
 
-        return wifi_saved_page;
+        profiles_page.open_ethernet_profile.connect ((dev) => {
+            notebook.set_current_page (1);
+            ethernet_controller.open_profile_edit (dev);
+        });
+
+        return profiles_page;
     }
 
     private Gtk.Widget build_wifi_saved_edit_page () {
@@ -752,9 +754,57 @@ public class MainWindow : Gtk.ApplicationWindow {
         return wifi_saved_edit_page;
     }
 
+    private bool has_ethernet_profile (NetworkDevice dev) {
+        return nm.has_ethernet_profile_for_device (dev);
+    }
+
+    private void refresh_saved_ethernet_profiles () {
+        if (profiles_page == null) {
+            return;
+        }
+
+        nm.get_devices.begin (null, (obj, res) => {
+            try {
+                var devices = nm.get_devices.end (res);
+                var ethernet_profiles = new List<NetworkDevice> ();
+                foreach (var dev in devices) {
+                    if (!dev.is_ethernet || !has_ethernet_profile (dev)) {
+                        continue;
+                    }
+                    ethernet_profiles.append (dev);
+                }
+
+                var ethernet_profiles_arr = new NetworkDevice[ethernet_profiles.length ()];
+                int idx = 0;
+                foreach (var dev in ethernet_profiles) {
+                    ethernet_profiles_arr[idx++] = dev;
+                }
+                profiles_page.set_ethernet_profiles (ethernet_profiles_arr);
+            } catch (Error e) {
+                show_error ("Could not load ethernet profiles: " + e.message);
+            }
+        });
+    }
+
     private void refresh_saved_networks () {
         if (wifi_saved_flow != null) {
             wifi_saved_flow.refresh_saved_networks ();
+        }
+    }
+
+    private void refresh_saved_profiles () {
+        refresh_saved_networks ();
+        refresh_saved_ethernet_profiles ();
+    }
+
+    private void open_profiles_page (bool focus_ethernet_section = false) {
+        notebook.set_current_page (0);
+        refresh_saved_profiles ();
+        wifi_stack.set_visible_child_name ("saved");
+        if (focus_ethernet_section) {
+            profiles_page.focus_ethernet_section ();
+        } else {
+            profiles_page.focus_wifi_section ();
         }
     }
 
@@ -895,7 +945,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private void refresh_all () {
         refresh_wifi ();
-        refresh_saved_networks ();
+        refresh_saved_profiles ();
         refresh_ethernet_section ();
         refresh_vpn_section ();
     }
@@ -998,7 +1048,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         status_sep.add_css_class ("nm-separator");
         root.append (status_sep);
 
-        var notebook = new Gtk.Notebook ();
+        notebook = new Gtk.Notebook ();
         notebook.set_show_border (false);
         notebook.add_css_class ("nm-notebook");
         notebook.switch_page.connect ((page, page_num) => {
@@ -1036,6 +1086,41 @@ public class MainWindow : Gtk.ApplicationWindow {
             ),
             vpn_tab
         );
+
+        var tabs_menu_popover = new Gtk.Popover ();
+        tabs_menu_popover.add_css_class ("nm-tabs-menu-popover");
+        tabs_menu_popover.set_has_arrow (false);
+        tabs_menu_popover.set_position (Gtk.PositionType.BOTTOM);
+        // Bias the popover inward so it stays inside the right window edge.
+        tabs_menu_popover.set_offset (-72, 0);
+        var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
+        tabs_menu_box.add_css_class ("nm-tabs-menu-list");
+        tabs_menu_box.set_margin_top (6);
+        tabs_menu_box.set_margin_bottom (6);
+        tabs_menu_box.set_margin_start (6);
+        tabs_menu_box.set_margin_end (6);
+
+        var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
+        saved_profiles_item.add_css_class ("nm-tabs-menu-item");
+        saved_profiles_item.clicked.connect (() => {
+            tabs_menu_popover.popdown ();
+            open_profiles_page (false);
+        });
+        tabs_menu_box.append (saved_profiles_item);
+
+        tabs_menu_popover.set_child (tabs_menu_box);
+
+        var tabs_menu_button = new Gtk.MenuButton ();
+        tabs_menu_button.add_css_class ("nm-icon-button");
+        tabs_menu_button.add_css_class ("nm-tabs-menu-button");
+        tabs_menu_button.set_tooltip_text ("Profiles");
+        tabs_menu_button.set_popover (tabs_menu_popover);
+        var tabs_menu_icon = new Gtk.Image.from_icon_name ("view-more-symbolic");
+        tabs_menu_icon.add_css_class ("nm-toolbar-icon");
+        tabs_menu_icon.add_css_class ("nm-tabs-menu-icon");
+        tabs_menu_button.set_child (tabs_menu_icon);
+
+        notebook.set_action_widget (tabs_menu_button, Gtk.PackType.END);
 
         root.append (notebook);
     }
