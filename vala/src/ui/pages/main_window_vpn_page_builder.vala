@@ -125,6 +125,8 @@ public class MainWindowVpnPageBuilder : Object {
         vpn_stack = new Gtk.Stack ();
         vpn_stack.set_vexpand (true);
         vpn_stack.add_css_class ("nm-content-stack");
+        vpn_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
+        vpn_stack.set_transition_duration (320);
         vpn_stack.add_named (scroll, "list");
         vpn_stack.add_named (vpn_placeholder, "empty");
         vpn_stack.set_visible_child_name ("empty");

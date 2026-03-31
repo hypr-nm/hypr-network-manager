@@ -91,6 +91,8 @@ namespace MainWindowWifiPageBuilder {
         wifi_stack = new Gtk.Stack ();
         wifi_stack.set_vexpand (true);
         wifi_stack.add_css_class ("nm-content-stack");
+        wifi_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
+        wifi_stack.set_transition_duration (320);
         wifi_stack.add_named (scroll, "list");
         wifi_stack.add_named (wifi_placeholder, "empty");
         wifi_stack.add_named (details_page, "details");

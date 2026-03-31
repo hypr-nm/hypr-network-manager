@@ -317,11 +317,26 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_stack = new Gtk.Stack ();
         ethernet_stack.set_vexpand (true);
         ethernet_stack.add_css_class ("nm-content-stack");
+        ethernet_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
+        ethernet_stack.set_transition_duration (320);
         ethernet_stack.add_named (scroll, "list");
         ethernet_stack.add_named (ethernet_placeholder, "empty");
         ethernet_stack.add_named (details_page, "details");
         ethernet_stack.add_named (edit_page, "edit");
         ethernet_stack.set_visible_child_name ("empty");
+        var ethernet_stack_ref = ethernet_stack;
+
+        MainWindowActionCallback sync_toolbar_visibility = () => {
+            string page_name = ethernet_stack_ref.get_visible_child_name ();
+            bool show_toolbar = page_name == "list" || page_name == "empty";
+            toolbar.set_visible (show_toolbar);
+        };
+
+        ethernet_stack_ref.notify["visible-child-name"].connect (() => {
+            sync_toolbar_visibility ();
+        });
+
+        sync_toolbar_visibility ();
 
         page.append (ethernet_stack);
         return page;

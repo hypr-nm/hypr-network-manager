@@ -763,6 +763,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         profiles_stack = new Gtk.Stack ();
         profiles_stack.set_vexpand (true);
         profiles_stack.add_css_class ("nm-content-stack");
+        profiles_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
+        profiles_stack.set_transition_duration (320);
         profiles_stack.add_named (profiles_page, "list");
         profiles_stack.add_named (profiles_details_page, "details");
         profiles_stack.add_named (wifi_saved_edit_page, "edit");
@@ -1192,6 +1194,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         content_stack = new Gtk.Stack ();
         content_stack.set_vexpand (true);
         content_stack.add_css_class ("nm-content-stack");
+        content_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
+        content_stack.set_transition_duration (320);
 
         notebook = new Gtk.Notebook ();
         notebook.set_show_border (false);
