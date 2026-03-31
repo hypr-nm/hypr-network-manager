@@ -14,6 +14,7 @@ const string NM_CONN_IFACE = "org.freedesktop.NetworkManager.Settings.Connection
 const int NM_DBUS_TIMEOUT_MS = 20000;
 const uint32 NM_DEVICE_TYPE_ETHERNET = 1;
 const uint32 NM_DEVICE_TYPE_WIFI = 2;
+const uint32 NM_DEVICE_STATE_UNAVAILABLE = 20;
 const uint32 NM_DEVICE_STATE_DISCONNECTED = 30;
 const uint32 NM_DEVICE_STATE_ACTIVATED = 100;
 const uint32 NM_DEVICE_STATE_FAILED = 120;

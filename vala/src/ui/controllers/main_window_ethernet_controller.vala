@@ -178,6 +178,10 @@ public class MainWindowEthernetController : Object {
         return nm.has_ethernet_profile_for_device (dev);
     }
 
+    private bool can_connect_with_profile (NetworkDevice dev) {
+        return has_saved_profile (dev) && dev.state != NM_DEVICE_STATE_UNAVAILABLE;
+    }
+
     private void sync_edit_gateway_dns_sensitivity () {
         if (ethernet_edit_page.ipv4_method_dropdown != null) {
             bool ipv4_disabled = ethernet_edit_page.ipv4_method_dropdown.get_selected () == 2;
@@ -229,6 +233,10 @@ public class MainWindowEthernetController : Object {
 
     private void trigger_toggle (NetworkDevice dev) {
         if (pending_ethernet_action.contains (dev.name)) {
+            return;
+        }
+
+        if (!dev.is_connected && !can_connect_with_profile (dev)) {
             return;
         }
 
@@ -416,9 +424,12 @@ public class MainWindowEthernetController : Object {
         } else if (dev.is_connected) {
             ethernet_details_page.primary_button.set_label ("Disconnect");
             ethernet_details_page.primary_button.set_sensitive (true);
-        } else if (has_profile) {
+        } else if (can_connect_with_profile (dev)) {
             ethernet_details_page.primary_button.set_label ("Connect");
             ethernet_details_page.primary_button.set_sensitive (true);
+        } else if (has_profile) {
+            ethernet_details_page.primary_button.set_label ("Unavailable");
+            ethernet_details_page.primary_button.set_sensitive (false);
         } else {
             ethernet_details_page.primary_button.set_label ("No Profile");
             ethernet_details_page.primary_button.set_sensitive (false);
@@ -722,8 +733,11 @@ public class MainWindowEthernetController : Object {
             can_toggle = false;
         } else if (dev.is_connected) {
             action_label = "Disconnect";
-        } else if (has_saved_profile (dev)) {
+        } else if (can_connect_with_profile (dev)) {
             action_label = "Connect";
+        } else if (has_saved_profile (dev)) {
+            action_label = "Unavailable";
+            can_toggle = false;
         } else {
             action_label = "No Profile";
             can_toggle = false;
