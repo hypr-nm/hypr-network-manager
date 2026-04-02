@@ -102,7 +102,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         set_default_size (effective_width, effective_height);
         set_size_request (MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT);
         set_resizable (false);
-        set_opacity (1.0);
+        set_opacity (MainWindowUiMetrics.WINDOW_OPACITY);
         add_css_class ("nm-window");
         nm = new NetworkManagerClient ();
         wifi_controller = new MainWindowWifiController ();
@@ -283,15 +283,13 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_status_bar () {
-        var bar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var bar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         bar.add_css_class ("nm-status-bar");
-        bar.set_margin_start (12);
-        bar.set_margin_end (8);
-        bar.set_margin_top (8);
-        bar.set_margin_bottom (8);
+        bar.add_css_class ("nm-toolbar-inset");
 
         status_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-        status_icon.set_pixel_size (16);
+        status_icon.add_css_class ("nm-icon-size");
+        status_icon.add_css_class ("nm-icon-size-16");
         status_icon.add_css_class ("nm-status-icon");
         bar.append (status_icon);
 
@@ -310,7 +308,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             on_networking_switch_changed ();
         });
 
-        var switch_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 4);
+        var switch_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_COMPACT);
         switch_box.append (switch_label);
         switch_box.append (networking_switch);
         bar.append (switch_box);
@@ -624,16 +622,13 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_wifi_add_page () {
-        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, 10);
-        page.set_margin_start (12);
-        page.set_margin_end (12);
-        page.set_margin_top (12);
-        page.set_margin_bottom (12);
+        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
+        page.add_css_class ("nm-page-shell-inset");
         page.add_css_class ("nm-page");
         page.add_css_class ("nm-page-wifi-add");
         page.add_css_class ("nm-page-network-edit");
 
-        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button (() => {
             set_popup_text_input_mode (false);
             wifi_stack.set_visible_child_name ("list");
@@ -647,7 +642,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         header.append (title);
         page.append (header);
 
-        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         form.add_css_class ("nm-edit-form");
         form.add_css_class ("nm-edit-network-form");
 
@@ -736,7 +731,7 @@ public class MainWindow : Gtk.ApplicationWindow {
             save_btn
         );
 
-        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions.add_css_class ("nm-edit-actions");
 
         save_btn.clicked.connect (submit_add_hidden_network);
@@ -764,7 +759,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         profiles_stack.set_vexpand (true);
         profiles_stack.add_css_class ("nm-content-stack");
         profiles_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
-        profiles_stack.set_transition_duration (320);
+        profiles_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
         profiles_stack.add_named (profiles_page, "list");
         profiles_stack.add_named (profiles_details_page, "details");
         profiles_stack.add_named (wifi_saved_edit_page, "edit");
@@ -1181,7 +1176,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private void build_ui () {
-        var root = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        var root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         root.add_css_class ("nm-root");
         set_child (root);
 
@@ -1195,7 +1190,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         content_stack.set_vexpand (true);
         content_stack.add_css_class ("nm-content-stack");
         content_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
-        content_stack.set_transition_duration (320);
+        content_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
 
         notebook = new Gtk.Notebook ();
         notebook.set_show_border (false);
@@ -1263,13 +1258,13 @@ public class MainWindow : Gtk.ApplicationWindow {
         tabs_menu_popover.set_has_arrow (false);
         tabs_menu_popover.set_position (Gtk.PositionType.BOTTOM);
         // Bias the popover inward so it stays inside the right window edge.
-        tabs_menu_popover.set_offset (-72, 0);
-        var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
+        tabs_menu_popover.set_offset (
+            MainWindowUiMetrics.TABS_POPOVER_OFFSET_X,
+            MainWindowUiMetrics.TABS_POPOVER_OFFSET_Y
+        );
+        var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
         tabs_menu_box.add_css_class ("nm-tabs-menu-list");
-        tabs_menu_box.set_margin_top (6);
-        tabs_menu_box.set_margin_bottom (6);
-        tabs_menu_box.set_margin_start (6);
-        tabs_menu_box.set_margin_end (6);
+        tabs_menu_box.add_css_class ("nm-popover-list-inset");
 
         var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
         saved_profiles_item.add_css_class ("nm-tabs-menu-item");

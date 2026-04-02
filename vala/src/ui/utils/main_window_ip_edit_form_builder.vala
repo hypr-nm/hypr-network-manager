@@ -49,7 +49,7 @@ namespace MainWindowIpEditFormBuilder {
         string css_class,
         out Gtk.Box content_box
     ) {
-        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
+        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         container.add_css_class ("nm-edit-collapsible");
         if (with_extra_classes) {
             container.add_css_class (css_class);
@@ -64,7 +64,7 @@ namespace MainWindowIpEditFormBuilder {
             toggle_button.add_css_class (css_class + "-toggle");
         }
 
-        var toggle_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var toggle_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         toggle_row.set_halign (Gtk.Align.FILL);
         toggle_row.set_hexpand (true);
         toggle_row.add_css_class ("nm-edit-section-toggle-row");
@@ -88,7 +88,7 @@ namespace MainWindowIpEditFormBuilder {
         toggle_button.set_child (toggle_row);
         container.append (toggle_button);
 
-        content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         content_box.add_css_class ("nm-edit-section-content");
         if (with_extra_classes) {
             content_box.add_css_class (css_class + "-content");
@@ -96,7 +96,7 @@ namespace MainWindowIpEditFormBuilder {
 
         var content_revealer = new Gtk.Revealer ();
         content_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        content_revealer.set_transition_duration (220);
+        content_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
         content_revealer.set_child (content_box);
         content_revealer.add_css_class ("nm-edit-section-revealer");
         if (with_extra_classes) {
@@ -157,7 +157,7 @@ namespace MainWindowIpEditFormBuilder {
         }
         section.append (ipv4_method_dropdown);
 
-        var manual_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var manual_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
             manual_fields.add_css_class ("nm-edit-ip-advanced");
             manual_fields.add_css_class ("nm-edit-ipv4-manual");
@@ -165,7 +165,7 @@ namespace MainWindowIpEditFormBuilder {
 
         var manual_revealer = new Gtk.Revealer ();
         manual_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        manual_revealer.set_transition_duration (180);
+        manual_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
         manual_revealer.add_css_class ("nm-edit-ip-subsection-revealer");
         manual_revealer.add_css_class ("nm-edit-ipv4-manual-revealer");
         manual_revealer.set_child (manual_fields);
@@ -225,7 +225,7 @@ namespace MainWindowIpEditFormBuilder {
         }
         manual_fields.append (ipv4_gateway_entry);
 
-        var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
             override_fields.add_css_class ("nm-edit-ip-advanced");
             override_fields.add_css_class ("nm-edit-ipv4-overrides");
@@ -233,7 +233,7 @@ namespace MainWindowIpEditFormBuilder {
 
         var override_revealer = new Gtk.Revealer ();
         override_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        override_revealer.set_transition_duration (180);
+        override_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
         override_revealer.add_css_class ("nm-edit-ip-subsection-revealer");
         override_revealer.add_css_class ("nm-edit-ipv4-overrides-revealer");
         override_revealer.set_child (override_fields);
@@ -245,7 +245,7 @@ namespace MainWindowIpEditFormBuilder {
             with_extra_classes ? "nm-edit-dns-label" : null
         ));
 
-        var dns_mode_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var dns_mode_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         dns_mode_row.set_halign (Gtk.Align.FILL);
         dns_mode_row.set_hexpand (true);
         if (with_extra_classes) {
@@ -361,7 +361,7 @@ namespace MainWindowIpEditFormBuilder {
         }
         section.append (ipv6_method_dropdown);
 
-        var manual_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var manual_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
             manual_fields.add_css_class ("nm-edit-ip-advanced");
             manual_fields.add_css_class ("nm-edit-ipv6-manual");
@@ -369,7 +369,7 @@ namespace MainWindowIpEditFormBuilder {
 
         var manual_revealer = new Gtk.Revealer ();
         manual_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        manual_revealer.set_transition_duration (180);
+        manual_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
         manual_revealer.add_css_class ("nm-edit-ip-subsection-revealer");
         manual_revealer.add_css_class ("nm-edit-ipv6-manual-revealer");
         manual_revealer.set_child (manual_fields);
@@ -429,7 +429,7 @@ namespace MainWindowIpEditFormBuilder {
         }
         manual_fields.append (ipv6_gateway_entry);
 
-        var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
             override_fields.add_css_class ("nm-edit-ip-advanced");
             override_fields.add_css_class ("nm-edit-ipv6-overrides");
@@ -437,7 +437,7 @@ namespace MainWindowIpEditFormBuilder {
 
         var override_revealer = new Gtk.Revealer ();
         override_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        override_revealer.set_transition_duration (180);
+        override_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
         override_revealer.add_css_class ("nm-edit-ip-subsection-revealer");
         override_revealer.add_css_class ("nm-edit-ipv6-overrides-revealer");
         override_revealer.set_child (override_fields);
@@ -449,7 +449,7 @@ namespace MainWindowIpEditFormBuilder {
             with_extra_classes ? "nm-edit-ipv6-dns-label" : null
         ));
 
-        var dns_mode_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var dns_mode_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         dns_mode_row.set_halign (Gtk.Align.FILL);
         dns_mode_row.set_hexpand (true);
         if (with_extra_classes) {

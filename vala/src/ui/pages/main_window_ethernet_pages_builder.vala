@@ -38,15 +38,12 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
     public MainWindowEthernetDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start (12);
-        this.set_margin_end (12);
-        this.set_margin_top (12);
-        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
         this.add_css_class ("nm-page-ethernet-details");
         this.add_css_class ("nm-page-network-details");
 
-        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
 
         var back_btn = MainWindowHelpers.build_back_button (() => {
@@ -55,12 +52,13 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         nav_row.append (back_btn);
         this.append (nav_row);
 
-        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         header.set_halign (Gtk.Align.CENTER);
         header.add_css_class ("nm-details-header");
 
         var icon = new Gtk.Image.from_icon_name ("network-transmit-receive-symbolic");
-        icon.set_pixel_size (28);
+        icon.add_css_class ("nm-icon-size");
+        icon.add_css_class ("nm-icon-size-28");
         icon.add_css_class ("nm-signal-icon");
         icon.add_css_class ("nm-ethernet-icon");
         icon.add_css_class ("nm-details-network-icon");
@@ -72,7 +70,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         this.details_title.add_css_class ("nm-details-network-title");
         header.append (this.details_title);
 
-        this.action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        this.action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         this.action_row.set_halign (Gtk.Align.CENTER);
         this.action_row.add_css_class ("nm-details-action-row");
 
@@ -106,9 +104,8 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         scroll.add_css_class ("nm-scroll");
         scroll.set_vexpand (true);
 
-        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
-        body.set_margin_top (4);
-        body.set_margin_bottom (4);
+        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
+        body.add_css_class ("nm-details-scroll-body-inset");
 
         Gtk.Box b_rows, a_rows, i_rows;
         body.append (MainWindowHelpers.build_details_section ("Basic", out b_rows));
@@ -147,15 +144,12 @@ public class MainWindowEthernetEditPage : Gtk.Box {
     public MainWindowEthernetEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start (12);
-        this.set_margin_end (12);
-        this.set_margin_top (12);
-        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
         this.add_css_class ("nm-page-ethernet-edit");
         this.add_css_class ("nm-page-network-edit");
 
-        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button (() => {
             this.back ();
         });
@@ -168,7 +162,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         header.append (this.edit_title);
         this.append (header);
 
-        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         form.add_css_class ("nm-edit-form");
         form.add_css_class ("nm-edit-ethernet-form");
         form.add_css_class ("nm-edit-network-form");
@@ -230,7 +224,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         this.ipv6_dns_auto_switch = v6_dns_auto;
         this.ipv6_dns_entry = v6_dns;
 
-        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var save_btn = new Gtk.Button.with_label ("Apply");
         save_btn.add_css_class ("nm-button");
         save_btn.add_css_class ("suggested-action");
@@ -259,16 +253,13 @@ namespace MainWindowEthernetPageBuilder {
         Gtk.Widget edit_page,
         MainWindowActionCallback on_refresh
     ) {
-        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
         page.add_css_class ("nm-page-ethernet");
 
-        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-        toolbar.set_margin_start (12);
-        toolbar.set_margin_end (8);
-        toolbar.set_margin_top (8);
-        toolbar.set_margin_bottom (8);
+        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         toolbar.add_css_class ("nm-toolbar");
+        toolbar.add_css_class ("nm-toolbar-inset");
 
         var title = new Gtk.Label ("Ethernet");
         title.set_xalign (0.0f);
@@ -280,7 +271,8 @@ namespace MainWindowEthernetPageBuilder {
         refresh_btn.add_css_class ("nm-button");
         refresh_btn.add_css_class ("nm-icon-button");
         var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        refresh_icon.set_pixel_size (16);
+        refresh_icon.add_css_class ("nm-icon-size");
+        refresh_icon.add_css_class ("nm-icon-size-16");
         refresh_icon.add_css_class ("nm-toolbar-icon");
         refresh_icon.add_css_class ("nm-refresh-icon");
         refresh_icon.add_css_class ("nm-ethernet-refresh-icon");
@@ -301,12 +293,13 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_listbox.add_css_class ("nm-list");
         scroll.set_child (ethernet_listbox);
 
-        var ethernet_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var ethernet_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         ethernet_placeholder.set_halign (Gtk.Align.CENTER);
         ethernet_placeholder.set_valign (Gtk.Align.CENTER);
         ethernet_placeholder.add_css_class ("nm-empty-state");
         var eth_icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
-        eth_icon.set_pixel_size (24);
+        eth_icon.add_css_class ("nm-icon-size");
+        eth_icon.add_css_class ("nm-icon-size-24");
         eth_icon.add_css_class ("nm-placeholder-icon");
         eth_icon.add_css_class ("nm-ethernet-placeholder-icon");
         var eth_lbl = new Gtk.Label ("No Ethernet devices found");
@@ -318,7 +311,7 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_stack.set_vexpand (true);
         ethernet_stack.add_css_class ("nm-content-stack");
         ethernet_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
-        ethernet_stack.set_transition_duration (320);
+        ethernet_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
         ethernet_stack.add_named (scroll, "list");
         ethernet_stack.add_named (ethernet_placeholder, "empty");
         ethernet_stack.add_named (details_page, "details");

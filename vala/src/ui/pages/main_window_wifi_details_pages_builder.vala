@@ -16,15 +16,12 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
     public MainWindowWifiDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start (12);
-        this.set_margin_end (12);
-        this.set_margin_top (12);
-        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
         this.add_css_class ("nm-page-wifi-details");
         this.add_css_class ("nm-page-network-details");
 
-        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
 
         var back_btn = MainWindowHelpers.build_back_button (() => {
@@ -34,12 +31,13 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
         nav_row.append (back_btn);
         this.append (nav_row);
 
-        var network_header = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var network_header = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         network_header.set_halign (Gtk.Align.CENTER);
         network_header.add_css_class ("nm-details-header");
 
         var network_icon = new Gtk.Image.from_icon_name ("network-wireless-signal-excellent-symbolic");
-        network_icon.set_pixel_size (28);
+        network_icon.add_css_class ("nm-icon-size");
+        network_icon.add_css_class ("nm-icon-size-28");
         network_icon.add_css_class ("nm-signal-icon");
         network_icon.add_css_class ("nm-wifi-icon");
         network_icon.add_css_class ("nm-details-network-icon");
@@ -51,7 +49,7 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
         this.details_title.add_css_class ("nm-details-network-title");
         network_header.append (this.details_title);
 
-        this.action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        this.action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         this.action_row.set_halign (Gtk.Align.CENTER);
         this.action_row.add_css_class ("nm-details-action-row");
 
@@ -85,9 +83,8 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
         scroll.add_css_class ("nm-scroll");
         scroll.set_vexpand (true);
 
-        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
-        body.set_margin_top (4);
-        body.set_margin_bottom (4);
+        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
+        body.add_css_class ("nm-details-scroll-body-inset");
 
         Gtk.Box b_rows, a_rows, i_rows;
         body.append (MainWindowHelpers.build_details_section ("Basic", out b_rows));
@@ -128,15 +125,12 @@ public class MainWindowWifiEditPage : Gtk.Box {
     public MainWindowWifiEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start (12);
-        this.set_margin_end (12);
-        this.set_margin_top (12);
-        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
         this.add_css_class ("nm-page-wifi-edit");
         this.add_css_class ("nm-page-network-edit");
 
-        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button (() => {
             this.back ();
         });
@@ -149,7 +143,7 @@ public class MainWindowWifiEditPage : Gtk.Box {
         header.append (this.edit_title);
         this.append (header);
 
-        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         form.add_css_class ("nm-edit-form");
         form.add_css_class ("nm-edit-wifi-form");
         form.add_css_class ("nm-edit-network-form");
@@ -250,7 +244,7 @@ public class MainWindowWifiEditPage : Gtk.Box {
 
         this.sync_sensitivity ();
 
-        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions.add_css_class ("nm-edit-actions");
         actions.add_css_class ("nm-edit-wifi-actions");
 

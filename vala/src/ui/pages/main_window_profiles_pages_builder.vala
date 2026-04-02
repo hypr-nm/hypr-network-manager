@@ -16,14 +16,11 @@ public class MainWindowProfilesPage : Gtk.Box {
     public MainWindowProfilesPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start (12);
-        this.set_margin_end (12);
-        this.set_margin_top (12);
-        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
         this.add_css_class ("nm-page-wifi-saved");
 
-        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
 
         var back_btn = MainWindowHelpers.build_back_button (() => {
             this.back ();
@@ -55,7 +52,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         scroll.add_css_class ("nm-scroll");
         scroll.set_vexpand (true);
 
-        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
+        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
         body.add_css_class ("nm-profiles-page-body");
 
         var wifi_heading = new Gtk.Label ("Wi-Fi Profiles");
@@ -96,7 +93,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         if (profiles.length == 0) {
             var row = new Gtk.ListBoxRow ();
-            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
+            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             box.add_css_class ("nm-empty-state");
             var label = new Gtk.Label ("No saved Wi-Fi profiles");
             label.add_css_class ("nm-placeholder-label");
@@ -111,10 +108,10 @@ public class MainWindowProfilesPage : Gtk.Box {
             var row = new Gtk.ListBoxRow ();
             row.add_css_class ("nm-wifi-row");
 
-            var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 10);
+            var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
             root.add_css_class ("nm-row-content");
 
-            var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
+            var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
             info.set_hexpand (true);
             string profile_name = MainWindowHelpers.safe_text (row_profile.profile_name).strip ();
             string ssid = MainWindowHelpers.safe_text (row_profile.ssid).strip ();
@@ -160,7 +157,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         if (devices.length == 0) {
             var row = new Gtk.ListBoxRow ();
-            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
+            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             box.add_css_class ("nm-empty-state");
             var label = new Gtk.Label ("No saved Ethernet profiles");
             label.add_css_class ("nm-placeholder-label");
@@ -175,10 +172,10 @@ public class MainWindowProfilesPage : Gtk.Box {
             var row = new Gtk.ListBoxRow ();
             row.add_css_class ("nm-wifi-row");
 
-            var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 10);
+            var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
             root.add_css_class ("nm-row-content");
 
-            var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
+            var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
             info.set_hexpand (true);
 
             string iface = MainWindowHelpers.safe_text (row_device.name).strip ();
@@ -256,14 +253,11 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
     public MainWindowProfilesDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start (12);
-        this.set_margin_end (12);
-        this.set_margin_top (12);
-        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
         this.add_css_class ("nm-page-network-details");
 
-        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
 
         var back_btn = MainWindowHelpers.build_back_button (() => {
@@ -272,12 +266,13 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         nav_row.append (back_btn);
         this.append (nav_row);
 
-        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var header = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         header.set_halign (Gtk.Align.CENTER);
         header.add_css_class ("nm-details-header");
 
         var icon = new Gtk.Image.from_icon_name ("avatar-default-symbolic");
-        icon.set_pixel_size (28);
+        icon.add_css_class ("nm-icon-size");
+        icon.add_css_class ("nm-icon-size-28");
         icon.add_css_class ("nm-details-network-icon");
         header.append (icon);
 
@@ -293,7 +288,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         this.subtitle_label.add_css_class ("nm-sub-label");
         header.append (this.subtitle_label);
 
-        var action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         action_row.set_halign (Gtk.Align.CENTER);
         action_row.add_css_class ("nm-details-action-row");
 
@@ -327,9 +322,8 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         scroll.add_css_class ("nm-scroll");
         scroll.set_vexpand (true);
 
-        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
-        body.set_margin_top (4);
-        body.set_margin_bottom (4);
+        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
+        body.add_css_class ("nm-details-scroll-body-inset");
 
         Gtk.Box rows_out;
         body.append (MainWindowHelpers.build_details_section ("Details", out rows_out));
@@ -512,7 +506,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
     public signal void sync_sensitivity ();
 
     private Gtk.Box build_section (string title, out Gtk.Box section_content) {
-        var section = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         section.add_css_class ("nm-edit-collapsible");
 
         var heading = new Gtk.Label (title);
@@ -521,7 +515,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         heading.add_css_class ("nm-edit-field-label");
         section.append (heading);
 
-        section_content = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        section_content = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         section_content.add_css_class ("nm-edit-section-content");
         section.append (section_content);
 
@@ -531,15 +525,12 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
     public MainWindowWifiSavedEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.set_margin_start (12);
-        this.set_margin_end (12);
-        this.set_margin_top (12);
-        this.set_margin_bottom (12);
+        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
         this.add_css_class ("nm-page-wifi-edit");
         this.add_css_class ("nm-page-network-edit");
 
-        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button (() => {
             this.back ();
         });
@@ -557,7 +548,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         scroll.add_css_class ("nm-scroll");
         scroll.set_vexpand (true);
 
-        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
+        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
         form.add_css_class ("nm-edit-form");
         form.add_css_class ("nm-edit-network-form");
 
@@ -710,7 +701,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         this.ipv6_dns_auto_switch = v6_dns_auto;
         this.ipv6_dns_entry = v6_dns;
 
-        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions.add_css_class ("nm-edit-actions");
 
         var save_btn = new Gtk.Button.with_label ("Save");

@@ -56,14 +56,15 @@ namespace MainWindowWifiRowBuilder {
         bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
         bool requires_hidden_ssid = net.is_hidden;
 
-        var row_root = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        var row_root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         row_root.add_css_class ("nm-row-root");
 
-        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 10);
+        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
         content.add_css_class ("nm-row-content");
 
         var signal_icon = new Gtk.Image.from_icon_name (signal_icon_name);
-        signal_icon.set_pixel_size (16);
+        signal_icon.add_css_class ("nm-icon-size");
+        signal_icon.add_css_class ("nm-icon-size-16");
         signal_icon.add_css_class ("nm-signal-icon");
         signal_icon.add_css_class ("nm-wifi-icon");
         if (net.is_secured) {
@@ -71,7 +72,7 @@ namespace MainWindowWifiRowBuilder {
         }
         content.append (signal_icon);
 
-        var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 1);
+        var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
         info.set_hexpand (true);
         info.add_css_class ("nm-row-info");
         string ssid_text = MainWindowHelpers.safe_text (net.ssid);
@@ -113,10 +114,10 @@ namespace MainWindowWifiRowBuilder {
         expand_hint.set_valign (Gtk.Align.CENTER);
         content.append (expand_hint);
 
-        var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+        var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions_panel.add_css_class ("nm-row-actions");
 
-        var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+        var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         action_buttons.add_css_class ("nm-row-action-buttons");
         action_buttons.set_valign (Gtk.Align.CENTER);
 
@@ -235,13 +236,13 @@ namespace MainWindowWifiRowBuilder {
             update_prompt_connect_sensitivity ();
         });
 
-        var prompt_actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+        var prompt_actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         prompt_actions.add_css_class ("nm-inline-password-actions");
         prompt_actions.set_halign (Gtk.Align.END);
         prompt_actions.append (prompt_cancel);
         prompt_actions.append (prompt_connect);
 
-        var prompt_inner = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
+        var prompt_inner = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         prompt_inner.add_css_class ("nm-inline-password");
         prompt_inner.append (hidden_ssid_label);
         prompt_inner.append (hidden_ssid_entry);
@@ -252,7 +253,7 @@ namespace MainWindowWifiRowBuilder {
         var prompt_revealer = new Gtk.Revealer ();
         prompt_revealer.add_css_class ("nm-inline-password-revealer");
         prompt_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        prompt_revealer.set_transition_duration (220);
+        prompt_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
         prompt_revealer.set_reveal_child (false);
         prompt_revealer.set_child (prompt_inner);
 
@@ -339,7 +340,7 @@ namespace MainWindowWifiRowBuilder {
             });
             actions_panel.append (auto_connect);
         } else {
-            var spacer = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+            var spacer = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
             spacer.set_hexpand (true);
             actions_panel.append (spacer);
         }
@@ -349,7 +350,7 @@ namespace MainWindowWifiRowBuilder {
         var actions_revealer = new Gtk.Revealer ();
         actions_revealer.add_css_class ("nm-row-actions-revealer");
         actions_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        actions_revealer.set_transition_duration (220);
+        actions_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
         actions_revealer.set_reveal_child (false);
         actions_revealer.set_child (actions_panel);
         row.set_data<Gtk.Revealer> ("actions-revealer", actions_revealer);

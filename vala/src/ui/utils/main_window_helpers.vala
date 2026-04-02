@@ -6,9 +6,10 @@ namespace MainWindowHelpers {
         back_btn.add_css_class ("nm-button");
         back_btn.add_css_class ("nm-nav-back");
 
-        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         var icon = new Gtk.Image.from_icon_name ("go-previous-symbolic");
-        icon.set_pixel_size (14);
+        icon.add_css_class ("nm-icon-size");
+        icon.add_css_class ("nm-icon-size-14");
         icon.add_css_class ("nm-back-icon");
 
         var label = new Gtk.Label ("Back");
@@ -52,7 +53,7 @@ namespace MainWindowHelpers {
     }
 
     public Gtk.Widget build_details_row (string? key, string? value) {
-        var row = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
+        var row = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
         row.add_css_class ("nm-details-row");
         row.add_css_class ("nm-details-item");
 
@@ -79,7 +80,7 @@ namespace MainWindowHelpers {
     }
 
     public Gtk.Widget build_details_section (string title, out Gtk.Box rows_container) {
-        var section = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
+        var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         section.add_css_class ("nm-details-section");
 
         var heading = new Gtk.Label (title);
@@ -91,7 +92,7 @@ namespace MainWindowHelpers {
         separator.add_css_class ("nm-separator");
         section.append (separator);
 
-        rows_container = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
+        rows_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
         rows_container.add_css_class ("nm-details-rows");
         section.append (rows_container);
 

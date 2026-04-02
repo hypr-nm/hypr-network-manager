@@ -31,7 +31,7 @@ public class BlankWindow : Gtk.ApplicationWindow {
         set_default_size (monitor_geometry.width, monitor_geometry.height);
         set_size_request (monitor_geometry.width, monitor_geometry.height);
 
-        click_surface = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        click_surface = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         click_surface.set_hexpand (true);
         click_surface.set_vexpand (true);
         click_surface.set_can_target (true);

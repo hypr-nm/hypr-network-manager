@@ -66,16 +66,13 @@ public class MainWindowVpnPageBuilder : Object {
         out Gtk.Stack vpn_stack,
         MainWindowActionCallback on_refresh
     ) {
-        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
         page.add_css_class ("nm-page-vpn");
 
-        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-        toolbar.set_margin_start (12);
-        toolbar.set_margin_end (8);
-        toolbar.set_margin_top (8);
-        toolbar.set_margin_bottom (8);
+        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         toolbar.add_css_class ("nm-toolbar");
+        toolbar.add_css_class ("nm-toolbar-inset");
 
         var title = new Gtk.Label ("VPN");
         title.set_xalign (0.0f);
@@ -87,7 +84,8 @@ public class MainWindowVpnPageBuilder : Object {
         refresh_btn.add_css_class ("nm-button");
         refresh_btn.add_css_class ("nm-icon-button");
         var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        refresh_icon.set_pixel_size (16);
+        refresh_icon.add_css_class ("nm-icon-size");
+        refresh_icon.add_css_class ("nm-icon-size-16");
         refresh_icon.add_css_class ("nm-toolbar-icon");
         refresh_icon.add_css_class ("nm-refresh-icon");
         refresh_icon.add_css_class ("nm-vpn-refresh-icon");
@@ -107,12 +105,13 @@ public class MainWindowVpnPageBuilder : Object {
         vpn_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         vpn_listbox.add_css_class ("nm-list");
 
-        var vpn_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var vpn_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         vpn_placeholder.set_halign (Gtk.Align.CENTER);
         vpn_placeholder.set_valign (Gtk.Align.CENTER);
         vpn_placeholder.add_css_class ("nm-empty-state");
         var vpn_icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        vpn_icon.set_pixel_size (24);
+        vpn_icon.add_css_class ("nm-icon-size");
+        vpn_icon.add_css_class ("nm-icon-size-24");
         vpn_icon.add_css_class ("nm-placeholder-icon");
         vpn_icon.add_css_class ("nm-vpn-placeholder-icon");
         var vpn_lbl = new Gtk.Label ("No VPN profiles found");
@@ -126,7 +125,7 @@ public class MainWindowVpnPageBuilder : Object {
         vpn_stack.set_vexpand (true);
         vpn_stack.add_css_class ("nm-content-stack");
         vpn_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
-        vpn_stack.set_transition_duration (320);
+        vpn_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
         vpn_stack.add_named (scroll, "list");
         vpn_stack.add_named (vpn_placeholder, "empty");
         vpn_stack.set_visible_child_name ("empty");
@@ -145,19 +144,17 @@ public class MainWindowVpnPageBuilder : Object {
             row.add_css_class ("connected");
         }
 
-        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 10);
-        content.set_margin_start (12);
-        content.set_margin_end (8);
-        content.set_margin_top (8);
-        content.set_margin_bottom (8);
+        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
+        content.add_css_class ("nm-row-content-inset");
 
         var icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        icon.set_pixel_size (16);
+        icon.add_css_class ("nm-icon-size");
+        icon.add_css_class ("nm-icon-size-16");
         icon.add_css_class ("nm-signal-icon");
         icon.add_css_class ("nm-vpn-icon");
         content.append (icon);
 
-        var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 1);
+        var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
         info.set_hexpand (true);
         var name_lbl = new Gtk.Label (conn.name);
         name_lbl.set_xalign (0.0f);

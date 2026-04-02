@@ -12,16 +12,13 @@ namespace MainWindowWifiPageBuilder {
         MainWindowActionCallback on_add_network,
         MainWindowActionCallback on_switch_changed
     ) {
-        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
         page.add_css_class ("nm-page-wifi");
 
-        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-        toolbar.set_margin_start (12);
-        toolbar.set_margin_end (8);
-        toolbar.set_margin_top (8);
-        toolbar.set_margin_bottom (8);
+        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         toolbar.add_css_class ("nm-toolbar");
+        toolbar.add_css_class ("nm-toolbar-inset");
 
         var title = new Gtk.Label ("Wi-Fi");
         title.set_xalign (0.0f);
@@ -75,12 +72,13 @@ namespace MainWindowWifiPageBuilder {
         wifi_listbox.add_css_class ("nm-list");
         scroll.set_child (wifi_listbox);
 
-        var wifi_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        var wifi_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         wifi_placeholder.set_halign (Gtk.Align.CENTER);
         wifi_placeholder.set_valign (Gtk.Align.CENTER);
         wifi_placeholder.add_css_class ("nm-empty-state");
         var ph_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-        ph_icon.set_pixel_size (24);
+        ph_icon.add_css_class ("nm-icon-size");
+        ph_icon.add_css_class ("nm-icon-size-24");
         ph_icon.add_css_class ("nm-placeholder-icon");
         ph_icon.add_css_class ("nm-wifi-placeholder-icon");
         var ph_lbl = new Gtk.Label ("No networks found");
@@ -92,7 +90,7 @@ namespace MainWindowWifiPageBuilder {
         wifi_stack.set_vexpand (true);
         wifi_stack.add_css_class ("nm-content-stack");
         wifi_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
-        wifi_stack.set_transition_duration (320);
+        wifi_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
         wifi_stack.add_named (scroll, "list");
         wifi_stack.add_named (wifi_placeholder, "empty");
         wifi_stack.add_named (details_page, "details");

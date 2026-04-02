@@ -716,19 +716,17 @@ public class MainWindowEthernetController : Object {
             row.add_css_class ("connected");
         }
 
-        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 10);
-        content.set_margin_start (12);
-        content.set_margin_end (8);
-        content.set_margin_top (8);
-        content.set_margin_bottom (8);
+        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
+        content.add_css_class ("nm-row-content-inset");
 
         var icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
-        icon.set_pixel_size (16);
+        icon.add_css_class ("nm-icon-size");
+        icon.add_css_class ("nm-icon-size-16");
         icon.add_css_class ("nm-signal-icon");
         icon.add_css_class ("nm-ethernet-icon");
         content.append (icon);
 
-        var info = new Gtk.Box (Gtk.Orientation.VERTICAL, 1);
+        var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
         info.set_hexpand (true);
         var name_lbl = new Gtk.Label (dev.name);
         name_lbl.set_xalign (0.0f);
