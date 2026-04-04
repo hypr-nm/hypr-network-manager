@@ -78,10 +78,21 @@ namespace MainWindowWifiRowBuilder {
         string ssid_text = MainWindowHelpers.safe_text (net.ssid);
         string bssid_text = MainWindowHelpers.safe_text (net.bssid);
 
+        var ssid_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+        ssid_row.set_hexpand (true);
+
         var ssid_lbl = new Gtk.Label (ssid_text);
         ssid_lbl.set_xalign (0.0f);
         ssid_lbl.add_css_class ("nm-ssid-label");
-        info.append (ssid_lbl);
+        ssid_row.append (ssid_lbl);
+
+        if (is_connected_now) {
+            var connected_indicator = new Gtk.Label ("• Connected");
+            connected_indicator.add_css_class ("nm-connected-indicator");
+            ssid_row.append (connected_indicator);
+        }
+
+        info.append (ssid_row);
 
         bool is_saved_only = net.saved && net.ap_path.has_prefix ("saved:");
         string subtitle;
