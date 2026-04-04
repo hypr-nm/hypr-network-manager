@@ -13,6 +13,6 @@ namespace MainWindowUiMetrics {
     public const int TRANSITION_REVEALER_COMPACT_MS = 180;
 
     public const double WINDOW_OPACITY = 1.0;
-    public const int TABS_POPOVER_OFFSET_X = -72;
+    public const int TABS_POPOVER_OFFSET_X = -35;
     public const int TABS_POPOVER_OFFSET_Y = 0;
 }

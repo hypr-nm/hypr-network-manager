@@ -172,7 +172,9 @@ namespace MainWindowWifiRowBuilder {
         var hidden_ssid_entry = new Gtk.Entry ();
         hidden_ssid_entry.set_hexpand (true);
         hidden_ssid_entry.set_placeholder_text ("Hidden network name");
+        hidden_ssid_entry.add_css_class ("nm-password-entry");
         hidden_ssid_entry.add_css_class ("nm-inline-password-entry");
+        hidden_ssid_entry.add_css_class ("nm-inline-ssid-entry");
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
 

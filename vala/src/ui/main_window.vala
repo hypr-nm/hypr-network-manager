@@ -1277,7 +1277,6 @@ public class MainWindow : Gtk.ApplicationWindow {
         tabs_menu_popover.set_child (tabs_menu_box);
 
         var tabs_menu_button = new Gtk.MenuButton ();
-        tabs_menu_button.add_css_class ("nm-icon-button");
         tabs_menu_button.add_css_class ("nm-tabs-menu-button");
         tabs_menu_button.set_tooltip_text ("Profiles");
         tabs_menu_button.set_popover (tabs_menu_popover);
