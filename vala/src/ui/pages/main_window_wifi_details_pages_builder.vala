@@ -18,9 +18,10 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
 
         this.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            {"nm-page-wifi-details", "nm-page-network-details", "nm-page"}
+            "nm-page-wifi-details",
+            {"nm-page-network-details", "nm-page"}
         );
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
@@ -133,9 +134,10 @@ public class MainWindowWifiEditPage : Gtk.Box {
 
         this.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            {"nm-page-wifi-edit", "nm-page-network-edit", "nm-page"}
+            "nm-page-wifi-edit",
+            {"nm-page-network-edit", "nm-page"}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -165,9 +167,10 @@ public class MainWindowWifiEditPage : Gtk.Box {
 
         var password_label = new Gtk.Label ("Password");
         password_label.set_xalign (0.0f);
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             password_label,
-            {"nm-edit-password-label", "nm-edit-field-label", "nm-form-label"}
+            "nm-edit-password-label",
+            {"nm-edit-field-label", "nm-form-label"}
         );
         form.append (password_label);
 
@@ -175,9 +178,10 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.password_entry.set_visibility (false);
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         this.password_entry.set_placeholder_text ("Password");
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             this.password_entry,
-            {"nm-edit-password-entry", "nm-edit-field-entry", "nm-edit-field-control", "nm-password-entry"}
+            "nm-edit-password-entry",
+            {"nm-edit-field-entry", "nm-edit-field-control", "nm-password-entry"}
         );
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
@@ -254,11 +258,11 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.sync_sensitivity ();
 
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        MainWindowCssClassResolver.add_best_class (actions, {"nm-edit-wifi-actions", "nm-edit-actions"});
+        MainWindowCssClassResolver.add_hook_and_best_class (actions, "nm-edit-wifi-actions", {"nm-edit-actions"});
 
         var apply_btn = new Gtk.Button.with_label ("Apply");
         apply_btn.add_css_class ("nm-button");
-        MainWindowCssClassResolver.add_best_class (apply_btn, {"nm-edit-apply-button", "nm-button"});
+        MainWindowCssClassResolver.add_hook_and_best_class (apply_btn, "nm-edit-apply-button", {"nm-button"});
         apply_btn.clicked.connect (() => {
             this.apply ();
         });

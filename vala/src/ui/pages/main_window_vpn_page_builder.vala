@@ -68,7 +68,7 @@ public class MainWindowVpnPageBuilder : Object {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
-        MainWindowCssClassResolver.add_best_class (page, {"nm-page-vpn", "nm-page"});
+        MainWindowCssClassResolver.add_hook_and_best_class (page, "nm-page-vpn", {"nm-page"});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar-inset", "nm-page-shell-inset"});

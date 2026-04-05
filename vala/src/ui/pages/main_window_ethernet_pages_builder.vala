@@ -40,9 +40,10 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
 
         this.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            {"nm-page-ethernet-details", "nm-page-network-details", "nm-page"}
+            "nm-page-ethernet-details",
+            {"nm-page-network-details", "nm-page"}
         );
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
@@ -152,9 +153,10 @@ public class MainWindowEthernetEditPage : Gtk.Box {
 
         this.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            {"nm-page-ethernet-edit", "nm-page-network-edit", "nm-page"}
+            "nm-page-ethernet-edit",
+            {"nm-page-network-edit", "nm-page"}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -263,7 +265,7 @@ namespace MainWindowEthernetPageBuilder {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
-        MainWindowCssClassResolver.add_best_class (page, {"nm-page-ethernet", "nm-page"});
+        MainWindowCssClassResolver.add_hook_and_best_class (page, "nm-page-ethernet", {"nm-page"});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar-inset", "nm-page-shell-inset"});

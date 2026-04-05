@@ -18,9 +18,10 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         this.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            {"nm-page-wifi-saved", "nm-page"}
+            "nm-page-wifi-saved",
+            {"nm-page"}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -535,9 +536,10 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
 
         this.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            {"nm-page-wifi-edit", "nm-page-network-edit", "nm-page"}
+            "nm-page-wifi-edit",
+            {"nm-page-network-edit", "nm-page"}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);

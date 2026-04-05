@@ -21,10 +21,7 @@ namespace MainWindowIpEditFormBuilder {
         }
 
         if (extra_class != null && extra_class != "") {
-            MainWindowCssClassResolver.add_best_class (
-                widget,
-                {extra_class, "nm-edit-field-control"}
-            );
+            MainWindowCssClassResolver.add_hook_and_best_class (widget, extra_class, {"nm-edit-field-control"});
             return;
         }
 
@@ -57,7 +54,7 @@ namespace MainWindowIpEditFormBuilder {
     ) {
         var container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (container, {css_class, "nm-edit-collapsible"});
+            MainWindowCssClassResolver.add_hook_and_best_class (container, css_class, {"nm-edit-collapsible"});
         } else {
             container.add_css_class ("nm-edit-collapsible");
         }
@@ -67,9 +64,10 @@ namespace MainWindowIpEditFormBuilder {
         toggle_button.set_halign (Gtk.Align.FILL);
         toggle_button.set_hexpand (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 toggle_button,
-                {css_class + "-toggle", "nm-edit-section-toggle"}
+                css_class + "-toggle",
+                {"nm-edit-section-toggle"}
             );
         } else {
             toggle_button.add_css_class ("nm-edit-section-toggle");
@@ -82,9 +80,10 @@ namespace MainWindowIpEditFormBuilder {
 
         var toggle_icon = new Gtk.Image.from_icon_name ("pan-down-symbolic");
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 toggle_icon,
-                {css_class + "-toggle-icon", "nm-edit-section-toggle-icon"}
+                css_class + "-toggle-icon",
+                {"nm-edit-section-toggle-icon"}
             );
         } else {
             toggle_icon.add_css_class ("nm-edit-section-toggle-icon");
@@ -95,9 +94,10 @@ namespace MainWindowIpEditFormBuilder {
         toggle_label.set_xalign (0.0f);
         toggle_label.set_hexpand (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 toggle_label,
-                {css_class + "-toggle-label", "nm-edit-section-toggle-label"}
+                css_class + "-toggle-label",
+                {"nm-edit-section-toggle-label"}
             );
         } else {
             toggle_label.add_css_class ("nm-edit-section-toggle-label");
@@ -109,9 +109,10 @@ namespace MainWindowIpEditFormBuilder {
 
         content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 content_box,
-                {css_class + "-content", "nm-edit-section-content"}
+                css_class + "-content",
+                {"nm-edit-section-content"}
             );
         } else {
             content_box.add_css_class ("nm-edit-section-content");
@@ -122,9 +123,10 @@ namespace MainWindowIpEditFormBuilder {
         content_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
         content_revealer.set_child (content_box);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 content_revealer,
-                {css_class + "-revealer", "nm-edit-section-revealer"}
+                css_class + "-revealer",
+                {"nm-edit-section-revealer"}
             );
         } else {
             content_revealer.add_css_class ("nm-edit-section-revealer");
@@ -162,9 +164,10 @@ namespace MainWindowIpEditFormBuilder {
         form.append (collapsible);
 
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 section,
-                {"nm-edit-ipv4-section", "nm-edit-ip-section"}
+                "nm-edit-ipv4-section",
+                {"nm-edit-ip-section"}
             );
         }
 
@@ -194,18 +197,20 @@ namespace MainWindowIpEditFormBuilder {
 
         var manual_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 manual_fields,
-                {"nm-edit-ipv4-manual", "nm-edit-ip-advanced"}
+                "nm-edit-ipv4-manual",
+                {"nm-edit-ip-advanced"}
             );
         }
 
         var manual_revealer = new Gtk.Revealer ();
         manual_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         manual_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             manual_revealer,
-            {"nm-edit-ipv4-manual-revealer", "nm-edit-ip-subsection-revealer"}
+            "nm-edit-ipv4-manual-revealer",
+            {"nm-edit-ip-subsection-revealer"}
         );
         manual_revealer.set_child (manual_fields);
         section.append (manual_revealer);
@@ -226,7 +231,7 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv4_address_entry,
-                {"nm-edit-ipv4-address-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         manual_fields.append (ipv4_address_entry);
@@ -247,7 +252,7 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv4_prefix_entry,
-                {"nm-edit-ipv4-prefix-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         manual_fields.append (ipv4_prefix_entry);
@@ -268,25 +273,27 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv4_gateway_entry,
-                {"nm-edit-gateway-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         manual_fields.append (ipv4_gateway_entry);
 
         var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 override_fields,
-                {"nm-edit-ipv4-overrides", "nm-edit-ip-advanced"}
+                "nm-edit-ipv4-overrides",
+                {"nm-edit-ip-advanced"}
             );
         }
 
         var override_revealer = new Gtk.Revealer ();
         override_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         override_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             override_revealer,
-            {"nm-edit-ipv4-overrides-revealer", "nm-edit-ip-subsection-revealer"}
+            "nm-edit-ipv4-overrides-revealer",
+            {"nm-edit-ip-subsection-revealer"}
         );
         override_revealer.set_child (override_fields);
         section.append (override_revealer);
@@ -312,9 +319,10 @@ namespace MainWindowIpEditFormBuilder {
         dns_mode_label.set_hexpand (true);
         dns_mode_label.set_valign (Gtk.Align.CENTER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 dns_mode_label,
-                {"nm-edit-dns-mode-label", "nm-edit-mode-label"}
+                "nm-edit-dns-mode-label",
+                {"nm-edit-mode-label"}
             );
         }
         dns_mode_row.append (dns_mode_label);
@@ -352,7 +360,7 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv4_dns_entry,
-                {"nm-edit-dns-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         override_fields.append (ipv4_dns_entry);
@@ -405,9 +413,10 @@ namespace MainWindowIpEditFormBuilder {
         form.append (collapsible);
 
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 section,
-                {"nm-edit-ipv6-section", "nm-edit-ip-section"}
+                "nm-edit-ipv6-section",
+                {"nm-edit-ip-section"}
             );
         }
 
@@ -429,27 +438,30 @@ namespace MainWindowIpEditFormBuilder {
                 ipv6_method_dropdown,
                 {"nm-edit-dropdown", "nm-edit-field-control"}
             );
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 ipv6_method_dropdown,
-                {"nm-edit-ipv6-method-dropdown", "nm-edit-dropdown"}
+                "nm-edit-ipv6-method-dropdown",
+                {"nm-edit-dropdown"}
             );
         }
         section.append (ipv6_method_dropdown);
 
         var manual_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 manual_fields,
-                {"nm-edit-ipv6-manual", "nm-edit-ip-advanced"}
+                "nm-edit-ipv6-manual",
+                {"nm-edit-ip-advanced"}
             );
         }
 
         var manual_revealer = new Gtk.Revealer ();
         manual_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         manual_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             manual_revealer,
-            {"nm-edit-ipv6-manual-revealer", "nm-edit-ip-subsection-revealer"}
+            "nm-edit-ipv6-manual-revealer",
+            {"nm-edit-ip-subsection-revealer"}
         );
         manual_revealer.set_child (manual_fields);
         section.append (manual_revealer);
@@ -470,7 +482,7 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv6_address_entry,
-                {"nm-edit-ipv6-address-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         manual_fields.append (ipv6_address_entry);
@@ -491,7 +503,7 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv6_prefix_entry,
-                {"nm-edit-ipv6-prefix-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         manual_fields.append (ipv6_prefix_entry);
@@ -512,25 +524,27 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv6_gateway_entry,
-                {"nm-edit-ipv6-gateway-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         manual_fields.append (ipv6_gateway_entry);
 
         var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 override_fields,
-                {"nm-edit-ipv6-overrides", "nm-edit-ip-advanced"}
+                "nm-edit-ipv6-overrides",
+                {"nm-edit-ip-advanced"}
             );
         }
 
         var override_revealer = new Gtk.Revealer ();
         override_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         override_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             override_revealer,
-            {"nm-edit-ipv6-overrides-revealer", "nm-edit-ip-subsection-revealer"}
+            "nm-edit-ipv6-overrides-revealer",
+            {"nm-edit-ip-subsection-revealer"}
         );
         override_revealer.set_child (override_fields);
         section.append (override_revealer);
@@ -556,9 +570,10 @@ namespace MainWindowIpEditFormBuilder {
         dns_mode_label.set_hexpand (true);
         dns_mode_label.set_valign (Gtk.Align.CENTER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 dns_mode_label,
-                {"nm-edit-ipv6-dns-mode-label", "nm-edit-mode-label"}
+                "nm-edit-ipv6-dns-mode-label",
+                {"nm-edit-mode-label"}
             );
         }
         dns_mode_row.append (dns_mode_label);
@@ -599,7 +614,7 @@ namespace MainWindowIpEditFormBuilder {
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
                 ipv6_dns_entry,
-                {"nm-edit-ipv6-dns-entry", "nm-edit-field-entry", "nm-edit-field-control"}
+                {"nm-edit-field-entry", "nm-edit-field-control"}
             );
         }
         override_fields.append (ipv6_dns_entry);

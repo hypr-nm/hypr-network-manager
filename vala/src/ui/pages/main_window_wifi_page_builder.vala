@@ -14,7 +14,7 @@ namespace MainWindowWifiPageBuilder {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
-        MainWindowCssClassResolver.add_best_class (page, {"nm-page-wifi", "nm-page"});
+        MainWindowCssClassResolver.add_hook_and_best_class (page, "nm-page-wifi", {"nm-page"});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar-inset", "nm-page-shell-inset"});
@@ -30,7 +30,7 @@ namespace MainWindowWifiPageBuilder {
         add_btn.add_css_class ("nm-button");
         MainWindowCssClassResolver.add_best_class (add_btn, {"nm-icon-button", "nm-button"});
         var add_icon = new Gtk.Image.from_icon_name ("list-add-symbolic");
-        MainWindowCssClassResolver.add_best_class (add_icon, {"nm-wifi-add-icon", "nm-toolbar-icon"});
+        MainWindowCssClassResolver.add_hook_and_best_class (add_icon, "nm-wifi-add-icon", {"nm-toolbar-icon"});
         add_btn.set_child (add_icon);
         add_btn.set_tooltip_text ("Add Hidden Network");
         add_btn.clicked.connect (() => {
@@ -53,7 +53,7 @@ namespace MainWindowWifiPageBuilder {
         toolbar.append (refresh_btn);
 
         wifi_switch = new Gtk.Switch ();
-        MainWindowCssClassResolver.add_best_class (wifi_switch, {"nm-wifi-switch", "nm-switch"});
+        MainWindowCssClassResolver.add_hook_and_best_class (wifi_switch, "nm-wifi-switch", {"nm-switch"});
         wifi_switch.set_valign (Gtk.Align.CENTER);
         wifi_switch.notify["active"].connect (() => {
             on_switch_changed ();

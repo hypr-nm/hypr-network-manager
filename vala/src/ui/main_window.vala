@@ -624,9 +624,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
         page.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_best_class (page, {"nm-page-shell-inset", "nm-page"});
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             page,
-            {"nm-page-wifi-add", "nm-page-network-edit", "nm-page"}
+            "nm-page-wifi-add",
+            {"nm-page-network-edit", "nm-page"}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);

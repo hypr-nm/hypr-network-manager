@@ -8,7 +8,7 @@ namespace MainWindowHelpers {
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         var icon = new Gtk.Image.from_icon_name ("go-previous-symbolic");
         MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-14", "nm-icon-size"});
-        MainWindowCssClassResolver.add_best_class (icon, {"nm-back-icon", "nm-icon-size"});
+        MainWindowCssClassResolver.add_hook_and_best_class (icon, "nm-back-icon", {"nm-icon-size"});
 
         var label = new Gtk.Label ("Back");
         label.add_css_class ("nm-back-label");

@@ -175,26 +175,29 @@ namespace MainWindowWifiRowBuilder {
         var prompt_label = new Gtk.Label ("Password for %s".printf (net.ssid));
         prompt_label.set_xalign (0.0f);
         prompt_label.set_hexpand (true);
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_label,
-            {"nm-inline-password-label", "nm-form-label"}
+            "nm-inline-password-label",
+            {"nm-form-label"}
         );
         prompt_label.set_visible (net.is_secured);
 
         var hidden_ssid_label = new Gtk.Label ("SSID");
         hidden_ssid_label.set_xalign (0.0f);
         hidden_ssid_label.set_hexpand (true);
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             hidden_ssid_label,
-            {"nm-inline-password-label", "nm-form-label"}
+            "nm-inline-password-label",
+            {"nm-form-label"}
         );
 
         var hidden_ssid_entry = new Gtk.Entry ();
         hidden_ssid_entry.set_hexpand (true);
         hidden_ssid_entry.set_placeholder_text ("Hidden network name");
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             hidden_ssid_entry,
-            {"nm-inline-ssid-entry", "nm-inline-password-entry", "nm-password-entry"}
+            "nm-inline-ssid-entry",
+            {"nm-inline-password-entry", "nm-password-entry"}
         );
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
@@ -206,9 +209,10 @@ namespace MainWindowWifiRowBuilder {
         prompt_entry.set_placeholder_text (
             "Wi-Fi password (min %d chars)".printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
         );
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_entry,
-            {"nm-inline-password-entry", "nm-password-entry"}
+            "nm-inline-password-entry",
+            {"nm-password-entry"}
         );
         prompt_entry.set_visible (net.is_secured);
 
@@ -239,16 +243,18 @@ namespace MainWindowWifiRowBuilder {
 
         var prompt_cancel = new Gtk.Button.with_label ("Cancel");
         prompt_cancel.add_css_class ("nm-button");
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_cancel,
-            {"nm-inline-password-cancel", "nm-button"}
+            "nm-inline-password-cancel",
+            {"nm-button"}
         );
 
         var prompt_connect = new Gtk.Button.with_label ("Connect");
         prompt_connect.add_css_class ("nm-button");
-        MainWindowCssClassResolver.add_best_class (
+        MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_connect,
-            {"nm-inline-password-connect", "suggested-action", "nm-button"}
+            "nm-inline-password-connect",
+            {"suggested-action", "nm-button"}
         );
         prompt_connect.set_sensitive (false);
 
