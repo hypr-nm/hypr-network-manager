@@ -14,11 +14,11 @@ namespace MainWindowWifiPageBuilder {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
-        page.add_css_class ("nm-page-wifi");
+        MainWindowCssClassResolver.add_best_class (page, {"nm-page-wifi", "nm-page"});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        toolbar.add_css_class ("nm-toolbar");
-        toolbar.add_css_class ("nm-toolbar-inset");
+        MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar-inset", "nm-page-shell-inset"});
+        MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar", "nm-status-bar"});
 
         var title = new Gtk.Label ("Wi-Fi");
         title.set_xalign (0.0f);
@@ -28,10 +28,9 @@ namespace MainWindowWifiPageBuilder {
 
         var add_btn = new Gtk.Button ();
         add_btn.add_css_class ("nm-button");
-        add_btn.add_css_class ("nm-icon-button");
+        MainWindowCssClassResolver.add_best_class (add_btn, {"nm-icon-button", "nm-button"});
         var add_icon = new Gtk.Image.from_icon_name ("list-add-symbolic");
-        add_icon.add_css_class ("nm-toolbar-icon");
-        add_icon.add_css_class ("nm-wifi-add-icon");
+        MainWindowCssClassResolver.add_best_class (add_icon, {"nm-wifi-add-icon", "nm-toolbar-icon"});
         add_btn.set_child (add_icon);
         add_btn.set_tooltip_text ("Add Hidden Network");
         add_btn.clicked.connect (() => {
@@ -41,11 +40,12 @@ namespace MainWindowWifiPageBuilder {
 
         var refresh_btn = new Gtk.Button ();
         refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-icon-button");
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
         var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        refresh_icon.add_css_class ("nm-toolbar-icon");
-        refresh_icon.add_css_class ("nm-refresh-icon");
-        refresh_icon.add_css_class ("nm-wifi-refresh-icon");
+        MainWindowCssClassResolver.add_best_class (
+            refresh_icon,
+            {"nm-wifi-refresh-icon", "nm-refresh-icon", "nm-toolbar-icon"}
+        );
         refresh_btn.set_child (refresh_icon);
         refresh_btn.clicked.connect (() => {
             on_refresh ();
@@ -53,8 +53,7 @@ namespace MainWindowWifiPageBuilder {
         toolbar.append (refresh_btn);
 
         wifi_switch = new Gtk.Switch ();
-        wifi_switch.add_css_class ("nm-switch");
-        wifi_switch.add_css_class ("nm-wifi-switch");
+        MainWindowCssClassResolver.add_best_class (wifi_switch, {"nm-wifi-switch", "nm-switch"});
         wifi_switch.set_valign (Gtk.Align.CENTER);
         wifi_switch.notify["active"].connect (() => {
             on_switch_changed ();
@@ -77,10 +76,11 @@ namespace MainWindowWifiPageBuilder {
         wifi_placeholder.set_valign (Gtk.Align.CENTER);
         wifi_placeholder.add_css_class ("nm-empty-state");
         var ph_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-        ph_icon.add_css_class ("nm-icon-size");
-        ph_icon.add_css_class ("nm-icon-size-24");
-        ph_icon.add_css_class ("nm-placeholder-icon");
-        ph_icon.add_css_class ("nm-wifi-placeholder-icon");
+        MainWindowCssClassResolver.add_best_class (ph_icon, {"nm-icon-size-24", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (
+            ph_icon,
+            {"nm-wifi-placeholder-icon", "nm-placeholder-icon"}
+        );
         var ph_lbl = new Gtk.Label ("No networks found");
         ph_lbl.add_css_class ("nm-placeholder-label");
         wifi_placeholder.append (ph_icon);

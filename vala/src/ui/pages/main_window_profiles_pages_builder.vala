@@ -16,9 +16,12 @@ public class MainWindowProfilesPage : Gtk.Box {
     public MainWindowProfilesPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-wifi-saved");
+        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        MainWindowCssClassResolver.add_best_class (
+            this,
+            {"nm-page-wifi-saved", "nm-page"}
+        );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
 
@@ -35,7 +38,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         var refresh_btn = new Gtk.Button ();
         refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-icon-button");
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
         var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
         refresh_icon.add_css_class ("nm-toolbar-icon");
         refresh_btn.set_child (refresh_icon);
@@ -135,7 +138,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var delete_btn = new Gtk.Button.with_label ("Delete");
             delete_btn.add_css_class ("nm-button");
-            delete_btn.add_css_class ("nm-action-button");
+            MainWindowCssClassResolver.add_best_class (delete_btn, {"nm-action-button", "nm-button"});
             delete_btn.clicked.connect (() => {
                 this.delete_profile (row_profile);
             });
@@ -195,7 +198,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var details_btn = new Gtk.Button.with_label ("Details");
             details_btn.add_css_class ("nm-button");
-            details_btn.add_css_class ("nm-action-button");
+            MainWindowCssClassResolver.add_best_class (details_btn, {"nm-action-button", "nm-button"});
             details_btn.clicked.connect (() => {
                 this.open_ethernet_profile (row_device);
             });
@@ -253,9 +256,12 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
     public MainWindowProfilesDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-network-details");
+        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        MainWindowCssClassResolver.add_best_class (
+            this,
+            {"nm-page-network-details", "nm-page"}
+        );
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
@@ -271,9 +277,8 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         header.add_css_class ("nm-details-header");
 
         var icon = new Gtk.Image.from_icon_name ("avatar-default-symbolic");
-        icon.add_css_class ("nm-icon-size");
-        icon.add_css_class ("nm-icon-size-28");
-        icon.add_css_class ("nm-details-network-icon");
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-28", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-details-network-icon", "nm-icon-size"});
         header.append (icon);
 
         this.title_label = new Gtk.Label ("Profile");
@@ -294,8 +299,10 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
 
         this.edit_button = new Gtk.Button.with_label ("Edit");
         this.edit_button.add_css_class ("nm-button");
-        this.edit_button.add_css_class ("nm-action-button");
-        this.edit_button.add_css_class ("nm-details-action-button");
+        MainWindowCssClassResolver.add_best_class (
+            this.edit_button,
+            {"nm-details-action-button", "nm-action-button", "nm-button"}
+        );
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });
@@ -303,8 +310,10 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
 
         this.delete_button = new Gtk.Button.with_label ("Delete");
         this.delete_button.add_css_class ("nm-button");
-        this.delete_button.add_css_class ("nm-action-button");
-        this.delete_button.add_css_class ("nm-details-action-button");
+        MainWindowCssClassResolver.add_best_class (
+            this.delete_button,
+            {"nm-details-action-button", "nm-action-button", "nm-button"}
+        );
         this.delete_button.clicked.connect (() => {
             this.delete_profile ();
         });
@@ -511,8 +520,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
 
         var heading = new Gtk.Label (title);
         heading.set_xalign (0.0f);
-        heading.add_css_class ("nm-form-label");
-        heading.add_css_class ("nm-edit-field-label");
+        MainWindowCssClassResolver.add_best_class (heading, {"nm-edit-field-label", "nm-form-label"});
         section.append (heading);
 
         section_content = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -525,10 +533,12 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
     public MainWindowWifiSavedEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-wifi-edit");
-        this.add_css_class ("nm-page-network-edit");
+        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        MainWindowCssClassResolver.add_best_class (
+            this,
+            {"nm-page-wifi-edit", "nm-page-network-edit", "nm-page"}
+        );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button (() => {
@@ -549,8 +559,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         scroll.set_vexpand (true);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        form.add_css_class ("nm-edit-form");
-        form.add_css_class ("nm-edit-network-form");
+        MainWindowCssClassResolver.add_best_class (form, {"nm-edit-network-form", "nm-edit-form"});
 
         Gtk.Box profile_content;
         var profile_section = build_section ("Profile", out profile_content);
@@ -561,8 +570,10 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         profile_content.append (profile_name_label);
 
         this.profile_name_entry = new Gtk.Entry ();
-        this.profile_name_entry.add_css_class ("nm-edit-field-control");
-        this.profile_name_entry.add_css_class ("nm-edit-field-entry");
+        MainWindowCssClassResolver.add_best_class (
+            this.profile_name_entry,
+            {"nm-edit-field-entry", "nm-edit-field-control"}
+        );
         profile_content.append (this.profile_name_entry);
 
         var ssid_label = new Gtk.Label ("SSID");
@@ -571,8 +582,10 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         profile_content.append (ssid_label);
 
         this.ssid_entry = new Gtk.Entry ();
-        this.ssid_entry.add_css_class ("nm-edit-field-control");
-        this.ssid_entry.add_css_class ("nm-edit-field-entry");
+        MainWindowCssClassResolver.add_best_class (
+            this.ssid_entry,
+            {"nm-edit-field-entry", "nm-edit-field-control"}
+        );
         profile_content.append (this.ssid_entry);
 
         var bssid_label = new Gtk.Label ("BSSID");
@@ -581,8 +594,10 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         profile_content.append (bssid_label);
 
         this.bssid_entry = new Gtk.Entry ();
-        this.bssid_entry.add_css_class ("nm-edit-field-control");
-        this.bssid_entry.add_css_class ("nm-edit-field-entry");
+        MainWindowCssClassResolver.add_best_class (
+            this.bssid_entry,
+            {"nm-edit-field-entry", "nm-edit-field-control"}
+        );
         profile_content.append (this.bssid_entry);
 
         var security_label = new Gtk.Label ("Security Mode");
@@ -597,8 +612,10 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         security_modes.append ("Enhanced Open (OWE)");
         security_modes.append ("WEP");
         this.security_mode_dropdown = new Gtk.DropDown (security_modes, null);
-        this.security_mode_dropdown.add_css_class ("nm-edit-field-control");
-        this.security_mode_dropdown.add_css_class ("nm-edit-dropdown");
+        MainWindowCssClassResolver.add_best_class (
+            this.security_mode_dropdown,
+            {"nm-edit-dropdown", "nm-edit-field-control"}
+        );
         profile_content.append (this.security_mode_dropdown);
 
         form.append (profile_section);
@@ -627,9 +644,10 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         this.password_entry = new Gtk.Entry ();
         this.password_entry.set_visibility (false);
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
-        this.password_entry.add_css_class ("nm-password-entry");
-        this.password_entry.add_css_class ("nm-edit-field-control");
-        this.password_entry.add_css_class ("nm-edit-field-entry");
+        MainWindowCssClassResolver.add_best_class (
+            this.password_entry,
+            {"nm-edit-field-entry", "nm-edit-field-control", "nm-password-entry"}
+        );
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
         MainWindowActionCallback update_password_visibility_icon = () => {
@@ -706,7 +724,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
 
         var save_btn = new Gtk.Button.with_label ("Save");
         save_btn.add_css_class ("nm-button");
-        save_btn.add_css_class ("suggested-action");
+        MainWindowCssClassResolver.add_best_class (save_btn, {"suggested-action", "nm-button"});
         save_btn.clicked.connect (() => {
             this.save ();
         });

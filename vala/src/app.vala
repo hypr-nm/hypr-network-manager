@@ -92,6 +92,8 @@ public class NetworkManager : Gtk.Application {
             return;
         }
 
+        MainWindowCssClassResolver.initialize (css_path);
+
         if (!load_css (css_path, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)) {
             log_warn (
                 "app",

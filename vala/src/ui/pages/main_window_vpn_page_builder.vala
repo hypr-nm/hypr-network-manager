@@ -68,11 +68,11 @@ public class MainWindowVpnPageBuilder : Object {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
-        page.add_css_class ("nm-page-vpn");
+        MainWindowCssClassResolver.add_best_class (page, {"nm-page-vpn", "nm-page"});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        toolbar.add_css_class ("nm-toolbar");
-        toolbar.add_css_class ("nm-toolbar-inset");
+        MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar-inset", "nm-page-shell-inset"});
+        MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar", "nm-status-bar"});
 
         var title = new Gtk.Label ("VPN");
         title.set_xalign (0.0f);
@@ -82,13 +82,13 @@ public class MainWindowVpnPageBuilder : Object {
 
         var refresh_btn = new Gtk.Button ();
         refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-icon-button");
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
         var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        refresh_icon.add_css_class ("nm-icon-size");
-        refresh_icon.add_css_class ("nm-icon-size-16");
-        refresh_icon.add_css_class ("nm-toolbar-icon");
-        refresh_icon.add_css_class ("nm-refresh-icon");
-        refresh_icon.add_css_class ("nm-vpn-refresh-icon");
+        MainWindowCssClassResolver.add_best_class (refresh_icon, {"nm-icon-size-16", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (
+            refresh_icon,
+            {"nm-vpn-refresh-icon", "nm-refresh-icon", "nm-toolbar-icon"}
+        );
         refresh_btn.set_child (refresh_icon);
         refresh_btn.clicked.connect (() => {
             on_refresh ();
@@ -110,10 +110,11 @@ public class MainWindowVpnPageBuilder : Object {
         vpn_placeholder.set_valign (Gtk.Align.CENTER);
         vpn_placeholder.add_css_class ("nm-empty-state");
         var vpn_icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        vpn_icon.add_css_class ("nm-icon-size");
-        vpn_icon.add_css_class ("nm-icon-size-24");
-        vpn_icon.add_css_class ("nm-placeholder-icon");
-        vpn_icon.add_css_class ("nm-vpn-placeholder-icon");
+        MainWindowCssClassResolver.add_best_class (vpn_icon, {"nm-icon-size-24", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (
+            vpn_icon,
+            {"nm-vpn-placeholder-icon", "nm-placeholder-icon"}
+        );
         var vpn_lbl = new Gtk.Label ("No VPN profiles found");
         vpn_lbl.add_css_class ("nm-placeholder-label");
         vpn_placeholder.append (vpn_icon);
@@ -148,10 +149,8 @@ public class MainWindowVpnPageBuilder : Object {
         content.add_css_class ("nm-row-content-inset");
 
         var icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        icon.add_css_class ("nm-icon-size");
-        icon.add_css_class ("nm-icon-size-16");
-        icon.add_css_class ("nm-signal-icon");
-        icon.add_css_class ("nm-vpn-icon");
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-16", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-vpn-icon", "nm-signal-icon"});
         content.append (icon);
 
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
@@ -168,9 +167,11 @@ public class MainWindowVpnPageBuilder : Object {
         content.append (info);
 
         var action = new Gtk.Button.with_label (conn.is_connected ? "Disconnect" : "Connect");
-        action.add_css_class ("nm-button");
+        MainWindowCssClassResolver.add_best_class (
+            action,
+            {"row-link-action", "nm-button"}
+        );
         action.add_css_class (conn.is_connected ? "nm-disconnect-button" : "nm-connect-button");
-        action.add_css_class ("nm-row-action-button");
         action.clicked.connect (() => {
             uint epoch = capture_ui_epoch ();
             if (conn.is_connected) {

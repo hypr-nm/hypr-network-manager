@@ -3,14 +3,12 @@ using Gtk;
 namespace MainWindowHelpers {
     public Gtk.Button build_back_button (MainWindowActionCallback on_back) {
         var back_btn = new Gtk.Button ();
-        back_btn.add_css_class ("nm-button");
-        back_btn.add_css_class ("nm-nav-back");
+        MainWindowCssClassResolver.add_best_class (back_btn, {"nm-nav-back", "nm-button"});
 
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         var icon = new Gtk.Image.from_icon_name ("go-previous-symbolic");
-        icon.add_css_class ("nm-icon-size");
-        icon.add_css_class ("nm-icon-size-14");
-        icon.add_css_class ("nm-back-icon");
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-14", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-back-icon", "nm-icon-size"});
 
         var label = new Gtk.Label ("Back");
         label.add_css_class ("nm-back-label");
@@ -54,8 +52,7 @@ namespace MainWindowHelpers {
 
     public Gtk.Widget build_details_row (string? key, string? value) {
         var row = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
-        row.add_css_class ("nm-details-row");
-        row.add_css_class ("nm-details-item");
+        MainWindowCssClassResolver.add_best_class (row, {"nm-details-item", "nm-details-row"});
 
         string key_text = display_text_or_na (key);
         string value_text = display_text_or_na (value);
@@ -64,15 +61,16 @@ namespace MainWindowHelpers {
         key_label.set_xalign (0.0f);
         key_label.set_halign (Gtk.Align.START);
         key_label.set_hexpand (false);
-        key_label.add_css_class ("nm-details-key");
-        key_label.add_css_class ("nm-details-item-key");
+        MainWindowCssClassResolver.add_best_class (key_label, {"nm-details-item-key", "nm-details-key"});
 
         var value_label = new Gtk.Label (value_text);
         value_label.set_xalign (0.0f);
         value_label.set_halign (Gtk.Align.START);
         value_label.set_wrap (true);
-        value_label.add_css_class ("nm-details-value");
-        value_label.add_css_class ("nm-details-item-value");
+        MainWindowCssClassResolver.add_best_class (
+            value_label,
+            {"nm-details-item-value", "nm-details-value"}
+        );
 
         row.append (key_label);
         row.append (value_label);

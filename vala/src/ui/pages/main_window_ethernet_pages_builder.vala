@@ -38,10 +38,12 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
     public MainWindowEthernetDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-ethernet-details");
-        this.add_css_class ("nm-page-network-details");
+        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        MainWindowCssClassResolver.add_best_class (
+            this,
+            {"nm-page-ethernet-details", "nm-page-network-details", "nm-page"}
+        );
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
@@ -57,11 +59,11 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         header.add_css_class ("nm-details-header");
 
         var icon = new Gtk.Image.from_icon_name ("network-transmit-receive-symbolic");
-        icon.add_css_class ("nm-icon-size");
-        icon.add_css_class ("nm-icon-size-28");
-        icon.add_css_class ("nm-signal-icon");
-        icon.add_css_class ("nm-ethernet-icon");
-        icon.add_css_class ("nm-details-network-icon");
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-28", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (
+            icon,
+            {"nm-details-network-icon", "nm-ethernet-icon", "nm-signal-icon"}
+        );
         header.append (icon);
 
         this.details_title = new Gtk.Label ("Ethernet");
@@ -76,8 +78,10 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
 
         this.primary_button = new Gtk.Button.with_label ("Connect");
         this.primary_button.add_css_class ("nm-button");
-        this.primary_button.add_css_class ("nm-action-button");
-        this.primary_button.add_css_class ("nm-details-action-button");
+        MainWindowCssClassResolver.add_best_class (
+            this.primary_button,
+            {"nm-details-action-button", "nm-action-button", "nm-button"}
+        );
         this.primary_button.clicked.connect (() => {
             this.primary_action ();
         });
@@ -85,8 +89,10 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
 
         this.edit_button = new Gtk.Button.with_label ("Edit");
         this.edit_button.add_css_class ("nm-button");
-        this.edit_button.add_css_class ("nm-action-button");
-        this.edit_button.add_css_class ("nm-details-action-button");
+        MainWindowCssClassResolver.add_best_class (
+            this.edit_button,
+            {"nm-details-action-button", "nm-action-button", "nm-button"}
+        );
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });
@@ -144,10 +150,12 @@ public class MainWindowEthernetEditPage : Gtk.Box {
     public MainWindowEthernetEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page-shell-inset");
         this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-ethernet-edit");
-        this.add_css_class ("nm-page-network-edit");
+        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        MainWindowCssClassResolver.add_best_class (
+            this,
+            {"nm-page-ethernet-edit", "nm-page-network-edit", "nm-page"}
+        );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button (() => {
@@ -163,15 +171,15 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         this.append (header);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        form.add_css_class ("nm-edit-form");
-        form.add_css_class ("nm-edit-ethernet-form");
-        form.add_css_class ("nm-edit-network-form");
+        MainWindowCssClassResolver.add_best_class (
+            form,
+            {"nm-edit-ethernet-form", "nm-edit-network-form", "nm-edit-form"}
+        );
 
         this.note_label = new Gtk.Label ("");
         this.note_label.set_xalign (0.0f);
         this.note_label.set_wrap (true);
-        this.note_label.add_css_class ("nm-sub-label");
-        this.note_label.add_css_class ("nm-edit-note");
+        MainWindowCssClassResolver.add_best_class (this.note_label, {"nm-edit-note", "nm-sub-label"});
         form.append (this.note_label);
 
         Gtk.DropDown v4_method;
@@ -227,7 +235,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var save_btn = new Gtk.Button.with_label ("Apply");
         save_btn.add_css_class ("nm-button");
-        save_btn.add_css_class ("suggested-action");
+        MainWindowCssClassResolver.add_best_class (save_btn, {"suggested-action", "nm-button"});
         save_btn.clicked.connect (() => {
             this.apply ();
         });
@@ -255,11 +263,11 @@ namespace MainWindowEthernetPageBuilder {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
-        page.add_css_class ("nm-page-ethernet");
+        MainWindowCssClassResolver.add_best_class (page, {"nm-page-ethernet", "nm-page"});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        toolbar.add_css_class ("nm-toolbar");
-        toolbar.add_css_class ("nm-toolbar-inset");
+        MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar-inset", "nm-page-shell-inset"});
+        MainWindowCssClassResolver.add_best_class (toolbar, {"nm-toolbar", "nm-status-bar"});
 
         var title = new Gtk.Label ("Ethernet");
         title.set_xalign (0.0f);
@@ -269,13 +277,13 @@ namespace MainWindowEthernetPageBuilder {
 
         var refresh_btn = new Gtk.Button ();
         refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-icon-button");
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
         var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        refresh_icon.add_css_class ("nm-icon-size");
-        refresh_icon.add_css_class ("nm-icon-size-16");
-        refresh_icon.add_css_class ("nm-toolbar-icon");
-        refresh_icon.add_css_class ("nm-refresh-icon");
-        refresh_icon.add_css_class ("nm-ethernet-refresh-icon");
+        MainWindowCssClassResolver.add_best_class (refresh_icon, {"nm-icon-size-16", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (
+            refresh_icon,
+            {"nm-ethernet-refresh-icon", "nm-refresh-icon", "nm-toolbar-icon"}
+        );
         refresh_btn.set_child (refresh_icon);
         refresh_btn.clicked.connect (() => {
             on_refresh ();
@@ -298,10 +306,11 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_placeholder.set_valign (Gtk.Align.CENTER);
         ethernet_placeholder.add_css_class ("nm-empty-state");
         var eth_icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
-        eth_icon.add_css_class ("nm-icon-size");
-        eth_icon.add_css_class ("nm-icon-size-24");
-        eth_icon.add_css_class ("nm-placeholder-icon");
-        eth_icon.add_css_class ("nm-ethernet-placeholder-icon");
+        MainWindowCssClassResolver.add_best_class (eth_icon, {"nm-icon-size-24", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (
+            eth_icon,
+            {"nm-ethernet-placeholder-icon", "nm-placeholder-icon"}
+        );
         var eth_lbl = new Gtk.Label ("No Ethernet devices found");
         eth_lbl.add_css_class ("nm-placeholder-label");
         ethernet_placeholder.append (eth_icon);

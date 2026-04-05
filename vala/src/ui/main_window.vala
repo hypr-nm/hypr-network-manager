@@ -284,13 +284,12 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private Gtk.Widget build_status_bar () {
         var bar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        bar.add_css_class ("nm-status-bar");
-        bar.add_css_class ("nm-toolbar-inset");
+        MainWindowCssClassResolver.add_best_class (bar, {"nm-toolbar-inset", "nm-page-shell-inset"});
+        MainWindowCssClassResolver.add_best_class (bar, {"nm-status-bar", "nm-toolbar"});
 
         status_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-        status_icon.add_css_class ("nm-icon-size");
-        status_icon.add_css_class ("nm-icon-size-16");
-        status_icon.add_css_class ("nm-status-icon");
+        MainWindowCssClassResolver.add_best_class (status_icon, {"nm-icon-size-16", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (status_icon, {"nm-status-icon", "nm-icon-size"});
         bar.append (status_icon);
 
         status_label = new Gtk.Label ("Loading networks…");
@@ -623,10 +622,12 @@ public class MainWindow : Gtk.ApplicationWindow {
 
     private Gtk.Widget build_wifi_add_page () {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
-        page.add_css_class ("nm-page-shell-inset");
         page.add_css_class ("nm-page");
-        page.add_css_class ("nm-page-wifi-add");
-        page.add_css_class ("nm-page-network-edit");
+        MainWindowCssClassResolver.add_best_class (page, {"nm-page-shell-inset", "nm-page"});
+        MainWindowCssClassResolver.add_best_class (
+            page,
+            {"nm-page-wifi-add", "nm-page-network-edit", "nm-page"}
+        );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button (() => {
@@ -643,32 +644,30 @@ public class MainWindow : Gtk.ApplicationWindow {
         page.append (header);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        form.add_css_class ("nm-edit-form");
-        form.add_css_class ("nm-edit-network-form");
+        MainWindowCssClassResolver.add_best_class (form, {"nm-edit-network-form", "nm-edit-form"});
 
         var note = new Gtk.Label ("Manually add a hidden Wi-Fi network.");
         note.set_xalign (0.0f);
         note.set_wrap (true);
-        note.add_css_class ("nm-sub-label");
-        note.add_css_class ("nm-edit-note");
+        MainWindowCssClassResolver.add_best_class (note, {"nm-edit-note", "nm-sub-label"});
         form.append (note);
 
         var ssid_label = new Gtk.Label ("SSID");
         ssid_label.set_xalign (0.0f);
-        ssid_label.add_css_class ("nm-form-label");
-        ssid_label.add_css_class ("nm-edit-field-label");
+        MainWindowCssClassResolver.add_best_class (ssid_label, {"nm-edit-field-label", "nm-form-label"});
         form.append (ssid_label);
 
         wifi_add_ssid_entry = new Gtk.Entry ();
         wifi_add_ssid_entry.set_placeholder_text ("Network name");
-        wifi_add_ssid_entry.add_css_class ("nm-edit-field-control");
-        wifi_add_ssid_entry.add_css_class ("nm-edit-field-entry");
+        MainWindowCssClassResolver.add_best_class (
+            wifi_add_ssid_entry,
+            {"nm-edit-field-entry", "nm-edit-field-control"}
+        );
         form.append (wifi_add_ssid_entry);
 
         var security_label = new Gtk.Label ("Security");
         security_label.set_xalign (0.0f);
-        security_label.add_css_class ("nm-form-label");
-        security_label.add_css_class ("nm-edit-field-label");
+        MainWindowCssClassResolver.add_best_class (security_label, {"nm-edit-field-label", "nm-form-label"});
         form.append (security_label);
 
         var security_list = new Gtk.StringList (null);
@@ -676,15 +675,17 @@ public class MainWindow : Gtk.ApplicationWindow {
             security_list.append (label);
         }
         wifi_add_security_dropdown = new Gtk.DropDown (security_list, null);
-        wifi_add_security_dropdown.add_css_class ("nm-edit-field-control");
-        wifi_add_security_dropdown.add_css_class ("nm-edit-dropdown");
+        MainWindowCssClassResolver.add_best_class (
+            wifi_add_security_dropdown,
+            {"nm-edit-dropdown", "nm-edit-field-control"}
+        );
         wifi_add_security_dropdown.set_selected (
             HiddenWifiSecurityModeUtils.to_dropdown_index (HiddenWifiSecurityMode.WPA_PSK)
         );
 
         var save_btn = new Gtk.Button.with_label ("Connect");
         save_btn.add_css_class ("nm-button");
-        save_btn.add_css_class ("suggested-action");
+        MainWindowCssClassResolver.add_best_class (save_btn, {"suggested-action", "nm-button"});
 
         wifi_add_security_dropdown.notify["selected"].connect (() => {
             wifi_controller.sync_add_network_sensitivity (
@@ -697,8 +698,10 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         var password_label = new Gtk.Label ("Password");
         password_label.set_xalign (0.0f);
-        password_label.add_css_class ("nm-form-label");
-        password_label.add_css_class ("nm-edit-field-label");
+        MainWindowCssClassResolver.add_best_class (
+            password_label,
+            {"nm-edit-field-label", "nm-form-label"}
+        );
         form.append (password_label);
 
         wifi_add_password_entry = new Gtk.Entry ();
@@ -707,9 +710,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_add_password_entry.set_placeholder_text (
             "Network password (min %d chars)".printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
         );
-        wifi_add_password_entry.add_css_class ("nm-password-entry");
-        wifi_add_password_entry.add_css_class ("nm-edit-field-control");
-        wifi_add_password_entry.add_css_class ("nm-edit-field-entry");
+        MainWindowCssClassResolver.add_best_class (
+            wifi_add_password_entry,
+            {"nm-edit-field-entry", "nm-edit-field-control", "nm-password-entry"}
+        );
         wifi_add_password_entry.changed.connect (() => {
             wifi_controller.sync_add_network_sensitivity (
                 wifi_add_security_dropdown,
@@ -1263,8 +1267,14 @@ public class MainWindow : Gtk.ApplicationWindow {
             MainWindowUiMetrics.TABS_POPOVER_OFFSET_Y
         );
         var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-        tabs_menu_box.add_css_class ("nm-tabs-menu-list");
-        tabs_menu_box.add_css_class ("nm-popover-list-inset");
+        MainWindowCssClassResolver.add_best_class (
+            tabs_menu_box,
+            {"nm-popover-list-inset", "nm-row-content-inset"}
+        );
+        MainWindowCssClassResolver.add_best_class (
+            tabs_menu_box,
+            {"nm-tabs-menu-list", "nm-list"}
+        );
 
         var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
         saved_profiles_item.add_css_class ("nm-tabs-menu-item");
@@ -1281,8 +1291,10 @@ public class MainWindow : Gtk.ApplicationWindow {
         tabs_menu_button.set_tooltip_text ("Profiles");
         tabs_menu_button.set_popover (tabs_menu_popover);
         var tabs_menu_icon = new Gtk.Image.from_icon_name ("view-more-symbolic");
-        tabs_menu_icon.add_css_class ("nm-toolbar-icon");
-        tabs_menu_icon.add_css_class ("nm-tabs-menu-icon");
+        MainWindowCssClassResolver.add_best_class (
+            tabs_menu_icon,
+            {"nm-tabs-menu-icon", "nm-toolbar-icon"}
+        );
         tabs_menu_button.set_child (tabs_menu_icon);
 
         notebook.set_action_widget (tabs_menu_button, Gtk.PackType.END);

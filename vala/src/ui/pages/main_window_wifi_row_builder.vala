@@ -63,10 +63,8 @@ namespace MainWindowWifiRowBuilder {
         content.add_css_class ("nm-row-content");
 
         var signal_icon = new Gtk.Image.from_icon_name (signal_icon_name);
-        signal_icon.add_css_class ("nm-icon-size");
-        signal_icon.add_css_class ("nm-icon-size-16");
-        signal_icon.add_css_class ("nm-signal-icon");
-        signal_icon.add_css_class ("nm-wifi-icon");
+        MainWindowCssClassResolver.add_best_class (signal_icon, {"nm-icon-size-16", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (signal_icon, {"nm-wifi-icon", "nm-signal-icon"});
         if (net.is_secured) {
             signal_icon.add_css_class ("nm-signal-icon-secured");
         }
@@ -133,15 +131,18 @@ namespace MainWindowWifiRowBuilder {
         action_buttons.set_valign (Gtk.Align.CENTER);
 
         var details_btn = new Gtk.Button ();
-        details_btn.add_css_class ("nm-button");
-        details_btn.add_css_class ("nm-menu-button");
-        details_btn.add_css_class ("nm-details-open-button");
-        details_btn.add_css_class ("nm-row-icon-button");
+        MainWindowCssClassResolver.add_best_class (
+            details_btn,
+            {"row-icon-action", "nm-button"}
+        );
+        MainWindowCssClassResolver.add_best_class (details_btn, {"nm-details-open-button", "row-icon-action"});
         details_btn.set_valign (Gtk.Align.CENTER);
         details_btn.set_tooltip_text ("Details");
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
-        details_icon.add_css_class ("nm-details-open-icon");
-        details_icon.add_css_class ("nm-details-button-icon");
+        MainWindowCssClassResolver.add_best_class (
+            details_icon,
+            {"nm-details-button-icon", "nm-details-open-icon"}
+        );
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
             on_open_details (net);
@@ -149,9 +150,11 @@ namespace MainWindowWifiRowBuilder {
 
         if (has_resolvable_saved_profile) {
             var forget = new Gtk.Button.with_label ("Forget");
-            forget.add_css_class ("nm-button");
+            MainWindowCssClassResolver.add_best_class (
+                forget,
+                {"row-link-action", "nm-button"}
+            );
             forget.add_css_class ("nm-action-button");
-            forget.add_css_class ("nm-row-action-button");
             forget.set_valign (Gtk.Align.CENTER);
             forget.clicked.connect (() => {
                 on_forget_saved_network (net);
@@ -161,31 +164,38 @@ namespace MainWindowWifiRowBuilder {
 
         string action_label = is_connecting ? "Connecting…" : (is_connected_now ? "Disconnect" : "Connect");
         var action = new Gtk.Button.with_label (action_label);
-        action.add_css_class ("nm-button");
+        MainWindowCssClassResolver.add_best_class (
+            action,
+            {"row-link-action", "nm-button"}
+        );
         action.add_css_class (is_connected_now && !is_connecting ? "nm-disconnect-button" : "nm-connect-button");
-        action.add_css_class ("nm-row-action-button");
         action.set_valign (Gtk.Align.CENTER);
         action.set_sensitive (!is_connecting);
 
         var prompt_label = new Gtk.Label ("Password for %s".printf (net.ssid));
         prompt_label.set_xalign (0.0f);
         prompt_label.set_hexpand (true);
-        prompt_label.add_css_class ("nm-form-label");
-        prompt_label.add_css_class ("nm-inline-password-label");
+        MainWindowCssClassResolver.add_best_class (
+            prompt_label,
+            {"nm-inline-password-label", "nm-form-label"}
+        );
         prompt_label.set_visible (net.is_secured);
 
         var hidden_ssid_label = new Gtk.Label ("SSID");
         hidden_ssid_label.set_xalign (0.0f);
         hidden_ssid_label.set_hexpand (true);
-        hidden_ssid_label.add_css_class ("nm-form-label");
-        hidden_ssid_label.add_css_class ("nm-inline-password-label");
+        MainWindowCssClassResolver.add_best_class (
+            hidden_ssid_label,
+            {"nm-inline-password-label", "nm-form-label"}
+        );
 
         var hidden_ssid_entry = new Gtk.Entry ();
         hidden_ssid_entry.set_hexpand (true);
         hidden_ssid_entry.set_placeholder_text ("Hidden network name");
-        hidden_ssid_entry.add_css_class ("nm-password-entry");
-        hidden_ssid_entry.add_css_class ("nm-inline-password-entry");
-        hidden_ssid_entry.add_css_class ("nm-inline-ssid-entry");
+        MainWindowCssClassResolver.add_best_class (
+            hidden_ssid_entry,
+            {"nm-inline-ssid-entry", "nm-inline-password-entry", "nm-password-entry"}
+        );
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
 
@@ -196,8 +206,10 @@ namespace MainWindowWifiRowBuilder {
         prompt_entry.set_placeholder_text (
             "Wi-Fi password (min %d chars)".printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
         );
-        prompt_entry.add_css_class ("nm-password-entry");
-        prompt_entry.add_css_class ("nm-inline-password-entry");
+        MainWindowCssClassResolver.add_best_class (
+            prompt_entry,
+            {"nm-inline-password-entry", "nm-password-entry"}
+        );
         prompt_entry.set_visible (net.is_secured);
 
         MainWindowActionCallback update_prompt_password_visibility_icon = () => {
@@ -227,12 +239,17 @@ namespace MainWindowWifiRowBuilder {
 
         var prompt_cancel = new Gtk.Button.with_label ("Cancel");
         prompt_cancel.add_css_class ("nm-button");
-        prompt_cancel.add_css_class ("nm-inline-password-cancel");
+        MainWindowCssClassResolver.add_best_class (
+            prompt_cancel,
+            {"nm-inline-password-cancel", "nm-button"}
+        );
 
         var prompt_connect = new Gtk.Button.with_label ("Connect");
         prompt_connect.add_css_class ("nm-button");
-        prompt_connect.add_css_class ("suggested-action");
-        prompt_connect.add_css_class ("nm-inline-password-connect");
+        MainWindowCssClassResolver.add_best_class (
+            prompt_connect,
+            {"nm-inline-password-connect", "suggested-action", "nm-button"}
+        );
         prompt_connect.set_sensitive (false);
 
         MainWindowActionCallback update_prompt_connect_sensitivity = () => {
