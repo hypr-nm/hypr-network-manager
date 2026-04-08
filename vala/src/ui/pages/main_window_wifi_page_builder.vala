@@ -26,31 +26,22 @@ namespace MainWindowWifiPageBuilder {
         title.add_css_class ("nm-section-title");
         toolbar.append (title);
 
-        var add_btn = new Gtk.Button ();
+        var add_btn = new Gtk.Button.with_label ("Add Network");
         add_btn.add_css_class ("nm-button");
         add_btn.add_css_class ("nm-wifi-toolbar-action");
         add_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (add_btn, {"nm-icon-button", "nm-button"});
-        var add_icon = new Gtk.Image.from_icon_name ("list-add-symbolic");
-        MainWindowCssClassResolver.add_hook_and_best_class (add_icon, "nm-wifi-add-icon", {"nm-toolbar-icon"});
-        add_btn.set_child (add_icon);
+        MainWindowCssClassResolver.add_best_class (add_btn, {"nm-wifi-toolbar-action", "nm-button"});
         add_btn.set_tooltip_text ("Add Hidden Network");
         add_btn.clicked.connect (() => {
             on_add_network ();
         });
         toolbar.append (add_btn);
 
-        var refresh_btn = new Gtk.Button ();
+        var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
         refresh_btn.add_css_class ("nm-wifi-toolbar-action");
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
-        var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        MainWindowCssClassResolver.add_best_class (
-            refresh_icon,
-            {"nm-wifi-refresh-icon", "nm-refresh-icon", "nm-toolbar-icon"}
-        );
-        refresh_btn.set_child (refresh_icon);
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-wifi-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {
             on_refresh ();
         });
