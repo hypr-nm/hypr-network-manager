@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/github/hypr-network-manager/icons">
+    <file alias="hicolor/symbolic/actions/view-visible-symbolic.svg">icons/view-visible-symbolic.svg</file>
+    <file alias="hicolor/symbolic/actions/view-visible-off-symbolic.svg">icons/view-visible-off-symbolic.svg</file>
+    <file alias="hicolor/symbolic/actions/expand-element-symbolic.svg">icons/expand-element-symbolic.svg</file>
+    <file alias="hicolor/symbolic/actions/collapse-element-symbolic.svg">icons/collapse-element-symbolic.svg</file>
+  </gresource>
+</gresources>
