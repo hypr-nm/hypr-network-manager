@@ -192,8 +192,14 @@ public class MainWindowEthernetController : Object {
         return nm.has_ethernet_profile_for_device (dev);
     }
 
+    private bool is_networking_enabled () {
+        return nm.nm_client.networking_enabled;
+    }
+
     private bool can_connect_with_profile (NetworkDevice dev) {
-        return has_saved_profile (dev) && dev.state != NM_DEVICE_STATE_UNAVAILABLE;
+        return is_networking_enabled ()
+            && has_saved_profile (dev)
+            && dev.state != NM_DEVICE_STATE_UNAVAILABLE;
     }
 
     private void sync_edit_gateway_dns_sensitivity () {
