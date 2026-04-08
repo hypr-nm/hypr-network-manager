@@ -110,7 +110,7 @@ public class NetworkManager : Gtk.Application {
         }
 
         var icon_theme = Gtk.IconTheme.get_for_display (display);
-        icon_theme.add_resource_path ("/io/github/hypr-network-manager/icons");
+        icon_theme.add_resource_path ("/io/github/hypr-network-manager/icons/hicolor/symbolic/actions");
     }
 
     private void hide_dismiss_overlay () {

@@ -7,10 +7,8 @@ namespace MainWindowIconResources {
     private const string ICON_COLLAPSED = "collapse-element-symbolic";
     private const string ICON_EXPANDED = "expand-element-symbolic";
 
-    private const string RESOURCE_PASSWORD_HIDDEN = "/io/github/hypr-network-manager/icons/hicolor/scalable/actions/view-visible-symbolic.svg";
-    private const string RESOURCE_PASSWORD_VISIBLE = "/io/github/hypr-network-manager/icons/hicolor/scalable/actions/view-visible-off-symbolic.svg";
-    private const string RESOURCE_COLLAPSED = "/io/github/hypr-network-manager/icons/hicolor/scalable/actions/collapse-element-symbolic.svg";
-    private const string RESOURCE_EXPANDED = "/io/github/hypr-network-manager/icons/hicolor/scalable/actions/expand-element-symbolic.svg";
+    private const string RESOURCE_PASSWORD_HIDDEN = "/io/github/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg";
+    private const string RESOURCE_PASSWORD_VISIBLE = "/io/github/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg";
 
     private const string FALLBACK_PASSWORD_HIDDEN = "view-reveal-symbolic";
     private const string FALLBACK_PASSWORD_VISIBLE = "view-conceal-symbolic";
@@ -25,8 +23,6 @@ namespace MainWindowIconResources {
 
     private Gdk.Paintable? password_hidden_paintable = null;
     private Gdk.Paintable? password_visible_paintable = null;
-    private Gdk.Paintable? collapsed_paintable = null;
-    private Gdk.Paintable? expanded_paintable = null;
 
     private bool resource_exists (string path) {
         size_t size = 0;
@@ -66,12 +62,6 @@ namespace MainWindowIconResources {
         if (!has_password_visible && resource_exists (RESOURCE_PASSWORD_VISIBLE)) {
             password_visible_paintable = Gdk.Texture.from_resource (RESOURCE_PASSWORD_VISIBLE);
         }
-        if (!has_collapsed && resource_exists (RESOURCE_COLLAPSED)) {
-            collapsed_paintable = Gdk.Texture.from_resource (RESOURCE_COLLAPSED);
-        }
-        if (!has_expanded && resource_exists (RESOURCE_EXPANDED)) {
-            expanded_paintable = Gdk.Texture.from_resource (RESOURCE_EXPANDED);
-        }
     }
 
     public void set_password_visibility_icon (Gtk.Entry entry, bool password_visible) {
@@ -104,27 +94,10 @@ namespace MainWindowIconResources {
     public void set_expand_indicator_icon (Gtk.Image image, bool expanded) {
         ensure_icon_availability ();
 
-        if (expanded) {
-            if (has_expanded) {
-                image.set_from_icon_name (ICON_EXPANDED);
-                return;
-            }
-            if (expanded_paintable != null) {
-                image.set_from_paintable (expanded_paintable);
-                return;
-            }
-            image.set_from_icon_name (FALLBACK_EXPANDED);
-            return;
-        }
-
-        if (has_collapsed) {
-            image.set_from_icon_name (ICON_COLLAPSED);
-            return;
-        }
-        if (collapsed_paintable != null) {
-            image.set_from_paintable (collapsed_paintable);
-            return;
-        }
-        image.set_from_icon_name (FALLBACK_COLLAPSED);
+        image.set_from_icon_name (
+            expanded
+                ? (has_expanded ? ICON_EXPANDED : FALLBACK_EXPANDED)
+                : (has_collapsed ? ICON_COLLAPSED : FALLBACK_COLLAPSED)
+        );
     }
 }

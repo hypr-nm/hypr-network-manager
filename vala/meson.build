@@ -3,6 +3,14 @@ gio_dep = dependency('gio-2.0')
 layer_shell_dep = dependency('gtk4-layer-shell-0')
 json_glib_dep = dependency('json-glib-1.0')
 libnm_dep = dependency('libnm', version: '>= 1.0')
+gnome = import('gnome')
+
+app_resources = gnome.compile_resources(
+  'hypr_network_manager_resources',
+  'resources/hypr-network-manager.gresource.xml',
+  source_dir: 'resources',
+  c_name: 'hypr_network_manager_resources'
+)
 
 add_project_arguments(
   '-w',
@@ -12,6 +20,7 @@ add_project_arguments(
 executable(
   'hypr-network-manager',
   [
+    app_resources,
     'src/logging.vala',
     'src/constants.vala',
     'src/models/config.vala',
@@ -50,6 +59,7 @@ executable(
     'src/ui/utils/main_window_ip_edit_form_builder.vala',
     'src/ui/utils/main_window_ui_metrics.vala',
     'src/ui/utils/main_window_css_class_resolver.vala',
+    'src/ui/utils/main_window_icon_resources.vala',
     'src/ui/utils/main_window_helpers.vala',
     'src/ui/utils/main_window_helpers_formatting.vala',
     'src/ui/utils/main_window_wifi_edit_utils.vala',
