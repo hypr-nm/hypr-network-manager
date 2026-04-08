@@ -103,6 +103,16 @@ public class NetworkManager : Gtk.Application {
         }
     }
 
+    private void register_app_icon_resources () {
+        var display = Gdk.Display.get_default ();
+        if (display == null) {
+            return;
+        }
+
+        var icon_theme = Gtk.IconTheme.get_for_display (display);
+        icon_theme.add_resource_path ("/io/github/hypr-network-manager/icons");
+    }
+
     private void hide_dismiss_overlay () {
         if (dismiss_overlay == null) {
             return;
@@ -150,6 +160,7 @@ public class NetworkManager : Gtk.Application {
             return;
         }
 
+        register_app_icon_resources ();
         load_theme_css ();
 
         window = new MainWindow (

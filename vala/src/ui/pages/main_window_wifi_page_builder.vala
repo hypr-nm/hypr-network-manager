@@ -28,6 +28,8 @@ namespace MainWindowWifiPageBuilder {
 
         var add_btn = new Gtk.Button ();
         add_btn.add_css_class ("nm-button");
+        add_btn.add_css_class ("nm-wifi-toolbar-action");
+        add_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (add_btn, {"nm-icon-button", "nm-button"});
         var add_icon = new Gtk.Image.from_icon_name ("list-add-symbolic");
         MainWindowCssClassResolver.add_hook_and_best_class (add_icon, "nm-wifi-add-icon", {"nm-toolbar-icon"});
@@ -40,6 +42,8 @@ namespace MainWindowWifiPageBuilder {
 
         var refresh_btn = new Gtk.Button ();
         refresh_btn.add_css_class ("nm-button");
+        refresh_btn.add_css_class ("nm-wifi-toolbar-action");
+        refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
         var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
         MainWindowCssClassResolver.add_best_class (

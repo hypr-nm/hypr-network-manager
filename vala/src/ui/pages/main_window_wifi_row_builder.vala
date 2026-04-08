@@ -5,6 +5,10 @@ namespace MainWindowWifiRowBuilder {
             revealer.set_reveal_child (false);
             row.set_data<bool> ("nm-actions-expanded", false);
         }
+        var expand_hint = row.get_data<Gtk.Image> ("expand-hint");
+        if (expand_hint != null) {
+            MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
+        }
     }
 
     private void collapse_other_expanded_rows (Gtk.ListBoxRow row) {
@@ -118,10 +122,12 @@ namespace MainWindowWifiRowBuilder {
         info.append (sub);
         content.append (info);
 
-        var expand_hint = new Gtk.Image.from_icon_name ("pan-down-symbolic");
+        var expand_hint = new Gtk.Image ();
+        MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
         expand_hint.add_css_class ("nm-row-expand-icon");
         expand_hint.set_valign (Gtk.Align.CENTER);
         content.append (expand_hint);
+        row.set_data<Gtk.Image> ("expand-hint", expand_hint);
 
         var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions_panel.add_css_class ("nm-row-actions");
@@ -131,6 +137,7 @@ namespace MainWindowWifiRowBuilder {
         action_buttons.set_valign (Gtk.Align.CENTER);
 
         var details_btn = new Gtk.Button ();
+        details_btn.add_css_class ("row-icon-action");
         MainWindowCssClassResolver.add_best_class (
             details_btn,
             {"row-icon-action", "nm-button"}
@@ -218,10 +225,7 @@ namespace MainWindowWifiRowBuilder {
 
         MainWindowActionCallback update_prompt_password_visibility_icon = () => {
             bool reveal = prompt_entry.get_visibility ();
-            prompt_entry.set_icon_from_icon_name (
-                Gtk.EntryIconPosition.SECONDARY,
-                reveal ? "view-conceal-symbolic" : "view-reveal-symbolic"
-            );
+            MainWindowIconResources.set_password_visibility_icon (prompt_entry, reveal);
             prompt_entry.set_icon_tooltip_text (
                 Gtk.EntryIconPosition.SECONDARY,
                 reveal ? "Hide password" : "Show password"
@@ -232,6 +236,7 @@ namespace MainWindowWifiRowBuilder {
             prompt_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
             prompt_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
             update_prompt_password_visibility_icon ();
+
             prompt_entry.icon_press.connect ((icon_pos) => {
                 if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
                     return;
@@ -401,6 +406,7 @@ namespace MainWindowWifiRowBuilder {
 
             actions_revealer.set_reveal_child (expanded);
             row.set_data<bool> ("nm-actions-expanded", expanded);
+            MainWindowIconResources.set_expand_indicator_icon (expand_hint, expanded);
             if (!expanded) {
                 on_hide_password_prompt (prompt_revealer, prompt_entry, null);
             }

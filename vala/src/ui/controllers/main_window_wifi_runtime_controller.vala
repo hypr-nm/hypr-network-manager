@@ -917,7 +917,10 @@ public class MainWindowWifiRuntimeController : Object {
         active_wifi_password_revealer = revealer;
         active_wifi_password_entry = entry;
         entry.set_text ("");
+        entry.set_visibility (false);
         entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
+        MainWindowIconResources.set_password_visibility_icon (entry, false);
+        entry.set_icon_tooltip_text (Gtk.EntryIconPosition.SECONDARY, "Show password");
         on_set_popup_text_input_mode (true);
         revealer.set_reveal_child (true);
         entry.grab_focus ();

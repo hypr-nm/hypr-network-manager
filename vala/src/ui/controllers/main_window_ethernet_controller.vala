@@ -742,6 +742,7 @@ public class MainWindowEthernetController : Object {
         content.append (info);
 
         var details_btn = new Gtk.Button ();
+        details_btn.add_css_class ("row-icon-action");
         MainWindowCssClassResolver.add_best_class (
             details_btn,
             {"row-icon-action", "nm-button"}

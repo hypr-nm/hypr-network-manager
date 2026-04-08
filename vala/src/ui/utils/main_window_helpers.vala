@@ -3,6 +3,7 @@ using Gtk;
 namespace MainWindowHelpers {
     public Gtk.Button build_back_button (MainWindowActionCallback on_back) {
         var back_btn = new Gtk.Button ();
+        back_btn.add_css_class ("nm-nav-back");
         MainWindowCssClassResolver.add_best_class (back_btn, {"nm-nav-back", "nm-button"});
 
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);

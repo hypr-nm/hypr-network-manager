@@ -32,9 +32,11 @@ namespace MainWindowIpEditFormBuilder {
         Gtk.Box container,
         Gtk.Button toggle_button,
         Gtk.Revealer content_revealer,
+        Gtk.Image toggle_icon,
         bool expanded
     ) {
         content_revealer.set_reveal_child (expanded);
+        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, expanded);
         if (expanded) {
             container.add_css_class ("is-expanded");
             container.remove_css_class ("is-collapsed");
@@ -78,7 +80,8 @@ namespace MainWindowIpEditFormBuilder {
         toggle_row.set_hexpand (true);
         toggle_row.add_css_class ("nm-edit-section-toggle-row");
 
-        var toggle_icon = new Gtk.Image.from_icon_name ("pan-down-symbolic");
+        var toggle_icon = new Gtk.Image ();
+        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, false);
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_hook_and_best_class (
                 toggle_icon,
@@ -133,11 +136,11 @@ namespace MainWindowIpEditFormBuilder {
         }
         container.append (content_revealer);
 
-        set_collapsible_state (container, toggle_button, content_revealer, true);
+        set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, true);
 
         toggle_button.clicked.connect (() => {
             bool expanded = !content_revealer.get_reveal_child ();
-            set_collapsible_state (container, toggle_button, content_revealer, expanded);
+            set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, expanded);
         });
 
         return container;

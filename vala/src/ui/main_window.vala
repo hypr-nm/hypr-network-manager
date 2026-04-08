@@ -623,6 +623,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     private Gtk.Widget build_wifi_add_page () {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
         page.add_css_class ("nm-page");
+        page.add_css_class ("nm-page-shell-inset");
         MainWindowCssClassResolver.add_best_class (page, {"nm-page-shell-inset", "nm-page"});
         MainWindowCssClassResolver.add_hook_and_best_class (
             page,
@@ -646,6 +647,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         MainWindowCssClassResolver.add_best_class (form, {"nm-edit-network-form", "nm-edit-form"});
+        form.add_css_class ("nm-details-scroll-body-inset");
 
         var note = new Gtk.Label ("Manually add a hidden Wi-Fi network.");
         note.set_xalign (0.0f);

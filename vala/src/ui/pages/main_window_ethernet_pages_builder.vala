@@ -39,6 +39,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
         this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-shell-inset");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
@@ -152,6 +153,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
         this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-shell-inset");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
@@ -177,6 +179,7 @@ public class MainWindowEthernetEditPage : Gtk.Box {
             form,
             {"nm-edit-ethernet-form", "nm-edit-network-form", "nm-edit-form"}
         );
+        form.add_css_class ("nm-details-scroll-body-inset");
 
         this.note_label = new Gtk.Label ("");
         this.note_label.set_xalign (0.0f);

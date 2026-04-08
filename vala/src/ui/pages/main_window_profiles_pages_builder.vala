@@ -17,6 +17,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
         this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-shell-inset");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
@@ -58,6 +59,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
         body.add_css_class ("nm-profiles-page-body");
+        body.add_css_class ("nm-details-scroll-body-inset");
 
         var wifi_heading = new Gtk.Label ("Wi-Fi Profiles");
         wifi_heading.set_xalign (0.0f);
@@ -258,6 +260,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
         this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-shell-inset");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
         MainWindowCssClassResolver.add_best_class (
             this,
@@ -535,6 +538,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
         this.add_css_class ("nm-page");
+        this.add_css_class ("nm-page-shell-inset");
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
@@ -562,6 +566,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
         MainWindowCssClassResolver.add_best_class (form, {"nm-edit-network-form", "nm-edit-form"});
+        form.add_css_class ("nm-details-scroll-body-inset");
 
         Gtk.Box profile_content;
         var profile_section = build_section ("Profile", out profile_content);
@@ -654,16 +659,14 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
         MainWindowActionCallback update_password_visibility_icon = () => {
             bool reveal = this.password_entry.get_visibility ();
-            this.password_entry.set_icon_from_icon_name (
-                Gtk.EntryIconPosition.SECONDARY,
-                reveal ? "view-conceal-symbolic" : "view-reveal-symbolic"
-            );
+            MainWindowIconResources.set_password_visibility_icon (this.password_entry, reveal);
             this.password_entry.set_icon_tooltip_text (
                 Gtk.EntryIconPosition.SECONDARY,
                 reveal ? "Hide password" : "Show password"
             );
         };
         update_password_visibility_icon ();
+
         this.password_entry.icon_press.connect ((icon_pos) => {
             if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
                 return;
