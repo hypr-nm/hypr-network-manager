@@ -282,9 +282,9 @@ namespace MainWindowEthernetPageBuilder {
 
         var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-wifi-toolbar-action");
+        refresh_btn.add_css_class ("nm-toolbar-action");
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-wifi-toolbar-action", "nm-button"});
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {
             on_refresh ();
         });

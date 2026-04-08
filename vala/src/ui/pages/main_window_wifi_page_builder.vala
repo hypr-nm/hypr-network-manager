@@ -28,9 +28,9 @@ namespace MainWindowWifiPageBuilder {
 
         var add_btn = new Gtk.Button.with_label ("Add Network");
         add_btn.add_css_class ("nm-button");
-        add_btn.add_css_class ("nm-wifi-toolbar-action");
+        add_btn.add_css_class ("nm-toolbar-action");
         add_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (add_btn, {"nm-wifi-toolbar-action", "nm-button"});
+        MainWindowCssClassResolver.add_best_class (add_btn, {"nm-toolbar-action", "nm-button"});
         add_btn.set_tooltip_text ("Add Hidden Network");
         add_btn.clicked.connect (() => {
             on_add_network ();
@@ -39,9 +39,9 @@ namespace MainWindowWifiPageBuilder {
 
         var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-wifi-toolbar-action");
+        refresh_btn.add_css_class ("nm-toolbar-action");
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-wifi-toolbar-action", "nm-button"});
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {
             on_refresh ();
         });

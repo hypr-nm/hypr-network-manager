@@ -25,7 +25,9 @@ public class MainWindowProfilesPage : Gtk.Box {
             {"nm-page"}
         );
 
-        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+        MainWindowCssClassResolver.add_best_class (header, {"nm-toolbar-inset", "nm-page-shell-inset"});
+        MainWindowCssClassResolver.add_best_class (header, {"nm-toolbar", "nm-status-bar"});
 
         var back_btn = MainWindowHelpers.build_back_button (() => {
             this.back ();
@@ -40,8 +42,9 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-wifi-toolbar-action");
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-wifi-toolbar-action", "nm-button"});
+        refresh_btn.add_css_class ("nm-toolbar-action");
+        refresh_btn.set_valign (Gtk.Align.CENTER);
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.set_tooltip_text ("Refresh Profiles");
         refresh_btn.clicked.connect (() => {
             this.refresh ();
