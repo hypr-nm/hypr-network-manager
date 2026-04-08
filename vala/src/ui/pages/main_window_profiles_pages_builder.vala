@@ -38,12 +38,10 @@ public class MainWindowProfilesPage : Gtk.Box {
         title.add_css_class ("nm-section-title");
         header.append (title);
 
-        var refresh_btn = new Gtk.Button ();
+        var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
-        var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        refresh_icon.add_css_class ("nm-toolbar-icon");
-        refresh_btn.set_child (refresh_icon);
+        refresh_btn.add_css_class ("nm-wifi-toolbar-action");
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-wifi-toolbar-action", "nm-button"});
         refresh_btn.set_tooltip_text ("Refresh Profiles");
         refresh_btn.clicked.connect (() => {
             this.refresh ();

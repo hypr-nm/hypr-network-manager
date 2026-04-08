@@ -80,16 +80,11 @@ public class MainWindowVpnPageBuilder : Object {
         title.add_css_class ("nm-section-title");
         toolbar.append (title);
 
-        var refresh_btn = new Gtk.Button ();
+        var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-icon-button", "nm-button"});
-        var refresh_icon = new Gtk.Image.from_icon_name ("view-refresh-symbolic");
-        MainWindowCssClassResolver.add_best_class (refresh_icon, {"nm-icon-size-16", "nm-icon-size"});
-        MainWindowCssClassResolver.add_best_class (
-            refresh_icon,
-            {"nm-vpn-refresh-icon", "nm-refresh-icon", "nm-toolbar-icon"}
-        );
-        refresh_btn.set_child (refresh_icon);
+        refresh_btn.add_css_class ("nm-wifi-toolbar-action");
+        refresh_btn.set_valign (Gtk.Align.CENTER);
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-wifi-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {
             on_refresh ();
         });
