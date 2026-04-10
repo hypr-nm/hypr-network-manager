@@ -816,16 +816,20 @@ checkbutton:checked > label {
 
 separator.nm-separator,
 .nm-separator {
-  color: alpha(@on_surface, .16);
-  border-color: alpha(@on_surface, .16);
-  background-color: alpha(@on_surface, .16);
+  color: alpha(@on_surface, .08);
+  border-color: alpha(@on_surface, .08);
+  background-color: alpha(@on_surface, .08);
+  min-height: 1px;
+  min-width: 1px;
 }
 
 .nm-page-network-details > .nm-separator,
 .nm-page-network-details .nm-details-section .nm-separator {
-  color: alpha(@on_surface, .22);
-  border-color: alpha(@on_surface, .22);
-  background-color: alpha(@on_surface, .22);
+  color: alpha(@on_surface, .12);
+  border-color: alpha(@on_surface, .12);
+  background-color: alpha(@on_surface, .12);
+  min-height: 1px;
+  min-width: 1px;
 }
 
 .nm-scroll scrollbar {
