@@ -36,30 +36,28 @@ jobs:
             changed_files="$(git diff --name-only "$before_sha" "$after_sha")"
           fi
 
+          printf 'changed_files:\n%s\n' "$changed_files"
+
           declare -a distros=()
 
-          if grep -qx '.github/workflows/build-containers.yml' <<< "$changed_files"; then
-            distros=(ubuntu fedora arch)
-          else
-            while IFS= read -r file; do
-              case "$file" in
-                .ci/docker/ubuntu.Dockerfile)
-                  distros+=(ubuntu)
-                  ;;
-                .ci/docker/fedora.Dockerfile)
-                  distros+=(fedora)
-                  ;;
-                .ci/docker/arch.Dockerfile)
-                  distros+=(arch)
-                  ;;
-                .ci/docker/*)
-                  # Shared docker context changed; rebuild all images.
-                  distros=(ubuntu fedora arch)
-                  break
-                  ;;
-              esac
-            done <<< "$changed_files"
-          fi
+          while IFS= read -r file; do
+            case "$file" in
+              .ci/docker/ubuntu.Dockerfile)
+                distros+=(ubuntu)
+                ;;
+              .ci/docker/fedora.Dockerfile)
+                distros+=(fedora)
+                ;;
+              .ci/docker/arch.Dockerfile)
+                distros+=(arch)
+                ;;
+              .ci/docker/*)
+                # Shared docker context changed; rebuild all images.
+                distros=(ubuntu fedora arch)
+                break
+                ;;
+            esac
+          done <<< "$changed_files"
 
           if [[ ${#distros[@]} -eq 0 ]]; then
             echo 'has_changes=false' >> "$GITHUB_OUTPUT"
@@ -74,6 +72,8 @@ jobs:
             sep=','
           done
           matrix="${matrix}]}"
+
+          echo "resolved_matrix=${matrix}"
 
           echo 'has_changes=true' >> "$GITHUB_OUTPUT"
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
