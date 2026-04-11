@@ -1097,8 +1097,49 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     public void prepare_for_presentation () {
+        reset_ui_state ();
         refresh_all ();
         refresh_switch_states ();
+    }
+
+    private void reset_ui_state () {
+        if (content_stack != null) {
+            content_stack.set_visible_child_name ("main");
+        }
+        if (wifi_stack != null) {
+            wifi_stack.set_visible_child_name ("list");
+        }
+        if (ethernet_stack != null) {
+            ethernet_stack.set_visible_child_name ("list");
+        }
+        if (profiles_stack != null) {
+            profiles_stack.set_visible_child_name ("list");
+        }
+        if (vpn_stack != null) {
+            vpn_stack.set_visible_child_name ("list");
+        }
+        if (notebook != null) {
+            notebook.set_current_page (0);
+        }
+
+        hide_active_wifi_password_prompt ();
+
+        if (wifi_listbox != null) {
+            for (Gtk.Widget? child = wifi_listbox.get_first_child (); child != null; child = child.get_next_sibling ()) {
+                var row = child as Gtk.ListBoxRow;
+                if (row != null && row.get_data<bool> ("nm-actions-expanded")) {
+                    var revealer = row.get_data<Gtk.Revealer> ("actions-revealer");
+                    if (revealer != null) {
+                        revealer.set_reveal_child (false);
+                    }
+                    var expand_hint = row.get_data<Gtk.Image> ("expand-hint");
+                    if (expand_hint != null) {
+                        MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
+                    }
+                    row.set_data<bool> ("nm-actions-expanded", false);
+                }
+            }
+        }
     }
 
     private void refresh_after_action (bool request_wifi_scan) {
