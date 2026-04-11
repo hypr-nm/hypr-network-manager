@@ -168,6 +168,7 @@ public class NetworkManager : Gtk.Application {
             if (window.visible) {
                  request_close ();
             } else {
+                 window.prepare_for_presentation ();
                  window.present ();
             }
             return;

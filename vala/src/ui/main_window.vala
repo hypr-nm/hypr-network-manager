@@ -152,10 +152,12 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_all ();
         refresh_coordinator.start ();
 
-        this.close_request.connect (() => {
-            dispose_lifecycle_owners ();
-            log_info ("gui", "window_close: requested by user/system");
-            return false;
+        this.map.connect (() => {
+            refresh_coordinator.start ();
+        });
+
+        this.unmap.connect (() => {
+            refresh_coordinator.stop ();
         });
 
         log_info ("gui", "window_init: completed");
@@ -1092,6 +1094,11 @@ public class MainWindow : Gtk.ApplicationWindow {
         refresh_saved_profiles ();
         refresh_ethernet_section ();
         refresh_vpn_section ();
+    }
+
+    public void prepare_for_presentation () {
+        refresh_all ();
+        refresh_switch_states ();
     }
 
     private void refresh_after_action (bool request_wifi_scan) {
