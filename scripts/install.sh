@@ -123,24 +123,53 @@ run_as_target_user() {
 }
 
 configure_build() {
+  local target_user current_user
+
   BUILD_DIR_PATH="$(nm_resolve_path_against_root "$PROJECT_ROOT" "$BUILD_DIR")"
+
   if [[ -d "$BUILD_DIR_PATH" ]]; then
-    log "Reconfiguring existing Meson build dir: $BUILD_DIR_PATH"
+    log "Cleaning existing Meson build dir: $BUILD_DIR_PATH"
+    if [[ "$INSTALL_SCOPE" == "system" ]]; then
+      run_with_privilege rm -rf "$BUILD_DIR_PATH"
+    else
+      target_user="$(resolve_target_user)"
+      current_user="$(id -un)"
+      if [[ "$target_user" == "$current_user" ]]; then
+        rm -rf "$BUILD_DIR_PATH"
+      else
+        run_with_privilege rm -rf "$BUILD_DIR_PATH"
+      fi
+    fi
   else
     log "Creating Meson build dir: $BUILD_DIR_PATH"
   fi
 
-  nm_meson_setup "$PROJECT_ROOT" "$BUILD_DIR_PATH" "$BUILD_TYPE" "$STRIP_BIN" "$INSTALL_PREFIX"
+  if [[ "$INSTALL_SCOPE" == "system" ]]; then
+    nm_meson_setup "$PROJECT_ROOT" "$BUILD_DIR_PATH" "$BUILD_TYPE" "$STRIP_BIN" "$INSTALL_PREFIX"
+    return
+  fi
+
+  target_user="$(resolve_target_user)"
+  current_user="$(id -un)"
+  if [[ "$target_user" == "$current_user" ]]; then
+    nm_meson_setup "$PROJECT_ROOT" "$BUILD_DIR_PATH" "$BUILD_TYPE" "$STRIP_BIN" "$INSTALL_PREFIX"
+  else
+    run_as_target_user meson setup "$BUILD_DIR_PATH" "$PROJECT_ROOT" \
+      --buildtype="$BUILD_TYPE" -Dstrip="$STRIP_BIN" --prefix "$INSTALL_PREFIX"
+  fi
 }
 
 build_and_install() {
   log "Compiling project"
-  nm_meson_compile "$BUILD_DIR_PATH"
-
-  log "Installing binary and assets"
   if [[ "$INSTALL_SCOPE" == "system" ]]; then
+    nm_meson_compile "$BUILD_DIR_PATH"
+
+    log "Installing binary and assets"
     run_with_privilege meson install -C "$BUILD_DIR_PATH"
   else
+    run_as_target_user meson compile -C "$BUILD_DIR_PATH"
+
+    log "Installing binary and assets"
     run_as_target_user meson install -C "$BUILD_DIR_PATH"
   fi
 }
