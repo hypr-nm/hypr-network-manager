@@ -411,6 +411,7 @@ public class NetworkManagerClient : GLib.Object {
         string alt;
         string tooltip;
         string klass;
+        int percentage;
         NmStatusFormatter.pick_status_fields (
             networking_on,
             wifi_on,
@@ -420,10 +421,11 @@ public class NetworkManagerClient : GLib.Object {
             out text,
             out alt,
             out tooltip,
-            out klass
+            out klass,
+            out percentage
         );
 
-        return NmStatusFormatter.build_status_json (text, alt, tooltip, klass);
+        return NmStatusFormatter.build_status_json (text, alt, tooltip, klass, percentage);
     }
 
     ~NetworkManagerClient () {

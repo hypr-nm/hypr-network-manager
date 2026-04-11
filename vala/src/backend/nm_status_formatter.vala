@@ -10,47 +10,52 @@ public class NmStatusFormatter : GLib.Object {
         out string text,
         out string alt,
         out string tooltip,
-        out string klass
+        out string klass,
+        out int percentage
     ) {
+        percentage = 0;
+
         if (!networking_on) {
-            text = "NET-OFF";
-            alt = "Offline";
+            text = "Offline";
+            alt = "offline";
             tooltip = "Networking is disabled";
             klass = "offline";
             return;
         }
 
         if (active_eth != null) {
-            text = "ETH";
-            alt = active_eth.connection != "" ? active_eth.connection : "Ethernet";
+            text = active_eth.connection != "" ? active_eth.connection : "Ethernet";
+            alt = "ethernet";
             tooltip = "Ethernet: " + active_eth.name;
             klass = "ethernet";
+            percentage = 100;
             return;
         }
 
         if (active_wifi != null) {
-            text = "WIFI";
-            alt = active_wifi.connection != "" ? active_wifi.connection : "WiFi";
-            tooltip = "WiFi: " + alt + " (" + wifi_signal.to_string () + "%)\\nDevice: " + active_wifi.name;
+            text = active_wifi.connection != "" ? active_wifi.connection : "WiFi";
+            alt = "wifi";
+            tooltip = "WiFi: " + text + " (" + wifi_signal.to_string () + "%)\nDevice: " + active_wifi.name;
             klass = "wifi";
+            percentage = (int) wifi_signal;
             return;
         }
 
         if (!wifi_on) {
-            text = "WIFI-OFF";
-            alt = "WiFi Off";
+            text = "WiFi Off";
+            alt = "wifi-off";
             tooltip = "WiFi is disabled";
             klass = "wifi-off";
             return;
         }
 
-        text = "DISCONNECTED";
-        alt = "Disconnected";
+        text = "Disconnected";
+        alt = "disconnected";
         tooltip = "Not connected to any network";
         klass = "disconnected";
     }
 
-    public static string build_status_json (string text, string alt, string tooltip, string klass) {
+    public static string build_status_json (string text, string alt, string tooltip, string klass, int percentage) {
         var builder = new Json.Builder ();
         builder.begin_object ();
         builder.set_member_name ("text");
@@ -61,6 +66,8 @@ public class NmStatusFormatter : GLib.Object {
         builder.add_string_value (tooltip);
         builder.set_member_name ("class");
         builder.add_string_value (klass);
+        builder.set_member_name ("percentage");
+        builder.add_int_value (percentage);
         builder.end_object ();
 
         var generator = new Json.Generator ();
