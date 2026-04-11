@@ -1,0 +1,38 @@
+/* hypr-network-manager: Nord Snow Storm token variant */
+
+@define-color surface #eceff4;
+@define-color surface_soft #e5e9f0;
+@define-color surface_raised #d8dee9;
+@define-color surface_deep #cfd7e6;
+@define-color surface_light #f5f7fb;
+@define-color on_surface #2e3440;
+@define-color on_surface_variant #4c566a;
+@define-color on_surface_soft #3b4252;
+
+@define-color primary #5e81ac;
+@define-color secondary #81a1c1;
+@define-color error #bf616a;
+@define-color success #a3be8c;
+@define-color action #5e81ac;
+@define-color primary_hover #81a1c1;
+@define-color warning #ebcb8b;
+@define-color line #c2cad9;
+@define-color line_strong #b3bccd;
+@define-color switch_thumb @on_surface_variant;
+
+@define-color text @on_surface;
+@define-color background-alt alpha(@surface, .6);
+@define-color selected @primary;
+@define-color hover alpha(@secondary, .18);
+@define-color urgent @error;
+
+@define-color active rgba(94, 129, 172, 0.16);
+@define-color hover_soft rgba(76, 86, 106, 0.10);
+@define-color hover_row rgba(76, 86, 106, 0.07);
+@define-color selected_soft rgba(94, 129, 172, 0.12);
+
+* {
+  color: @text;
+  font-size: 13px;
+  font-family: sans-serif;
+}

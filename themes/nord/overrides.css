@@ -1,0 +1,240 @@
+/* hypr-network-manager: Nord theme overrides
+ *
+ * Behavior baseline intentionally mirrors modern overrides.
+ * Keep this file focused on minimal deltas while shared layers handle geometry.
+ */
+
+window.nm-window,
+.nm-window {
+  background: @surface;
+  border-color: @line;
+  border-radius: 12px;
+  opacity: 1.0;
+}
+
+/* Slim switch look with bright slider. */
+switch.nm-switch,
+.nm-switch {
+  border: none;
+  background: alpha(@on_surface, .16);
+}
+
+switch.nm-switch:checked,
+.nm-switch:checked {
+  border-color: transparent;
+  background: @active;
+}
+
+switch.nm-switch slider,
+.nm-switch slider {
+  background: @switch_thumb;
+}
+
+.nm-list row.nm-wifi-row,
+.nm-list row.nm-device-row,
+.nm-wifi-row,
+.nm-device-row {
+  border: 1px solid @surface_raised;
+  border-radius: 10px;
+  background: @surface_soft;
+}
+
+.nm-list row.nm-wifi-row:hover,
+.nm-list row.nm-device-row:hover {
+  border-color: alpha(@on_surface, .20);
+  background: @surface_raised;
+}
+
+.nm-wifi-row.connected,
+.nm-device-row.connected {
+  border-color: alpha(@secondary, .34);
+  background: @selected_soft;
+}
+
+.nm-list row.nm-wifi-row:last-child,
+.nm-list row.nm-device-row:last-child,
+.nm-list row:last-child {
+  border-bottom-color: transparent;
+}
+
+.nm-sub-label {
+  color: alpha(@on_surface, .78);
+}
+
+.nm-row-info .nm-sub-label,
+.nm-row-info label.nm-sub-label {
+  color: alpha(@on_surface, .82);
+}
+
+/* Raise contrast for header titles and details labels on dark Nord surfaces. */
+.nm-title,
+.nm-status-label,
+.nm-section-title,
+.nm-details-network-title {
+  color: @on_surface_soft;
+}
+
+.nm-toggle-label,
+.nm-form-label,
+.nm-edit-field-label,
+.nm-edit-mode-label {
+  color: alpha(@on_surface, .78);
+}
+
+.nm-details-group-title {
+  color: alpha(@on_surface, .70);
+}
+
+.nm-details-key,
+.nm-details-item-key {
+  color: alpha(@on_surface, .62);
+}
+
+.nm-details-value,
+.nm-details-item-value {
+  color: @on_surface;
+}
+
+.nm-page-network-details .nm-sub-label,
+.nm-page-network-edit .nm-sub-label,
+.nm-page-saved-profiles .nm-sub-label {
+  color: alpha(@on_surface, .84);
+}
+
+.nm-signal-icon {
+  min-width: 18px;
+  opacity: 0.85;
+}
+
+.nm-signal-icon-secured {
+  opacity: 0.95;
+}
+
+.nm-row-expand-icon {
+  color: alpha(@on_surface, .55);
+  opacity: 0.85;
+}
+
+.nm-wifi-row:hover .nm-row-expand-icon,
+.nm-device-row:hover .nm-row-expand-icon {
+  color: alpha(@on_surface, .85);
+  opacity: 1.0;
+}
+
+/* Keep action buttons flatter than the shared pill default. */
+button.nm-button,
+.nm-button {
+  font-weight: 600;
+  border-radius: 8px;
+  border-color: @line;
+  background: @active;
+}
+
+button.nm-button:hover,
+.nm-button:hover {
+  border-color: alpha(@on_surface, .20);
+  background: @hover_soft;
+}
+
+.row-link-action {
+  border-radius: 6px;
+  color: @action;
+}
+
+.row-link-action:hover {
+  background: alpha(@secondary, .12);
+  color: @text;
+}
+
+.row-link-action > label {
+  text-underline-offset: 2px;
+}
+
+.row-link-action:hover > label {
+  text-decoration-thickness: 2px;
+}
+
+.nm-edit-section-toggle-icon {
+  -gtk-icon-source: -gtk-icontheme("go-next-symbolic");
+}
+
+.nm-edit-collapsible.is-expanded .nm-edit-section-toggle-icon {
+  -gtk-icon-source: -gtk-icontheme("go-down-symbolic");
+}
+
+.nm-edit-mode-row {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.nm-edit-field-entry:disabled,
+.nm-edit-dropdown:disabled,
+entry.nm-edit-field-entry:disabled {
+  opacity: 0.55;
+  color: alpha(@on_surface, .58);
+}
+
+checkbutton.nm-row-autoconnect-check > check,
+.nm-row-autoconnect-check > check,
+checkbutton > check {
+  background: alpha(@on_surface, .10);
+  border: 1px solid alpha(@on_surface, .28);
+}
+
+checkbutton.nm-row-autoconnect-check:checked > check,
+.nm-row-autoconnect-check:checked > check,
+checkbutton:checked > check {
+  background: @selected;
+  border-color: @selected;
+  color: #eceff4;
+}
+
+/* Crisper focus ring in forms/entries. */
+.nm-password-entry:focus,
+entry.nm-edit-field-entry:focus,
+.nm-edit-field-entry:focus,
+entry.nm-inline-password-entry:focus,
+.nm-inline-password-entry:focus,
+entry.nm-inline-ssid-entry:focus,
+.nm-inline-ssid-entry:focus,
+dropdown.nm-edit-dropdown:focus-within,
+.nm-edit-dropdown:focus-within {
+  border-color: alpha(@primary, .70);
+}
+
+/* Compact popover menu geometry. */
+popover,
+popover.menu,
+popover.background,
+popover.background.menu,
+popover.menu.background {
+  background: @surface_soft;
+}
+
+popover > contents,
+popover.menu > contents,
+popover.background > contents,
+popover.background.menu > contents,
+popover.menu.background > contents {
+  background: @surface_soft;
+  padding: 4px;
+}
+
+popover listview row,
+popover.menu listview row,
+popover.background listview row,
+popover listview row.activatable,
+popover.menu listview row.activatable,
+popover.background listview row.activatable {
+  padding: 4px 8px;
+  border-radius: 7px;
+}
+
+.nm-scroll scrollbar slider {
+  background: alpha(@on_surface, .25);
+}
+
+.nm-scroll scrollbar slider:hover {
+  background: alpha(@on_surface, .4);
+}
