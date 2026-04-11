@@ -145,6 +145,31 @@ build_and_install() {
   fi
 }
 
+install_theme_tree_system() {
+  local dest_themes_dir="$1"
+
+  run_with_privilege install -d -m 755 "$dest_themes_dir"
+  run_with_privilege cp -a "$PROJECT_ROOT/themes/." "$dest_themes_dir/"
+}
+
+install_theme_tree_user_missing() {
+  local dest_themes_dir="$1"
+  local src_file rel_path dst_file dst_dir
+
+  install -d -m 755 "$dest_themes_dir"
+
+  while IFS= read -r -d '' src_file; do
+    rel_path="${src_file#"$PROJECT_ROOT/themes/"}"
+    dst_file="$dest_themes_dir/$rel_path"
+    dst_dir="$(dirname "$dst_file")"
+
+    install -d -m 755 "$dst_dir"
+    if [[ ! -e "$dst_file" ]]; then
+      install -m 644 "$src_file" "$dst_file"
+    fi
+  done < <(find "$PROJECT_ROOT/themes" -type f -print0)
+}
+
 install_defaults() {
   local target_user target_group target_home user_config_dir
   target_user="$(resolve_target_user)"
@@ -155,43 +180,19 @@ install_defaults() {
   if [[ "$INSTALL_SCOPE" == "system" ]]; then
     log "Installing default config and themes to $CONFIG_TARGET_DIR"
     run_with_privilege install -d -m 755 "$CONFIG_TARGET_DIR"
-    run_with_privilege install -d -m 755 "$CONFIG_TARGET_DIR/themes"
     run_with_privilege install -m 644 "$PROJECT_ROOT/config.json" "$CONFIG_TARGET_DIR/config.json"
-    run_with_privilege install -m 644 "$PROJECT_ROOT/themes/base.css" "$CONFIG_TARGET_DIR/themes/base.css"
-
-    local css_file css_name
-    for css_file in "$PROJECT_ROOT/themes"/*.css; do
-      css_name="$(basename "$css_file")"
-      if [[ "$css_name" == "base.css" ]]; then
-        continue
-      fi
-      run_with_privilege install -m 644 "$css_file" "$CONFIG_TARGET_DIR/themes/$css_name"
-    done
+    install_theme_tree_system "$CONFIG_TARGET_DIR/themes"
     return
   fi
 
   log "Installing user defaults to $user_config_dir"
   install -d -m 755 "$user_config_dir"
-  install -d -m 755 "$user_config_dir/themes"
 
   if [[ ! -f "$user_config_dir/config.json" ]]; then
     install -m 644 "$PROJECT_ROOT/config.json" "$user_config_dir/config.json"
   fi
 
-  if [[ ! -f "$user_config_dir/themes/base.css" ]]; then
-    install -m 644 "$PROJECT_ROOT/themes/base.css" "$user_config_dir/themes/base.css"
-  fi
-
-  local css_file css_name
-  for css_file in "$PROJECT_ROOT/themes"/*.css; do
-    css_name="$(basename "$css_file")"
-    if [[ "$css_name" == "base.css" ]]; then
-      continue
-    fi
-    if [[ ! -f "$user_config_dir/themes/$css_name" ]]; then
-      install -m 644 "$css_file" "$user_config_dir/themes/$css_name"
-    fi
-  done
+  install_theme_tree_user_missing "$user_config_dir/themes"
 
   if [[ "$(id -un)" == "root" ]]; then
     chown -R "$target_user":"$target_group" "$user_config_dir"
