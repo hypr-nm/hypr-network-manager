@@ -6,10 +6,12 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
 
 ## Table of Contents
 
-1. [Installation](#installation)
-2. [Getting Started](#getting-started)
+1. [Getting Started](#getting-started)
+2. [Installation](#installation)
 3. [Configuration](#configuration)
 4. [Theming](#theming)
+
+  * [Theme Author Guide](./THEME_AUTHOR_GUIDE.md)
 5. [Usage](#usage)
 
    * [Launching the GUI](#launching-the-gui)
@@ -28,52 +30,7 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
    * [GUI & Layer-Shell](#gui--layer-shell)
 9. [Security](#security)
 10. [Troubleshooting](#troubleshooting)
-
----
-
-## Installation
-
-Use the install script for both system-wide and user-local installs in either interactive or non-interactive modes.
-
-
-* GTK 4 runtime and development libraries
-* gtk4-layer-shell
-* json-glib
-* NetworkManager
-
-The install script auto-installs dependencies when supported package managers are available.
-
-### Manual Build
-
-```bash
-meson setup builddir
-meson compile -C builddir
-```
-
-### Build Scripts (Dev/Prod)
-
-Use one compile script for all build modes:
-
-```bash
-./scripts/compile.sh [dev|prod|debug] [build_dir]
-```
-
-Examples:
-
-```bash
-./scripts/compile.sh            # dev build -> builddir-dev
-./scripts/compile.sh dev        # dev build -> builddir-dev
-./scripts/compile.sh prod       # prod build -> builddir-prod
-./scripts/compile.sh debug      # debug build -> builddir-debug
-./scripts/compile.sh prod out   # prod build -> out
-./scripts/compile.sh --mode dev --install-deps
-```
-
-For run/build convenience during development:
-
-```bash
-./scripts/run-dev.sh
-```
+11. [Release and Support Policies](#release-and-support-policies)
 
 ---
 
@@ -84,6 +41,61 @@ For run/build convenience during development:
 3. Launch the GUI or use CLI commands for status and control.
 
 For step-by-step guidance, see the relevant sections below.
+
+---
+
+## Installation
+
+The easiest way to install the app and its dependencies automatically is via the web installer script:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/ZorEl212/hypr-network-manager/master/curl-install.sh | bash
+```
+
+Alternatively, you can skip the interactive prompt and define the `INSTALL_SCOPE` directly:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/ZorEl212/hypr-network-manager/master/curl-install.sh | INSTALL_SCOPE=system bash
+```
+or 
+```bash
+curl -sSfL https://raw.githubusercontent.com/ZorEl212/hypr-network-manager/master/curl-install.sh | INSTALL_SCOPE=user bash
+```
+
+---
+
+### Dependencies
+
+* GTK 4 runtime and development libraries
+* gtk4-layer-shell
+* json-glib
+* NetworkManager
+
+The install script auto-installs dependencies when supported package managers are available.
+
+### Manual Installation (From Source)
+
+Clone the repository and run the installation script:
+
+```bash
+git clone https://github.com/ZorEl212/hypr-network-manager.git
+cd hypr-network-manager
+./scripts/install.sh
+```
+
+You will be prompted to select the install level for the binary and defaults:
+1. **System**: `/usr/local` and `/etc/xdg/hypr-network-manager`
+2. **User**: `~/.local` and `~/.config/hypr-network-manager`
+
+You can bypass the prompt by defining the `INSTALL_SCOPE` environment variable before running the script:
+
+```bash
+INSTALL_SCOPE=system ./scripts/install.sh
+```
+or 
+```bash
+INSTALL_SCOPE=user ./scripts/install.sh
+```
 
 ---
 
@@ -159,170 +171,217 @@ Themes are CSS-based and hot-swappable.
 1. `~/.config/hypr-network-manager/themes/base.css` (user-local)
 2. `/etc/xdg/hypr-network-manager/themes/base.css` (system-wide fallback)
 
-This path is fixed and is not configurable through `config.json`.
 
-### Custom Theme Example
+### Recommended Theme Architecture
 
-```css
-@import url("./frosted-glass.css");
-```
+The bundled default theme is split into four layers:
 
-You can create themes in `~/.config/hypr-network-manager/themes/` and import them in `themes/base.css`.
+1. `core/structure.css` (layout and core geometry)
+2. `<theme>/tokens.css` (color + typography tokens)
+3. `core/core-components.css` (shared component visuals that consume tokens)
+4. `<theme>/overrides.css` (optional theme-specific tweaks)
 
-### Clean Slate Theming (Strip GTK Defaults)
+Bundled themes follow this folder layout:
 
-If you want full visual control, start by neutralizing GTK defaults on app-scoped classes, then build styles back up intentionally.
+* `themes/<name>/base.css`
+* `themes/<name>/tokens.css`
+* `themes/<name>/overrides.css`
 
-Recommended baseline reset (scoped to this app):
+### Compact Theme Workflow
 
-```css
-/* Keep reset scoped so it does not affect other GTK apps */
-.nm-window,
-.nm-window * {
-  background-image: none;
-  box-shadow: none;
-  text-shadow: none;
-  border: none;
-  outline: none;
-}
+Note: This is just a recommended pattern to get started, not a strict requirement. Themes can be structured in any way as long as the root `base.css` is present and valid.
 
-.nm-window button,
-.nm-window entry,
-.nm-window row,
-.nm-window box,
-.nm-window label,
-.nm-window separator {
-  border-radius: 0;
-  padding: 0;
-  margin: 0;
-}
-```
-
-Then add back explicit styling for containers, buttons, entries, focus, and hover states in your theme. This avoids fighting distro/GTK defaults and gives a predictable theming base.
-
-### Theme Style Overrides
-
-The following appearance settings are CSS-driven and should be edited in your active theme file (for example `themes/default.css`, `themes/nord.css`, etc.):
-
-* Opacity
-* Border radius
-* Font family
-* Font size
-
-Example (already present in bundled theme files):
+1. Create a theme directory in `~/.config/hypr-network-manager/themes/` (for example `my-theme/`).
+2. Keep your root `base.css` small:
 
 ```css
-window.nm-window,
-.nm-window {
-  opacity: 1.0;
-  border-radius: 12px;
-}
-
-.nm-root,
-.nm-window,
-.nm-root label,
-.nm-window label,
-.nm-root button,
-.nm-window button,
-.nm-root entry,
-.nm-window entry {
-  font-family: sans-serif;
-  font-size: 13px;
-}
+@import url("my-theme/base.css");
 ```
+
+3. Ideal `my-theme/base.css` structure:
+
+```css
+@import url("../core/structure.css");
+@import url("tokens.css");
+@import url("../core/core-components.css");
+@import url("overrides.css");
+```
+
+4. Add targeted component changes in `my-theme/overrides.css`.
+
+
+### Optional Palette Engine Integration
+
+Even though bundled themes are static by default, the token names and structure are designed with material design principles in mind. This allows you to easily integrate dynamic palette generation tools like Matugen or similar.
+
+To integrate generated palettes, map generated colors into the theme token set.
+
+1. Generate a palette file as `~/.config/hypr-network-manager/themes/colors.css`.
+2. Create `~/.config/hypr-network-manager/themes/my-theme/tokens.css` with token mappings.
+3. Update `~/.config/hypr-network-manager/themes/my-theme/base.css`:
+
+```css
+@import url("../structure.css");
+@import url("../colors.css");
+@import url("tokens.css");
+@import url("../shared-components.css");
+```
+
+Matugen example:
+
+```css
+@define-color surface @surface;
+@define-color surface_soft @surface_container_high;
+@define-color surface_raised @surface_container_highest;
+@define-color on_surface @on_surface;
+@define-color on_surface_variant @on_surface_variant;
+@define-color primary @primary;
+@define-color secondary @secondary;
+@define-color error @error;
+@define-color success @tertiary;
+@define-color action @primary_fixed_dim;
+@define-color primary_hover @primary_fixed;
+```
+
+Generic engine (non-Material naming such as `color_1`, `color_2`, ...) example:
+
+```css
+@define-color surface @color_1;
+@define-color surface_soft @color_2;
+@define-color surface_raised @color_3;
+@define-color on_surface @color_15;
+@define-color on_surface_variant @color_8;
+@define-color primary @color_6;
+@define-color secondary @color_5;
+@define-color error @color_9;
+@define-color success @color_10;
+@define-color action @color_14;
+@define-color primary_hover @color_12;
+```
+
+Tip: keep token names from `default/tokens.css` stable and only change token-to-palette mappings. That keeps the shared component layer unchanged.
 
 ### Supported theming classes
 
-The application currently assigns these CSS classes in the UI runtime.
+The application assigns these CSS classes in the UI runtime, split into three categories based on their purpose: Structural/Layout, Generic, and Specific functional classes.
+
+#### Structural and Layout Classes
+
+These classes dictate the physical geometry, containers, positioning, padding, and scaffolding of the UI.
+
+<details>
+<summary>View Structural and Layout Classes</summary>
 
 | Class | Where it applies |
 | --- | --- |
 | nm-window | Main app window |
 | nm-root | Root container for the popup content |
 | nm-status-bar | Top status/header row |
-| nm-status-icon | Header icon |
-| nm-status-label | Header status text |
-| nm-toggle-label | "Networking" label near the global switch |
-| nm-switch | Global/network switches |
 | nm-notebook | Main tab notebook |
-| nm-tab-label | Tab label widgets |
 | nm-page | Shared page container class |
+| nm-page-shell-inset | Main layout margin inset for page grids |
 | nm-page-wifi | Wi-Fi page container |
-| nm-page-wifi-details | Wi-Fi details page container |
-| nm-page-wifi-edit | Wi-Fi edit page container |
+| nm-page-network-details | Shared details page container |
+| nm-page-network-edit | Shared edit page container |
+| nm-page-saved-profiles | Saved networks page container |
 | nm-page-ethernet | Ethernet page container |
 | nm-page-vpn | VPN page container |
 | nm-toolbar | Page toolbar row |
-| nm-toolbar-icon | Generic toolbar icon image class |
-| nm-refresh-icon | Shared refresh icon class |
-| nm-wifi-refresh-icon | Wi-Fi page refresh icon class |
-| nm-ethernet-refresh-icon | Ethernet page refresh icon class |
-| nm-vpn-refresh-icon | VPN page refresh icon class |
-| nm-section-title | Section title labels |
-| nm-button | Shared button base class |
-| nm-icon-button | Icon-only refresh buttons |
-| nm-separator | Horizontal separators |
+| nm-separator | Horizontal dividers (1px min-height logic) |
 | nm-scroll | Scrolled container |
+| nm-scroll-body-inset | Details/Form interior vertical grid container |
 | nm-list | ListBox containers for Wi-Fi/Ethernet/VPN lists |
 | nm-empty-state | Empty-state placeholder containers |
-| nm-placeholder-icon | Empty-state icons |
-| nm-placeholder-label | Empty-state labels |
 | nm-content-stack | Stacks that switch list vs empty-state views |
 | nm-wifi-row | Wi-Fi list rows |
 | nm-device-row | Ethernet and VPN rows |
-| connected | State class for active/connected rows |
-| nm-signal-icon | Per-row signal/device icon |
-| nm-signal-icon-secured | Secured Wi-Fi icon variant class |
-| nm-wifi-icon | Wi-Fi icon hook class |
-| nm-ethernet-icon | Ethernet icon hook class |
-| nm-vpn-icon | VPN icon hook class |
-| nm-ssid-label | Primary row title text |
-| nm-sub-label | Secondary row subtitle text |
 | nm-row-root | Wi-Fi row vertical container |
 | nm-row-content | Wi-Fi row horizontal content container |
 | nm-row-info | Wi-Fi row text/info container |
-| nm-row-actions | Wi-Fi row actions container |
-| nm-row-action-button | Text-style row action button (connect/disconnect/forget) |
-| nm-row-icon-button | Icon-only row action button |
-| nm-action-button | "Forget" action button |
-| nm-connect-button | Connect action button |
-| nm-disconnect-button | Disconnect action button |
-| nm-form-label | Generic form labels |
-| nm-nav-back | Lightweight back navigation button |
-| nm-details-network-title | Network title on details/edit pages |
-| nm-details-group-title | Group label for sections like BASIC/ADVANCED |
-| nm-password-entry | Password entry base styling |
+| nm-row-actions | Row actions revealing container |
+| nm-row-action-buttons | Horizontal strip of buttons (forget/disconnect) |
 | nm-inline-password | Inline Wi-Fi password prompt container |
-| nm-inline-password-label | Inline password prompt label |
-| nm-inline-password-entry | Inline password input |
 | nm-inline-password-actions | Inline password action row |
-| nm-inline-password-cancel | Inline cancel button |
-| nm-inline-password-connect | Inline connect button |
-| nm-inline-password-revealer | Inline prompt revealer widget |
 | nm-details-nav-row | Details page top navigation row |
 | nm-details-header | Details page icon/title header block |
 | nm-details-action-row | Details page action buttons row |
-| nm-details-action-button | Details page action button variant |
-| nm-details-open-button | Row details-open trigger button |
-| nm-details-open-icon | Icon inside details-open trigger button |
-| nm-details-button-icon | Details button icon hook class |
-| nm-details-key | Key label class used in details rows |
-| nm-details-value | Value label class used in details rows |
-| nm-details-network-icon | Large network icon on details page |
 | nm-details-section | Details section wrapper (basic/advanced) |
 | nm-details-rows | Details rows container |
-| nm-details-row | Single details key/value row |
 | nm-details-item | Vertical details item wrapper |
-| nm-details-item-key | Details item key label |
-| nm-details-item-value | Details item value label |
-| nm-edit-form | Wi-Fi edit form wrapper |
-| nm-menu-button | Compact navigation button (e.g. `>` details nav) |
-| nm-wifi-switch | Wi-Fi-specific switch |
-| nm-wifi-placeholder-icon | Wi-Fi empty-state icon hook class |
-| nm-ethernet-placeholder-icon | Ethernet empty-state icon hook class |
-| nm-vpn-placeholder-icon | VPN empty-state icon hook class |
 | blank-window | Dismiss overlay window |
 | blank-window-surface | Click-capture surface inside dismiss overlay |
+
+</details>
+
+#### Generic Classes
+
+These classes represent base components or reusable elements without a specific designated functional outcome attached to them. They primarily set shared visuals before specific contextual rules take over.
+
+<details>
+<summary>View Generic Classes</summary>
+
+| Class | Where it applies |
+| --- | --- |
+| nm-button | Shared button base class |
+| nm-action-button | Generic generic action button (forget, edit, details, etc) |
+| nm-toolbar-action | Generic toolbar button class |
+| nm-details-action-button | Buttons inside the details action row |
+| row-link-action | Text-style row action role class (connect/disconnect/forget) |
+| row-icon-action | Icon-only row action role class (details/open buttons) |
+| nm-form-label | Generic form labels |
+| nm-sub-label | Secondary row subtitle text |
+| nm-details-key | Key label class used in details rows |
+| nm-details-value | Value label class used in details rows |
+| nm-edit-field-entry | General text entries inside edits (IPv4/6, DNS) |
+| nm-edit-dropdown | General dropdown boxes inside edits (methods) |
+| nm-password-entry | Password entry base styling |
+| nm-placeholder-icon | Empty-state icons |
+| nm-placeholder-label | Empty-state labels |
+| nm-status-icon | Header icon |
+| nm-status-label | Header status text |
+| nm-signal-icon | Per-row signal/device icon |
+| nm-row-expand-icon | Chevron toggle on list elements |
+| nm-inline-password-label | Inline password prompt label |
+| nm-inline-password-entry | Inline password input |
+| nm-inline-password-revealer | Inline prompt revealer widget |
+
+</details>
+
+#### Specific Functional Classes
+
+These classes target specific behaviors, states, and distinct functional outcomes. They are built to be layered over generic/structural classes.
+
+<details>
+<summary>View Specific Functional Classes</summary>
+
+| Class | Where it applies |
+| --- | --- |
+| nm-toggle-label | "Networking" label near the global switch |
+| nm-switch | Global/network switches |
+| nm-tab-label | Tab label widgets |
+| nm-tabs-menu-button | Dropdown expand button in tabs header |
+| nm-tabs-menu-popover | Popover for overflowing tabs/saved networks |
+| nm-refresh-button | Refresh button |
+| nm-add-button | Add network button |
+| nm-section-title | Section title labels |
+| nm-connected-indicator | State class for active/connected rows |
+| nm-signal-icon-secured | Secured Wi-Fi icon variant class |
+| nm-ssid-label | Primary row title text |
+| nm-primary-action-button | Primary action button in details page |
+| nm-forget-button | "Forget" action button |
+| nm-delete-button | "Delete" action button |
+| nm-edit-button | "Edit" action button |
+| nm-details-button | "Details" action button |
+| nm-connect-button | Connect action button |
+| nm-disconnect-button | Disconnect action button |
+| nm-nav-back | Lightweight back navigation button |
+| nm-details-network-title | Network title on details/edit pages |
+| nm-details-group-title | Group label for sections like BASIC/ADVANCED |
+| nm-edit-section-toggle | Advanced network sections expander button |
+| nm-inline-password-cancel | Inline cancel button |
+| nm-inline-password-connect | Inline connect button |
+
+</details>
 
 ---
 
@@ -457,7 +516,6 @@ For run/build convenience during development:
 
 * All communication with NetworkManager is done over D-Bus
 * WPA/WPA2/WPA3 credentials handled securely
-* No CLI exposure of passwords
 
 ---
 
@@ -477,3 +535,14 @@ LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgtk4-layer-shell.so hypr-network-manager
 
 * Check logs for D-Bus connection errors
 * Ensure NetworkManager service is running
+
+---
+
+## Release and Support Policies
+
+See the project policy documents for release lifecycle and maintenance expectations:
+
+* [Changelog](../CHANGELOG.md)
+* [Releasing](./RELEASING.md)
+* [Support Policy](../SUPPORT.md)
+* [Security Policy](../SECURITY.md)
