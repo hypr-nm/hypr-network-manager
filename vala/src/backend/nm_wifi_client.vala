@@ -928,7 +928,12 @@ public class NmWifiClient : GLib.Object {
             if (dev is NM.DeviceWifi) {
                 try {
                     yield ((NM.DeviceWifi)dev).request_scan_async (cancellable);
-                } catch (Error e) {}
+                } catch (Error e) {
+                    log_warn (
+                        "nm-wifi-client",
+                        "wifi_scan request failed iface=%s error=%s".printf (dev.get_iface (), e.message)
+                    );
+                }
             }
         }
         return true;

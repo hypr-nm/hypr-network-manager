@@ -92,7 +92,9 @@ int main (string[] args) {
             msg.set_body(new Variant("(s)", "yeab212.hypr-network-manager"));
             var reply = conn.send_message_with_reply_sync(msg, DBusSendMessageFlags.NONE, -1);
             reply.get_body().get("(b)", out daemon_running);
-        } catch (Error e) {}
+        } catch (Error e) {
+            log_warn ("cli", "daemon ownership check failed; assuming daemon is not running error=" + e.message);
+        }
 
         if (!daemon_running) {
             log_info ("cli", "daemon not running, spawning background instance.");
