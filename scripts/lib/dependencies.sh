@@ -132,27 +132,27 @@ nm_detect_pkg_manager() {
 
 _nm_install_deps_pacman() {
   nm_run_with_privilege pacman -S --needed --noconfirm \
-    vala meson ninja pkgconf gtk4 gtk4-layer-shell json-glib networkmanager
+    vala meson ninja pkgconf gtk4 gtk4-layer-shell json-glib networkmanager cmake
 }
 
 _nm_install_deps_apt() {
   nm_run_with_privilege apt-get update
   nm_run_with_privilege apt-get install -y \
     valac meson ninja-build pkg-config \
-    libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager libnm-dev
+    libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager libnm-dev cmake
 }
 
 _nm_install_deps_dnf() {
   nm_run_with_privilege dnf install -y \
     vala meson ninja-build pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-libnm-devel
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-libnm-devel cmake
 }
 
 _nm_install_deps_zypper() {
   nm_run_with_privilege zypper --non-interactive refresh
   nm_run_with_privilege zypper --non-interactive install \
     vala meson ninja pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-devel
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-devel libnm
 }
 
 nm_install_dependencies() {
