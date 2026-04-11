@@ -51,17 +51,17 @@ window.nm-window,
 }
 
 /* Saved profiles should not render as a second slab over the main surface. */
-.nm-page.nm-page-wifi-saved,
-.nm-page-wifi-saved .nm-scroll,
-.nm-page-wifi-saved scrolledwindow,
-.nm-page-wifi-saved scrolledwindow.frame,
-.nm-page-wifi-saved .nm-scroll.frame,
-.nm-page-wifi-saved .nm-scroll > viewport,
-.nm-page-wifi-saved viewport,
-.nm-page-wifi-saved .nm-scroll > viewport > widget,
-.nm-page-wifi-saved .nm-profiles-page-body,
-.nm-page-wifi-saved .nm-list,
-.nm-page-wifi-saved .nm-list > row {
+.nm-page.nm-page-saved-profiles,
+.nm-page-saved-profiles .nm-scroll,
+.nm-page-saved-profiles scrolledwindow,
+.nm-page-saved-profiles scrolledwindow.frame,
+.nm-page-saved-profiles .nm-scroll.frame,
+.nm-page-saved-profiles .nm-scroll > viewport,
+.nm-page-saved-profiles viewport,
+.nm-page-saved-profiles .nm-scroll > viewport > widget,
+.nm-page-saved-profiles .nm-profiles-page-body,
+.nm-page-saved-profiles .nm-list,
+.nm-page-saved-profiles .nm-list > row {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -355,21 +355,31 @@ button.nm-button:hover,
   background: alpha(@success, .16);
 }
 
-.nm-disconnect-button {
+.nm-disconnect-button,
+.nm-delete-button,
+.nm-forget-button {
   color: @urgent;
   border-color: alpha(@urgent, .55);
 }
 
-.nm-disconnect-button:hover {
+.nm-disconnect-button:hover,
+.nm-delete-button:hover,
+.nm-forget-button:hover {
   background: alpha(@urgent, .16);
 }
 
-.nm-action-button {
+.nm-action-button,
+.nm-edit-button,
+.nm-details-button,
+.nm-primary-action-button {
   color: @action;
   border-color: alpha(@action, .6);
 }
 
-.nm-action-button:hover {
+.nm-action-button:hover,
+.nm-edit-button:hover,
+.nm-details-button:hover,
+.nm-primary-action-button:hover {
   background: alpha(@action, .16);
 }
 
@@ -398,7 +408,12 @@ button.nm-button:hover,
 
 .row-link-action.nm-connect-button,
 .row-link-action.nm-disconnect-button,
-.row-link-action.nm-action-button {
+.row-link-action.nm-action-button,
+.row-link-action.nm-delete-button,
+.row-link-action.nm-forget-button,
+.row-link-action.nm-edit-button,
+.row-link-action.nm-details-button,
+.row-link-action.nm-primary-action-button {
   background: transparent;
   border: none;
   color: @selected;
@@ -406,7 +421,12 @@ button.nm-button:hover,
 
 .row-link-action.nm-connect-button:hover,
 .row-link-action.nm-disconnect-button:hover,
-.row-link-action.nm-action-button:hover {
+.row-link-action.nm-action-button:hover,
+.row-link-action.nm-delete-button:hover,
+.row-link-action.nm-forget-button:hover,
+.row-link-action.nm-edit-button:hover,
+.row-link-action.nm-details-button:hover,
+.row-link-action.nm-primary-action-button:hover {
   background: transparent;
   border: none;
   color: @primary_hover;
