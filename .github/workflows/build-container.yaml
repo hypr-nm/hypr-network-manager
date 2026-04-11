@@ -21,15 +21,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Normalize owner to lowercase (GHCR requirement)
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Login to GHCR
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build image
         run: |
           docker build \
             -f .ci/docker/${{ matrix.distro }}.Dockerfile \
-            -t ghcr.io/${{ github.repository }}-${{ matrix.distro }}:latest .
+            -t ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest .
 
       - name: Push image
         run: |
-          docker push ghcr.io/${{ github.repository }}-${{ matrix.distro }}:latest
+          docker push ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest
