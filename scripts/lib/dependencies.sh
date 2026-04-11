@@ -139,20 +139,20 @@ _nm_install_deps_apt() {
   nm_run_with_privilege apt-get update
   nm_run_with_privilege apt-get install -y \
     valac meson ninja-build pkg-config \
-    libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager
+    libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager libnm-dev
 }
 
 _nm_install_deps_dnf() {
   nm_run_with_privilege dnf install -y \
     vala meson ninja-build pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-libnm-devel
 }
 
 _nm_install_deps_zypper() {
   nm_run_with_privilege zypper --non-interactive refresh
   nm_run_with_privilege zypper --non-interactive install \
     vala meson ninja pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-devel
 }
 
 nm_install_dependencies() {
@@ -191,7 +191,7 @@ nm_check_build_dependencies() {
   done
 
   if command -v pkg-config >/dev/null 2>&1; then
-    for pkg in gtk4 gio-2.0 gtk4-layer-shell-0 json-glib-1.0; do
+    for pkg in gtk4 gio-2.0 gtk4-layer-shell-0 json-glib-1.0 libnm; do
       if ! pkg-config --exists "$pkg"; then
         missing+=("pkg:$pkg")
       fi
