@@ -2,226 +2,39 @@ name: Compile test
 
 on:
   push:
-    paths:
-      - 'scripts/**'
-      - 'src/**'
-      - 'meson.build'
-      - 'meson_options.txt'
-      - '.github/workflows/build.yml'
   pull_request:
 
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
-
 jobs:
-  build-test-ubuntu-container:
+  build:
     runs-on: ubuntu-latest
 
-    env:
-      PREFIX: /usr/local
-      PKG_CONFIG_PATH: /usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig
-      LD_LIBRARY_PATH: /usr/local/lib/x86_64-linux-gnu:/usr/local/lib
+    strategy:
+      matrix:
+        distro: [ubuntu, fedora, arch]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Cache gtk4-layer-shell build tree (Ubuntu)
-        uses: actions/cache@v4
-        with:
-          path: .ci-cache/gtk4-layer-shell/ubuntu
-          key: ${{ runner.os }}-gtk4-layer-shell-724be167
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
-      - name: Install dependencies
+      - name: Pull container image
         run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y \
-            meson cmake ninja-build valac pkg-config python3 \
-            libwayland-dev wayland-protocols \
-            libgtk-4-dev gobject-introspection libgirepository1.0-dev gtk-doc-tools \
-            libjson-glib-dev network-manager libnm-dev \
-            git
+          docker pull ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest
 
-      - name: Build gtk4-layer-shell
+      - name: Run build and test inside container
         run: |
-          set -euo pipefail
-
-          CACHE_ROOT="$GITHUB_WORKSPACE/.ci-cache/gtk4-layer-shell/ubuntu"
-          SRC_DIR="$CACHE_ROOT/src"
-          BUILD_DIR="$SRC_DIR/build"
-          mkdir -p "$CACHE_ROOT"
-
-          if [ ! -d "$SRC_DIR/.git" ]; then
-            git clone https://github.com/wmww/gtk4-layer-shell "$SRC_DIR"
-          fi
-
-          cd "$SRC_DIR"
-          git fetch --depth 1 origin 724be1675be4a92e49e0e1a31330f4c4b3d99526
-          git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
-
-          meson setup "$BUILD_DIR" --prefix=$PREFIX --reconfigure || meson setup "$BUILD_DIR" --prefix=$PREFIX
-          ninja -C "$BUILD_DIR"
-          sudo ninja -C "$BUILD_DIR" install
-
-          pkg-config --modversion gtk4-layer-shell-0
-          test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
-          test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
-
-      - name: Configure (release)
-        run: |
-          set -euo pipefail
-          meson setup builddir-ci --buildtype=release
-
-      - name: Compile
-        run: |
-          set -euo pipefail
-          meson compile -C builddir-ci
-
-      - name: Run binary test
-        run: |
-          set -euo pipefail
-          ./builddir-ci/vala/hypr-network-manager --help > /dev/null
-
-  build-test-fedora-container:
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:latest
-
-    env:
-      PREFIX: /usr/local
-      PKG_CONFIG_PATH: /usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig
-      LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cache gtk4-layer-shell build tree (Fedora)
-        uses: actions/cache@v4
-        with:
-          path: .ci-cache/gtk4-layer-shell/fedora
-          key: fedora-gtk4-layer-shell-724be167
-
-      - name: Install dependencies
-        run: |
-          set -euo pipefail
-          dnf -y update
-          dnf -y install \
-            meson ninja-build cmake vala pkgconf-pkg-config python3 \
-            wayland-devel wayland-protocols-devel \
-            gtk4-devel gobject-introspection-devel gobject-introspection gtk-doc \
-            json-glib-devel NetworkManager NetworkManager-libnm-devel \
-            git
-
-      - name: Build gtk4-layer-shell
-        run: |
-          set -euo pipefail
-
-          CACHE_ROOT="$GITHUB_WORKSPACE/.ci-cache/gtk4-layer-shell/fedora"
-          SRC_DIR="$CACHE_ROOT/src"
-          BUILD_DIR="$SRC_DIR/build"
-          mkdir -p "$CACHE_ROOT"
-
-          if [ ! -d "$SRC_DIR/.git" ]; then
-            git clone https://github.com/wmww/gtk4-layer-shell "$SRC_DIR"
-          fi
-
-          cd "$SRC_DIR"
-          git fetch --depth 1 origin 724be1675be4a92e49e0e1a31330f4c4b3d99526
-          git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
-
-          meson setup "$BUILD_DIR" --prefix=$PREFIX --reconfigure || meson setup "$BUILD_DIR" --prefix=$PREFIX
-          ninja -C "$BUILD_DIR"
-          ninja -C "$BUILD_DIR" install
-
-          pkg-config --modversion gtk4-layer-shell-0
-          test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
-          test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
-
-      - name: Configure (release)
-        run: |
-          set -euo pipefail
-          meson setup builddir-ci-fedora --buildtype=release
-
-      - name: Compile
-        run: |
-          set -euo pipefail
-          meson compile -C builddir-ci-fedora
-
-      - name: Run binary test
-        run: |
-          set -euo pipefail
-          ./builddir-ci-fedora/vala/hypr-network-manager --help > /dev/null
-
-  build-test-arch-container:
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
-
-    env:
-      PREFIX: /usr/local
-      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
-      LD_LIBRARY_PATH: /usr/local/lib
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cache gtk4-layer-shell build tree (Arch)
-        uses: actions/cache@v4
-        with:
-          path: .ci-cache/gtk4-layer-shell/arch
-          key: arch-gtk4-layer-shell-724be167
-
-      - name: Install dependencies
-        run: |
-          set -euo pipefail
-          pacman -Sy --noconfirm archlinux-keyring
-          pacman -S --noconfirm --needed \
-            base-devel git meson cmake ninja vala pkgconf python \
-            wayland wayland-protocols gtk4 gobject-introspection gtk-doc \
-            json-glib networkmanager
-
-      - name: Build gtk4-layer-shell
-        run: |
-          set -euo pipefail
-
-          CACHE_ROOT="$GITHUB_WORKSPACE/.ci-cache/gtk4-layer-shell/arch"
-          SRC_DIR="$CACHE_ROOT/src"
-          BUILD_DIR="$SRC_DIR/build"
-          mkdir -p "$CACHE_ROOT"
-
-          if [ ! -d "$SRC_DIR/.git" ]; then
-            git clone https://github.com/wmww/gtk4-layer-shell "$SRC_DIR"
-          fi
-
-          cd "$SRC_DIR"
-          git fetch --depth 1 origin 724be1675be4a92e49e0e1a31330f4c4b3d99526
-          git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526
-
-          meson setup "$BUILD_DIR" --prefix=$PREFIX --reconfigure || meson setup "$BUILD_DIR" --prefix=$PREFIX
-          ninja -C "$BUILD_DIR"
-          ninja -C "$BUILD_DIR" install
-
-          pkg-config --modversion gtk4-layer-shell-0
-          test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
-          test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
-
-      - name: Configure (release)
-        run: |
-          set -euo pipefail
-          meson setup builddir-ci-arch --buildtype=release
-
-      - name: Compile
-        run: |
-          set -euo pipefail
-          meson compile -C builddir-ci-arch
-
-      - name: Run binary test
-        run: |
-          set -euo pipefail
-          ./builddir-ci-arch/vala/hypr-network-manager --help > /dev/null
-
+          docker run --rm \
+            -v $PWD:/workspace \
+            -w /workspace \
+            ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest \
+            bash -lc "
+              set -euo pipefail
+              meson setup builddir --buildtype=release
+              meson compile -C builddir
+              ./builddir/vala/hypr-network-manager --help > /dev/null
+            "
