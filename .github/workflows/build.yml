@@ -2,11 +2,18 @@ name: Compile test
 
 on:
   push:
+    paths:
+      - 'scripts/**'
+      - 'src/**'
+      - 'meson.build'
+      - 'meson_options.txt'
+      - '.github/workflows/build.yml'
   pull_request:
 
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
+
 
 jobs:
   build-test-ubuntu-container:
