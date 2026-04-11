@@ -12,10 +12,13 @@ public class NetworkManager : Gtk.Application {
     private AppConfig config;
     private MainWindow? window;
     private BlankWindow? dismiss_overlay;
+    private bool is_daemon;
+    private bool initial_activation_skipped = false;
 
-    public NetworkManager (AppConfig config) {
+    public NetworkManager (AppConfig config, bool daemon_mode) {
         Object (application_id: "io.github.hypr-network-manager.vala");
         this.config = config;
+        this.is_daemon = daemon_mode;
     }
 
     private void debug_log (string message) {
@@ -136,6 +139,13 @@ public class NetworkManager : Gtk.Application {
         }
     }
 
+    protected override void startup () {
+        base.startup ();
+        if (is_daemon) {
+            this.hold (); // Keep the daemon running smoothly
+        }
+    }
+
     private void on_main_window_mapped () {
         if (window == null) {
             return;
@@ -156,7 +166,11 @@ public class NetworkManager : Gtk.Application {
 
     protected override void activate () {
         if (window != null) {
-            window.present ();
+            if (window.visible) {
+                 request_close ();
+            } else {
+                 window.present ();
+            }
             return;
         }
 
@@ -169,6 +183,12 @@ public class NetworkManager : Gtk.Application {
         );
         window.close_request.connect (() => {
             hide_dismiss_overlay ();
+            
+            if (is_daemon) {
+                window.visible = false;
+                return true;
+            }
+            
             window = null;
             quit ();
             return false;
@@ -179,6 +199,14 @@ public class NetworkManager : Gtk.Application {
         window.unmap.connect (() => {
             hide_dismiss_overlay ();
         });
+        
+        if (is_daemon && !initial_activation_skipped) {
+            initial_activation_skipped = true;
+            // Load application logic in background to pre-warm the rendering pipeline
+            // but keep the window totally hidden untoggled!
+            return;
+        }
+
         window.present ();
     }
 }

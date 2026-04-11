@@ -3,6 +3,7 @@ int main (string[] args) {
     bool debug_enabled = false;
     bool status = false;
     bool toggle_wifi = false;
+    bool daemon_mode = false;
 
     configure_global_logging (false);
 
@@ -11,6 +12,7 @@ int main (string[] args) {
         {"status", 0, 0, OptionArg.NONE, ref status, "Print JSON status for waybar/eww", null},
         {"toggle-wifi", 0, 0, OptionArg.NONE, ref toggle_wifi, "Toggle Wi-Fi and exit", null},
         {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, "Enable debug logs", null},
+        {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, "Run as a background daemon", null},
         {null}
     };
 
@@ -70,7 +72,7 @@ int main (string[] args) {
         return 0;
     }
 
-    var app = new NetworkManager (config);
+    var app = new NetworkManager (config, daemon_mode);
     log_info ("cli", "mode_select: gui mode");
     return app.run (args);
 }
