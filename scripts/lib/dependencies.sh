@@ -152,7 +152,7 @@ _nm_install_deps_zypper() {
   nm_run_with_privilege zypper --non-interactive refresh
   nm_run_with_privilege zypper --non-interactive install \
     vala meson ninja pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-devel libnm
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-devel cmake
 }
 
 nm_install_dependencies() {
