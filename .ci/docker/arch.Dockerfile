@@ -8,7 +8,7 @@ ENV PREFIX=/usr/local \
     LD_LIBRARY_PATH=/usr/local/lib
 
 RUN pacman -Sy --noconfirm archlinux-keyring && \
-    pacman -S --noconfirm \
+    pacman -Syu --noconfirm \
       base-devel git ca-certificates-utils ca-certificates-mozilla meson cmake ninja vala pkgconf python \
               wayland wayland-protocols gtk4 gobject-introspection gtk-doc \
             json-glib networkmanager && \
