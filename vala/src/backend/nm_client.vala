@@ -29,7 +29,7 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public static string normalize_ipv6_method (string value) {
-        if (value == "auto" || value == "manual" || value == "ignore" || value == "shared" || value == "disabled" |
+        if (value == "auto" || value == "manual" || value == "ignore" || value == "shared" || value == "disabled" ||
             value == "link-local") {
             return value;
         }
