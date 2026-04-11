@@ -11,7 +11,6 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
 3. [Configuration](#configuration)
 4. [Theming](#theming)
 
-  * [Theme Author Guide](./THEME_AUTHOR_GUIDE.md)
 5. [Usage](#usage)
 
    * [Launching the GUI](#launching-the-gui)
@@ -419,8 +418,6 @@ Add a custom module in Waybar:
 }
 ```
 
-Copy CSS snippets from `waybar/style.css` to your bar's style sheet.
-
 ### Hyprland Integration
 
 For blur on this app's layer-shell surface namespace, add this rule:
@@ -492,30 +489,24 @@ For run/build convenience during development:
 
 * Displays wired devices
 * Supports disconnecting connections
+* Detailed ethernet profile configuration
 
 ### VPN Tab
 
 * Lists all profiles
 * Connect / Disconnect actions supported
 
-### NetworkManager D-Bus Client
-
-* Handles all D-Bus calls to NetworkManager
-* Implements AddAndActivateConnection, ActivateConnection, Disconnect, etc.
-* Ensures passwords are never exposed on command line
-
 ### GUI & Layer-Shell
 
 * Layer-shell used for proper Wayland popup placement
 * Window dimensions, anchors, and margins configurable
-* Frosted-glass effects rely on compositor blur
 
 ---
 
 ## Security
 
 * All communication with NetworkManager is done over D-Bus
-* WPA/WPA2/WPA3 credentials handled securely
+* network credentials are handled securely
 
 ---
 
@@ -543,6 +534,4 @@ LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgtk4-layer-shell.so hypr-network-manager
 See the project policy documents for release lifecycle and maintenance expectations:
 
 * [Changelog](../CHANGELOG.md)
-* [Releasing](./RELEASING.md)
 * [Support Policy](../SUPPORT.md)
-* [Security Policy](../SECURITY.md)
