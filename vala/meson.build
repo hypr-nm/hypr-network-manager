@@ -33,6 +33,7 @@ executable(
     'src/models/network_device.vala',
     'src/models/vpn_connection.vala',
     'src/backend/utils/nm_ip_config_helper.vala',
+    'src/backend/utils/nm_wifi_utils.vala',
     'src/backend/nm_status_formatter.vala',
     'src/backend/nm_ethernet_client.vala',
     'src/backend/nm_wifi_client.vala',
