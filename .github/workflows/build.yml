@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test-ubuntu:
+  build-test-ubuntu-container:
     runs-on: ubuntu-latest
 
     env:
@@ -21,17 +21,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          set -euo pipefail
-          source ./scripts/lib/dependencies.sh
-          nm_install_dependencies
-
       - name: Cache gtk4-layer-shell build tree (Ubuntu)
         uses: actions/cache@v4
         with:
           path: .ci-cache/gtk4-layer-shell/ubuntu
           key: ${{ runner.os }}-gtk4-layer-shell-724be167
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            meson ninja-build valac pkg-config python3 \
+            libwayland-dev wayland-protocols \
+            libgtk-4-dev gobject-introspection libgirepository1.0-dev gtk-doc-tools \
+            libjson-glib-dev network-manager \
+            git
 
       - name: Build gtk4-layer-shell
         run: |
@@ -58,17 +63,22 @@ jobs:
           test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
           test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
 
-      - name: Compile via shared script
+      - name: Configure (release)
         run: |
           set -euo pipefail
-          ./scripts/compile.sh --mode prod
+          meson setup builddir-ci --buildtype=release
+
+      - name: Compile
+        run: |
+          set -euo pipefail
+          meson compile -C builddir-ci
 
       - name: Run binary test
         run: |
           set -euo pipefail
-          ./builddir-prod/vala/hypr-network-manager --help > /dev/null
+          ./builddir-ci/vala/hypr-network-manager --help > /dev/null
 
-  build-test-fedora:
+  build-test-fedora-container:
     runs-on: ubuntu-latest
     container:
       image: fedora:latest
@@ -82,17 +92,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          set -euo pipefail
-          source ./scripts/lib/dependencies.sh
-          nm_install_dependencies
-
       - name: Cache gtk4-layer-shell build tree (Fedora)
         uses: actions/cache@v4
         with:
           path: .ci-cache/gtk4-layer-shell/fedora
           key: fedora-gtk4-layer-shell-724be167
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          dnf -y update
+          dnf -y install \
+            meson ninja-build vala pkgconf-pkg-config python3 \
+            wayland-devel wayland-protocols-devel \
+            gtk4-devel gobject-introspection-devel gobject-introspection gtk-doc \
+            json-glib-devel NetworkManager \
+            git
 
       - name: Build gtk4-layer-shell
         run: |
@@ -119,17 +134,22 @@ jobs:
           test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
           test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
 
-      - name: Compile via shared script
+      - name: Configure (release)
         run: |
           set -euo pipefail
-          ./scripts/compile.sh --mode prod
+          meson setup builddir-ci-fedora --buildtype=release
+
+      - name: Compile
+        run: |
+          set -euo pipefail
+          meson compile -C builddir-ci-fedora
 
       - name: Run binary test
         run: |
           set -euo pipefail
-          ./builddir-prod/vala/hypr-network-manager --help > /dev/null
+          ./builddir-ci-fedora/vala/hypr-network-manager --help > /dev/null
 
-  build-test-arch:
+  build-test-arch-container:
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
@@ -143,17 +163,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          set -euo pipefail
-          source ./scripts/lib/dependencies.sh
-          nm_install_dependencies
-
       - name: Cache gtk4-layer-shell build tree (Arch)
         uses: actions/cache@v4
         with:
           path: .ci-cache/gtk4-layer-shell/arch
           key: arch-gtk4-layer-shell-724be167
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          pacman -Sy --noconfirm archlinux-keyring
+          pacman -S --noconfirm --needed \
+            base-devel git meson ninja vala pkgconf python \
+            wayland wayland-protocols gtk4 gobject-introspection gtk-doc \
+            json-glib networkmanager
 
       - name: Build gtk4-layer-shell
         run: |
@@ -180,12 +203,18 @@ jobs:
           test -f /usr/local/include/gtk4-layer-shell/gtk4-layer-shell.h
           test -f /usr/local/share/vala/vapi/gtk4-layer-shell-0.vapi
 
-      - name: Compile via shared script
+      - name: Configure (release)
         run: |
           set -euo pipefail
-          ./scripts/compile.sh --mode prod
+          meson setup builddir-ci-arch --buildtype=release
+
+      - name: Compile
+        run: |
+          set -euo pipefail
+          meson compile -C builddir-ci-arch
 
       - name: Run binary test
         run: |
           set -euo pipefail
-          ./builddir-prod/vala/hypr-network-manager --help > /dev/null
+          ./builddir-ci-arch/vala/hypr-network-manager --help > /dev/null
+
