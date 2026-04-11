@@ -87,7 +87,28 @@ int main (string[] args) {
             try {
                 string[] spawn_args = { args[0], "--daemon" };
                 Process.spawn_async(null, spawn_args, null, SpawnFlags.SEARCH_PATH | SpawnFlags.STDOUT_TO_DEV_NULL | SpawnFlags.STDERR_TO_DEV_NULL, null, null);
-                Thread.usleep(150000); // 150ms to allow daemon to grab the DBus name
+                
+                var loop = new MainLoop ();
+                uint watch_id = Bus.watch_name (BusType.SESSION, "io.github.hypr-network-manager.vala", BusNameWatcherFlags.NONE,
+                    (conn, name, owner) => {
+                        if (owner != null && owner != "") {
+                            log_info ("cli", "Daemon grabbed DBus name dynamically!");
+                            loop.quit ();
+                        }
+                    },
+                    (conn, name) => {
+                        // ignore completely
+                    });
+
+                // Fail-safe to avoid blocking indefinitely if the daemon fails to start
+                Timeout.add (NM_DAEMON_TIMEOUT_MS, () => {
+                    log_warn ("cli", "Timeout waiting for daemon to acquire DBus name");
+                    loop.quit ();
+                    return false;
+                });
+                
+                loop.run ();
+                Bus.unwatch_name (watch_id);
             } catch (Error e) {
                 log_error ("cli", "Failed to spawn daemon: " + e.message);
             }
