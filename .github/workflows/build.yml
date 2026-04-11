@@ -32,10 +32,10 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y \
-            meson ninja-build valac pkg-config python3 \
+            meson cmake ninja-build valac pkg-config python3 \
             libwayland-dev wayland-protocols \
             libgtk-4-dev gobject-introspection libgirepository1.0-dev gtk-doc-tools \
-            libjson-glib-dev network-manager \
+            libjson-glib-dev network-manager libnm-dev \
             git
 
       - name: Build gtk4-layer-shell
@@ -103,10 +103,10 @@ jobs:
           set -euo pipefail
           dnf -y update
           dnf -y install \
-            meson ninja-build vala pkgconf-pkg-config python3 \
+            meson ninja-build cmake vala pkgconf-pkg-config python3 \
             wayland-devel wayland-protocols-devel \
             gtk4-devel gobject-introspection-devel gobject-introspection gtk-doc \
-            json-glib-devel NetworkManager \
+            json-glib-devel NetworkManager NetworkManager-libnm-devel \
             git
 
       - name: Build gtk4-layer-shell
@@ -174,7 +174,7 @@ jobs:
           set -euo pipefail
           pacman -Sy --noconfirm archlinux-keyring
           pacman -S --noconfirm --needed \
-            base-devel git meson ninja vala pkgconf python \
+            base-devel git meson cmake ninja vala pkgconf python \
             wayland wayland-protocols gtk4 gobject-introspection gtk-doc \
             json-glib networkmanager
 
