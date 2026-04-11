@@ -21,7 +21,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            "nm-page-wifi-saved",
+            "nm-page-saved-profiles",
             {"nm-page"}
         );
 
@@ -43,6 +43,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
         refresh_btn.add_css_class ("nm-toolbar-action");
+        refresh_btn.add_css_class ("nm-refresh-button");
         refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.set_tooltip_text ("Refresh Profiles");
@@ -142,7 +143,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var delete_btn = new Gtk.Button.with_label ("Delete");
             delete_btn.add_css_class ("nm-button");
-            MainWindowCssClassResolver.add_best_class (delete_btn, {"nm-action-button", "nm-button"});
+            MainWindowCssClassResolver.add_best_class (delete_btn, {"nm-delete-button", "nm-action-button", "nm-button"});
             delete_btn.clicked.connect (() => {
                 this.delete_profile (row_profile);
             });
@@ -202,7 +203,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var details_btn = new Gtk.Button.with_label ("Details");
             details_btn.add_css_class ("nm-button");
-            MainWindowCssClassResolver.add_best_class (details_btn, {"nm-action-button", "nm-button"});
+            MainWindowCssClassResolver.add_best_class (details_btn, {"nm-details-button", "nm-action-button", "nm-button"});
             details_btn.clicked.connect (() => {
                 this.open_ethernet_profile (row_device);
             });
@@ -306,7 +307,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         this.edit_button.add_css_class ("nm-button");
         MainWindowCssClassResolver.add_best_class (
             this.edit_button,
-            {"nm-details-action-button", "nm-action-button", "nm-button"}
+            {"nm-edit-button", "nm-details-action-button", "nm-action-button", "nm-button"}
         );
         this.edit_button.clicked.connect (() => {
             this.edit ();
@@ -317,7 +318,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         this.delete_button.add_css_class ("nm-button");
         MainWindowCssClassResolver.add_best_class (
             this.delete_button,
-            {"nm-details-action-button", "nm-action-button", "nm-button"}
+            {"nm-delete-button", "nm-details-action-button", "nm-action-button", "nm-button"}
         );
         this.delete_button.clicked.connect (() => {
             this.delete_profile ();

@@ -162,6 +162,7 @@ namespace MainWindowWifiRowBuilder {
                 {"row-link-action", "nm-button"}
             );
             forget.add_css_class ("nm-action-button");
+            forget.add_css_class ("nm-forget-button");
             forget.set_valign (Gtk.Align.CENTER);
             forget.clicked.connect (() => {
                 on_forget_saved_network (net);

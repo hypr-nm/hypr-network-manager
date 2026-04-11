@@ -82,7 +82,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         this.primary_button.add_css_class ("nm-button");
         MainWindowCssClassResolver.add_best_class (
             this.primary_button,
-            {"nm-details-action-button", "nm-action-button", "nm-button"}
+            {"nm-primary-action-button", "nm-details-action-button", "nm-action-button", "nm-button"}
         );
         this.primary_button.clicked.connect (() => {
             this.primary_action ();
@@ -93,7 +93,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         this.edit_button.add_css_class ("nm-button");
         MainWindowCssClassResolver.add_best_class (
             this.edit_button,
-            {"nm-details-action-button", "nm-action-button", "nm-button"}
+            {"nm-edit-button", "nm-details-action-button", "nm-action-button", "nm-button"}
         );
         this.edit_button.clicked.connect (() => {
             this.edit ();
@@ -283,6 +283,7 @@ namespace MainWindowEthernetPageBuilder {
         var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
         refresh_btn.add_css_class ("nm-toolbar-action");
+        refresh_btn.add_css_class ("nm-refresh-button");
         refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {

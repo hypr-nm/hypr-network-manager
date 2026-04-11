@@ -61,7 +61,7 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
         this.forget_button.add_css_class ("nm-button");
         MainWindowCssClassResolver.add_best_class (
             this.forget_button,
-            {"nm-details-action-button", "nm-action-button", "nm-button"}
+            {"nm-forget-button", "nm-details-action-button", "nm-action-button", "nm-button"}
         );
         this.forget_button.clicked.connect (() => {
             this.forget ();
@@ -72,7 +72,7 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
         this.edit_button.add_css_class ("nm-button");
         MainWindowCssClassResolver.add_best_class (
             this.edit_button,
-            {"nm-details-action-button", "nm-action-button", "nm-button"}
+            {"nm-edit-button", "nm-details-action-button", "nm-action-button", "nm-button"}
         );
         this.edit_button.clicked.connect (() => {
             this.edit ();
