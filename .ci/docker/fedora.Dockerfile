@@ -1,5 +1,7 @@
 FROM fedora:latest
 
+ARG GTK4_LAYER_SHELL_VERSION=1.3.0
+
 ENV PREFIX=/usr/local \
     PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig \
     LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib
@@ -10,13 +12,9 @@ RUN dnf -y update && \
       wayland-devel wayland-protocols-devel \
       gtk4-devel gobject-introspection-devel gtk-doc \
       json-glib-devel NetworkManager-libnm-devel \
-      git ca-certificates && \
+            ca-certificates && \
+        dnf -y install \
+            "gtk4-layer-shell-${GTK4_LAYER_SHELL_VERSION}*" \
+            "gtk4-layer-shell-devel-${GTK4_LAYER_SHELL_VERSION}*" && \
+        test "$(rpm -q --qf '%{VERSION}' gtk4-layer-shell)" = "$GTK4_LAYER_SHELL_VERSION" && \
     dnf clean all
-
-RUN git clone https://github.com/wmww/gtk4-layer-shell /tmp/gtk4-layer-shell && \
-    cd /tmp/gtk4-layer-shell && \
-    git checkout 724be1675be4a92e49e0e1a31330f4c4b3d99526 && \
-    meson setup build --prefix=$PREFIX && \
-    ninja -C build && \
-    ninja -C build install && \
-    rm -rf /tmp/gtk4-layer-shell
