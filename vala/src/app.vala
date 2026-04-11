@@ -177,10 +177,16 @@ public class NetworkManager : Gtk.Application {
         register_app_icon_resources ();
         load_theme_css ();
 
-        window = new MainWindow (
-            this,
-            config
-        );
+        try {
+            window = new MainWindow (
+                this,
+                config
+            );
+        } catch (Error e) {
+            log_error ("app", "window_init: failed to initialize network manager client error=" + e.message);
+            quit ();
+            return;
+        }
         window.close_request.connect (() => {
             hide_dismiss_overlay ();
             

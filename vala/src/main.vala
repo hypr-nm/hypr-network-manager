@@ -33,7 +33,13 @@ int main (string[] args) {
 
     if (status) {
         log_info ("cli", "mode_select: status mode");
-        var nm = new NetworkManagerClient ();
+        NetworkManagerClient nm;
+        try {
+            nm = new NetworkManagerClient ();
+        } catch (Error e) {
+            log_error ("cli", "status: failed to initialize network manager client error=" + e.message);
+            return 1;
+        }
         string status_json = "";
         var loop = new MainLoop ();
         nm.get_status_json_dbus.begin (null, (obj, res) => {
@@ -48,7 +54,13 @@ int main (string[] args) {
 
     if (toggle_wifi) {
         log_info ("cli", "mode_select: toggle-wifi mode");
-        var nm = new NetworkManagerClient ();
+        NetworkManagerClient nm;
+        try {
+            nm = new NetworkManagerClient ();
+        } catch (Error e) {
+            log_error ("cli", "toggle_wifi: failed to initialize network manager client error=" + e.message);
+            return 1;
+        }
         bool enabled_after_toggle = false;
         int toggle_exit_code = 0;
         string toggle_error = "";

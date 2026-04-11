@@ -74,7 +74,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     public MainWindow (
         Gtk.Application app,
         AppConfig config
-    ) {
+    ) throws Error {
         Object (application: app, title: "Network Manager");
         this.window_width = config.window_width;
         this.window_height = config.window_height;

@@ -36,11 +36,12 @@ public class NetworkManagerClient : GLib.Object {
         return "auto";
     }
 
-    public NetworkManagerClient () {
+    public NetworkManagerClient () throws Error {
         try {
             nm_client = new NM.Client (null);
         } catch (Error e) {
             log_error ("nm-client", "Failed to initialize NM.Client: " + e.message);
+            throw e;
         }
         wifi_client = new NmWifiClient (this);
         ethernet_client = new NmEthernetClient (this);
