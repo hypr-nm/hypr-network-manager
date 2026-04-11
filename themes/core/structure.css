@@ -158,6 +158,11 @@ button.nm-button,
 .nm-connect-button,
 .nm-disconnect-button,
 .nm-action-button,
+.nm-forget-button,
+.nm-delete-button,
+.nm-edit-button,
+.nm-details-button,
+.nm-primary-action-button,
 .row-link-action {
   font-size: 12px;
   font-weight: 600;
@@ -265,7 +270,7 @@ menubutton.nm-tabs-menu-button > button:checked {
   border-radius: 0;
 }
 
-.nm-page-wifi-saved {
+.nm-page-saved-profiles {
   padding: 6px 2px 8px;
   border: none;
   border-radius: 0;
@@ -274,7 +279,7 @@ menubutton.nm-tabs-menu-button > button:checked {
 /* Keep edit/saved-page headers inset while allowing scrollbars to stay edge-aligned. */
 .nm-page-network-details > box:first-child,
 .nm-page-network-edit > box:first-child,
-.nm-page-wifi-saved > box:first-child {
+.nm-page-saved-profiles > box:first-child {
   margin-top: 6px;
   margin-left: 12px;
   margin-right: 8px;
@@ -282,7 +287,7 @@ menubutton.nm-tabs-menu-button > button:checked {
 
 .nm-page-network-details > scrolledwindow:last-child,
 .nm-page-network-edit > scrolledwindow:last-child,
-.nm-page-wifi-saved > scrolledwindow:last-child {
+.nm-page-saved-profiles > scrolledwindow:last-child {
   margin-bottom: 6px;
 }
 
