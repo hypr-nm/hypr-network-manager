@@ -11,12 +11,80 @@ permissions:
   packages: write
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve distro matrix from changed files
+        id: set-matrix
+        run: |
+          set -euo pipefail
+
+          before_sha="${{ github.event.before }}"
+          after_sha="${{ github.sha }}"
+
+          if [[ "$before_sha" == "0000000000000000000000000000000000000000" ]]; then
+            changed_files="$(git show --pretty='' --name-only "$after_sha")"
+          else
+            changed_files="$(git diff --name-only "$before_sha" "$after_sha")"
+          fi
+
+          declare -a distros=()
+
+          if grep -qx '.github/workflows/build-containers.yml' <<< "$changed_files"; then
+            distros=(ubuntu fedora arch)
+          else
+            while IFS= read -r file; do
+              case "$file" in
+                .ci/docker/ubuntu.Dockerfile)
+                  distros+=(ubuntu)
+                  ;;
+                .ci/docker/fedora.Dockerfile)
+                  distros+=(fedora)
+                  ;;
+                .ci/docker/arch.Dockerfile)
+                  distros+=(arch)
+                  ;;
+                .ci/docker/*)
+                  # Shared docker context changed; rebuild all images.
+                  distros=(ubuntu fedora arch)
+                  break
+                  ;;
+              esac
+            done <<< "$changed_files"
+          fi
+
+          if [[ ${#distros[@]} -eq 0 ]]; then
+            echo 'has_changes=false' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"distro":[]}' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          matrix='{"distro":['
+          sep=''
+          for distro in "${distros[@]}"; do
+            matrix="${matrix}${sep}\"${distro}\""
+            sep=','
+          done
+          matrix="${matrix}]}"
+
+          echo 'has_changes=true' >> "$GITHUB_OUTPUT"
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
 
     strategy:
-      matrix:
-        distro: [ubuntu, fedora, arch]
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
 
     steps:
       - uses: actions/checkout@v4
