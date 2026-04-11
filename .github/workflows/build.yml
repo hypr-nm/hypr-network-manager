@@ -33,16 +33,39 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull container image
+      - name: Resolve image tag candidate
+        id: image-tag
         run: |
-          docker pull ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "candidate=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "candidate=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Run build and test inside container
+      - name: Pull container image
+        id: pull-image
+        run: |
+          set -euo pipefail
+          IMAGE_BASE="ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}"
+          CANDIDATE_TAG="${{ steps.image-tag.outputs.candidate }}"
+
+          if docker pull "${IMAGE_BASE}:${CANDIDATE_TAG}"; then
+            IMAGE_TAG="$CANDIDATE_TAG"
+          else
+            echo "SHA tag not found, falling back to latest: ${IMAGE_BASE}:latest"
+            docker pull "${IMAGE_BASE}:latest"
+            IMAGE_TAG="latest"
+          fi
+
+          echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Run build and test
         run: |
           docker run --rm \
             -v $PWD:/workspace \
             -w /workspace \
-            ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest \
+            ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:${{ steps.pull-image.outputs.tag }} \
             bash -lc "
               set -euo pipefail
               meson setup builddir --buildtype=release

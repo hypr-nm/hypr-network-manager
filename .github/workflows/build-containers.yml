@@ -102,10 +102,14 @@ jobs:
 
       - name: Build image
         run: |
+          IMAGE_BASE="ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}"
           docker build \
             -f .ci/docker/${{ matrix.distro }}.Dockerfile \
-            -t ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest .
+            -t "${IMAGE_BASE}:${{ github.sha }}" \
+            -t "${IMAGE_BASE}:latest" .
 
       - name: Push image
         run: |
-          docker push ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}:latest
+          IMAGE_BASE="ghcr.io/${{ env.OWNER_LC }}/hypr-network-manager-${{ matrix.distro }}"
+          docker push "${IMAGE_BASE}:${{ github.sha }}"
+          docker push "${IMAGE_BASE}:latest"
