@@ -72,6 +72,28 @@ int main (string[] args) {
         return 0;
     }
 
+    if (!daemon_mode && !status && !toggle_wifi) {
+        bool daemon_running = false;
+        try {
+            var conn = Bus.get_sync(BusType.SESSION);
+            var msg = new DBusMessage.method_call("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "NameHasOwner");
+            msg.set_body(new Variant("(s)", "io.github.hypr-network-manager.vala"));
+            var reply = conn.send_message_with_reply_sync(msg, DBusSendMessageFlags.NONE, -1);
+            reply.get_body().get("(b)", out daemon_running);
+        } catch (Error e) {}
+
+        if (!daemon_running) {
+            log_info ("cli", "daemon not running, spawning background instance.");
+            try {
+                string[] spawn_args = { args[0], "--daemon" };
+                Process.spawn_async(null, spawn_args, null, SpawnFlags.SEARCH_PATH | SpawnFlags.STDOUT_TO_DEV_NULL | SpawnFlags.STDERR_TO_DEV_NULL, null, null);
+                Thread.usleep(150000); // 150ms to allow daemon to grab the DBus name
+            } catch (Error e) {
+                log_error ("cli", "Failed to spawn daemon: " + e.message);
+            }
+        }
+    }
+
     var app = new NetworkManager (config, daemon_mode);
     log_info ("cli", "mode_select: gui mode");
     return app.run (args);
