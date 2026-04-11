@@ -16,7 +16,7 @@ public class NetworkManager : Gtk.Application {
     private bool initial_activation_skipped = false;
 
     public NetworkManager (AppConfig config, bool daemon_mode) {
-        Object (application_id: "io.github.hypr-network-manager.vala");
+        Object (application_id: "yeab212.hypr-network-manager");
         this.config = config;
         this.is_daemon = daemon_mode;
     }
@@ -113,7 +113,7 @@ public class NetworkManager : Gtk.Application {
         }
 
         var icon_theme = Gtk.IconTheme.get_for_display (display);
-        icon_theme.add_resource_path ("/io/github/hypr-network-manager/icons/hicolor/symbolic/actions");
+        icon_theme.add_resource_path ("/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions");
     }
 
     private void hide_dismiss_overlay () {

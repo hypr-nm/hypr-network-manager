@@ -7,8 +7,8 @@ namespace MainWindowIconResources {
     private const string ICON_COLLAPSED = "collapse-element-symbolic";
     private const string ICON_EXPANDED = "expand-element-symbolic";
 
-    private const string RESOURCE_PASSWORD_HIDDEN = "/io/github/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg";
-    private const string RESOURCE_PASSWORD_VISIBLE = "/io/github/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg";
+    private const string RESOURCE_PASSWORD_HIDDEN = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg";
+    private const string RESOURCE_PASSWORD_VISIBLE = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg";
 
     private const string FALLBACK_PASSWORD_HIDDEN = "view-reveal-symbolic";
     private const string FALLBACK_PASSWORD_VISIBLE = "view-conceal-symbolic";

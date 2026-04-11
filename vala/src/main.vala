@@ -77,7 +77,7 @@ int main (string[] args) {
         try {
             var conn = Bus.get_sync(BusType.SESSION);
             var msg = new DBusMessage.method_call("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "NameHasOwner");
-            msg.set_body(new Variant("(s)", "io.github.hypr-network-manager.vala"));
+            msg.set_body(new Variant("(s)", "yeab212.hypr-network-manager"));
             var reply = conn.send_message_with_reply_sync(msg, DBusSendMessageFlags.NONE, -1);
             reply.get_body().get("(b)", out daemon_running);
         } catch (Error e) {}
@@ -89,7 +89,7 @@ int main (string[] args) {
                 Process.spawn_async(null, spawn_args, null, SpawnFlags.SEARCH_PATH | SpawnFlags.STDOUT_TO_DEV_NULL | SpawnFlags.STDERR_TO_DEV_NULL, null, null);
                 
                 var loop = new MainLoop ();
-                uint watch_id = Bus.watch_name (BusType.SESSION, "io.github.hypr-network-manager.vala", BusNameWatcherFlags.NONE,
+                uint watch_id = Bus.watch_name (BusType.SESSION, "yeab212.hypr-network-manager", BusNameWatcherFlags.NONE,
                     (conn, name, owner) => {
                         if (owner != null && owner != "") {
                             log_info ("cli", "Daemon grabbed DBus name dynamically!");
