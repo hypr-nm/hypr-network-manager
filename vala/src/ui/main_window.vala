@@ -73,6 +73,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private Gtk.EventControllerKey key_controller;
     private bool layer_shell_active = false;
     private NetworkStateContext state_context;
+    private NetworkManagerRebuild.UI.Views.AppContentNavigationManager nav_manager;
 
     public MainWindow (
         Gtk.Application app,
@@ -386,33 +387,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         return ethernet_view_context.page;
     }
 
-    private bool is_focus_mode_active () {
-        if (content_stack == null || notebook == null) {
-            return false;
-        }
-
-        string root_page = content_stack.get_visible_child_name ();
-        if (root_page == "profiles") {
-            return true;
-        }
-
-        int current_tab = notebook.get_current_page ();
-        if (current_tab == 0 && wifi_stack != null) {
-            string wifi_page = wifi_stack.get_visible_child_name ();
-            return wifi_page == "details" || wifi_page == "edit" || wifi_page == "add";
-        }
-
-        if (current_tab == 1 && ethernet_stack != null) {
-            string ethernet_page = ethernet_stack.get_visible_child_name ();
-            return ethernet_page == "details" || ethernet_page == "edit";
-        }
-
-        return false;
-    }
-
-    private void update_main_chrome_visibility () {
-        bool focus_mode = is_focus_mode_active ();
-
+    private void update_main_chrome_visibility (bool focus_mode) {
         if (status_bar != null) {
             status_bar.set_visible (!focus_mode);
         }
@@ -1129,26 +1104,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         root.append (status_separator);
 
         content_stack = new Gtk.Stack ();
-        content_stack.set_vexpand (true);
-        content_stack.add_css_class ("nm-content-stack");
-        content_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
-        content_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
-
         notebook = new Gtk.Notebook ();
-        notebook.set_show_border (false);
-        notebook.add_css_class ("nm-notebook");
-        notebook.switch_page.connect ((page, page_num) => {
-            if (page_num != 0) {
-                wifi_controller.on_page_leave ();
-            }
-            if (page_num != 1) {
-                ethernet_controller.on_page_leave ();
-            }
-            if (page_num != 2) {
-                vpn_controller.on_page_leave ();
-            }
-            update_main_chrome_visibility ();
-        });
 
         var profiles_root_page = build_profiles_root_page ();
 
@@ -1178,22 +1134,32 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         content_stack.add_named (notebook, "main");
         content_stack.add_named (profiles_root_page, "profiles");
-        content_stack.set_visible_child_name ("main");
-        content_stack.notify["visible-child-name"].connect (() => {
-            update_main_chrome_visibility ();
+
+        nav_manager = new NetworkManagerRebuild.UI.Views.AppContentNavigationManager (
+            content_stack,
+            notebook,
+            wifi_stack,
+            ethernet_stack,
+            vpn_stack
+        );
+
+        nav_manager.page_changed.connect ((page_num) => {
+            if (page_num != 0) {
+                wifi_controller.on_page_leave ();
+            }
+            if (page_num != 1) {
+                ethernet_controller.on_page_leave ();
+            }
+            if (page_num != 2) {
+                vpn_controller.on_page_leave ();
+            }
         });
 
-        if (wifi_stack != null) {
-            wifi_stack.notify["visible-child-name"].connect (() => {
-                update_main_chrome_visibility ();
-            });
-        }
+        nav_manager.focus_mode_changed.connect ((focus_mode) => {
+            update_main_chrome_visibility (focus_mode);
+        });
 
-        if (ethernet_stack != null) {
-            ethernet_stack.notify["visible-child-name"].connect (() => {
-                update_main_chrome_visibility ();
-            });
-        }
+        content_stack.set_visible_child_name ("main");
 
         var tabs_menu_popover = new Gtk.Popover ();
         tabs_menu_popover.add_css_class ("nm-tabs-menu-popover");
@@ -1239,7 +1205,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         root.append (content_stack);
 
-        update_main_chrome_visibility ();
+        update_main_chrome_visibility (nav_manager.is_focus_mode_active ());
     }
 
     private void dispose_lifecycle_owners () {
