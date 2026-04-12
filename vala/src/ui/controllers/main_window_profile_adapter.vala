@@ -28,6 +28,12 @@ public class MainWindowProfileAdapter : Object {
         this.wifi_saved_edit_page = wifi_saved_edit_page;
         this.host = host;
         this.state_context = state_context;
+
+        wifi_controller.saved_profile_update_succeeded.connect (() => {
+            host.refresh_after_action (false);
+            host.set_popup_text_input_mode (false);
+            profiles_stack.set_visible_child_name ("list");
+        });
     }
 
     private void sync_gateway_dns_sensitivity () {
@@ -68,10 +74,7 @@ public class MainWindowProfileAdapter : Object {
         wifi_controller.load_saved_wifi_profile_settings (
             nm,
             profile,
-            wifi_saved_edit_page,
-            () => {
-                sync_gateway_dns_sensitivity ();
-            }
+            wifi_saved_edit_page
         );
     }
 
@@ -116,12 +119,7 @@ public class MainWindowProfileAdapter : Object {
             nm,
             profile,
             profile_request,
-            network_request,
-            () => {
-                host.refresh_after_action (false);
-                host.set_popup_text_input_mode (false);
-                profiles_stack.set_visible_child_name ("list");
-            }
+            network_request
         );
 
         return true;

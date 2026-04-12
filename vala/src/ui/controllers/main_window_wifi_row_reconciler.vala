@@ -66,7 +66,6 @@ public class MainWindowWifiRowReconciler : Object {
         WifiNetwork[] networks,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        MainWindowActionCallback on_hide_active_wifi_password_prompt,
         MainWindowWifiRowBuildCallback on_build_wifi_row
     ) {
         var visible_rows_by_id = new HashTable<string, Gtk.ListBoxRow> (str_hash, str_equal);
@@ -105,7 +104,7 @@ public class MainWindowWifiRowReconciler : Object {
             && networks_by_row_id.contains (active_wifi_password_row_id);
 
         if (has_active_prompt_id && !active_prompt_row_still_present) {
-            on_hide_active_wifi_password_prompt ();
+            host.hide_active_wifi_password_prompt ();
         }
 
         bool keep_stable_order = has_active_prompt_id && active_prompt_row_still_present;

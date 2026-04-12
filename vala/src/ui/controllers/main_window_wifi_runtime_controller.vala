@@ -17,6 +17,8 @@ public class MainWindowWifiRuntimeController : Object {
     private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
     private NetworkManagerRebuild.Models.NetworkStateContext state_context;
 
+    public signal void saved_profile_update_succeeded ();
+
     public MainWindowWifiRuntimeController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
@@ -159,7 +161,6 @@ public class MainWindowWifiRuntimeController : Object {
         Gtk.Image status_icon,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        MainWindowActionCallback on_hide_active_wifi_password_prompt,
         MainWindowWifiRowBuildCallback on_build_wifi_row
     ) {
         if (wifi_refresh_in_flight) {
@@ -272,11 +273,8 @@ public class MainWindowWifiRuntimeController : Object {
                 row_reconciler.reconcile (
                     wifi_listbox,
                     networks,
-                    
-                    
                     active_wifi_password_row_id,
                     has_active_wifi_password_prompt,
-                    on_hide_active_wifi_password_prompt,
                     on_build_wifi_row
                 );
 
@@ -669,8 +667,7 @@ public class MainWindowWifiRuntimeController : Object {
     public void load_saved_wifi_profile_settings (
         NetworkManagerClient nm,
         WifiSavedProfile profile,
-        MainWindowWifiSavedEditPage page,
-        MainWindowActionCallback on_sync_sensitivity
+        MainWindowWifiSavedEditPage page
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_saved_profile_settings_request ();
@@ -685,8 +682,7 @@ public class MainWindowWifiRuntimeController : Object {
                 }
 
                 MainWindowWifiSavedProfileFormUtils.apply_settings_to_edit_page (page, settings);
-
-                on_sync_sensitivity ();
+                MainWindowWifiSavedProfileFormUtils.sync_saved_edit_dns_sensitivity (page);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch)
                     || saved_profile_settings_cancellable != settings_request
@@ -702,8 +698,7 @@ public class MainWindowWifiRuntimeController : Object {
         NetworkManagerClient nm,
         WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest profile_request,
-        WifiNetworkUpdateRequest network_request,
-        MainWindowActionCallback on_success
+        WifiNetworkUpdateRequest network_request
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_saved_profile_update_request ();
@@ -734,7 +729,7 @@ public class MainWindowWifiRuntimeController : Object {
                             || saved_profile_update_cancellable != update_request) {
                             return;
                         }
-                        on_success ();
+                        saved_profile_update_succeeded ();
                     } catch (Error e) {
                         if (!is_ui_epoch_valid (epoch)
                             || saved_profile_update_cancellable != update_request
@@ -764,15 +759,13 @@ public class MainWindowWifiRuntimeController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
-        Gtk.Stack wifi_stack,
-        MainWindowActionCallback sync_sensitivity
+        Gtk.Stack wifi_stack
     ) {
         details_edit_controller.open_wifi_edit (
             nm,
             net,
             page,
-            wifi_stack,
-            sync_sensitivity
+            wifi_stack
         );
     }
 
@@ -780,15 +773,17 @@ public class MainWindowWifiRuntimeController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
-        bool close_after_apply,
-        MainWindowActionCallback on_open_details
+        Gtk.Stack wifi_stack,
+        MainWindowWifiDetailsPage details_page,
+        bool close_after_apply
     ) {
         return details_edit_controller.apply_wifi_edit (
             nm,
             net,
             page,
-            close_after_apply,
-            on_open_details
+            wifi_stack,
+            details_page,
+            close_after_apply
         );
     }
 

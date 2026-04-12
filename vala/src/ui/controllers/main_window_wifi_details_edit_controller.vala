@@ -124,7 +124,8 @@ public class MainWindowWifiDetailsEditController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         bool close_after_apply,
-        MainWindowActionCallback on_open_details,
+        Gtk.Stack wifi_stack,
+        MainWindowWifiDetailsPage details_page,
         uint epoch,
         uint waited_ms,
         Cancellable request_cancellable
@@ -167,7 +168,8 @@ public class MainWindowWifiDetailsEditController : Object {
                             return;
                         }
                         if (close_after_apply) {
-                            on_open_details ();
+                            populate_wifi_details (nm, net, details_page);
+                            wifi_stack.set_visible_child_name ("details");
                             host.set_popup_text_input_mode (false);
                         }
                         host.refresh_after_action (true);
@@ -205,7 +207,8 @@ public class MainWindowWifiDetailsEditController : Object {
                     nm,
                     net,
                     close_after_apply,
-                    on_open_details,
+                    wifi_stack,
+                    details_page,
                     epoch,
                     next_waited_ms,
                     request_cancellable
@@ -397,12 +400,36 @@ public class MainWindowWifiDetailsEditController : Object {
         });
     }
 
+    private void sync_edit_gateway_dns_sensitivity (MainWindowWifiEditPage page) {
+        if (page.ipv4_method_dropdown != null) {
+            bool ipv4_disabled = page.ipv4_method_dropdown.get_selected () == 2;
+            if (ipv4_disabled && page.dns_auto_switch != null) {
+                page.dns_auto_switch.set_active (true);
+            }
+        }
+
+        if (page.ipv6_method_dropdown != null) {
+            uint selected = page.ipv6_method_dropdown.get_selected ();
+            bool ipv6_disabled_or_ignore = selected == 2 || selected == 3;
+            if (ipv6_disabled_or_ignore && page.ipv6_dns_auto_switch != null) {
+                page.ipv6_dns_auto_switch.set_active (true);
+            }
+        }
+
+        if (page.ipv4_dns_entry != null && page.dns_auto_switch != null) {
+            page.ipv4_dns_entry.set_sensitive (!page.dns_auto_switch.get_active ());
+        }
+
+        if (page.ipv6_dns_entry != null && page.ipv6_dns_auto_switch != null) {
+            page.ipv6_dns_entry.set_sensitive (!page.ipv6_dns_auto_switch.get_active ());
+        }
+    }
+
     public void open_wifi_edit (
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
-        Gtk.Stack wifi_stack,
-        MainWindowActionCallback sync_sensitivity
+        Gtk.Stack wifi_stack
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_edit_request ();
@@ -439,7 +466,7 @@ public class MainWindowWifiDetailsEditController : Object {
         page.ipv6_gateway_entry.set_text ("");
         page.ipv6_dns_auto_switch.set_active (true);
         page.ipv6_dns_entry.set_text ("");
-        sync_sensitivity ();
+        sync_edit_gateway_dns_sensitivity (page);
 
         nm.get_wifi_network_ip_settings.begin (net, edit_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
@@ -477,7 +504,7 @@ public class MainWindowWifiDetailsEditController : Object {
             page.ipv6_gateway_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_gateway));
             page.ipv6_dns_auto_switch.set_active (ip_settings.ipv6_dns_auto);
             page.ipv6_dns_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_ipv6_dns));
-            sync_sensitivity ();
+            sync_edit_gateway_dns_sensitivity (page);
         });
     }
 
@@ -485,8 +512,10 @@ public class MainWindowWifiDetailsEditController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
+        Gtk.Stack wifi_stack,
+        MainWindowWifiDetailsPage details_page,
         bool close_after_apply,
-        MainWindowActionCallback on_open_details
+        MainWindowWifiNetworkCallback? on_open_details = null
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_action_request ();
@@ -617,7 +646,8 @@ public class MainWindowWifiDetailsEditController : Object {
                         return;
                     }
                     if (close_after_apply) {
-                        on_open_details ();
+                        populate_wifi_details (nm, net, details_page);
+                        wifi_stack.set_visible_child_name ("details");
                         host.set_popup_text_input_mode (false);
                     }
                     host.refresh_after_action (method != "disabled");
@@ -645,7 +675,8 @@ public class MainWindowWifiDetailsEditController : Object {
                         nm,
                         net,
                         close_after_apply,
-                        on_open_details,
+                        wifi_stack,
+                        details_page,
                         epoch,
                         0,
                         action_request

@@ -8,10 +8,15 @@ namespace MainWindowWifiPageBuilder {
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
         Gtk.Widget add_page,
-        MainWindowActionCallback on_refresh,
-        MainWindowActionCallback on_add_network,
-        MainWindowActionCallback on_switch_changed
+        owned MainWindowActionCallback on_refresh,
+        owned MainWindowActionCallback on_add_network,
+        owned MainWindowActionCallback on_switch_changed
     ) {
+        // Keep callbacks alive for widget signal handlers.
+        MainWindowActionCallback refresh_cb = (owned) on_refresh;
+        MainWindowActionCallback add_network_cb = (owned) on_add_network;
+        MainWindowActionCallback switch_changed_cb = (owned) on_switch_changed;
+
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_hook_and_best_class (page, "nm-page-wifi", {"nm-page"});
@@ -34,7 +39,7 @@ namespace MainWindowWifiPageBuilder {
         MainWindowCssClassResolver.add_best_class (add_btn, {"nm-toolbar-action", "nm-button"});
         add_btn.set_tooltip_text ("Add Hidden Network");
         add_btn.clicked.connect (() => {
-            on_add_network ();
+            add_network_cb ();
         });
         toolbar.append (add_btn);
 
@@ -45,7 +50,7 @@ namespace MainWindowWifiPageBuilder {
         refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {
-            on_refresh ();
+            refresh_cb ();
         });
         toolbar.append (refresh_btn);
 
@@ -53,7 +58,7 @@ namespace MainWindowWifiPageBuilder {
         MainWindowCssClassResolver.add_hook_and_best_class (wifi_switch, "nm-wifi-switch", {"nm-switch"});
         wifi_switch.set_valign (Gtk.Align.CENTER);
         wifi_switch.notify["active"].connect (() => {
-            on_switch_changed ();
+            switch_changed_cb ();
         });
         toolbar.append (wifi_switch);
 

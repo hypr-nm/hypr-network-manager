@@ -64,12 +64,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             nm,
             wifi_controller,
             config_context.refresh_interval_seconds,
-            () => {
-                refresh_all ();
-            },
-            (message) => {
-                debug_log (message);
-            }
+            this
         );
 
         layer_shell_active = configure_layer_shell ();
@@ -282,6 +277,12 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     public void close_window () {
         this.close ();
+    }
+
+    public void hide_active_wifi_password_prompt () {
+        if (wifi_section != null) {
+            wifi_section.hide_active_wifi_password_prompt ();
+        }
     }
 
     public void refresh_switch_states () {

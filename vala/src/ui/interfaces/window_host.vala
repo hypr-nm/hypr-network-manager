@@ -9,6 +9,7 @@ namespace NetworkManagerRebuild.UI.Interfaces {
         public abstract void refresh_after_action (bool request_wifi_scan);
         public abstract void refresh_all ();
         public abstract void refresh_switch_states ();
+        public abstract void hide_active_wifi_password_prompt ();
         public abstract void debug_log (string message);
         public abstract void close_window ();
     }

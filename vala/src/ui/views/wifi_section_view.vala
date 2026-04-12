@@ -310,8 +310,7 @@ namespace NetworkManagerRebuild.UI.Views {
                 nm,
                 net,
                 edit_page,
-                stack,
-                sync_wifi_edit_gateway_dns_sensitivity
+                stack
             );
         }
 
@@ -320,12 +319,9 @@ namespace NetworkManagerRebuild.UI.Views {
                 ref selected_wifi_network,
                 nm,
                 edit_page,
-                close_after_apply,
-                () => {
-                    if (selected_wifi_network != null) {
-                        open_wifi_details (selected_wifi_network);
-                    }
-                }
+                stack,
+                details_page,
+                close_after_apply
             );
         }
 
@@ -416,9 +412,6 @@ namespace NetworkManagerRebuild.UI.Views {
                 status_icon,
                 active_wifi_password_row_id,
                 has_active_prompt_open,
-                () => {
-                    hide_active_wifi_password_prompt ();
-                },
                 (net) => {
                     return build_wifi_row (net, state_context);
                 }

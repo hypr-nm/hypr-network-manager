@@ -6,10 +6,15 @@ public class MainWindowWifiController : Object {
     private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
     private NetworkManagerRebuild.Models.NetworkStateContext state_context;
 
+    public signal void saved_profile_update_succeeded ();
+
     public MainWindowWifiController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
         runtime_controller = new MainWindowWifiRuntimeController (host, state_context);
+        runtime_controller.saved_profile_update_succeeded.connect (() => {
+            saved_profile_update_succeeded ();
+        });
     }
 
     public void on_page_leave () {
@@ -128,8 +133,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
-        Gtk.Stack wifi_stack,
-        MainWindowActionCallback on_sync_gateway_dns_sensitivity
+        Gtk.Stack wifi_stack
     ) {
         if (!net.saved) {
             return;
@@ -140,8 +144,7 @@ public class MainWindowWifiController : Object {
             nm,
             net,
             page,
-            wifi_stack,
-            on_sync_gateway_dns_sensitivity
+            wifi_stack
         );
     }
 
@@ -149,8 +152,9 @@ public class MainWindowWifiController : Object {
         ref WifiNetwork? selected_wifi_network,
         NetworkManagerClient nm,
         MainWindowWifiEditPage page,
-        bool close_after_apply,
-        MainWindowActionCallback on_open_details
+        Gtk.Stack wifi_stack,
+        MainWindowWifiDetailsPage details_page,
+        bool close_after_apply
     ) {
         if (selected_wifi_network == null) {
             return false;
@@ -161,8 +165,9 @@ public class MainWindowWifiController : Object {
             nm,
             net,
             page,
-            close_after_apply,
-            on_open_details
+            wifi_stack,
+            details_page,
+            close_after_apply
         );
     }
 
@@ -208,7 +213,6 @@ public class MainWindowWifiController : Object {
         Gtk.Image status_icon,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        MainWindowActionCallback on_hide_active_wifi_password_prompt,
         MainWindowWifiRowBuildCallback on_build_wifi_row
     ) {
         runtime_controller.refresh_wifi (
@@ -219,7 +223,6 @@ public class MainWindowWifiController : Object {
             status_icon,
             active_wifi_password_row_id,
             has_active_wifi_password_prompt,
-            on_hide_active_wifi_password_prompt,
             on_build_wifi_row
         );
     }
@@ -366,14 +369,12 @@ public class MainWindowWifiController : Object {
     public void load_saved_wifi_profile_settings (
         NetworkManagerClient nm,
         WifiSavedProfile profile,
-        MainWindowWifiSavedEditPage page,
-        MainWindowActionCallback on_sync_sensitivity
+        MainWindowWifiSavedEditPage page
     ) {
         runtime_controller.load_saved_wifi_profile_settings (
             nm,
             profile,
-            page,
-            on_sync_sensitivity
+            page
         );
     }
 
@@ -381,15 +382,13 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest profile_request,
-        WifiNetworkUpdateRequest network_request,
-        MainWindowActionCallback on_success
+        WifiNetworkUpdateRequest network_request
     ) {
         runtime_controller.apply_saved_wifi_profile_updates (
             nm,
             profile,
             profile_request,
-            network_request,
-            on_success
+            network_request
         );
     }
 }

@@ -1,12 +1,12 @@
 using GLib;
 using Gtk;
+using NetworkManagerRebuild.UI.Interfaces;
 
 public class MainWindowRefreshCoordinator : Object {
     private NetworkManagerClient nm;
     private MainWindowWifiController wifi_controller;
     private uint refresh_interval_seconds;
-    private MainWindowActionCallback on_refresh_all;
-    private MainWindowLogCallback on_log;
+    private IWindowHost host;
 
     private uint periodic_refresh_source_id = 0;
     private uint signal_refresh_source_id = 0;
@@ -18,14 +18,12 @@ public class MainWindowRefreshCoordinator : Object {
         NetworkManagerClient nm,
         MainWindowWifiController wifi_controller,
         uint refresh_interval_seconds,
-        owned MainWindowActionCallback on_refresh_all,
-        owned MainWindowLogCallback on_log
+        IWindowHost host
     ) {
         this.nm = nm;
         this.wifi_controller = wifi_controller;
         this.refresh_interval_seconds = refresh_interval_seconds;
-        this.on_refresh_all = (owned) on_refresh_all;
-        this.on_log = (owned) on_log;
+        this.host = host;
     }
 
     public void start () {
@@ -38,7 +36,7 @@ public class MainWindowRefreshCoordinator : Object {
                     periodic_scan_failure_reported = false;
                 } catch (Error e) {
                     string message = e.message;
-                    on_log ("wifi_scan: periodic request failed error=" + message + "; outcome=continuing");
+                    host.debug_log ("wifi_scan: periodic request failed error=" + message + "; outcome=continuing");
                     if (!periodic_scan_failure_reported) {
                         log_warn (
                             "gui",
@@ -52,7 +50,7 @@ public class MainWindowRefreshCoordinator : Object {
 
             // Keep periodic polling as a fallback when D-Bus signal subscription is unavailable.
             if (!nm_events_subscription_enabled) {
-                on_refresh_all ();
+                host.refresh_all ();
             }
             return true;
         });
@@ -100,7 +98,7 @@ public class MainWindowRefreshCoordinator : Object {
 
         signal_refresh_source_id = Timeout.add (200, () => {
             signal_refresh_source_id = 0;
-            on_refresh_all ();
+            host.refresh_all ();
             return false;
         });
     }
@@ -111,12 +109,12 @@ public class MainWindowRefreshCoordinator : Object {
                 nm_events_subscription_enabled = nm.subscribe_network_events_dbus.end (res);
             } catch (Error e) {
                 nm_events_subscription_enabled = false;
-                on_log ("nm_events_subscribe: failed error=" + e.message + "; outcome=polling fallback");
+                host.debug_log ("nm_events_subscribe: failed error=" + e.message + "; outcome=polling fallback");
                 log_warn ("gui", "nm_events_subscribe: failed; outcome=polling fallback enabled");
                 return;
             }
             if (!nm_events_subscription_enabled) {
-                on_log ("nm_events_subscribe: unavailable; outcome=polling fallback");
+                host.debug_log ("nm_events_subscribe: unavailable; outcome=polling fallback");
                 log_warn ("gui", "nm_events_subscribe: unavailable; outcome=polling fallback enabled");
                 return;
             }

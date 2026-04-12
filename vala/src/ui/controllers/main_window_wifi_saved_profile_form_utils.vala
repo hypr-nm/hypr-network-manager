@@ -1,6 +1,22 @@
 using GLib;
 
 namespace MainWindowWifiSavedProfileFormUtils {
+    public void sync_saved_edit_dns_sensitivity (MainWindowWifiSavedEditPage page) {
+        bool ipv4_disabled = page.ipv4_method_dropdown.get_selected () == 2;
+        if (ipv4_disabled) {
+            page.dns_auto_switch.set_active (true);
+        }
+
+        uint ipv6_selected = page.ipv6_method_dropdown.get_selected ();
+        bool ipv6_disabled_or_ignore = ipv6_selected == 2 || ipv6_selected == 3;
+        if (ipv6_disabled_or_ignore) {
+            page.ipv6_dns_auto_switch.set_active (true);
+        }
+
+        page.ipv4_dns_entry.set_sensitive (!page.dns_auto_switch.get_active ());
+        page.ipv6_dns_entry.set_sensitive (!page.ipv6_dns_auto_switch.get_active ());
+    }
+
     public void apply_settings_to_edit_page (
         MainWindowWifiSavedEditPage page,
         WifiSavedProfileSettings settings
