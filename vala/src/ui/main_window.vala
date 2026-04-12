@@ -284,7 +284,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         this.close ();
     }
 
-    private void refresh_switch_states () {
+    public void refresh_switch_states () {
         if (wifi_section == null || status_bar_view == null) {
             return;
         }
@@ -302,10 +302,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         wifi_controller.on_networking_switch_changed (
             nm,
-            status_bar_view.networking_switch,
-            () => {
-                refresh_switch_states ();
-            }
+            status_bar_view.networking_switch
         );
     }
 

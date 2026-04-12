@@ -61,10 +61,7 @@ public class MainWindowRefreshCoordinator : Object {
     public void refresh_after_action (bool request_wifi_scan) {
         wifi_controller.refresh_after_action (
             nm,
-            request_wifi_scan,
-            () => {
-                on_refresh_all ();
-            }
+            request_wifi_scan
         );
     }
 

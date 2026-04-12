@@ -99,9 +99,8 @@ namespace NetworkManagerRebuild.UI.Views {
 
             details_page.forget.connect (() => {
                 if (selected_wifi_network == null) return;
-                forget_wifi_network (selected_wifi_network, () => {
-                    stack.set_visible_child_name ("list");
-                });
+                forget_wifi_network (selected_wifi_network);
+                stack.set_visible_child_name ("list");
             });
 
             details_page.edit.connect (() => {
@@ -330,14 +329,11 @@ namespace NetworkManagerRebuild.UI.Views {
             );
         }
 
-        private void forget_wifi_network (WifiNetwork net, MainWindowActionCallback? on_done = null) {
+        private void forget_wifi_network (WifiNetwork net) {
             controller.forget_wifi_network (
                 nm,
                 net
             );
-            if (on_done != null) {
-                on_done ();
-            }
         }
 
         private void disconnect_wifi_network (WifiNetwork net) {
@@ -384,20 +380,14 @@ namespace NetworkManagerRebuild.UI.Views {
                         password,
                         hidden_ssid,
                         pending_timeout_ms,
-                        should_close_on_connect,
-                        () => {
-                            refresh_requested ();
-                        }
+                        should_close_on_connect
                     );
                 },
                 (wifi_net, enabled) => {
                     wifi_controller_ref.set_wifi_network_autoconnect (
                         nm_client,
                         wifi_net,
-                        enabled,
-                        () => {
-                            refresh_requested ();
-                        }
+                        enabled
                     );
                 },
                 (revealer, entry) => {
@@ -428,9 +418,6 @@ namespace NetworkManagerRebuild.UI.Views {
                 has_active_prompt_open,
                 () => {
                     hide_active_wifi_password_prompt ();
-                },
-                () => {
-                    refresh_switch_states_requested ();
                 },
                 (net) => {
                     return build_wifi_row (net, state_context);
@@ -472,10 +459,7 @@ namespace NetworkManagerRebuild.UI.Views {
         private void on_wifi_switch_changed () {
             controller.on_wifi_switch_changed (
                 nm,
-                wifi_switch,
-                () => {
-                    refresh_switch_states_requested ();
-                }
+                wifi_switch
             );
         }
 

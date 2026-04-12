@@ -125,7 +125,6 @@ public class MainWindowWifiDetailsEditController : Object {
         WifiNetwork net,
         bool close_after_apply,
         MainWindowActionCallback on_open_details,
-        MainWindowActionCallback disable_popup_text_input,
         uint epoch,
         uint waited_ms,
         Cancellable request_cancellable
@@ -169,7 +168,7 @@ public class MainWindowWifiDetailsEditController : Object {
                         }
                         if (close_after_apply) {
                             on_open_details ();
-                            disable_popup_text_input ();
+                            host.set_popup_text_input_mode (false);
                         }
                         host.refresh_after_action (true);
                     } catch (Error e) {
@@ -206,12 +205,7 @@ public class MainWindowWifiDetailsEditController : Object {
                     nm,
                     net,
                     close_after_apply,
-                    
-                    
-                    
-                    
                     on_open_details,
-                    disable_popup_text_input,
                     epoch,
                     next_waited_ms,
                     request_cancellable
@@ -408,8 +402,7 @@ public class MainWindowWifiDetailsEditController : Object {
         WifiNetwork net,
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,
-        MainWindowActionCallback sync_sensitivity,
-        MainWindowActionCallback enable_popup_text_input
+        MainWindowActionCallback sync_sensitivity
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_edit_request ();
@@ -430,7 +423,7 @@ public class MainWindowWifiDetailsEditController : Object {
         }
 
         wifi_stack.set_visible_child_name ("edit");
-        enable_popup_text_input ();
+        host.set_popup_text_input_mode (true);
         page.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         page.password_entry.grab_focus ();
 
@@ -493,8 +486,7 @@ public class MainWindowWifiDetailsEditController : Object {
         WifiNetwork net,
         MainWindowWifiEditPage page,
         bool close_after_apply,
-        MainWindowActionCallback on_open_details,
-        MainWindowActionCallback disable_popup_text_input
+        MainWindowActionCallback on_open_details
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_action_request ();
@@ -626,7 +618,7 @@ public class MainWindowWifiDetailsEditController : Object {
                     }
                     if (close_after_apply) {
                         on_open_details ();
-                        disable_popup_text_input ();
+                        host.set_popup_text_input_mode (false);
                     }
                     host.refresh_after_action (method != "disabled");
                     return;
@@ -653,12 +645,7 @@ public class MainWindowWifiDetailsEditController : Object {
                         nm,
                         net,
                         close_after_apply,
-                        
-                        
-                        
-                        
                         on_open_details,
-                        disable_popup_text_input,
                         epoch,
                         0,
                         action_request
