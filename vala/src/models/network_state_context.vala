@@ -31,13 +31,13 @@ namespace NetworkManagerRebuild.Models {
             return pending_wifi_connect.contains(ssid_or_key);
         }
 
-        public void update_active_connections(GenericArray<Backend.NetworkConnection> active_connections) {
+        public void update_active_connections(GLib.GenericArray<NM.ActiveConnection> active_connections) {
             active_wifi_connections.remove_all();
             for (uint i = 0; i < active_connections.length; i++) {
                 var conn = active_connections.get(i);
-                if (conn.type == "802-11-wireless" || conn.type == "wifi") {
-                    if (conn.state == Backend.ConnectionState.ACTIVATED) {
-                        active_wifi_connections.insert(conn.id, true);
+                if (conn.get_connection_type() == "802-11-wireless" || conn.get_connection_type() == "wifi") {
+                    if (conn.get_state() == NM.ActiveConnectionState.ACTIVATED) {
+                        active_wifi_connections.insert(conn.get_id(), true);
                     }
                 }
             }
