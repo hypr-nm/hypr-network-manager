@@ -117,12 +117,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         );
         vpn_controller = new MainWindowVpnController (
             nm,
-            (message) => {
-                show_error (message);
-            },
-            (request_wifi_scan) => {
-                refresh_after_action (request_wifi_scan);
-            }
+            this,
+            state_context
         );
         refresh_coordinator = new MainWindowRefreshCoordinator (
             nm,

@@ -6,20 +6,20 @@ public class MainWindowVpnPageBuilder : Object {
     private uint[] timeout_source_ids = {};
 
     private NetworkManagerClient nm;
-    private MainWindowErrorCallback on_error;
-    private MainWindowRefreshActionCallback on_refresh_after_action;
+    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
 
     private Gtk.ListBox? vpn_listbox = null;
     private Gtk.Stack? vpn_stack = null;
 
     public MainWindowVpnPageBuilder (
         NetworkManagerClient nm,
-        owned MainWindowErrorCallback on_error,
-        owned MainWindowRefreshActionCallback on_refresh_after_action
+        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
+        NetworkManagerRebuild.Models.NetworkStateContext state_context
     ) {
         this.nm = nm;
-        this.on_error = (owned) on_error;
-        this.on_refresh_after_action = (owned) on_refresh_after_action;
+        this.host = host;
+        this.state_context = state_context;
     }
 
     public void on_page_leave () {
@@ -178,12 +178,12 @@ public class MainWindowVpnPageBuilder : Object {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        on_error ("VPN disconnect failed: " + e.message);
+                        host.show_error ("VPN disconnect failed: " + e.message);
                     }
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_refresh_after_action (false);
+                    host.refresh_after_action (false);
                 });
                 return;
             }
@@ -195,12 +195,12 @@ public class MainWindowVpnPageBuilder : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_error ("VPN connect failed: " + e.message);
+                    host.show_error ("VPN connect failed: " + e.message);
                 }
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action (false);
+                host.refresh_after_action (false);
             });
         });
         content.append (action);
@@ -232,7 +232,7 @@ public class MainWindowVpnPageBuilder : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_error ("VPN refresh failed: " + e.message);
+                host.show_error ("VPN refresh failed: " + e.message);
             }
         });
     }

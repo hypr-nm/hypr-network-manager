@@ -3,13 +3,13 @@ public class MainWindowVpnController : Object {
 
     public MainWindowVpnController (
         NetworkManagerClient nm,
-        owned MainWindowErrorCallback on_error,
-        owned MainWindowRefreshActionCallback on_refresh_after_action
+        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
+        NetworkManagerRebuild.Models.NetworkStateContext state_context
     ) {
         page_builder = new MainWindowVpnPageBuilder (
             nm,
-            (owned) on_error,
-            (owned) on_refresh_after_action
+            host,
+            state_context
         );
     }
 
