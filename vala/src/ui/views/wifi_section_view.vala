@@ -438,6 +438,37 @@ namespace NetworkManagerRebuild.UI.Views {
             );
         }
 
+        public void reset_view_state () {
+            if (stack != null) {
+                stack.set_visible_child_name ("list");
+            }
+
+            hide_active_wifi_password_prompt ();
+
+            if (listbox == null) {
+                return;
+            }
+
+            for (Gtk.Widget? child = listbox.get_first_child (); child != null; child = child.get_next_sibling ()) {
+                var row = child as Gtk.ListBoxRow;
+                if (row == null || !row.get_data<bool> ("nm-actions-expanded")) {
+                    continue;
+                }
+
+                var revealer = row.get_data<Gtk.Revealer> ("actions-revealer");
+                if (revealer != null) {
+                    revealer.set_reveal_child (false);
+                }
+
+                var expand_hint = row.get_data<Gtk.Image> ("expand-hint");
+                if (expand_hint != null) {
+                    MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
+                }
+
+                row.set_data<bool> ("nm-actions-expanded", false);
+            }
+        }
+
         private void on_wifi_switch_changed () {
             controller.on_wifi_switch_changed (
                 nm,
