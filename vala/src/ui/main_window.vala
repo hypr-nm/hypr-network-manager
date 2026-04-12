@@ -42,7 +42,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private Gtk.Switch wifi_switch;
     private Gtk.ListBox wifi_listbox;
     private Gtk.Stack wifi_stack;
-    private Gtk.Stack ethernet_stack;
+    private NetworkManagerRebuild.UI.Views.EthernetSectionView ethernet_section;
     private WifiNetwork? selected_wifi_network = null;
     private MainWindowProfileAdapter? wifi_saved_flow = null;
     private MainWindowWifiDetailsPage wifi_details_page;
@@ -63,8 +63,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private MainWindowRefreshCoordinator refresh_coordinator;
     private MainWindowEthernetController ethernet_controller;
     private MainWindowVpnController vpn_controller;
-    private Gtk.ListBox vpn_listbox;
-    private Gtk.Stack vpn_stack;
+    private NetworkManagerRebuild.UI.Views.VpnSectionView vpn_section;
     private Gtk.Stack content_stack;
     private Gtk.Notebook notebook;
     private HashTable<string, bool> pending_wifi_connect;
@@ -336,56 +335,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         );
     }
 
-    private Gtk.Widget build_ethernet_page () {
-        var ethernet_details_page = new MainWindowEthernetDetailsPage ();
-        var ethernet_edit_page = new MainWindowEthernetEditPage ();
-
-        ethernet_details_page.back.connect (() => {
-            ethernet_controller.on_details_back_requested ();
-        });
-        ethernet_details_page.primary_action.connect (() => {
-            ethernet_controller.on_details_primary_requested ();
-        });
-        ethernet_details_page.edit.connect (() => {
-            ethernet_controller.on_details_edit_requested ();
-        });
-
-        ethernet_edit_page.back.connect (() => {
-            ethernet_controller.on_edit_back_requested ();
-        });
-        ethernet_edit_page.apply.connect (() => {
-            ethernet_controller.on_edit_apply_requested ();
-        });
-        ethernet_edit_page.sync_sensitivity.connect (() => {
-            ethernet_controller.on_edit_sync_sensitivity_requested ();
-        });
-
-        Gtk.ListBox ethernet_listbox;
-        Gtk.Stack ethernet_stack_local;
-        var page = MainWindowEthernetPageBuilder.build_page (
-            out ethernet_listbox,
-            out ethernet_stack_local,
-            ethernet_details_page,
-            ethernet_edit_page,
-            () => {
-                refresh_ethernet_section ();
-            }
-        );
-
-        var ethernet_view_context = new MainWindowEthernetViewContext (
-            page,
-            ethernet_listbox,
-            ethernet_stack_local,
-            ethernet_details_page,
-            ethernet_edit_page
-        );
-
-        this.ethernet_stack = ethernet_view_context.stack;
-
-        ethernet_controller.configure_page (ethernet_view_context);
-
-        return ethernet_view_context.page;
-    }
 
     private void update_main_chrome_visibility (bool focus_mode) {
         if (status_bar != null) {
@@ -988,14 +937,14 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         if (wifi_stack != null) {
             wifi_stack.set_visible_child_name ("list");
         }
-        if (ethernet_stack != null) {
-            ethernet_stack.set_visible_child_name ("list");
+        if (ethernet_section != null && ethernet_section.stack != null) {
+            ethernet_section.stack.set_visible_child_name ("list");
         }
         if (profiles_stack != null) {
             profiles_stack.set_visible_child_name ("list");
         }
-        if (vpn_stack != null) {
-            vpn_stack.set_visible_child_name ("list");
+        if (vpn_section != null && vpn_section.stack != null) {
+            vpn_section.stack.set_visible_child_name ("list");
         }
         if (notebook != null) {
             notebook.set_current_page (0);
@@ -1114,21 +1063,17 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         var eth_tab = new Gtk.Label ("Ethernet");
         eth_tab.add_css_class ("nm-tab-label");
+        ethernet_section = new NetworkManagerRebuild.UI.Views.EthernetSectionView (ethernet_controller);
         notebook.append_page (
-            build_ethernet_page (),
+            ethernet_section.widget,
             eth_tab
         );
 
         var vpn_tab = new Gtk.Label ("VPN");
         vpn_tab.add_css_class ("nm-tab-label");
+        vpn_section = new NetworkManagerRebuild.UI.Views.VpnSectionView (vpn_controller);
         notebook.append_page (
-            vpn_controller.build_page (
-                out vpn_listbox,
-                out vpn_stack,
-                () => {
-                    refresh_vpn_section ();
-                }
-            ),
+            vpn_section.widget,
             vpn_tab
         );
 
@@ -1139,8 +1084,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             content_stack,
             notebook,
             wifi_stack,
-            ethernet_stack,
-            vpn_stack
+            ethernet_section.stack,
+            vpn_section.stack
         );
 
         nav_manager.page_changed.connect ((page_num) => {
