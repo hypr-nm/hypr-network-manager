@@ -37,6 +37,8 @@ executable(
     'src/ui/interfaces/window_host.vala',
     'src/ui/views/status_bar_view.vala',
     'src/ui/views/app_content_navigation_manager.vala',
+    'src/ui/views/wifi_section_view.vala',
+    'src/ui/views/saved_profiles_view.vala',
     'src/ui/views/ethernet_section_view.vala',
     'src/ui/views/vpn_section_view.vala',
     'src/backend/utils/nm_ip_config_helper.vala',
