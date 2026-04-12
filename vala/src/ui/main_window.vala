@@ -15,11 +15,8 @@ using NetworkManagerRebuild.Models;
 public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private WindowConfigContext config_context;
     private NetworkManagerClient nm;
-    private Gtk.Widget status_bar;
+    private NetworkManagerRebuild.UI.Views.StatusBarView status_bar_view;
     private Gtk.Widget status_separator;
-    private Gtk.Label status_label;
-    private Gtk.Image status_icon;
-    private Gtk.Switch networking_switch;
     private NetworkManagerRebuild.UI.Views.WifiSectionView wifi_section;
     private NetworkManagerRebuild.UI.Views.SavedProfilesView profiles_section;
     private NetworkManagerRebuild.UI.Views.EthernetSectionView ethernet_section;
@@ -217,22 +214,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.NONE);
     }
 
-    private Gtk.Widget build_status_bar () {
-        var view = new NetworkManagerRebuild.UI.Views.StatusBarView ();
-        status_icon = view.status_icon;
-        status_label = view.status_label;
-        networking_switch = view.networking_switch;
-        
-        view.networking_switch_toggled.connect (() => {
-            on_networking_switch_changed ();
-        });
-
-        return view.root_widget;
-    }
-
     private void update_main_chrome_visibility (bool focus_mode) {
-        if (status_bar != null) {
-            status_bar.set_visible (!focus_mode);
+        if (status_bar_view != null) {
+            status_bar_view.root_widget.set_visible (!focus_mode);
         }
         if (status_separator != null) {
             status_separator.set_visible (!focus_mode);
@@ -301,13 +285,24 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void refresh_switch_states () {
-        refresh_coordinator.refresh_switch_states (wifi_section != null ? wifi_section.wifi_switch : null, networking_switch);
+        if (wifi_section == null || status_bar_view == null) {
+            return;
+        }
+
+        refresh_coordinator.refresh_switch_states (
+            wifi_section.wifi_switch,
+            status_bar_view.networking_switch
+        );
     }
 
     private void on_networking_switch_changed () {
+        if (status_bar_view == null) {
+            return;
+        }
+
         wifi_controller.on_networking_switch_changed (
             nm,
-            networking_switch,
+            status_bar_view.networking_switch,
             () => {
                 refresh_switch_states ();
             }
@@ -327,8 +322,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         root.add_css_class ("nm-root");
         set_child (root);
 
-        status_bar = build_status_bar ();
-        root.append (status_bar);
+        status_bar_view = new NetworkManagerRebuild.UI.Views.StatusBarView ();
+        status_bar_view.networking_switch_toggled.connect (() => {
+            on_networking_switch_changed ();
+        });
+        root.append (status_bar_view.root_widget);
         status_separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
         status_separator.add_css_class ("nm-separator");
         root.append (status_separator);
@@ -341,8 +339,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             wifi_controller,
             this,
             config_context,
-            status_label,
-            status_icon
+            status_bar_view.status_label,
+            status_bar_view.status_icon
         );
         wifi_section.refresh_requested.connect (() => {
             refresh_wifi ();
