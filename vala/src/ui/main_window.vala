@@ -9,8 +9,10 @@ using GLib;
 using Gtk;
 using Gdk;
 using GtkLayerShell;
+using NetworkManagerRebuild.UI.Interfaces;
+using NetworkManagerRebuild.Models;
 
-public class MainWindow : Gtk.ApplicationWindow {
+public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private const int MIN_WINDOW_WIDTH = 480;
     private const int MIN_WINDOW_HEIGHT = 680;
 
@@ -70,12 +72,14 @@ public class MainWindow : Gtk.ApplicationWindow {
     private HashTable<string, bool> active_wifi_connections;
     private Gtk.EventControllerKey key_controller;
     private bool layer_shell_active = false;
+    private NetworkStateContext state_context;
 
     public MainWindow (
         Gtk.Application app,
         AppConfig config
     ) throws Error {
         Object (application: app, title: "Network Manager");
+        this.state_context = new NetworkStateContext();
         this.window_width = config.window_width;
         this.window_height = config.window_height;
         this.anchor_top = config.anchor_top;
@@ -108,15 +112,8 @@ public class MainWindow : Gtk.ApplicationWindow {
         wifi_controller = new MainWindowWifiController ();
         ethernet_controller = new MainWindowEthernetController (
             nm,
-            (message) => {
-                show_error (message);
-            },
-            (request_wifi_scan) => {
-                refresh_after_action (request_wifi_scan);
-            },
-            (enabled) => {
-                set_popup_text_input_mode (enabled);
-            }
+            this,
+            state_context
         );
         vpn_controller = new MainWindowVpnController (
             nm,
@@ -163,7 +160,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         log_info ("gui", "window_init: completed");
     }
 
-    private void debug_log (string message) {
+    public void debug_log (string message) {
         log_debug ("gui", message);
     }
 
@@ -285,36 +282,16 @@ public class MainWindow : Gtk.ApplicationWindow {
     }
 
     private Gtk.Widget build_status_bar () {
-        var bar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        MainWindowCssClassResolver.add_best_class (bar, {"nm-toolbar-inset", "nm-page-shell-inset"});
-        MainWindowCssClassResolver.add_best_class (bar, {"nm-status-bar", "nm-toolbar"});
-
-        status_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-        MainWindowCssClassResolver.add_best_class (status_icon, {"nm-icon-size-16", "nm-icon-size"});
-        MainWindowCssClassResolver.add_best_class (status_icon, {"nm-status-icon", "nm-icon-size"});
-        bar.append (status_icon);
-
-        status_label = new Gtk.Label ("Loading networks…");
-        status_label.set_xalign (0.0f);
-        status_label.set_hexpand (true);
-        status_label.add_css_class ("nm-status-label");
-        bar.append (status_label);
-
-        var switch_label = new Gtk.Label ("Networking");
-        switch_label.add_css_class ("nm-toggle-label");
-        networking_switch = new Gtk.Switch ();
-        networking_switch.add_css_class ("nm-switch");
-        networking_switch.set_valign (Gtk.Align.CENTER);
-        networking_switch.notify["active"].connect (() => {
+        var view = new NetworkManagerRebuild.UI.Views.StatusBarView ();
+        status_icon = view.status_icon;
+        status_label = view.status_label;
+        networking_switch = view.networking_switch;
+        
+        view.networking_switch_toggled.connect (() => {
             on_networking_switch_changed ();
         });
 
-        var switch_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_COMPACT);
-        switch_box.append (switch_label);
-        switch_box.append (networking_switch);
-        bar.append (switch_box);
-
-        return bar;
+        return view.root_widget;
     }
 
     private Gtk.Widget build_wifi_page () {
@@ -1089,7 +1066,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         vpn_controller.refresh ();
     }
 
-    private void refresh_all () {
+    public void refresh_all () {
         refresh_wifi ();
         refresh_saved_profiles ();
         refresh_ethernet_section ();
@@ -1142,8 +1119,12 @@ public class MainWindow : Gtk.ApplicationWindow {
         }
     }
 
-    private void refresh_after_action (bool request_wifi_scan) {
+    public void refresh_after_action (bool request_wifi_scan) {
         refresh_coordinator.refresh_after_action (request_wifi_scan);
+    }
+
+    public void close_window () {
+        this.close ();
     }
 
     private void refresh_switch_states () {
@@ -1222,7 +1203,7 @@ public class MainWindow : Gtk.ApplicationWindow {
         active_wifi_password_row_id = null;
     }
 
-    private void show_error (string message) {
+    public void show_error (string message) {
         var dialog = new Gtk.AlertDialog ("Network Error");
         dialog.set_message ("Network Error");
         dialog.set_detail (message);
