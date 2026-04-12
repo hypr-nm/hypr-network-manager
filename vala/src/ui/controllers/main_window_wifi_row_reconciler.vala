@@ -1,10 +1,14 @@
 using Gtk;
 
 public class MainWindowWifiRowReconciler : Object {
+    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
     private HashTable<string, string> wifi_row_signatures;
     private string[] wifi_row_order = {};
 
-    public MainWindowWifiRowReconciler () {
+    public MainWindowWifiRowReconciler (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
+        this.host = host;
+        this.state_context = state_context;
         wifi_row_signatures = new HashTable<string, string> (str_hash, str_equal);
     }
 
@@ -60,8 +64,6 @@ public class MainWindowWifiRowReconciler : Object {
     public void reconcile (
         Gtk.ListBox wifi_listbox,
         WifiNetwork[] networks,
-        HashTable<string, bool> active_wifi_connections,
-        HashTable<string, bool> pending_wifi_connect,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
         MainWindowActionCallback on_hide_active_wifi_password_prompt,
@@ -139,8 +141,8 @@ public class MainWindowWifiRowReconciler : Object {
         foreach (var row_id in ordered_row_ids) {
             var net = networks_by_row_id.lookup (row_id);
             string net_key = net.network_key;
-            bool is_connected_now = active_wifi_connections.contains (net_key);
-            bool is_connecting = pending_wifi_connect.contains (net_key);
+            bool is_connected_now = state_context.active_wifi_connections.contains (net_key);
+            bool is_connecting = state_context.pending_wifi_connect.contains (net_key);
             string new_signature = build_wifi_row_signature (net, is_connected_now, is_connecting);
 
             var row = visible_rows_by_id.lookup (row_id);

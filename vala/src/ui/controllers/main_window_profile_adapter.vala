@@ -7,10 +7,8 @@ public class MainWindowProfileAdapter : Object {
     private Gtk.Stack profiles_stack;
     private MainWindowProfilesPage profiles_page;
     private MainWindowWifiSavedEditPage wifi_saved_edit_page;
-
-    private MainWindowErrorCallback on_error;
-    private MainWindowRefreshActionCallback on_refresh_after_action;
-    private MainWindowBoolCallback on_set_popup_text_input_mode;
+    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
 
     private WifiSavedProfile? selected_profile = null;
 
@@ -20,18 +18,16 @@ public class MainWindowProfileAdapter : Object {
         Gtk.Stack profiles_stack,
         MainWindowProfilesPage profiles_page,
         MainWindowWifiSavedEditPage wifi_saved_edit_page,
-        owned MainWindowErrorCallback on_error,
-        owned MainWindowRefreshActionCallback on_refresh_after_action,
-        owned MainWindowBoolCallback on_set_popup_text_input_mode
+        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
+        NetworkManagerRebuild.Models.NetworkStateContext state_context
     ) {
         this.nm = nm;
         this.wifi_controller = wifi_controller;
         this.profiles_stack = profiles_stack;
         this.profiles_page = profiles_page;
         this.wifi_saved_edit_page = wifi_saved_edit_page;
-        this.on_error = (owned) on_error;
-        this.on_refresh_after_action = (owned) on_refresh_after_action;
-        this.on_set_popup_text_input_mode = (owned) on_set_popup_text_input_mode;
+        this.host = host;
+        this.state_context = state_context;
     }
 
     private void sync_gateway_dns_sensitivity () {
@@ -54,10 +50,7 @@ public class MainWindowProfileAdapter : Object {
     public void refresh_saved_networks () {
         wifi_controller.refresh_saved_wifi_profiles (
             nm,
-            profiles_page,
-            (message) => {
-                on_error (message);
-            }
+            profiles_page
         );
     }
 
@@ -69,7 +62,7 @@ public class MainWindowProfileAdapter : Object {
             title_name = MainWindowHelpers.safe_text (profile.ssid).strip ();
         }
         wifi_saved_edit_page.title_label.set_text ("Saved Profile: %s".printf (title_name));
-        on_set_popup_text_input_mode (true);
+        host.set_popup_text_input_mode (true);
         profiles_stack.set_visible_child_name ("edit");
 
         wifi_controller.load_saved_wifi_profile_settings (
@@ -78,9 +71,6 @@ public class MainWindowProfileAdapter : Object {
             wifi_saved_edit_page,
             () => {
                 sync_gateway_dns_sensitivity ();
-            },
-            (message) => {
-                on_error (message);
             }
         );
     }
@@ -94,18 +84,12 @@ public class MainWindowProfileAdapter : Object {
                 device_path = profile.device_path,
                 ap_path = "saved:" + profile.saved_connection_uuid,
                 saved = true
-            },
-            (message) => {
-                on_error (message.replace ("Forget", "Delete"));
-            },
-            (request_wifi_scan) => {
-                on_refresh_after_action (request_wifi_scan);
             }
         );
     }
 
     public void on_saved_edit_back () {
-        on_set_popup_text_input_mode (false);
+        host.set_popup_text_input_mode (false);
         profiles_stack.set_visible_child_name ("list");
     }
 
@@ -123,7 +107,7 @@ public class MainWindowProfileAdapter : Object {
             out network_request,
             out error_message
         )) {
-            on_error (error_message);
+            host.show_error (error_message);
             return false;
         }
 
@@ -133,12 +117,9 @@ public class MainWindowProfileAdapter : Object {
             profile,
             profile_request,
             network_request,
-            (message) => {
-                on_error (message);
-            },
             () => {
-                on_refresh_after_action (false);
-                on_set_popup_text_input_mode (false);
+                host.refresh_after_action (false);
+                host.set_popup_text_input_mode (false);
                 profiles_stack.set_visible_child_name ("list");
             }
         );

@@ -2,6 +2,8 @@ using GLib;
 using Gtk;
 
 public class MainWindowWifiDetailsEditController : Object {
+    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
     private const uint WIFI_RECONNECT_CHECK_INTERVAL_MS = 300;
     private const uint WIFI_RECONNECT_MAX_WAIT_MS = 10000;
 
@@ -12,7 +14,9 @@ public class MainWindowWifiDetailsEditController : Object {
     private Cancellable? edit_request_cancellable = null;
     private Cancellable? action_request_cancellable = null;
 
-    public MainWindowWifiDetailsEditController () {
+    public MainWindowWifiDetailsEditController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
+        this.host = host;
+        this.state_context = state_context;
     }
 
     public void on_page_leave () {
@@ -120,10 +124,6 @@ public class MainWindowWifiDetailsEditController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         bool close_after_apply,
-        HashTable<string, bool> pending_wifi_connect,
-        HashTable<string, bool> pending_wifi_seen_connecting,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action,
         MainWindowActionCallback on_open_details,
         MainWindowActionCallback disable_popup_text_input,
         uint epoch,
@@ -171,7 +171,7 @@ public class MainWindowWifiDetailsEditController : Object {
                             on_open_details ();
                             disable_popup_text_input ();
                         }
-                        on_refresh_after_action (true);
+                        host.refresh_after_action (true);
                     } catch (Error e) {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
@@ -179,22 +179,22 @@ public class MainWindowWifiDetailsEditController : Object {
                         if (is_cancelled_error (e)) {
                             return;
                         }
-                        pending_wifi_connect.remove (net_key);
-                        pending_wifi_seen_connecting.remove (net_key);
-                        on_error ("Reconnect after edit failed: " + e.message);
-                        on_refresh_after_action (false);
+                        state_context.pending_wifi_connect.remove (net_key);
+                        state_context.pending_wifi_seen_connecting.remove (net_key);
+                        host.show_error ("Reconnect after edit failed: " + e.message);
+                        host.refresh_after_action (false);
                     }
                 });
                 return;
             }
 
             if (waited_ms >= WIFI_RECONNECT_MAX_WAIT_MS) {
-                pending_wifi_connect.remove (net_key);
-                pending_wifi_seen_connecting.remove (net_key);
-                on_error (
+                state_context.pending_wifi_connect.remove (net_key);
+                state_context.pending_wifi_seen_connecting.remove (net_key);
+                host.show_error (
                     "Reconnect after edit timed out while waiting for disconnect to complete."
                 );
-                on_refresh_after_action (false);
+                host.refresh_after_action (false);
                 return;
             }
 
@@ -206,10 +206,10 @@ public class MainWindowWifiDetailsEditController : Object {
                     nm,
                     net,
                     close_after_apply,
-                    pending_wifi_connect,
-                    pending_wifi_seen_connecting,
-                    on_error,
-                    on_refresh_after_action,
+                    
+                    
+                    
+                    
                     on_open_details,
                     disable_popup_text_input,
                     epoch,
@@ -225,9 +225,7 @@ public class MainWindowWifiDetailsEditController : Object {
     public void populate_wifi_details (
         NetworkManagerClient nm,
         WifiNetwork net,
-        HashTable<string, bool> active_wifi_connections,
-        MainWindowWifiDetailsPage page,
-        MainWindowLogCallback log_debug
+        MainWindowWifiDetailsPage page
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_details_request ();
@@ -235,7 +233,7 @@ public class MainWindowWifiDetailsEditController : Object {
         var details_request = details_request_cancellable;
 
         page.details_title.set_text (MainWindowHelpers.safe_text (net.ssid));
-        bool is_connected_now = active_wifi_connections.contains (net.network_key);
+        bool is_connected_now = state_context.active_wifi_connections.contains (net.network_key);
         bool can_manage_saved_profile = net.saved;
         page.action_row.set_visible (can_manage_saved_profile);
         page.forget_button.set_visible (can_manage_saved_profile);
@@ -411,8 +409,7 @@ public class MainWindowWifiDetailsEditController : Object {
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,
         MainWindowActionCallback sync_sensitivity,
-        MainWindowActionCallback enable_popup_text_input,
-        MainWindowLogCallback log_debug
+        MainWindowActionCallback enable_popup_text_input
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_edit_request ();
@@ -496,10 +493,6 @@ public class MainWindowWifiDetailsEditController : Object {
         WifiNetwork net,
         MainWindowWifiEditPage page,
         bool close_after_apply,
-        HashTable<string, bool> pending_wifi_connect,
-        HashTable<string, bool> pending_wifi_seen_connecting,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action,
         MainWindowActionCallback on_open_details,
         MainWindowActionCallback disable_popup_text_input
     ) {
@@ -538,7 +531,7 @@ public class MainWindowWifiDetailsEditController : Object {
             out ipv4_prefix,
             out prefix_error
         )) {
-            on_error (prefix_error);
+            host.show_error (prefix_error);
             return false;
         }
 
@@ -549,49 +542,49 @@ public class MainWindowWifiDetailsEditController : Object {
             out ipv6_prefix,
             out prefix6_error
         )) {
-            on_error (prefix6_error);
+            host.show_error (prefix6_error);
             return false;
         }
 
         if (method == "manual") {
             if (ipv4_address == "") {
-                on_error ("Manual IPv4 requires an address.");
+                host.show_error ("Manual IPv4 requires an address.");
                 return false;
             }
             if (ipv4_prefix == 0) {
-                on_error ("Manual IPv4 requires a prefix between 1 and 32.");
+                host.show_error ("Manual IPv4 requires a prefix between 1 and 32.");
                 return false;
             }
             if (ipv4_gateway == "") {
-                on_error ("Manual IPv4 requires a gateway address.");
+                host.show_error ("Manual IPv4 requires a gateway address.");
                 return false;
             }
         }
 
         string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
         if (!dns_auto && dns_servers.length == 0) {
-            on_error ("Manual DNS is enabled; provide at least one DNS server.");
+            host.show_error ("Manual DNS is enabled; provide at least one DNS server.");
             return false;
         }
 
         if (method6 == "manual") {
             if (ipv6_address == "") {
-                on_error ("Manual IPv6 requires an address.");
+                host.show_error ("Manual IPv6 requires an address.");
                 return false;
             }
             if (ipv6_prefix == 0) {
-                on_error ("Manual IPv6 requires a prefix between 1 and 128.");
+                host.show_error ("Manual IPv6 requires a prefix between 1 and 128.");
                 return false;
             }
             if (ipv6_gateway == "") {
-                on_error ("Manual IPv6 requires a gateway address.");
+                host.show_error ("Manual IPv6 requires a gateway address.");
                 return false;
             }
         }
 
         string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
         if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
-            on_error ("Manual IPv6 DNS is enabled; provide at least one DNS server.");
+            host.show_error ("Manual IPv6 DNS is enabled; provide at least one DNS server.");
             return false;
         }
 
@@ -623,7 +616,7 @@ public class MainWindowWifiDetailsEditController : Object {
                     if (is_cancelled_error (e)) {
                         return;
                     }
-                    on_error ("Apply failed: " + e.message);
+                    host.show_error ("Apply failed: " + e.message);
                     return;
                 }
 
@@ -635,7 +628,7 @@ public class MainWindowWifiDetailsEditController : Object {
                         on_open_details ();
                         disable_popup_text_input ();
                     }
-                    on_refresh_after_action (method != "disabled");
+                    host.refresh_after_action (method != "disabled");
                     return;
                 }
 
@@ -649,21 +642,21 @@ public class MainWindowWifiDetailsEditController : Object {
                         if (is_cancelled_error (e)) {
                             return;
                         }
-                        on_error ("Disconnect before reconnect failed: " + e.message);
+                        host.show_error ("Disconnect before reconnect failed: " + e.message);
                         return;
                     }
 
-                    pending_wifi_connect.insert (net_key, true);
-                    pending_wifi_seen_connecting.remove (net_key);
+                    state_context.pending_wifi_connect.insert (net_key, true);
+                    state_context.pending_wifi_seen_connecting.remove (net_key);
 
                     reconnect_after_disconnect_with_retry (
                         nm,
                         net,
                         close_after_apply,
-                        pending_wifi_connect,
-                        pending_wifi_seen_connecting,
-                        on_error,
-                        on_refresh_after_action,
+                        
+                        
+                        
+                        
                         on_open_details,
                         disable_popup_text_input,
                         epoch,

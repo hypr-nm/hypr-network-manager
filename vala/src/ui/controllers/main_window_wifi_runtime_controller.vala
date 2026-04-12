@@ -14,11 +14,15 @@ public class MainWindowWifiRuntimeController : Object {
     private bool wifi_refresh_queued = false;
     private MainWindowWifiDetailsEditController details_edit_controller;
     private MainWindowWifiRowReconciler row_reconciler;
+    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
 
-    public MainWindowWifiRuntimeController () {
+    public MainWindowWifiRuntimeController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
+        this.host = host;
+        this.state_context = state_context;
         active_wifi_by_device = new HashTable<string, WifiNetwork> (str_hash, str_equal);
-        details_edit_controller = new MainWindowWifiDetailsEditController ();
-        row_reconciler = new MainWindowWifiRowReconciler ();
+        details_edit_controller = new MainWindowWifiDetailsEditController (host, state_context);
+        row_reconciler = new MainWindowWifiRowReconciler (host, state_context);
     }
 
     public void on_page_leave () {
@@ -153,15 +157,11 @@ public class MainWindowWifiRuntimeController : Object {
         Gtk.ListBox wifi_listbox,
         Gtk.Label status_label,
         Gtk.Image status_icon,
-        HashTable<string, bool> active_wifi_connections,
-        HashTable<string, bool> pending_wifi_connect,
-        HashTable<string, bool> pending_wifi_seen_connecting,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
         MainWindowActionCallback on_hide_active_wifi_password_prompt,
         MainWindowActionCallback on_refresh_switch_states,
-        MainWindowWifiRowBuildCallback on_build_wifi_row,
-        MainWindowLogCallback on_log
+        MainWindowWifiRowBuildCallback on_build_wifi_row
     ) {
         if (wifi_refresh_in_flight) {
             wifi_refresh_queued = true;
@@ -170,7 +170,7 @@ public class MainWindowWifiRuntimeController : Object {
 
         wifi_refresh_in_flight = true;
         uint epoch = capture_ui_epoch ();
-        on_log ("Refreshing Wi-Fi list");
+        host.debug_log ("Refreshing Wi-Fi list");
         string current_view = wifi_stack.get_visible_child_name ();
         on_refresh_switch_states ();
 
@@ -201,7 +201,7 @@ public class MainWindowWifiRuntimeController : Object {
                     wifi_device_states.insert (dev.device_path, dev.state);
                 }
 
-                active_wifi_connections.remove_all ();
+                state_context.active_wifi_connections.remove_all ();
                 active_wifi_by_device.remove_all ();
                 foreach (var net in networks) {
                     if (!net.connected) {
@@ -215,7 +215,7 @@ public class MainWindowWifiRuntimeController : Object {
                         continue;
                     }
 
-                    active_wifi_connections.insert (net.network_key, true);
+                    state_context.active_wifi_connections.insert (net.network_key, true);
                     if (!active_wifi_by_device.contains (net.device_path)) {
                         active_wifi_by_device.insert (net.device_path, net);
                     }
@@ -226,13 +226,13 @@ public class MainWindowWifiRuntimeController : Object {
 
                 foreach (var net in networks) {
                     string net_key = net.network_key;
-                    if (!pending_wifi_connect.contains (net_key)) {
+                    if (!state_context.pending_wifi_connect.contains (net_key)) {
                         continue;
                     }
 
-                    if (active_wifi_connections.contains (net_key)) {
-                        pending_wifi_connect.remove (net_key);
-                        pending_wifi_seen_connecting.remove (net_key);
+                    if (state_context.active_wifi_connections.contains (net_key)) {
+                        state_context.pending_wifi_connect.remove (net_key);
+                        state_context.pending_wifi_seen_connecting.remove (net_key);
                         continue;
                     }
 
@@ -251,30 +251,30 @@ public class MainWindowWifiRuntimeController : Object {
                     bool is_connecting_state = matched_device.state >= 40
                         && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
                     if (is_connecting_state) {
-                        pending_wifi_seen_connecting.insert (net_key, true);
+                        state_context.pending_wifi_seen_connecting.insert (net_key, true);
                         continue;
                     }
 
                     bool activated_on_other_network = matched_device.state == NM_DEVICE_STATE_ACTIVATED
-                        && !active_wifi_connections.contains (net_key);
+                        && !state_context.active_wifi_connections.contains (net_key);
                     if (activated_on_other_network || matched_device.state == NM_DEVICE_STATE_FAILED) {
-                        pending_wifi_connect.remove (net_key);
-                        pending_wifi_seen_connecting.remove (net_key);
+                        state_context.pending_wifi_connect.remove (net_key);
+                        state_context.pending_wifi_seen_connecting.remove (net_key);
                         continue;
                     }
 
-                    if (pending_wifi_seen_connecting.contains (net_key)
+                    if (state_context.pending_wifi_seen_connecting.contains (net_key)
                         && matched_device.state <= NM_DEVICE_STATE_DISCONNECTED) {
-                        pending_wifi_connect.remove (net_key);
-                        pending_wifi_seen_connecting.remove (net_key);
+                        state_context.pending_wifi_connect.remove (net_key);
+                        state_context.pending_wifi_seen_connecting.remove (net_key);
                     }
                 }
 
                 row_reconciler.reconcile (
                     wifi_listbox,
                     networks,
-                    active_wifi_connections,
-                    pending_wifi_connect,
+                    
+                    
                     active_wifi_password_row_id,
                     has_active_wifi_password_prompt,
                     on_hide_active_wifi_password_prompt,
@@ -315,12 +315,12 @@ public class MainWindowWifiRuntimeController : Object {
                     status_icon.set_from_icon_name ("network-wireless-offline-symbolic");
                 }
 
-                on_log ("Rendered %u Wi-Fi rows".printf (networks.length));
+                host.debug_log ("Rendered %u Wi-Fi rows".printf (networks.length));
             } catch (Error e) {
                 if (e is IOError.CANCELLED || !is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_log ("Wi-Fi refresh failed: " + e.message);
+                host.debug_log ("Wi-Fi refresh failed: " + e.message);
             } finally {
                 if (wifi_refresh_cancellable == request_cancellable) {
                     wifi_refresh_cancellable = null;
@@ -341,15 +341,9 @@ public class MainWindowWifiRuntimeController : Object {
         WifiNetwork net,
         string? password,
         string? hidden_ssid,
-        HashTable<string, bool> active_wifi_connections,
-        HashTable<string, bool> pending_wifi_connect,
-        HashTable<string, bool> pending_wifi_seen_connecting,
         uint pending_wifi_connect_timeout_ms,
         bool close_on_connect,
-        MainWindowActionCallback on_close_window,
-        MainWindowRefreshActionCallback on_refresh_after_action,
-        MainWindowActionCallback on_refresh_wifi,
-        MainWindowErrorCallback on_error
+        MainWindowActionCallback on_refresh_wifi
     ) {
         uint epoch = capture_ui_epoch ();
 
@@ -358,9 +352,9 @@ public class MainWindowWifiRuntimeController : Object {
         bool can_fallback_reconnect = fallback_network != null
             && fallback_network.network_key != net_key;
 
-        if (!active_wifi_connections.contains (net_key)) {
-            pending_wifi_connect.insert (net_key, true);
-            pending_wifi_seen_connecting.remove (net_key);
+        if (!state_context.active_wifi_connections.contains (net_key)) {
+            state_context.pending_wifi_connect.insert (net_key, true);
+            state_context.pending_wifi_seen_connecting.remove (net_key);
         }
 
         WifiNetwork connect_target = net;
@@ -408,11 +402,11 @@ public class MainWindowWifiRuntimeController : Object {
                 }
 
                 if (close_on_connect) {
-                    on_close_window ();
+                    host.close_window ();
                     return;
                 }
 
-                on_refresh_after_action (true);
+                host.refresh_after_action (true);
 
                 string pending_ssid = net_key;
                 uint effective_timeout_ms = pending_wifi_connect_timeout_ms >= 1000
@@ -425,9 +419,9 @@ public class MainWindowWifiRuntimeController : Object {
                         return false;
                     }
 
-                    if (pending_wifi_connect.contains (pending_ssid)) {
-                        pending_wifi_connect.remove (pending_ssid);
-                        pending_wifi_seen_connecting.remove (pending_ssid);
+                    if (state_context.pending_wifi_connect.contains (pending_ssid)) {
+                        state_context.pending_wifi_connect.remove (pending_ssid);
+                        state_context.pending_wifi_seen_connecting.remove (pending_ssid);
                         on_refresh_wifi ();
                     }
                     return false;
@@ -437,14 +431,14 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                pending_wifi_connect.remove (net_key);
-                pending_wifi_seen_connecting.remove (net_key);
+                state_context.pending_wifi_connect.remove (net_key);
+                state_context.pending_wifi_seen_connecting.remove (net_key);
                 string connect_error_message = e.message;
 
                 if (can_fallback_reconnect) {
                     string fallback_key = fallback_network.network_key;
-                    pending_wifi_connect.insert (fallback_key, true);
-                    pending_wifi_seen_connecting.remove (fallback_key);
+                    state_context.pending_wifi_connect.insert (fallback_key, true);
+                    state_context.pending_wifi_seen_connecting.remove (fallback_key);
 
                     nm.connect_wifi.begin (fallback_network, null, null, (obj2, res2) => {
                         try {
@@ -452,14 +446,14 @@ public class MainWindowWifiRuntimeController : Object {
                             if (!is_ui_epoch_valid (epoch)) {
                                 return;
                             }
-                            on_refresh_after_action (true);
+                            host.refresh_after_action (true);
                         } catch (Error fallback_error) {
                             if (!is_ui_epoch_valid (epoch)) {
                                 return;
                             }
-                            pending_wifi_connect.remove (fallback_key);
-                            pending_wifi_seen_connecting.remove (fallback_key);
-                            on_error (
+                            state_context.pending_wifi_connect.remove (fallback_key);
+                            state_context.pending_wifi_seen_connecting.remove (fallback_key);
+                            host.show_error (
                                 "Connect failed: %s. Reconnect to previous network failed: %s"
                                     .printf (connect_error_message, fallback_error.message)
                             );
@@ -469,7 +463,7 @@ public class MainWindowWifiRuntimeController : Object {
                     return;
                 }
 
-                on_error ("Connect failed: " + connect_error_message);
+                host.show_error ("Connect failed: " + connect_error_message);
                 on_refresh_wifi ();
             }
         });
@@ -506,8 +500,7 @@ public class MainWindowWifiRuntimeController : Object {
         Gtk.Stack wifi_stack,
         Gtk.Entry wifi_add_ssid_entry,
         Gtk.DropDown wifi_add_security_dropdown,
-        Gtk.Entry wifi_add_password_entry,
-        MainWindowBoolCallback on_set_popup_text_input_mode
+        Gtk.Entry wifi_add_password_entry
     ) {
         cancel_add_network_request ();
         wifi_add_ssid_entry.set_text ("");
@@ -521,7 +514,7 @@ public class MainWindowWifiRuntimeController : Object {
         );
 
         wifi_stack.set_visible_child_name ("add");
-        on_set_popup_text_input_mode (true);
+        host.set_popup_text_input_mode (true);
         wifi_add_ssid_entry.grab_focus ();
     }
 
@@ -530,10 +523,7 @@ public class MainWindowWifiRuntimeController : Object {
         Gtk.Stack wifi_stack,
         Gtk.Entry wifi_add_ssid_entry,
         Gtk.DropDown wifi_add_security_dropdown,
-        Gtk.Entry wifi_add_password_entry,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action,
-        MainWindowBoolCallback on_set_popup_text_input_mode
+        Gtk.Entry wifi_add_password_entry
     ) {
         string ssid = wifi_add_ssid_entry.get_text ().strip ();
         HiddenWifiSecurityMode security_mode = HiddenWifiSecurityModeUtils.from_dropdown_index (
@@ -542,12 +532,12 @@ public class MainWindowWifiRuntimeController : Object {
         string password = wifi_add_password_entry.get_text ().strip ();
 
         if (ssid == "") {
-            on_error ("SSID is required.");
+            host.show_error ("SSID is required.");
             return;
         }
 
         if (!HiddenWifiSecurityModeUtils.is_password_valid_for_mode (security_mode, password)) {
-            on_error (
+            host.show_error (
                 "Password must be at least %d characters for the selected security mode.".printf (
                     HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH
                 )
@@ -566,23 +556,21 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action (true);
+                host.refresh_after_action (true);
                 wifi_stack.set_visible_child_name ("list");
-                on_set_popup_text_input_mode (false);
+                host.set_popup_text_input_mode (false);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Add hidden network failed: " + e.message);
+                host.show_error ("Add hidden network failed: " + e.message);
             }
         });
     }
 
     public void forget_wifi_network (
         NetworkManagerClient nm,
-        WifiNetwork net,
-        owned MainWindowErrorCallback on_error,
-        owned MainWindowRefreshActionCallback on_refresh_after_action
+        WifiNetwork net
     ) {
         uint epoch = capture_ui_epoch ();
         string profile_uuid = net.saved_connection_uuid.strip ();
@@ -594,28 +582,24 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action (true);
+                host.refresh_after_action (true);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Forget failed: " + e.message);
+                host.show_error ("Forget failed: " + e.message);
             }
         });
     }
 
     public void disconnect_wifi_network (
         NetworkManagerClient nm,
-        WifiNetwork net,
-        HashTable<string, bool> pending_wifi_connect,
-        HashTable<string, bool> pending_wifi_seen_connecting,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action
+        WifiNetwork net
     ) {
         uint epoch = capture_ui_epoch ();
         string wifi_key = net.network_key;
-        pending_wifi_connect.remove (wifi_key);
-        pending_wifi_seen_connecting.remove (wifi_key);
+        state_context.pending_wifi_connect.remove (wifi_key);
+        state_context.pending_wifi_seen_connecting.remove (wifi_key);
 
         nm.disconnect_wifi.begin (net, null, (obj, res) => {
             try {
@@ -623,13 +607,13 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action (false);
+                host.refresh_after_action (false);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Disconnect failed: " + e.message);
-                on_refresh_after_action (false);
+                host.show_error ("Disconnect failed: " + e.message);
+                host.refresh_after_action (false);
             }
         });
     }
@@ -638,8 +622,6 @@ public class MainWindowWifiRuntimeController : Object {
         NetworkManagerClient nm,
         WifiNetwork net,
         bool enabled,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action,
         MainWindowActionCallback on_refresh_wifi
     ) {
         uint epoch = capture_ui_epoch ();
@@ -649,12 +631,12 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action (false);
+                host.refresh_after_action (false);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Could not update auto-connect: " + e.message);
+                host.show_error ("Could not update auto-connect: " + e.message);
                 on_refresh_wifi ();
             }
         });
@@ -662,8 +644,7 @@ public class MainWindowWifiRuntimeController : Object {
 
     public void refresh_saved_wifi_profiles (
         NetworkManagerClient nm,
-        MainWindowProfilesPage page,
-        MainWindowErrorCallback on_error
+        MainWindowProfilesPage page
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_saved_profiles_request ();
@@ -683,7 +664,7 @@ public class MainWindowWifiRuntimeController : Object {
                     || is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Could not load saved networks: " + e.message);
+                host.show_error ("Could not load saved networks: " + e.message);
             }
         });
     }
@@ -692,8 +673,7 @@ public class MainWindowWifiRuntimeController : Object {
         NetworkManagerClient nm,
         WifiSavedProfile profile,
         MainWindowWifiSavedEditPage page,
-        MainWindowActionCallback on_sync_sensitivity,
-        MainWindowErrorCallback on_error
+        MainWindowActionCallback on_sync_sensitivity
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_saved_profile_settings_request ();
@@ -716,7 +696,7 @@ public class MainWindowWifiRuntimeController : Object {
                     || is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Could not load saved profile settings: " + e.message);
+                host.show_error ("Could not load saved profile settings: " + e.message);
             }
         });
     }
@@ -726,7 +706,6 @@ public class MainWindowWifiRuntimeController : Object {
         WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest profile_request,
         WifiNetworkUpdateRequest network_request,
-        MainWindowErrorCallback on_error,
         MainWindowActionCallback on_success
     ) {
         uint epoch = capture_ui_epoch ();
@@ -743,7 +722,7 @@ public class MainWindowWifiRuntimeController : Object {
                     || is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Save profile failed: " + e.message);
+                host.show_error ("Save profile failed: " + e.message);
                 return;
             }
 
@@ -765,7 +744,7 @@ public class MainWindowWifiRuntimeController : Object {
                             || is_cancelled_error (e)) {
                             return;
                         }
-                        on_error ("Save network settings failed: " + e.message);
+                        host.show_error ("Save network settings failed: " + e.message);
                     }
                 }
             );
@@ -775,16 +754,12 @@ public class MainWindowWifiRuntimeController : Object {
     public void populate_wifi_details (
         NetworkManagerClient nm,
         WifiNetwork net,
-        HashTable<string, bool> active_wifi_connections,
-        MainWindowWifiDetailsPage page,
-        MainWindowLogCallback log_debug
+        MainWindowWifiDetailsPage page
     ) {
         details_edit_controller.populate_wifi_details (
             nm,
             net,
-            active_wifi_connections,
-            page,
-            log_debug
+            page
         );
     }
 
@@ -794,8 +769,7 @@ public class MainWindowWifiRuntimeController : Object {
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,
         MainWindowActionCallback sync_sensitivity,
-        MainWindowActionCallback enable_popup_text_input,
-        MainWindowLogCallback log_debug
+        MainWindowActionCallback enable_popup_text_input
     ) {
         details_edit_controller.open_wifi_edit (
             nm,
@@ -803,8 +777,7 @@ public class MainWindowWifiRuntimeController : Object {
             page,
             wifi_stack,
             sync_sensitivity,
-            enable_popup_text_input,
-            log_debug
+            enable_popup_text_input
         );
     }
 
@@ -813,10 +786,6 @@ public class MainWindowWifiRuntimeController : Object {
         WifiNetwork net,
         MainWindowWifiEditPage page,
         bool close_after_apply,
-        HashTable<string, bool> pending_wifi_connect,
-        HashTable<string, bool> pending_wifi_seen_connecting,
-        MainWindowErrorCallback on_error,
-        MainWindowRefreshActionCallback on_refresh_after_action,
         MainWindowActionCallback on_open_details,
         MainWindowActionCallback disable_popup_text_input
     ) {
@@ -825,10 +794,10 @@ public class MainWindowWifiRuntimeController : Object {
             net,
             page,
             close_after_apply,
-            pending_wifi_connect,
-            pending_wifi_seen_connecting,
-            on_error,
-            on_refresh_after_action,
+            
+            
+            
+            
             on_open_details,
             disable_popup_text_input
         );
@@ -837,8 +806,7 @@ public class MainWindowWifiRuntimeController : Object {
     public void refresh_after_action (
         NetworkManagerClient nm,
         bool request_wifi_scan,
-        MainWindowActionCallback on_refresh_all,
-        MainWindowLogCallback on_log
+        MainWindowActionCallback on_refresh_all
     ) {
         uint epoch = capture_ui_epoch ();
 
@@ -851,7 +819,7 @@ public class MainWindowWifiRuntimeController : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_log ("Could not request Wi-Fi scan: " + message);
+                    host.debug_log ("Could not request Wi-Fi scan: " + message);
                 }
             });
         }
@@ -878,7 +846,7 @@ public class MainWindowWifiRuntimeController : Object {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        on_log ("Could not request delayed Wi-Fi scan: " + message);
+                        host.debug_log ("Could not request delayed Wi-Fi scan: " + message);
                     }
                 });
             }
@@ -903,8 +871,7 @@ public class MainWindowWifiRuntimeController : Object {
         ref Gtk.Revealer? active_wifi_password_revealer,
         ref Gtk.Entry? active_wifi_password_entry,
         Gtk.Revealer revealer,
-        Gtk.Entry entry,
-        MainWindowBoolCallback on_set_popup_text_input_mode
+        Gtk.Entry entry
     ) {
         if (active_wifi_password_revealer != null && active_wifi_password_revealer != revealer) {
             active_wifi_password_revealer.set_reveal_child (false);
@@ -921,7 +888,7 @@ public class MainWindowWifiRuntimeController : Object {
         entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         MainWindowIconResources.set_password_visibility_icon (entry, false);
         entry.set_icon_tooltip_text (Gtk.EntryIconPosition.SECONDARY, "Show password");
-        on_set_popup_text_input_mode (true);
+        host.set_popup_text_input_mode (true);
         revealer.set_reveal_child (true);
         entry.grab_focus ();
     }
@@ -931,8 +898,7 @@ public class MainWindowWifiRuntimeController : Object {
         ref Gtk.Entry? active_wifi_password_entry,
         Gtk.Revealer revealer,
         Gtk.Entry entry,
-        string? value,
-        MainWindowBoolCallback on_set_popup_text_input_mode
+        string? value
     ) {
         revealer.set_reveal_child (false);
         if (value == null) {
@@ -942,14 +908,13 @@ public class MainWindowWifiRuntimeController : Object {
         if (active_wifi_password_revealer == revealer) {
             active_wifi_password_revealer = null;
             active_wifi_password_entry = null;
-            on_set_popup_text_input_mode (false);
+            host.set_popup_text_input_mode (false);
         }
     }
 
     public void hide_active_wifi_password_prompt (
         ref Gtk.Revealer? active_wifi_password_revealer,
-        ref Gtk.Entry? active_wifi_password_entry,
-        MainWindowBoolCallback on_set_popup_text_input_mode
+        ref Gtk.Entry? active_wifi_password_entry
     ) {
         if (active_wifi_password_revealer != null) {
             active_wifi_password_revealer.set_reveal_child (false);
@@ -959,14 +924,13 @@ public class MainWindowWifiRuntimeController : Object {
         }
         active_wifi_password_revealer = null;
         active_wifi_password_entry = null;
-        on_set_popup_text_input_mode (false);
+        host.set_popup_text_input_mode (false);
     }
 
     public void refresh_switch_states (
         NetworkManagerClient nm,
         Gtk.Switch wifi_switch,
-        Gtk.Switch networking_switch,
-        MainWindowLogCallback on_log
+        Gtk.Switch networking_switch
     ) {
         uint epoch = capture_ui_epoch ();
         uint refresh_epoch = switch_refresh_epoch + 1;
@@ -984,7 +948,7 @@ public class MainWindowWifiRuntimeController : Object {
                 }
             } catch (Error e) {
                 if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
-                    on_log ("Could not read WirelessEnabled: " + e.message);
+                    host.debug_log ("Could not read WirelessEnabled: " + e.message);
                 }
             }
 
@@ -996,7 +960,7 @@ public class MainWindowWifiRuntimeController : Object {
                     }
                 } catch (Error e) {
                     if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
-                        on_log ("Could not read NetworkingEnabled: " + e.message);
+                        host.debug_log ("Could not read NetworkingEnabled: " + e.message);
                     }
                 } finally {
                     if (switch_refresh_epoch == refresh_epoch) {
@@ -1010,9 +974,7 @@ public class MainWindowWifiRuntimeController : Object {
     public void on_wifi_switch_changed (
         NetworkManagerClient nm,
         Gtk.Switch wifi_switch,
-        MainWindowErrorCallback on_error,
-        MainWindowActionCallback on_refresh_switch_states,
-        MainWindowRefreshActionCallback on_refresh_after_action
+        MainWindowActionCallback on_refresh_switch_states
     ) {
         if (updating_switches) {
             return;
@@ -1027,13 +989,13 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action (enabled);
+                host.refresh_after_action (enabled);
             } catch (Error e) {
                 string message = e.message;
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                    on_error ("Could not toggle Wi-Fi: " + message);
+                    host.show_error ("Could not toggle Wi-Fi: " + message);
                 on_refresh_switch_states ();
             }
         });
@@ -1042,9 +1004,7 @@ public class MainWindowWifiRuntimeController : Object {
     public void on_networking_switch_changed (
         NetworkManagerClient nm,
         Gtk.Switch networking_switch,
-        MainWindowErrorCallback on_error,
-        MainWindowActionCallback on_refresh_switch_states,
-        MainWindowRefreshActionCallback on_refresh_after_action
+        MainWindowActionCallback on_refresh_switch_states
     ) {
         if (updating_switches) {
             return;
@@ -1059,13 +1019,13 @@ public class MainWindowWifiRuntimeController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_refresh_after_action (enabled);
+                host.refresh_after_action (enabled);
             } catch (Error e) {
                 string message = e.message;
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                    on_error ("Could not toggle networking: " + message);
+                    host.show_error ("Could not toggle networking: " + message);
                 on_refresh_switch_states ();
             }
         });
