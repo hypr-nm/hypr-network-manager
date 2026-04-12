@@ -10,9 +10,8 @@ public class MainWindowEthernetController : Object {
     private Cancellable? edit_ip_cancellable = null;
 
     private NetworkManagerClient nm;
-    private MainWindowErrorCallback on_error;
-    private MainWindowRefreshActionCallback on_refresh_after_action;
-    private MainWindowBoolCallback on_set_popup_text_input_mode;
+    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
 
     private Gtk.ListBox ethernet_listbox;
     private Gtk.Stack ethernet_stack;
@@ -28,14 +27,12 @@ public class MainWindowEthernetController : Object {
 
     public MainWindowEthernetController (
         NetworkManagerClient nm,
-        owned MainWindowErrorCallback on_error,
-        owned MainWindowRefreshActionCallback on_refresh_after_action,
-        owned MainWindowBoolCallback on_set_popup_text_input_mode
+        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
+        NetworkManagerRebuild.Models.NetworkStateContext state_context
     ) {
         this.nm = nm;
-        this.on_error = (owned) on_error;
-        this.on_refresh_after_action = (owned) on_refresh_after_action;
-        this.on_set_popup_text_input_mode = (owned) on_set_popup_text_input_mode;
+        this.host = host;
+        this.state_context = state_context;
         pending_ethernet_action = new HashTable<string, bool> (str_hash, str_equal);
         pending_ethernet_target_connected = new HashTable<string, bool> (str_hash, str_equal);
     }
@@ -142,7 +139,7 @@ public class MainWindowEthernetController : Object {
     public void on_details_back_requested () {
         invalidate_ui_state ();
         selected_ethernet_device = null;
-        on_set_popup_text_input_mode (false);
+        host.set_popup_text_input_mode (false);
         ethernet_stack.set_visible_child_name ("list");
     }
 
@@ -162,7 +159,7 @@ public class MainWindowEthernetController : Object {
 
     public void on_edit_back_requested () {
         cancel_edit_request ();
-        on_set_popup_text_input_mode (false);
+        host.set_popup_text_input_mode (false);
         if (profile_edit_mode) {
             profile_edit_mode = false;
             selected_ethernet_device = null;
@@ -270,12 +267,12 @@ public class MainWindowEthernetController : Object {
                         return;
                     }
                     track_pending_action (dev, target_connected, epoch);
-                    on_refresh_after_action (false);
+                    host.refresh_after_action (false);
                 } catch (Error e) {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_error ("Ethernet disconnect failed: " + e.message);
+                    host.show_error ("Ethernet disconnect failed: " + e.message);
                 }
             });
             return;
@@ -288,12 +285,12 @@ public class MainWindowEthernetController : Object {
                     return;
                 }
                 track_pending_action (dev, target_connected, epoch);
-                on_refresh_after_action (false);
+                host.refresh_after_action (false);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                on_error ("Ethernet connect failed: " + e.message);
+                host.show_error ("Ethernet connect failed: " + e.message);
             }
         });
     }
@@ -466,7 +463,7 @@ public class MainWindowEthernetController : Object {
 
     private void open_edit (NetworkDevice dev) {
         if (!has_saved_profile (dev)) {
-            on_error ("This interface has no saved Ethernet profile to edit.");
+            host.show_error ("This interface has no saved Ethernet profile to edit.");
             return;
         }
 
@@ -484,7 +481,7 @@ public class MainWindowEthernetController : Object {
         ethernet_edit_page.note_label.set_text ("Update IPv4 and IPv6 settings for profile: %s".printf (profile_display));
 
         ethernet_stack.set_visible_child_name ("edit");
-        on_set_popup_text_input_mode (true);
+        host.set_popup_text_input_mode (true);
 
         nm.get_ethernet_device_ip_settings.begin (dev, edit_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
@@ -564,7 +561,7 @@ public class MainWindowEthernetController : Object {
             out ipv4_prefix,
             out prefix_error
         )) {
-            on_error (prefix_error);
+            host.show_error (prefix_error);
             return;
         }
 
@@ -575,49 +572,49 @@ public class MainWindowEthernetController : Object {
             out ipv6_prefix,
             out prefix6_error
         )) {
-            on_error (prefix6_error);
+            host.show_error (prefix6_error);
             return;
         }
 
         if (method == "manual") {
             if (ipv4_address == "") {
-                on_error ("Manual IPv4 requires an address.");
+                host.show_error ("Manual IPv4 requires an address.");
                 return;
             }
             if (ipv4_prefix == 0) {
-                on_error ("Manual IPv4 requires a prefix between 1 and 32.");
+                host.show_error ("Manual IPv4 requires a prefix between 1 and 32.");
                 return;
             }
             if (ipv4_gateway == "") {
-                on_error ("Manual IPv4 requires a gateway address.");
+                host.show_error ("Manual IPv4 requires a gateway address.");
                 return;
             }
         }
 
         string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
         if (!dns_auto && dns_servers.length == 0) {
-            on_error ("Manual DNS is enabled; provide at least one DNS server.");
+            host.show_error ("Manual DNS is enabled; provide at least one DNS server.");
             return;
         }
 
         if (method6 == "manual") {
             if (ipv6_address == "") {
-                on_error ("Manual IPv6 requires an address.");
+                host.show_error ("Manual IPv6 requires an address.");
                 return;
             }
             if (ipv6_prefix == 0) {
-                on_error ("Manual IPv6 requires a prefix between 1 and 128.");
+                host.show_error ("Manual IPv6 requires a prefix between 1 and 128.");
                 return;
             }
             if (ipv6_gateway == "") {
-                on_error ("Manual IPv6 requires a gateway address.");
+                host.show_error ("Manual IPv6 requires a gateway address.");
                 return;
             }
         }
 
         string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
         if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
-            on_error ("Manual IPv6 DNS is enabled; provide at least one DNS server.");
+            host.show_error ("Manual IPv6 DNS is enabled; provide at least one DNS server.");
             return;
         }
 
@@ -645,7 +642,7 @@ public class MainWindowEthernetController : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_error ("Apply failed: " + e.message);
+                    host.show_error ("Apply failed: " + e.message);
                     return;
                 }
 
@@ -653,8 +650,8 @@ public class MainWindowEthernetController : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    on_refresh_after_action (false);
-                    on_set_popup_text_input_mode (false);
+                    host.refresh_after_action (false);
+                    host.set_popup_text_input_mode (false);
                     if (profile_edit_mode) {
                         profile_edit_mode = false;
                         selected_ethernet_device = null;
@@ -676,7 +673,7 @@ public class MainWindowEthernetController : Object {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        on_error ("Disconnect before reconnect failed: " + e.message);
+                        host.show_error ("Disconnect before reconnect failed: " + e.message);
                         return;
                     }
 
@@ -695,10 +692,10 @@ public class MainWindowEthernetController : Object {
                         }
                         track_pending_action (dev, true, epoch);
                         if (!reconnect_ok) {
-                            on_error ("Reconnect after edit failed: " + reconnect_error);
+                            host.show_error ("Reconnect after edit failed: " + reconnect_error);
                         }
-                        on_refresh_after_action (false);
-                        on_set_popup_text_input_mode (false);
+                        host.refresh_after_action (false);
+                        host.set_popup_text_input_mode (false);
                         if (profile_edit_mode) {
                             profile_edit_mode = false;
                             selected_ethernet_device = null;
@@ -856,7 +853,7 @@ public class MainWindowEthernetController : Object {
                             ethernet_stack.set_visible_child_name (current_view);
                         } else {
                             selected_ethernet_device = null;
-                            on_set_popup_text_input_mode (false);
+                            host.set_popup_text_input_mode (false);
                             ethernet_stack.set_visible_child_name (
                                 ethernet_devices.length () > 0 ? "list" : "empty"
                             );
@@ -877,7 +874,7 @@ public class MainWindowEthernetController : Object {
                 if (is_cancelled_error (e)) {
                     return;
                 }
-                on_error ("Ethernet refresh failed: " + e.message);
+                host.show_error ("Ethernet refresh failed: " + e.message);
             }
         });
     }
