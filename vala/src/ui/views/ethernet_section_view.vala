@@ -63,5 +63,11 @@ namespace NetworkManagerRebuild.UI.Views {
 
             controller.configure_page (ethernet_view_context);
         }
+
+        public void reset_view_state () {
+            if (stack != null) {
+                stack.set_visible_child_name ("list");
+            }
+        }
     }
 }

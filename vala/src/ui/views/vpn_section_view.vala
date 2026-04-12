@@ -28,5 +28,11 @@ namespace NetworkManagerRebuild.UI.Views {
             this.stack = vpn_stack_local;
             this.widget = page;
         }
+
+        public void reset_view_state () {
+            if (stack != null) {
+                stack.set_visible_child_name ("list");
+            }
+        }
     }
 }
