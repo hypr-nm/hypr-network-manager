@@ -317,23 +317,32 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         dialog.show (this);
     }
 
-    private void build_ui () {
+    private Gtk.Box build_root_container () {
         var root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         root.add_css_class ("nm-root");
         set_child (root);
+        return root;
+    }
 
+    private void build_status_chrome (Gtk.Box root) {
         status_bar_view = new NetworkManagerRebuild.UI.Views.StatusBarView ();
         status_bar_view.networking_switch_toggled.connect (() => {
             on_networking_switch_changed ();
         });
         root.append (status_bar_view.root_widget);
+
         status_separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
         status_separator.add_css_class ("nm-separator");
         root.append (status_separator);
+    }
 
-        content_stack = new Gtk.Stack ();
-        notebook = new Gtk.Notebook ();
+    private Gtk.Label build_tab_label (string text) {
+        var tab = new Gtk.Label (text);
+        tab.add_css_class ("nm-tab-label");
+        return tab;
+    }
 
+    private void build_sections_and_tabs () {
         wifi_section = new NetworkManagerRebuild.UI.Views.WifiSectionView (
             nm,
             wifi_controller,
@@ -363,29 +372,18 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             profiles_section.refresh_saved_profiles ();
         });
 
-        var wifi_tab = new Gtk.Label ("Wi-Fi");
-        wifi_tab.add_css_class ("nm-tab-label");
-        notebook.append_page (wifi_section.widget, wifi_tab);
-
-        var eth_tab = new Gtk.Label ("Ethernet");
-        eth_tab.add_css_class ("nm-tab-label");
         ethernet_section = new NetworkManagerRebuild.UI.Views.EthernetSectionView (ethernet_controller);
-        notebook.append_page (
-            ethernet_section.widget,
-            eth_tab
-        );
-
-        var vpn_tab = new Gtk.Label ("VPN");
-        vpn_tab.add_css_class ("nm-tab-label");
         vpn_section = new NetworkManagerRebuild.UI.Views.VpnSectionView (vpn_controller);
-        notebook.append_page (
-            vpn_section.widget,
-            vpn_tab
-        );
+
+        notebook.append_page (wifi_section.widget, build_tab_label ("Wi-Fi"));
+        notebook.append_page (ethernet_section.widget, build_tab_label ("Ethernet"));
+        notebook.append_page (vpn_section.widget, build_tab_label ("VPN"));
 
         content_stack.add_named (notebook, "main");
         content_stack.add_named (profiles_section.stack, "profiles");
+    }
 
+    private void build_navigation_manager () {
         nav_manager = new NetworkManagerRebuild.UI.Views.AppContentNavigationManager (
             content_stack,
             notebook,
@@ -411,7 +409,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         });
 
         content_stack.set_visible_child_name ("main");
+    }
 
+    private Gtk.MenuButton build_tabs_menu_button () {
         var tabs_menu_popover = new Gtk.Popover ();
         tabs_menu_popover.add_css_class ("nm-tabs-menu-popover");
         tabs_menu_popover.set_has_arrow (false);
@@ -421,6 +421,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             MainWindowUiMetrics.TABS_POPOVER_OFFSET_X,
             MainWindowUiMetrics.TABS_POPOVER_OFFSET_Y
         );
+
         var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
@@ -438,13 +439,13 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             profiles_section.open_profiles_page (false);
         });
         tabs_menu_box.append (saved_profiles_item);
-
         tabs_menu_popover.set_child (tabs_menu_box);
 
         var tabs_menu_button = new Gtk.MenuButton ();
         tabs_menu_button.add_css_class ("nm-tabs-menu-button");
         tabs_menu_button.set_tooltip_text ("Profiles");
         tabs_menu_button.set_popover (tabs_menu_popover);
+
         var tabs_menu_icon = new Gtk.Image.from_icon_name ("view-more-symbolic");
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_icon,
@@ -452,7 +453,19 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         );
         tabs_menu_button.set_child (tabs_menu_icon);
 
-        notebook.set_action_widget (tabs_menu_button, Gtk.PackType.END);
+        return tabs_menu_button;
+    }
+
+    private void build_ui () {
+        var root = build_root_container ();
+        build_status_chrome (root);
+
+        content_stack = new Gtk.Stack ();
+        notebook = new Gtk.Notebook ();
+
+        build_sections_and_tabs ();
+        build_navigation_manager ();
+        notebook.set_action_widget (build_tabs_menu_button (), Gtk.PackType.END);
 
         root.append (content_stack);
 
