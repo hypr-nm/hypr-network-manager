@@ -35,6 +35,19 @@ namespace MainWindowWifiRowBuilder {
         }
     }
 
+    private void sync_prompt_connect_button_sensitivity (
+        Gtk.Button prompt_connect,
+        Gtk.Entry hidden_ssid_entry,
+        Gtk.Entry prompt_entry,
+        bool requires_hidden_ssid,
+        bool is_secured
+    ) {
+        bool has_hidden_ssid = !requires_hidden_ssid || hidden_ssid_entry.get_text ().strip () != "";
+        bool has_valid_password = !is_secured
+            || HiddenWifiSecurityModeUtils.is_password_valid (prompt_entry.get_text ());
+        prompt_connect.set_sensitive (has_hidden_ssid && has_valid_password);
+    }
+
     public Gtk.ListBoxRow build_row (
         WifiNetwork net,
         bool is_connected_now,
@@ -224,26 +237,17 @@ namespace MainWindowWifiRowBuilder {
         );
         prompt_entry.set_visible (net.is_secured);
 
-        MainWindowActionCallback update_prompt_password_visibility_icon = () => {
-            bool reveal = prompt_entry.get_visibility ();
-            MainWindowIconResources.set_password_visibility_icon (prompt_entry, reveal);
-            prompt_entry.set_icon_tooltip_text (
-                Gtk.EntryIconPosition.SECONDARY,
-                reveal ? "Hide password" : "Show password"
-            );
-        };
-
         if (net.is_secured) {
             prompt_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
             prompt_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
-            update_prompt_password_visibility_icon ();
+            MainWindowHelpers.sync_password_visibility_icon (prompt_entry);
 
             prompt_entry.icon_press.connect ((icon_pos) => {
                 if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
                     return;
                 }
                 prompt_entry.set_visibility (!prompt_entry.get_visibility ());
-                update_prompt_password_visibility_icon ();
+                MainWindowHelpers.sync_password_visibility_icon (prompt_entry);
             });
         }
 
@@ -264,19 +268,31 @@ namespace MainWindowWifiRowBuilder {
         );
         prompt_connect.set_sensitive (false);
 
-        MainWindowActionCallback update_prompt_connect_sensitivity = () => {
-            bool has_hidden_ssid = !requires_hidden_ssid || hidden_ssid_entry.get_text ().strip () != "";
-            bool has_valid_password = !net.is_secured
-                || HiddenWifiSecurityModeUtils.is_password_valid (prompt_entry.get_text ());
-            prompt_connect.set_sensitive (has_hidden_ssid && has_valid_password);
-        };
-
         prompt_entry.changed.connect (() => {
-            update_prompt_connect_sensitivity ();
+            sync_prompt_connect_button_sensitivity (
+                prompt_connect,
+                hidden_ssid_entry,
+                prompt_entry,
+                requires_hidden_ssid,
+                net.is_secured
+            );
         });
         hidden_ssid_entry.changed.connect (() => {
-            update_prompt_connect_sensitivity ();
+            sync_prompt_connect_button_sensitivity (
+                prompt_connect,
+                hidden_ssid_entry,
+                prompt_entry,
+                requires_hidden_ssid,
+                net.is_secured
+            );
         });
+        sync_prompt_connect_button_sensitivity (
+            prompt_connect,
+            hidden_ssid_entry,
+            prompt_entry,
+            requires_hidden_ssid,
+            net.is_secured
+        );
 
         var prompt_actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         prompt_actions.add_css_class ("nm-inline-password-actions");
@@ -365,7 +381,13 @@ namespace MainWindowWifiRowBuilder {
             }
         });
 
-        update_prompt_connect_sensitivity ();
+        sync_prompt_connect_button_sensitivity (
+            prompt_connect,
+            hidden_ssid_entry,
+            prompt_entry,
+            requires_hidden_ssid,
+            net.is_secured
+        );
 
         action_buttons.append (action);
         action_buttons.append (details_btn);

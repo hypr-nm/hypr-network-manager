@@ -1,7 +1,7 @@
 using Gtk;
 
 namespace MainWindowHelpers {
-    public Gtk.Button build_back_button (MainWindowActionCallback on_back) {
+    public Gtk.Button build_back_button () {
         var back_btn = new Gtk.Button ();
         back_btn.add_css_class ("nm-nav-back");
         MainWindowCssClassResolver.add_best_class (back_btn, {"nm-nav-back", "nm-button"});
@@ -18,11 +18,16 @@ namespace MainWindowHelpers {
         content.append (label);
         back_btn.set_child (content);
 
-        back_btn.clicked.connect (() => {
-            on_back ();
-        });
-
         return back_btn;
+    }
+
+    public void sync_password_visibility_icon (Gtk.Entry entry) {
+        bool reveal = entry.get_visibility ();
+        MainWindowIconResources.set_password_visibility_icon (entry, reveal);
+        entry.set_icon_tooltip_text (
+            Gtk.EntryIconPosition.SECONDARY,
+            reveal ? "Hide password" : "Show password"
+        );
     }
 
     public void clear_listbox (Gtk.ListBox? listbox) {

@@ -23,13 +23,11 @@ public class MainWindowVpnController : Object {
 
     public Gtk.Widget build_page (
         out Gtk.ListBox vpn_listbox,
-        out Gtk.Stack vpn_stack,
-        MainWindowActionCallback on_refresh
+        out Gtk.Stack vpn_stack
     ) {
         return page_builder.build_page (
             out vpn_listbox,
-            out vpn_stack,
-            on_refresh
+            out vpn_stack
         );
     }
 

@@ -146,6 +146,50 @@ namespace MainWindowIpEditFormBuilder {
         return container;
     }
 
+    private void sync_ipv4_section_sensitivity (
+        Gtk.DropDown method_dropdown,
+        Gtk.Revealer manual_revealer,
+        Gtk.Revealer override_revealer,
+        Gtk.Switch dns_auto_switch,
+        Gtk.Entry dns_entry
+    ) {
+        uint selected = method_dropdown.get_selected ();
+        bool is_auto = selected == 0;
+        bool is_manual = selected == 1;
+        bool is_disabled = selected == 2;
+
+        manual_revealer.set_reveal_child (is_manual);
+        override_revealer.set_reveal_child (is_auto || is_manual);
+
+        if (is_disabled && !dns_auto_switch.get_active ()) {
+            dns_auto_switch.set_active (true);
+        }
+
+        dns_entry.set_sensitive (!dns_auto_switch.get_active ());
+    }
+
+    private void sync_ipv6_section_sensitivity (
+        Gtk.DropDown method_dropdown,
+        Gtk.Revealer manual_revealer,
+        Gtk.Revealer override_revealer,
+        Gtk.Switch dns_auto_switch,
+        Gtk.Entry dns_entry
+    ) {
+        uint selected = method_dropdown.get_selected ();
+        bool is_auto = selected == 0;
+        bool is_manual = selected == 1;
+        bool is_disabled_or_ignore = selected == 2 || selected == 3;
+
+        manual_revealer.set_reveal_child (is_manual);
+        override_revealer.set_reveal_child (is_auto || is_manual);
+
+        if (is_disabled_or_ignore && !dns_auto_switch.get_active ()) {
+            dns_auto_switch.set_active (true);
+        }
+
+        dns_entry.set_sensitive (!dns_auto_switch.get_active ());
+    }
+
     public void append_ipv4_section (
         Gtk.Box form,
         out Gtk.DropDown ipv4_method_dropdown,
@@ -154,7 +198,6 @@ namespace MainWindowIpEditFormBuilder {
         out Gtk.Entry ipv4_gateway_entry,
         out Gtk.Switch dns_auto_switch,
         out Gtk.Entry ipv4_dns_entry,
-        MainWindowActionCallback on_sync_sensitivity,
         bool with_extra_classes
     ) {
         Gtk.Box section;
@@ -347,9 +390,6 @@ namespace MainWindowIpEditFormBuilder {
                 {"nm-edit-dns-mode-switch", "nm-edit-mode-switch"}
             );
         }
-        dns_auto_switch.notify["active"].connect (() => {
-            on_sync_sensitivity ();
-        });
         dns_mode_row.append (dns_auto_switch);
         override_fields.append (dns_mode_row);
 
@@ -370,29 +410,35 @@ namespace MainWindowIpEditFormBuilder {
 
         Gtk.DropDown local_ipv4_method_dropdown = ipv4_method_dropdown;
         Gtk.Switch local_dns_auto_switch = dns_auto_switch;
-
-        MainWindowActionCallback sync_compact_visibility = () => {
-            uint selected = local_ipv4_method_dropdown.get_selected ();
-            bool is_auto = selected == 0;
-            bool is_manual = selected == 1;
-            bool is_disabled = selected == 2;
-
-            manual_revealer.set_reveal_child (is_manual);
-            override_revealer.set_reveal_child (is_auto || is_manual);
-
-            if (is_disabled) {
-                if (!local_dns_auto_switch.get_active ()) {
-                    local_dns_auto_switch.set_active (true);
-                }
-            }
-            on_sync_sensitivity ();
-        };
+        Gtk.Entry local_ipv4_dns_entry = ipv4_dns_entry;
 
         local_ipv4_method_dropdown.notify["selected"].connect (() => {
-            sync_compact_visibility ();
+            sync_ipv4_section_sensitivity (
+                local_ipv4_method_dropdown,
+                manual_revealer,
+                override_revealer,
+                local_dns_auto_switch,
+                local_ipv4_dns_entry
+            );
         });
 
-        sync_compact_visibility ();
+        local_dns_auto_switch.notify["active"].connect (() => {
+            sync_ipv4_section_sensitivity (
+                local_ipv4_method_dropdown,
+                manual_revealer,
+                override_revealer,
+                local_dns_auto_switch,
+                local_ipv4_dns_entry
+            );
+        });
+
+        sync_ipv4_section_sensitivity (
+            local_ipv4_method_dropdown,
+            manual_revealer,
+            override_revealer,
+            local_dns_auto_switch,
+            local_ipv4_dns_entry
+        );
     }
 
     public void append_ipv6_section (
@@ -403,7 +449,6 @@ namespace MainWindowIpEditFormBuilder {
         out Gtk.Entry ipv6_gateway_entry,
         out Gtk.Switch ipv6_dns_auto_switch,
         out Gtk.Entry ipv6_dns_entry,
-        MainWindowActionCallback on_sync_sensitivity,
         bool with_extra_classes
     ) {
         Gtk.Box section;
@@ -601,9 +646,6 @@ namespace MainWindowIpEditFormBuilder {
                 }
             );
         }
-        ipv6_dns_auto_switch.notify["active"].connect (() => {
-            on_sync_sensitivity ();
-        });
         dns_mode_row.append (ipv6_dns_auto_switch);
         override_fields.append (dns_mode_row);
 
@@ -624,28 +666,34 @@ namespace MainWindowIpEditFormBuilder {
 
         Gtk.DropDown local_ipv6_method_dropdown = ipv6_method_dropdown;
         Gtk.Switch local_ipv6_dns_auto_switch = ipv6_dns_auto_switch;
-
-        MainWindowActionCallback sync_compact_visibility = () => {
-            uint selected = local_ipv6_method_dropdown.get_selected ();
-            bool is_auto = selected == 0;
-            bool is_manual = selected == 1;
-            bool is_disabled_or_ignore = selected == 2 || selected == 3;
-
-            manual_revealer.set_reveal_child (is_manual);
-            override_revealer.set_reveal_child (is_auto || is_manual);
-
-            if (is_disabled_or_ignore) {
-                if (!local_ipv6_dns_auto_switch.get_active ()) {
-                    local_ipv6_dns_auto_switch.set_active (true);
-                }
-            }
-            on_sync_sensitivity ();
-        };
+        Gtk.Entry local_ipv6_dns_entry = ipv6_dns_entry;
 
         local_ipv6_method_dropdown.notify["selected"].connect (() => {
-            sync_compact_visibility ();
+            sync_ipv6_section_sensitivity (
+                local_ipv6_method_dropdown,
+                manual_revealer,
+                override_revealer,
+                local_ipv6_dns_auto_switch,
+                local_ipv6_dns_entry
+            );
         });
 
-        sync_compact_visibility ();
+        local_ipv6_dns_auto_switch.notify["active"].connect (() => {
+            sync_ipv6_section_sensitivity (
+                local_ipv6_method_dropdown,
+                manual_revealer,
+                override_revealer,
+                local_ipv6_dns_auto_switch,
+                local_ipv6_dns_entry
+            );
+        });
+
+        sync_ipv6_section_sensitivity (
+            local_ipv6_method_dropdown,
+            manual_revealer,
+            override_revealer,
+            local_ipv6_dns_auto_switch,
+            local_ipv6_dns_entry
+        );
     }
 }

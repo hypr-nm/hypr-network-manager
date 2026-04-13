@@ -68,6 +68,16 @@ namespace NetworkManagerRebuild.UI.Views {
             wire_profiles_page_signals ();
             wire_profiles_details_page_signals ();
             wire_profiles_edit_page_signals ();
+            wire_ethernet_controller_signals ();
+        }
+
+        private void wire_ethernet_controller_signals () {
+            ethernet_controller.profile_edit_completed.connect (() => {
+                main_content_stack.set_visible_child_name ("profiles");
+                stack.set_visible_child_name ("list");
+                profiles_page.restore_scroll_position ();
+                window_host.set_popup_text_input_mode (false);
+            });
         }
 
         private void wire_profiles_page_signals () {
@@ -108,12 +118,7 @@ namespace NetworkManagerRebuild.UI.Views {
                     var selected_dev = selected_saved_ethernet_profile;
                     main_notebook.set_current_page (1);
                     main_content_stack.set_visible_child_name ("main");
-                    ethernet_controller.open_profile_edit (selected_dev, () => {
-                        main_content_stack.set_visible_child_name ("profiles");
-                        stack.set_visible_child_name ("list");
-                        profiles_page.restore_scroll_position ();
-                        window_host.set_popup_text_input_mode (false);
-                    });
+                    ethernet_controller.open_profile_edit (selected_dev);
                 }
             });
 
@@ -138,16 +143,6 @@ namespace NetworkManagerRebuild.UI.Views {
             wifi_saved_edit_page.save.connect (() => {
                 apply_saved_wifi_edit ();
             });
-
-            wifi_saved_edit_page.sync_sensitivity.connect (() => {
-                sync_saved_wifi_edit_gateway_dns_sensitivity ();
-            });
-        }
-
-        private void sync_saved_wifi_edit_gateway_dns_sensitivity () {
-            if (wifi_saved_flow != null) {
-                wifi_saved_flow.on_sync_sensitivity_requested ();
-            }
         }
 
         private bool has_ethernet_profile (NetworkDevice dev) {

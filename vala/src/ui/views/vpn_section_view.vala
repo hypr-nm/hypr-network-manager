@@ -18,10 +18,7 @@ namespace NetworkManagerRebuild.UI.Views {
 
             var page = controller.build_page (
                 out vpn_listbox,
-                out vpn_stack_local,
-                () => {
-                    controller.refresh ();
-                }
+                out vpn_stack_local
             );
 
             this.listbox = vpn_listbox;

@@ -28,7 +28,8 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
 
-        var back_btn = MainWindowHelpers.build_back_button (() => {
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
             this.back ();
         });
         back_btn.set_halign (Gtk.Align.START);
@@ -128,7 +129,6 @@ public class MainWindowWifiEditPage : Gtk.Box {
     public signal void back ();
     public signal void apply ();
     public signal void ok ();
-    public signal void sync_sensitivity ();
 
     public MainWindowWifiEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
@@ -143,7 +143,8 @@ public class MainWindowWifiEditPage : Gtk.Box {
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        var back_btn = MainWindowHelpers.build_back_button (() => {
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
             this.back ();
         });
         header.append (back_btn);
@@ -188,22 +189,14 @@ public class MainWindowWifiEditPage : Gtk.Box {
         );
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
-        MainWindowActionCallback update_password_visibility_icon = () => {
-            bool reveal = this.password_entry.get_visibility ();
-            MainWindowIconResources.set_password_visibility_icon (this.password_entry, reveal);
-            this.password_entry.set_icon_tooltip_text (
-                Gtk.EntryIconPosition.SECONDARY,
-                reveal ? "Hide password" : "Show password"
-            );
-        };
-        update_password_visibility_icon ();
+        MainWindowHelpers.sync_password_visibility_icon (this.password_entry);
 
         this.password_entry.icon_press.connect ((icon_pos) => {
             if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
                 return;
             }
             this.password_entry.set_visibility (!this.password_entry.get_visibility ());
-            update_password_visibility_icon ();
+            MainWindowHelpers.sync_password_visibility_icon (this.password_entry);
         });
         this.password_entry.activate.connect (() => {
             this.ok ();
@@ -222,7 +215,6 @@ public class MainWindowWifiEditPage : Gtk.Box {
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
-            () => this.sync_sensitivity (),
             true
         );
 
@@ -245,7 +237,6 @@ public class MainWindowWifiEditPage : Gtk.Box {
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
-            () => this.sync_sensitivity (),
             true
         );
 
@@ -255,8 +246,6 @@ public class MainWindowWifiEditPage : Gtk.Box {
         this.ipv6_gateway_entry = v6_gw;
         this.ipv6_dns_auto_switch = v6_dns_auto;
         this.ipv6_dns_entry = v6_dns;
-
-        this.sync_sensitivity ();
 
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         MainWindowCssClassResolver.add_hook_and_best_class (actions, "nm-edit-wifi-actions", {"nm-edit-actions"});

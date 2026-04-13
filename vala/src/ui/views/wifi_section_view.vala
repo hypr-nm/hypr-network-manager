@@ -60,34 +60,41 @@ namespace NetworkManagerRebuild.UI.Views {
             Gtk.Switch local_wifi_switch;
             Gtk.ListBox local_wifi_listbox;
             Gtk.Stack local_wifi_stack;
+            Gtk.Button local_add_button;
+            Gtk.Button local_refresh_button;
 
             var page = MainWindowWifiPageBuilder.build_page (
                 out local_wifi_switch,
                 out local_wifi_listbox,
                 out local_wifi_stack,
+                out local_add_button,
+                out local_refresh_button,
                 details_page,
                 edit_page,
-                add_page,
-                () => {
-                    refresh_requested ();
-                },
-                () => {
-                    controller.open_add_network (
-                        stack,
-                        add_ssid_entry,
-                        add_security_dropdown,
-                        add_password_entry
-                    );
-                },
-                () => {
-                    on_wifi_switch_changed ();
-                }
+                add_page
             );
 
             this.wifi_switch = local_wifi_switch;
             this.listbox = local_wifi_listbox;
             this.stack = local_wifi_stack;
             this.widget = page;
+
+            local_refresh_button.clicked.connect (() => {
+                refresh_requested ();
+            });
+
+            local_add_button.clicked.connect (() => {
+                controller.open_add_network (
+                    stack,
+                    add_ssid_entry,
+                    add_security_dropdown,
+                    add_password_entry
+                );
+            });
+
+            wifi_switch.notify["active"].connect (() => {
+                on_wifi_switch_changed ();
+            });
         }
 
         private void wire_details_page_signals () {
@@ -127,8 +134,6 @@ namespace NetworkManagerRebuild.UI.Views {
             edit_page.ok.connect (() => {
                 apply_wifi_edit (true);
             });
-
-            edit_page.sync_sensitivity.connect (sync_wifi_edit_gateway_dns_sensitivity);
         }
 
         private Gtk.Widget build_add_page () {
@@ -143,7 +148,8 @@ namespace NetworkManagerRebuild.UI.Views {
             );
 
             var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            var back_btn = MainWindowHelpers.build_back_button (() => {
+            var back_btn = MainWindowHelpers.build_back_button ();
+            back_btn.clicked.connect (() => {
                 window_host.set_popup_text_input_mode (false);
                 stack.set_visible_child_name ("list");
             });
@@ -268,20 +274,6 @@ namespace NetworkManagerRebuild.UI.Views {
                 add_ssid_entry,
                 add_security_dropdown,
                 add_password_entry
-            );
-        }
-
-        private void sync_wifi_edit_gateway_dns_sensitivity () {
-            if (edit_page == null) return;
-            controller.sync_edit_gateway_dns_sensitivity (
-                edit_page.ipv4_method_dropdown,
-                edit_page.ipv4_gateway_entry,
-                edit_page.ipv4_dns_entry,
-                edit_page.dns_auto_switch,
-                edit_page.ipv6_method_dropdown,
-                edit_page.ipv6_gateway_entry,
-                edit_page.ipv6_dns_entry,
-                edit_page.ipv6_dns_auto_switch
             );
         }
 

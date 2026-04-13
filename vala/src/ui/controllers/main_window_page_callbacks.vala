@@ -1,4 +1,3 @@
-public delegate void MainWindowActionCallback ();
 public delegate void MainWindowBoolCallback (bool value);
 public delegate void MainWindowRefreshActionCallback (bool request_wifi_scan);
 public delegate void MainWindowErrorCallback (string message);

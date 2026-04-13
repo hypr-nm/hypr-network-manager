@@ -36,23 +36,6 @@ public class MainWindowProfileAdapter : Object {
         });
     }
 
-    private void sync_gateway_dns_sensitivity () {
-        wifi_controller.sync_edit_gateway_dns_sensitivity (
-            wifi_saved_edit_page.ipv4_method_dropdown,
-            wifi_saved_edit_page.ipv4_gateway_entry,
-            wifi_saved_edit_page.ipv4_dns_entry,
-            wifi_saved_edit_page.dns_auto_switch,
-            wifi_saved_edit_page.ipv6_method_dropdown,
-            wifi_saved_edit_page.ipv6_gateway_entry,
-            wifi_saved_edit_page.ipv6_dns_entry,
-            wifi_saved_edit_page.ipv6_dns_auto_switch
-        );
-    }
-
-    public void on_sync_sensitivity_requested () {
-        sync_gateway_dns_sensitivity ();
-    }
-
     public void refresh_saved_networks () {
         wifi_controller.refresh_saved_wifi_profiles (
             nm,

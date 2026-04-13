@@ -63,8 +63,7 @@ public class MainWindowVpnPageBuilder : Object {
 
     public Gtk.Widget build_page (
         out Gtk.ListBox vpn_listbox,
-        out Gtk.Stack vpn_stack,
-        MainWindowActionCallback on_refresh
+        out Gtk.Stack vpn_stack
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
@@ -87,7 +86,7 @@ public class MainWindowVpnPageBuilder : Object {
         refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {
-            on_refresh ();
+            refresh ();
         });
         toolbar.append (refresh_btn);
 

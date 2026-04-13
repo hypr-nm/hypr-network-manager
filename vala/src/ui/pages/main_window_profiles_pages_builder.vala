@@ -29,7 +29,8 @@ public class MainWindowProfilesPage : Gtk.Box {
         MainWindowCssClassResolver.add_best_class (header, {"nm-toolbar-inset", "nm-page-shell-inset"});
         MainWindowCssClassResolver.add_best_class (header, {"nm-toolbar", "nm-status-bar"});
 
-        var back_btn = MainWindowHelpers.build_back_button (() => {
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
             this.back ();
         });
         header.append (back_btn);
@@ -272,7 +273,8 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
 
-        var back_btn = MainWindowHelpers.build_back_button (() => {
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
             this.back ();
         });
         nav_row.append (back_btn);
@@ -518,7 +520,6 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
 
     public signal void back ();
     public signal void save ();
-    public signal void sync_sensitivity ();
 
     private Gtk.Box build_section (string title, out Gtk.Box section_content) {
         var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -549,7 +550,8 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        var back_btn = MainWindowHelpers.build_back_button (() => {
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
             this.back ();
         });
         header.append (back_btn);
@@ -659,22 +661,14 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         );
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
-        MainWindowActionCallback update_password_visibility_icon = () => {
-            bool reveal = this.password_entry.get_visibility ();
-            MainWindowIconResources.set_password_visibility_icon (this.password_entry, reveal);
-            this.password_entry.set_icon_tooltip_text (
-                Gtk.EntryIconPosition.SECONDARY,
-                reveal ? "Hide password" : "Show password"
-            );
-        };
-        update_password_visibility_icon ();
+        MainWindowHelpers.sync_password_visibility_icon (this.password_entry);
 
         this.password_entry.icon_press.connect ((icon_pos) => {
             if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
                 return;
             }
             this.password_entry.set_visibility (!this.password_entry.get_visibility ());
-            update_password_visibility_icon ();
+            MainWindowHelpers.sync_password_visibility_icon (this.password_entry);
         });
         auth_content.append (this.password_entry);
 
@@ -692,7 +686,6 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
-            () => this.sync_sensitivity (),
             true
         );
 
@@ -715,7 +708,6 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
-            () => this.sync_sensitivity (),
             true
         );
 

@@ -5,18 +5,12 @@ namespace MainWindowWifiPageBuilder {
         out Gtk.Switch wifi_switch,
         out Gtk.ListBox wifi_listbox,
         out Gtk.Stack wifi_stack,
+        out Gtk.Button add_network_button,
+        out Gtk.Button refresh_button,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
-        Gtk.Widget add_page,
-        owned MainWindowActionCallback on_refresh,
-        owned MainWindowActionCallback on_add_network,
-        owned MainWindowActionCallback on_switch_changed
+        Gtk.Widget add_page
     ) {
-        // Keep callbacks alive for widget signal handlers.
-        MainWindowActionCallback refresh_cb = (owned) on_refresh;
-        MainWindowActionCallback add_network_cb = (owned) on_add_network;
-        MainWindowActionCallback switch_changed_cb = (owned) on_switch_changed;
-
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
         MainWindowCssClassResolver.add_hook_and_best_class (page, "nm-page-wifi", {"nm-page"});
@@ -38,10 +32,8 @@ namespace MainWindowWifiPageBuilder {
         add_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (add_btn, {"nm-toolbar-action", "nm-button"});
         add_btn.set_tooltip_text ("Add Hidden Network");
-        add_btn.clicked.connect (() => {
-            add_network_cb ();
-        });
         toolbar.append (add_btn);
+        add_network_button = add_btn;
 
         var refresh_btn = new Gtk.Button.with_label ("Refresh");
         refresh_btn.add_css_class ("nm-button");
@@ -49,17 +41,12 @@ namespace MainWindowWifiPageBuilder {
         refresh_btn.add_css_class ("nm-refresh-button");
         refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
-        refresh_btn.clicked.connect (() => {
-            refresh_cb ();
-        });
         toolbar.append (refresh_btn);
+        refresh_button = refresh_btn;
 
         wifi_switch = new Gtk.Switch ();
         MainWindowCssClassResolver.add_hook_and_best_class (wifi_switch, "nm-wifi-switch", {"nm-switch"});
         wifi_switch.set_valign (Gtk.Align.CENTER);
-        wifi_switch.notify["active"].connect (() => {
-            switch_changed_cb ();
-        });
         toolbar.append (wifi_switch);
 
         page.append (toolbar);
@@ -101,17 +88,15 @@ namespace MainWindowWifiPageBuilder {
         wifi_stack.set_visible_child_name ("empty");
         var wifi_stack_ref = wifi_stack;
 
-        MainWindowActionCallback sync_toolbar_visibility = () => {
+        wifi_stack_ref.notify["visible-child-name"].connect (() => {
             string page_name = wifi_stack_ref.get_visible_child_name ();
             bool show_toolbar = page_name == "list" || page_name == "empty";
             toolbar.set_visible (show_toolbar);
-        };
-
-        wifi_stack_ref.notify["visible-child-name"].connect (() => {
-            sync_toolbar_visibility ();
         });
 
-        sync_toolbar_visibility ();
+        string initial_page_name = wifi_stack_ref.get_visible_child_name ();
+        bool show_toolbar_initial = initial_page_name == "list" || initial_page_name == "empty";
+        toolbar.set_visible (show_toolbar_initial);
 
         page.append (wifi_stack);
 

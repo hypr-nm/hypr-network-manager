@@ -33,9 +33,6 @@ namespace NetworkManagerRebuild.UI.Views {
             ethernet_edit_page.apply.connect (() => {
                 controller.on_edit_apply_requested ();
             });
-            ethernet_edit_page.sync_sensitivity.connect (() => {
-                controller.on_edit_sync_sensitivity_requested ();
-            });
 
             Gtk.ListBox ethernet_listbox;
             Gtk.Stack ethernet_stack_local;
@@ -44,9 +41,7 @@ namespace NetworkManagerRebuild.UI.Views {
                 out ethernet_stack_local,
                 ethernet_details_page,
                 ethernet_edit_page,
-                () => {
-                    controller.refresh ();
-                }
+                controller
             );
 
             this.listbox = ethernet_listbox;

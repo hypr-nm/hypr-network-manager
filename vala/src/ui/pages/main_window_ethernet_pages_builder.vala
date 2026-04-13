@@ -50,7 +50,8 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class ("nm-details-nav-row");
 
-        var back_btn = MainWindowHelpers.build_back_button (() => {
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
             this.back ();
         });
         nav_row.append (back_btn);
@@ -147,7 +148,6 @@ public class MainWindowEthernetEditPage : Gtk.Box {
 
     public signal void back ();
     public signal void apply ();
-    public signal void sync_sensitivity ();
 
     public MainWindowEthernetEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
@@ -162,7 +162,8 @@ public class MainWindowEthernetEditPage : Gtk.Box {
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        var back_btn = MainWindowHelpers.build_back_button (() => {
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
             this.back ();
         });
         header.append (back_btn);
@@ -199,9 +200,6 @@ public class MainWindowEthernetEditPage : Gtk.Box {
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
-            () => {
-                this.sync_sensitivity ();
-            },
             true
         );
 
@@ -224,9 +222,6 @@ public class MainWindowEthernetEditPage : Gtk.Box {
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
-            () => {
-                this.sync_sensitivity ();
-            },
             true
         );
 
@@ -264,7 +259,7 @@ namespace MainWindowEthernetPageBuilder {
         out Gtk.Stack ethernet_stack,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
-        MainWindowActionCallback on_refresh
+        MainWindowEthernetController controller
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class ("nm-page");
@@ -287,7 +282,7 @@ namespace MainWindowEthernetPageBuilder {
         refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
         refresh_btn.clicked.connect (() => {
-            on_refresh ();
+            controller.refresh ();
         });
         toolbar.append (refresh_btn);
 
@@ -329,17 +324,15 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_stack.set_visible_child_name ("empty");
         var ethernet_stack_ref = ethernet_stack;
 
-        MainWindowActionCallback sync_toolbar_visibility = () => {
+        ethernet_stack_ref.notify["visible-child-name"].connect (() => {
             string page_name = ethernet_stack_ref.get_visible_child_name ();
             bool show_toolbar = page_name == "list" || page_name == "empty";
             toolbar.set_visible (show_toolbar);
-        };
-
-        ethernet_stack_ref.notify["visible-child-name"].connect (() => {
-            sync_toolbar_visibility ();
         });
 
-        sync_toolbar_visibility ();
+        string initial_page_name = ethernet_stack_ref.get_visible_child_name ();
+        bool show_toolbar_initial = initial_page_name == "list" || initial_page_name == "empty";
+        toolbar.set_visible (show_toolbar_initial);
 
         page.append (ethernet_stack);
         return page;
