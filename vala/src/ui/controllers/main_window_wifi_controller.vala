@@ -2,27 +2,52 @@ using GLib;
 using Gtk;
 
 public class MainWindowWifiController : Object {
-    private MainWindowWifiRuntimeController runtime_controller;
     private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
     private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+
+    private MainWindowWifiRefreshController refresh_controller;
+    private MainWindowWifiConnectionController connection_controller;
+    private MainWindowWifiHiddenNetworkController hidden_network_controller;
+    private MainWindowWifiSavedProfilesController saved_profiles_controller;
+    private MainWindowWifiSwitchController switch_controller;
+    private MainWindowWifiPasswordUIController password_ui_controller;
+    private MainWindowWifiDetailsEditController details_edit_controller;
 
     public signal void saved_profile_update_succeeded ();
 
     public MainWindowWifiController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
-        runtime_controller = new MainWindowWifiRuntimeController (host, state_context);
-        runtime_controller.saved_profile_update_succeeded.connect (() => {
+
+        refresh_controller = new MainWindowWifiRefreshController (host, state_context);
+        connection_controller = new MainWindowWifiConnectionController (host, state_context, refresh_controller);
+        hidden_network_controller = new MainWindowWifiHiddenNetworkController (host, connection_controller);
+        saved_profiles_controller = new MainWindowWifiSavedProfilesController (host);
+        switch_controller = new MainWindowWifiSwitchController (host);
+        password_ui_controller = new MainWindowWifiPasswordUIController (host);
+        details_edit_controller = new MainWindowWifiDetailsEditController (host, state_context);
+
+        saved_profiles_controller.saved_profile_update_succeeded.connect (() => {
             saved_profile_update_succeeded ();
         });
     }
 
     public void on_page_leave () {
-        runtime_controller.on_page_leave ();
+        refresh_controller.on_page_leave ();
+        connection_controller.on_page_leave ();
+        hidden_network_controller.on_page_leave ();
+        saved_profiles_controller.on_page_leave ();
+        switch_controller.on_page_leave ();
+        details_edit_controller.on_page_leave ();
     }
 
     public void dispose_controller () {
-        runtime_controller.dispose_controller ();
+        refresh_controller.dispose_controller ();
+        connection_controller.dispose_controller ();
+        hidden_network_controller.dispose_controller ();
+        saved_profiles_controller.dispose_controller ();
+        switch_controller.dispose_controller ();
+        details_edit_controller.dispose_controller ();
     }
 
     public void sync_add_network_sensitivity (
@@ -30,7 +55,7 @@ public class MainWindowWifiController : Object {
         Gtk.Entry? wifi_add_password_entry,
         Gtk.Button? wifi_add_connect_button = null
     ) {
-        runtime_controller.sync_add_network_sensitivity (
+        hidden_network_controller.sync_add_network_sensitivity (
             wifi_add_security_dropdown,
             wifi_add_password_entry,
             wifi_add_connect_button
@@ -43,7 +68,7 @@ public class MainWindowWifiController : Object {
         Gtk.DropDown wifi_add_security_dropdown,
         Gtk.Entry wifi_add_password_entry
     ) {
-        runtime_controller.open_add_network (
+        hidden_network_controller.open_add_network (
             wifi_stack,
             wifi_add_ssid_entry,
             wifi_add_security_dropdown,
@@ -58,7 +83,7 @@ public class MainWindowWifiController : Object {
         Gtk.DropDown wifi_add_security_dropdown,
         Gtk.Entry wifi_add_password_entry
     ) {
-        runtime_controller.apply_add_network (
+        hidden_network_controller.apply_add_network (
             nm,
             wifi_stack,
             wifi_add_ssid_entry,
@@ -72,7 +97,7 @@ public class MainWindowWifiController : Object {
         WifiNetwork net,
         MainWindowWifiDetailsPage page
     ) {
-        runtime_controller.populate_wifi_details (
+        details_edit_controller.populate_wifi_details (
             nm,
             net,
             page
@@ -102,7 +127,7 @@ public class MainWindowWifiController : Object {
         }
 
         selected_wifi_network = net;
-        runtime_controller.open_wifi_edit (
+        details_edit_controller.open_wifi_edit (
             nm,
             net,
             page,
@@ -123,7 +148,7 @@ public class MainWindowWifiController : Object {
         }
 
         var net = selected_wifi_network;
-        return runtime_controller.apply_wifi_edit (
+        return details_edit_controller.apply_wifi_edit (
             nm,
             net,
             page,
@@ -177,7 +202,7 @@ public class MainWindowWifiController : Object {
         bool has_active_wifi_password_prompt,
         MainWindowWifiRowBuildCallback on_build_wifi_row
     ) {
-        runtime_controller.refresh_wifi (
+        refresh_controller.refresh_wifi (
             nm,
             wifi_stack,
             wifi_listbox,
@@ -197,7 +222,7 @@ public class MainWindowWifiController : Object {
         uint pending_wifi_connect_timeout_ms,
         bool close_on_connect
     ) {
-        runtime_controller.connect_wifi_with_optional_password (
+        connection_controller.connect_wifi_with_optional_password (
             nm,
             net,
             password,
@@ -211,7 +236,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         bool request_wifi_scan
     ) {
-        runtime_controller.refresh_after_action (
+        connection_controller.refresh_after_action (
             nm,
             request_wifi_scan
         );
@@ -222,7 +247,7 @@ public class MainWindowWifiController : Object {
         Gtk.Switch wifi_switch,
         Gtk.Switch networking_switch
     ) {
-        runtime_controller.refresh_switch_states (
+        switch_controller.refresh_switch_states (
             nm,
             wifi_switch,
             networking_switch
@@ -233,7 +258,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         Gtk.Switch wifi_switch
     ) {
-        runtime_controller.on_wifi_switch_changed (
+        switch_controller.on_wifi_switch_changed (
             nm,
             wifi_switch
         );
@@ -243,7 +268,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         Gtk.Switch networking_switch
     ) {
-        runtime_controller.on_networking_switch_changed (
+        switch_controller.on_networking_switch_changed (
             nm,
             networking_switch
         );
@@ -255,7 +280,7 @@ public class MainWindowWifiController : Object {
         Gtk.Revealer revealer,
         Gtk.Entry entry
     ) {
-        runtime_controller.show_wifi_password_prompt (
+        password_ui_controller.show_wifi_password_prompt (
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry,
             revealer,
@@ -270,7 +295,7 @@ public class MainWindowWifiController : Object {
         Gtk.Entry entry,
         string? value
     ) {
-        runtime_controller.hide_wifi_password_prompt (
+        password_ui_controller.hide_wifi_password_prompt (
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry,
             revealer,
@@ -283,7 +308,7 @@ public class MainWindowWifiController : Object {
         ref Gtk.Revealer? active_wifi_password_revealer,
         ref Gtk.Entry? active_wifi_password_entry
     ) {
-        runtime_controller.hide_active_wifi_password_prompt (
+        password_ui_controller.hide_active_wifi_password_prompt (
             ref active_wifi_password_revealer,
             ref active_wifi_password_entry
         );
@@ -293,7 +318,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         WifiNetwork net
     ) {
-        runtime_controller.forget_wifi_network (
+        connection_controller.forget_wifi_network (
             nm,
             net
         );
@@ -303,7 +328,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         WifiNetwork net
     ) {
-        runtime_controller.disconnect_wifi_network (
+        connection_controller.disconnect_wifi_network (
             nm,
             net
         );
@@ -314,7 +339,7 @@ public class MainWindowWifiController : Object {
         WifiNetwork net,
         bool enabled
     ) {
-        runtime_controller.set_wifi_network_autoconnect (
+        connection_controller.set_wifi_network_autoconnect (
             nm,
             net,
             enabled
@@ -325,7 +350,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         MainWindowProfilesPage page
     ) {
-        runtime_controller.refresh_saved_wifi_profiles (nm, page);
+        saved_profiles_controller.refresh_saved_wifi_profiles (nm, page);
     }
 
     public void load_saved_wifi_profile_settings (
@@ -333,7 +358,7 @@ public class MainWindowWifiController : Object {
         WifiSavedProfile profile,
         MainWindowWifiSavedEditPage page
     ) {
-        runtime_controller.load_saved_wifi_profile_settings (
+        saved_profiles_controller.load_saved_wifi_profile_settings (
             nm,
             profile,
             page
@@ -346,7 +371,7 @@ public class MainWindowWifiController : Object {
         WifiSavedProfileUpdateRequest profile_request,
         WifiNetworkUpdateRequest network_request
     ) {
-        runtime_controller.apply_saved_wifi_profile_updates (
+        saved_profiles_controller.apply_saved_wifi_profile_updates (
             nm,
             profile,
             profile_request,
