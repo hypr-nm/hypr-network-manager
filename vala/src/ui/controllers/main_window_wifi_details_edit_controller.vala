@@ -177,68 +177,11 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         details_request_cancellable = new Cancellable ();
         var details_request = details_request_cancellable;
 
-        page.details_title.set_text (MainWindowHelpers.safe_text (net.ssid));
         bool is_connected_now = state_context.active_wifi_connections.contains (net.network_key);
-        bool can_manage_saved_profile = net.saved;
-        page.action_row.set_visible (can_manage_saved_profile);
-        page.forget_button.set_visible (can_manage_saved_profile);
-        page.edit_button.set_visible (can_manage_saved_profile);
+        bool pending = state_context.pending_wifi_connect.contains (net.network_key);
 
-        MainWindowHelpers.clear_box (page.basic_rows);
-        MainWindowHelpers.clear_box (page.advanced_rows);
-        MainWindowHelpers.clear_box (page.ip_rows);
-
-        page.basic_rows.append (
-            MainWindowHelpers.build_details_row (
-                "Connection Status",
-                is_connected_now ? "Connected" : "Not connected"
-            )
-        );
-        page.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Signal Strength", "%u%%".printf (net.signal))
-        );
-        page.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Bars", MainWindowHelpers.get_signal_bars (net.signal))
-        );
-        page.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Security", net.is_secured ? "Secured" : "Open")
-        );
-        page.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Saved Profile", net.saved ? "Yes" : "No")
-        );
-
-        string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
-        int channel = MainWindowHelpers.get_channel_from_frequency (net.frequency_mhz);
-        page.advanced_rows.append (
-            MainWindowHelpers.build_details_row (
-                "Frequency",
-                net.frequency_mhz > 0 ? "%.1f GHz".printf ((double) net.frequency_mhz / 1000.0) : "n/a"
-            )
-        );
-        page.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Channel", channel > 0 ? "%d".printf (channel) : "n/a")
-        );
-        page.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Band", band != "" ? band : "n/a")
-        );
-        page.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("BSSID", MainWindowHelpers.display_text_or_na (net.bssid))
-        );
-        page.advanced_rows.append (
-            MainWindowHelpers.build_details_row (
-                "Max bitrate",
-                net.max_bitrate_kbps > 0
-                    ? "%.1f Mbps".printf ((double) net.max_bitrate_kbps / 1000.0)
-                    : "n/a"
-            )
-        );
-        page.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Mode", MainWindowHelpers.get_mode_label (net.mode))
-        );
-
-        page.ip_rows.append (
-            MainWindowHelpers.build_details_row ("Loading", "Reading IP settings…")
-        );
+        page.render_details (net, is_connected_now, pending);
+        page.show_loading_ip ();
 
         nm.get_wifi_network_ip_settings.begin (net, details_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
@@ -250,9 +193,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             }
 
             NetworkIpSettings ip_settings = nm.get_wifi_network_ip_settings.end (res);
-
-            MainWindowHelpers.clear_box (page.ip_rows);
-            MainWindowIpDetailsRowBuilder.populate_ip_rows (page.ip_rows, ip_settings, is_connected_now);
+            page.render_ip_settings (ip_settings, is_connected_now);
         });
     }
 

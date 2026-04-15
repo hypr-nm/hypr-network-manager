@@ -1,6 +1,6 @@
 using Gtk;
 
-public class MainWindowWifiDetailsPage : Gtk.Box {
+public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
     public Gtk.Label details_title { get; set; }
     public Gtk.Box basic_rows { get; set; }
     public Gtk.Box advanced_rows { get; set; }
@@ -12,6 +12,72 @@ public class MainWindowWifiDetailsPage : Gtk.Box {
     public signal void back ();
     public signal void forget ();
     public signal void edit ();
+
+    public void render_details (
+        WifiNetwork net,
+        bool is_connected_now,
+        bool pending
+    ) {
+        this.details_title.set_text (MainWindowHelpers.safe_text (net.ssid));
+        bool can_manage_saved_profile = net.saved;
+        this.action_row.set_visible (can_manage_saved_profile);
+        this.forget_button.set_visible (can_manage_saved_profile);
+        this.edit_button.set_visible (can_manage_saved_profile);
+
+        MainWindowHelpers.clear_box (this.basic_rows);
+        MainWindowHelpers.clear_box (this.advanced_rows);
+
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row (
+                "Connection Status",
+                is_connected_now ? "Connected" : "Not connected"
+            )
+        );
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Signal Strength", "%u%%".printf (net.signal))
+        );
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Bars", MainWindowHelpers.get_signal_bars (net.signal))
+        );
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Security", net.is_secured ? "Secured" : "Open")
+        );
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Saved Profile", net.saved ? "Yes" : "No")
+        );
+
+        string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
+        int channel = MainWindowHelpers.get_channel_from_frequency (net.frequency_mhz);
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row (
+                "Frequency",
+                net.frequency_mhz > 0 ? "%.1f GHz".printf ((double) net.frequency_mhz / 1000.0) : "n/a"
+            )
+        );
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("Channel", channel > 0 ? "%d".printf (channel) : "n/a")
+        );
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("Band", band != "" ? band : "n/a")
+        );
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("BSSID", MainWindowHelpers.display_text_or_na (net.bssid))
+        );
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row (
+                "Max bitrate",
+                net.max_bitrate_kbps > 0
+                    ? "%.1f Mbps".printf ((double) net.max_bitrate_kbps / 1000.0)
+                    : "n/a"
+            )
+        );
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("Mode", MainWindowHelpers.get_mode_label (net.mode))
+        );
+
+        this.forget_button.set_sensitive (net.saved && !pending);
+        this.edit_button.set_sensitive (net.saved && !pending);
+    }
 
     public MainWindowWifiDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);

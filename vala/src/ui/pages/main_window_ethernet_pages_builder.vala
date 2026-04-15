@@ -22,7 +22,7 @@ public class MainWindowEthernetViewContext : Object {
     }
 }
 
-public class MainWindowEthernetDetailsPage : Gtk.Box {
+public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
     public Gtk.Label details_title { get; set; }
     public Gtk.Box basic_rows { get; set; }
     public Gtk.Box advanced_rows { get; set; }
@@ -34,6 +34,53 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
     public signal void back ();
     public signal void primary_action ();
     public signal void edit ();
+
+    public void render_details (
+        NetworkDevice dev,
+        bool has_profile,
+        bool pending,
+        bool can_connect
+    ) {
+        this.details_title.set_text (MainWindowHelpers.safe_text (dev.name));
+
+        MainWindowHelpers.clear_box (this.basic_rows);
+        MainWindowHelpers.clear_box (this.advanced_rows);
+
+        string profile_name = MainWindowHelpers.display_text_or_na (dev.connection);
+
+        this.basic_rows.append (MainWindowHelpers.build_details_row ("Interface", dev.name));
+        this.basic_rows.append (MainWindowHelpers.build_details_row ("Profile", profile_name));
+        this.basic_rows.append (MainWindowHelpers.build_details_row ("State", dev.state_label));
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row ("Connected", dev.is_connected ? "Yes" : "No")
+        );
+
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("Device Path", dev.device_path)
+        );
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row ("State Code", "%u".printf (dev.state))
+        );
+
+        if (pending) {
+            this.primary_button.set_label ("Updating…");
+            this.primary_button.set_sensitive (false);
+        } else if (dev.is_connected) {
+            this.primary_button.set_label ("Disconnect");
+            this.primary_button.set_sensitive (true);
+        } else if (can_connect) {
+            this.primary_button.set_label ("Connect");
+            this.primary_button.set_sensitive (true);
+        } else if (has_profile) {
+            this.primary_button.set_label ("Unavailable");
+            this.primary_button.set_sensitive (false);
+        } else {
+            this.primary_button.set_label ("No Profile");
+            this.primary_button.set_sensitive (false);
+        }
+
+        this.edit_button.set_sensitive (has_profile && !pending);
+    }
 
     public MainWindowEthernetDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);

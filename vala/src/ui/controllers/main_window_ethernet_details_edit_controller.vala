@@ -19,31 +19,13 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
         cancel_details_request ();
         details_request_cancellable = new Cancellable ();
         var details_request = details_request_cancellable;
-        ethernet_details_page.details_title.set_text (MainWindowHelpers.safe_text (dev.name));
 
-        MainWindowHelpers.clear_box (ethernet_details_page.basic_rows);
-        MainWindowHelpers.clear_box (ethernet_details_page.advanced_rows);
-        MainWindowHelpers.clear_box (ethernet_details_page.ip_rows);
-
-        string profile_name = MainWindowHelpers.display_text_or_na (dev.connection);
         bool has_profile = connection_controller.has_saved_profile (dev);
         bool pending = connection_controller.pending_action.contains (dev.name);
+        bool can_connect = connection_controller.can_connect_with_profile (dev);
 
-        ethernet_details_page.basic_rows.append (MainWindowHelpers.build_details_row ("Interface", dev.name));
-        ethernet_details_page.basic_rows.append (MainWindowHelpers.build_details_row ("Profile", profile_name));
-        ethernet_details_page.basic_rows.append (MainWindowHelpers.build_details_row ("State", dev.state_label));
-        ethernet_details_page.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Connected", dev.is_connected ? "Yes" : "No")
-        );
-
-        ethernet_details_page.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Device Path", dev.device_path)
-        );
-        ethernet_details_page.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("State Code", "%u".printf (dev.state))
-        );
-
-        ethernet_details_page.ip_rows.append (MainWindowHelpers.build_details_row ("Loading", "Reading IP settings…"));
+        ethernet_details_page.render_details (dev, has_profile, pending, can_connect);
+        ethernet_details_page.show_loading_ip ();
 
         nm.get_ethernet_device_ip_settings.begin (dev, details_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
@@ -57,29 +39,8 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
             }
 
             NetworkIpSettings ip_settings = nm.get_ethernet_device_ip_settings.end (res);
-
-            MainWindowHelpers.clear_box (ethernet_details_page.ip_rows);
-            MainWindowIpDetailsRowBuilder.populate_ip_rows (ethernet_details_page.ip_rows, ip_settings, dev.is_connected);
+            ethernet_details_page.render_ip_settings (ip_settings, dev.is_connected);
         });
-
-        if (pending) {
-            ethernet_details_page.primary_button.set_label ("Updating…");
-            ethernet_details_page.primary_button.set_sensitive (false);
-        } else if (dev.is_connected) {
-            ethernet_details_page.primary_button.set_label ("Disconnect");
-            ethernet_details_page.primary_button.set_sensitive (true);
-        } else if (connection_controller.can_connect_with_profile (dev)) {
-            ethernet_details_page.primary_button.set_label ("Connect");
-            ethernet_details_page.primary_button.set_sensitive (true);
-        } else if (has_profile) {
-            ethernet_details_page.primary_button.set_label ("Unavailable");
-            ethernet_details_page.primary_button.set_sensitive (false);
-        } else {
-            ethernet_details_page.primary_button.set_label ("No Profile");
-            ethernet_details_page.primary_button.set_sensitive (false);
-        }
-
-        ethernet_details_page.edit_button.set_sensitive (has_profile && !pending);
     }
 
     public void open_details (
