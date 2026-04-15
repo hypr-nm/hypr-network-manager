@@ -68,7 +68,6 @@ executable(
     'src/ui/controllers/main_window_wifi_switch_controller.vala',
     'src/ui/controllers/main_window_wifi_password_ui_controller.vala',
     'src/ui/controllers/main_window_wifi_row_reconciler.vala',
-    'src/ui/controllers/main_window_wifi_saved_profile_form_utils.vala',
     'src/ui/controllers/main_window_profile_adapter.vala',
     'src/ui/pages/main_window_wifi_page_builder.vala',
     'src/ui/pages/main_window_wifi_row_builder.vala',
