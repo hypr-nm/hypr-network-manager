@@ -87,8 +87,7 @@ public class MainWindowProfileAdapter : Object {
         WifiSavedProfileUpdateRequest profile_request;
         WifiNetworkUpdateRequest network_request;
         string error_message;
-        if (!MainWindowWifiSavedProfileFormUtils.build_update_requests (
-            wifi_saved_edit_page,
+        if (!wifi_saved_edit_page.build_update_requests (
             out profile_request,
             out network_request,
             out error_message

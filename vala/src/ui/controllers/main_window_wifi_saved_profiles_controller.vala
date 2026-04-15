@@ -116,8 +116,8 @@ public class MainWindowWifiSavedProfilesController : Object {
                     return;
                 }
 
-                MainWindowWifiSavedProfileFormUtils.apply_settings_to_edit_page (page, settings);
-                MainWindowWifiSavedProfileFormUtils.sync_saved_edit_dns_sensitivity (page);
+                page.apply_settings_to_edit_page (settings);
+                page.sync_edit_gateway_dns_sensitivity ();
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch)
                     || saved_profile_settings_cancellable != settings_request
