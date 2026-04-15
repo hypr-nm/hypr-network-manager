@@ -1,11 +1,11 @@
 using Gtk;
 
 public class MainWindowEthernetViewContext : Object {
-    public Gtk.Widget page { get; private set; }
-    public Gtk.ListBox listbox { get; private set; }
-    public Gtk.Stack stack { get; private set; }
-    public MainWindowEthernetDetailsPage details_page { get; private set; }
-    public MainWindowEthernetEditPage edit_page { get; private set; }
+    public Gtk.Widget page { get; set; }
+    public Gtk.ListBox listbox { get; set; }
+    public Gtk.Stack stack { get; set; }
+    public MainWindowEthernetDetailsPage details_page { get; set; }
+    public MainWindowEthernetEditPage edit_page { get; set; }
 
     public MainWindowEthernetViewContext (
         Gtk.Widget page,
@@ -23,13 +23,13 @@ public class MainWindowEthernetViewContext : Object {
 }
 
 public class MainWindowEthernetDetailsPage : Gtk.Box {
-    public Gtk.Label details_title { get; private set; }
-    public Gtk.Box basic_rows { get; private set; }
-    public Gtk.Box advanced_rows { get; private set; }
-    public Gtk.Box ip_rows { get; private set; }
-    public Gtk.Box action_row { get; private set; }
-    public Gtk.Button primary_button { get; private set; }
-    public Gtk.Button edit_button { get; private set; }
+    public Gtk.Label details_title { get; set; }
+    public Gtk.Box basic_rows { get; set; }
+    public Gtk.Box advanced_rows { get; set; }
+    public Gtk.Box ip_rows { get; set; }
+    public Gtk.Box action_row { get; set; }
+    public Gtk.Button primary_button { get; set; }
+    public Gtk.Button edit_button { get; set; }
 
     public signal void back ();
     public signal void primary_action ();
@@ -130,21 +130,21 @@ public class MainWindowEthernetDetailsPage : Gtk.Box {
     }
 }
 
-public class MainWindowEthernetEditPage : Gtk.Box {
-    public Gtk.Label edit_title { get; private set; }
-    public Gtk.Label note_label { get; private set; }
-    public Gtk.DropDown ipv4_method_dropdown { get; private set; }
-    public Gtk.Entry ipv4_address_entry { get; private set; }
-    public Gtk.Entry ipv4_prefix_entry { get; private set; }
-    public Gtk.Entry ipv4_gateway_entry { get; private set; }
-    public Gtk.Switch dns_auto_switch { get; private set; }
-    public Gtk.Entry ipv4_dns_entry { get; private set; }
-    public Gtk.DropDown ipv6_method_dropdown { get; private set; }
-    public Gtk.Entry ipv6_address_entry { get; private set; }
-    public Gtk.Entry ipv6_prefix_entry { get; private set; }
-    public Gtk.Entry ipv6_gateway_entry { get; private set; }
-    public Gtk.Switch ipv6_dns_auto_switch { get; private set; }
-    public Gtk.Entry ipv6_dns_entry { get; private set; }
+public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
+    public Gtk.Label edit_title { get; set; }
+    public Gtk.Label note_label { get; set; }
+    public Gtk.DropDown ipv4_method_dropdown { get; set; }
+    public Gtk.Entry ipv4_address_entry { get; set; }
+    public Gtk.Entry ipv4_prefix_entry { get; set; }
+    public Gtk.Entry ipv4_gateway_entry { get; set; }
+    public Gtk.Switch dns_auto_switch { get; set; }
+    public Gtk.Entry ipv4_dns_entry { get; set; }
+    public Gtk.DropDown ipv6_method_dropdown { get; set; }
+    public Gtk.Entry ipv6_address_entry { get; set; }
+    public Gtk.Entry ipv6_prefix_entry { get; set; }
+    public Gtk.Entry ipv6_gateway_entry { get; set; }
+    public Gtk.Switch ipv6_dns_auto_switch { get; set; }
+    public Gtk.Entry ipv6_dns_entry { get; set; }
 
     public signal void back ();
     public signal void apply ();
