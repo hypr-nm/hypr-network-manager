@@ -198,8 +198,8 @@ public class MainWindowEthernetController : Object {
 
     private void sync_edit_gateway_dns_sensitivity () {
         if (ethernet_edit_page.ipv4_method_dropdown != null) {
-            bool ipv4_disabled = ethernet_edit_page.ipv4_method_dropdown.get_selected () == 2;
-            if (ipv4_disabled) {
+            uint selected = ethernet_edit_page.ipv4_method_dropdown.get_selected ();
+            if (MainWindowIpSensitivityRules.should_force_ipv4_dns_auto_from_dropdown (selected)) {
                 if (ethernet_edit_page.dns_auto_switch != null) {
                     ethernet_edit_page.dns_auto_switch.set_active (true);
                 }
@@ -208,8 +208,7 @@ public class MainWindowEthernetController : Object {
 
         if (ethernet_edit_page.ipv6_method_dropdown != null) {
             uint selected = ethernet_edit_page.ipv6_method_dropdown.get_selected ();
-            bool ipv6_disabled_or_ignore = selected == 2 || selected == 3;
-            if (ipv6_disabled_or_ignore) {
+            if (MainWindowIpSensitivityRules.should_force_ipv6_dns_auto_from_dropdown (selected)) {
                 if (ethernet_edit_page.ipv6_dns_auto_switch != null) {
                     ethernet_edit_page.ipv6_dns_auto_switch.set_active (true);
                 }
@@ -217,11 +216,15 @@ public class MainWindowEthernetController : Object {
         }
 
         if (ethernet_edit_page.ipv4_dns_entry != null && ethernet_edit_page.dns_auto_switch != null) {
-            ethernet_edit_page.ipv4_dns_entry.set_sensitive (!ethernet_edit_page.dns_auto_switch.get_active ());
+            ethernet_edit_page.ipv4_dns_entry.set_sensitive (
+                MainWindowIpSensitivityRules.is_dns_entry_sensitive (ethernet_edit_page.dns_auto_switch.get_active ())
+            );
         }
         if (ethernet_edit_page.ipv6_dns_entry != null && ethernet_edit_page.ipv6_dns_auto_switch != null) {
             ethernet_edit_page.ipv6_dns_entry.set_sensitive (
-                !ethernet_edit_page.ipv6_dns_auto_switch.get_active ()
+                MainWindowIpSensitivityRules.is_dns_entry_sensitive (
+                    ethernet_edit_page.ipv6_dns_auto_switch.get_active ()
+                )
             );
         }
     }
@@ -543,11 +546,11 @@ public class MainWindowEthernetController : Object {
         bool ipv6_dns_auto = ethernet_edit_page.ipv6_dns_auto_switch.get_active ();
         string ipv6_dns_csv = ethernet_edit_page.ipv6_dns_entry.get_text ().strip ();
 
-        if (method == "disabled") {
+        if (MainWindowIpSensitivityRules.should_force_ipv4_dns_auto_from_method (method)) {
             dns_auto = true;
         }
 
-        if (method6 == "disabled" || method6 == "ignore") {
+        if (MainWindowIpSensitivityRules.should_force_ipv6_dns_auto_from_method (method6)) {
             ipv6_dns_auto = true;
         }
 

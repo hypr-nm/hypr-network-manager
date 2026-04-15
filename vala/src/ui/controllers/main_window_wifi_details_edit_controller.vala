@@ -402,26 +402,31 @@ public class MainWindowWifiDetailsEditController : Object {
 
     private void sync_edit_gateway_dns_sensitivity (MainWindowWifiEditPage page) {
         if (page.ipv4_method_dropdown != null) {
-            bool ipv4_disabled = page.ipv4_method_dropdown.get_selected () == 2;
-            if (ipv4_disabled && page.dns_auto_switch != null) {
+            uint selected = page.ipv4_method_dropdown.get_selected ();
+            if (MainWindowIpSensitivityRules.should_force_ipv4_dns_auto_from_dropdown (selected)
+                && page.dns_auto_switch != null) {
                 page.dns_auto_switch.set_active (true);
             }
         }
 
         if (page.ipv6_method_dropdown != null) {
             uint selected = page.ipv6_method_dropdown.get_selected ();
-            bool ipv6_disabled_or_ignore = selected == 2 || selected == 3;
-            if (ipv6_disabled_or_ignore && page.ipv6_dns_auto_switch != null) {
+            if (MainWindowIpSensitivityRules.should_force_ipv6_dns_auto_from_dropdown (selected)
+                && page.ipv6_dns_auto_switch != null) {
                 page.ipv6_dns_auto_switch.set_active (true);
             }
         }
 
         if (page.ipv4_dns_entry != null && page.dns_auto_switch != null) {
-            page.ipv4_dns_entry.set_sensitive (!page.dns_auto_switch.get_active ());
+            page.ipv4_dns_entry.set_sensitive (
+                MainWindowIpSensitivityRules.is_dns_entry_sensitive (page.dns_auto_switch.get_active ())
+            );
         }
 
         if (page.ipv6_dns_entry != null && page.ipv6_dns_auto_switch != null) {
-            page.ipv6_dns_entry.set_sensitive (!page.ipv6_dns_auto_switch.get_active ());
+            page.ipv6_dns_entry.set_sensitive (
+                MainWindowIpSensitivityRules.is_dns_entry_sensitive (page.ipv6_dns_auto_switch.get_active ())
+            );
         }
     }
 
@@ -537,11 +542,11 @@ public class MainWindowWifiDetailsEditController : Object {
         bool ipv6_dns_auto = page.ipv6_dns_auto_switch.get_active ();
         string ipv6_dns_csv = page.ipv6_dns_entry.get_text ().strip ();
 
-        if (method == "disabled") {
+        if (MainWindowIpSensitivityRules.should_force_ipv4_dns_auto_from_method (method)) {
             dns_auto = true;
         }
 
-        if (method6 == "disabled" || method6 == "ignore") {
+        if (MainWindowIpSensitivityRules.should_force_ipv6_dns_auto_from_method (method6)) {
             ipv6_dns_auto = true;
         }
 

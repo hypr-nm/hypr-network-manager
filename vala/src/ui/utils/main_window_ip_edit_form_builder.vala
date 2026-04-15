@@ -154,18 +154,21 @@ namespace MainWindowIpEditFormBuilder {
         Gtk.Entry dns_entry
     ) {
         uint selected = method_dropdown.get_selected ();
-        bool is_auto = selected == 0;
-        bool is_manual = selected == 1;
-        bool is_disabled = selected == 2;
+        manual_revealer.set_reveal_child (
+            MainWindowIpSensitivityRules.should_show_manual_fields (selected)
+        );
+        override_revealer.set_reveal_child (
+            MainWindowIpSensitivityRules.should_show_override_fields (selected)
+        );
 
-        manual_revealer.set_reveal_child (is_manual);
-        override_revealer.set_reveal_child (is_auto || is_manual);
-
-        if (is_disabled && !dns_auto_switch.get_active ()) {
+        if (MainWindowIpSensitivityRules.should_force_ipv4_dns_auto_from_dropdown (selected)
+            && !dns_auto_switch.get_active ()) {
             dns_auto_switch.set_active (true);
         }
 
-        dns_entry.set_sensitive (!dns_auto_switch.get_active ());
+        dns_entry.set_sensitive (
+            MainWindowIpSensitivityRules.is_dns_entry_sensitive (dns_auto_switch.get_active ())
+        );
     }
 
     private void sync_ipv6_section_sensitivity (
@@ -176,18 +179,21 @@ namespace MainWindowIpEditFormBuilder {
         Gtk.Entry dns_entry
     ) {
         uint selected = method_dropdown.get_selected ();
-        bool is_auto = selected == 0;
-        bool is_manual = selected == 1;
-        bool is_disabled_or_ignore = selected == 2 || selected == 3;
+        manual_revealer.set_reveal_child (
+            MainWindowIpSensitivityRules.should_show_manual_fields (selected)
+        );
+        override_revealer.set_reveal_child (
+            MainWindowIpSensitivityRules.should_show_override_fields (selected)
+        );
 
-        manual_revealer.set_reveal_child (is_manual);
-        override_revealer.set_reveal_child (is_auto || is_manual);
-
-        if (is_disabled_or_ignore && !dns_auto_switch.get_active ()) {
+        if (MainWindowIpSensitivityRules.should_force_ipv6_dns_auto_from_dropdown (selected)
+            && !dns_auto_switch.get_active ()) {
             dns_auto_switch.set_active (true);
         }
 
-        dns_entry.set_sensitive (!dns_auto_switch.get_active ());
+        dns_entry.set_sensitive (
+            MainWindowIpSensitivityRules.is_dns_entry_sensitive (dns_auto_switch.get_active ())
+        );
     }
 
     public void append_ipv4_section (
