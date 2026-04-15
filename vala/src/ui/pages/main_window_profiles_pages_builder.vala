@@ -1,8 +1,8 @@
 using Gtk;
 
 public class MainWindowProfilesPage : Gtk.Box {
-    public Gtk.ListBox wifi_saved_listbox { get; private set; }
-    public Gtk.ListBox ethernet_saved_listbox { get; private set; }
+    public Gtk.ListBox wifi_saved_listbox { get; set; }
+    public Gtk.ListBox ethernet_saved_listbox { get; set; }
 
     public signal void back ();
     public signal void refresh ();
@@ -249,11 +249,11 @@ public class MainWindowProfilesPage : Gtk.Box {
 }
 
 public class MainWindowProfilesDetailsPage : Gtk.Box {
-    public Gtk.Label title_label { get; private set; }
-    public Gtk.Label subtitle_label { get; private set; }
-    public Gtk.Box rows { get; private set; }
-    public Gtk.Button edit_button { get; private set; }
-    public Gtk.Button delete_button { get; private set; }
+    public Gtk.Label title_label { get; set; }
+    public Gtk.Label subtitle_label { get; set; }
+    public Gtk.Box rows { get; set; }
+    public Gtk.Button edit_button { get; set; }
+    public Gtk.Button delete_button { get; set; }
 
     public signal void back ();
     public signal void edit ();
@@ -486,7 +486,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
     }
 }
 
-public class MainWindowWifiSavedEditPage : Gtk.Box {
+public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     private static string[] SECURITY_MODE_KEYS = {
         "open",
         "wpa-psk",
@@ -495,31 +495,221 @@ public class MainWindowWifiSavedEditPage : Gtk.Box {
         "wep"
     };
 
-    public Gtk.Label title_label { get; private set; }
-    public Gtk.Entry profile_name_entry { get; private set; }
-    public Gtk.Entry ssid_entry { get; private set; }
-    public Gtk.Entry bssid_entry { get; private set; }
-    public Gtk.DropDown security_mode_dropdown { get; private set; }
-    public Gtk.CheckButton autoconnect_check { get; private set; }
-    public Gtk.CheckButton all_users_check { get; private set; }
-    public Gtk.Entry password_entry { get; private set; }
+    public Gtk.Label title_label { get; set; }
+    public Gtk.Entry profile_name_entry { get; set; }
+    public Gtk.Entry ssid_entry { get; set; }
+    public Gtk.Entry bssid_entry { get; set; }
+    public Gtk.DropDown security_mode_dropdown { get; set; }
+    public Gtk.CheckButton autoconnect_check { get; set; }
+    public Gtk.CheckButton all_users_check { get; set; }
+    public Gtk.Entry password_entry { get; set; }
 
-    public Gtk.DropDown ipv4_method_dropdown { get; private set; }
-    public Gtk.Entry ipv4_address_entry { get; private set; }
-    public Gtk.Entry ipv4_prefix_entry { get; private set; }
-    public Gtk.Entry ipv4_gateway_entry { get; private set; }
-    public Gtk.Switch dns_auto_switch { get; private set; }
-    public Gtk.Entry ipv4_dns_entry { get; private set; }
+    public Gtk.DropDown ipv4_method_dropdown { get; set; }
+    public Gtk.Entry ipv4_address_entry { get; set; }
+    public Gtk.Entry ipv4_prefix_entry { get; set; }
+    public Gtk.Entry ipv4_gateway_entry { get; set; }
+    public Gtk.Switch dns_auto_switch { get; set; }
+    public Gtk.Entry ipv4_dns_entry { get; set; }
 
-    public Gtk.DropDown ipv6_method_dropdown { get; private set; }
-    public Gtk.Entry ipv6_address_entry { get; private set; }
-    public Gtk.Entry ipv6_prefix_entry { get; private set; }
-    public Gtk.Entry ipv6_gateway_entry { get; private set; }
-    public Gtk.Switch ipv6_dns_auto_switch { get; private set; }
-    public Gtk.Entry ipv6_dns_entry { get; private set; }
+    public Gtk.DropDown ipv6_method_dropdown { get; set; }
+    public Gtk.Entry ipv6_address_entry { get; set; }
+    public Gtk.Entry ipv6_prefix_entry { get; set; }
+    public Gtk.Entry ipv6_gateway_entry { get; set; }
+    public Gtk.Switch ipv6_dns_auto_switch { get; set; }
+    public Gtk.Entry ipv6_dns_entry { get; set; }
 
     public signal void back ();
     public signal void save ();
+
+    public override void sync_edit_gateway_dns_sensitivity () {
+        bool ipv4_disabled = this.ipv4_method_dropdown.get_selected () == 2;
+        if (ipv4_disabled) {
+            this.dns_auto_switch.set_active (true);
+        }
+
+        uint ipv6_selected = this.ipv6_method_dropdown.get_selected ();
+        bool ipv6_disabled_or_ignore = ipv6_selected == 2 || ipv6_selected == 3;
+        if (ipv6_disabled_or_ignore) {
+            this.ipv6_dns_auto_switch.set_active (true);
+        }
+
+        this.ipv4_dns_entry.set_sensitive (!this.dns_auto_switch.get_active ());
+        this.ipv6_dns_entry.set_sensitive (!this.ipv6_dns_auto_switch.get_active ());
+    }
+
+    public void apply_settings_to_edit_page (WifiSavedProfileSettings settings) {
+        this.profile_name_entry.set_text (settings.profile_name);
+        this.ssid_entry.set_text (settings.ssid);
+        this.bssid_entry.set_text (settings.bssid);
+        this.set_selected_security_mode_key (settings.security_mode);
+        this.autoconnect_check.set_active (settings.autoconnect);
+        this.all_users_check.set_active (settings.available_to_all_users);
+        this.password_entry.set_text (settings.configured_password);
+
+        this.ipv4_method_dropdown.set_selected (
+            MainWindowHelpers.get_ipv4_method_dropdown_index (settings.ipv4_method)
+        );
+        this.ipv4_address_entry.set_text (settings.configured_address);
+        this.ipv4_prefix_entry.set_text (
+            settings.configured_prefix > 0 ? "%u".printf (settings.configured_prefix) : ""
+        );
+        this.ipv4_gateway_entry.set_text (settings.configured_gateway);
+        this.dns_auto_switch.set_active (settings.dns_auto);
+        this.ipv4_dns_entry.set_text (settings.configured_dns);
+
+        this.ipv6_method_dropdown.set_selected (
+            MainWindowHelpers.get_ipv6_method_dropdown_index (settings.ipv6_method)
+        );
+        this.ipv6_address_entry.set_text (settings.configured_ipv6_address);
+        this.ipv6_prefix_entry.set_text (
+            settings.configured_ipv6_prefix > 0 ? "%u".printf (settings.configured_ipv6_prefix) : ""
+        );
+        this.ipv6_gateway_entry.set_text (settings.configured_ipv6_gateway);
+        this.ipv6_dns_auto_switch.set_active (settings.ipv6_dns_auto);
+        this.ipv6_dns_entry.set_text (settings.configured_ipv6_dns);
+    }
+
+    public bool build_update_requests (
+        out WifiSavedProfileUpdateRequest profile_request,
+        out WifiNetworkUpdateRequest network_request,
+        out string error_message
+    ) {
+        error_message = "";
+
+        string password = this.password_entry.get_text ().strip ();
+
+        string method = MainWindowWifiEditUtils.get_selected_ipv4_method (this.ipv4_method_dropdown);
+        string ipv4_address = this.ipv4_address_entry.get_text ().strip ();
+        string ipv4_gateway = this.ipv4_gateway_entry.get_text ().strip ();
+        bool gateway_auto = method != "manual";
+        bool dns_auto = this.dns_auto_switch.get_active ();
+        string dns_csv = this.ipv4_dns_entry.get_text ().strip ();
+
+        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method (this.ipv6_method_dropdown);
+        string ipv6_address = this.ipv6_address_entry.get_text ().strip ();
+        string ipv6_gateway = this.ipv6_gateway_entry.get_text ().strip ();
+        bool ipv6_gateway_auto = method6 != "manual";
+        bool ipv6_dns_auto = this.ipv6_dns_auto_switch.get_active ();
+        string ipv6_dns_csv = this.ipv6_dns_entry.get_text ().strip ();
+
+        if (method == "disabled") {
+            dns_auto = true;
+        }
+        if (method6 == "disabled" || method6 == "ignore") {
+            ipv6_dns_auto = true;
+        }
+
+        uint32 ipv4_prefix;
+        if (!MainWindowWifiEditUtils.try_parse_prefix (
+            this.ipv4_prefix_entry.get_text (),
+            out ipv4_prefix,
+            out error_message
+        )) {
+            profile_request = new WifiSavedProfileUpdateRequest ();
+            network_request = new WifiNetworkUpdateRequest ();
+            return false;
+        }
+
+        uint32 ipv6_prefix;
+        if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix (
+            this.ipv6_prefix_entry.get_text (),
+            out ipv6_prefix,
+            out error_message
+        )) {
+            profile_request = new WifiSavedProfileUpdateRequest ();
+            network_request = new WifiNetworkUpdateRequest ();
+            return false;
+        }
+
+        if (method == "manual") {
+            if (ipv4_address == "") {
+                error_message = "Manual IPv4 requires an address.";
+                profile_request = new WifiSavedProfileUpdateRequest ();
+                network_request = new WifiNetworkUpdateRequest ();
+                return false;
+            }
+            if (ipv4_prefix == 0) {
+                error_message = "Manual IPv4 requires a prefix between 1 and 32.";
+                profile_request = new WifiSavedProfileUpdateRequest ();
+                network_request = new WifiNetworkUpdateRequest ();
+                return false;
+            }
+            if (ipv4_gateway == "") {
+                error_message = "Manual IPv4 requires a gateway address.";
+                profile_request = new WifiSavedProfileUpdateRequest ();
+                network_request = new WifiNetworkUpdateRequest ();
+                return false;
+            }
+        }
+
+        string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
+        if (!dns_auto && dns_servers.length == 0) {
+            error_message = "Manual DNS is enabled; provide at least one DNS server.";
+            profile_request = new WifiSavedProfileUpdateRequest ();
+            network_request = new WifiNetworkUpdateRequest ();
+            return false;
+        }
+
+        if (method6 == "manual") {
+            if (ipv6_address == "") {
+                error_message = "Manual IPv6 requires an address.";
+                profile_request = new WifiSavedProfileUpdateRequest ();
+                network_request = new WifiNetworkUpdateRequest ();
+                return false;
+            }
+            if (ipv6_prefix == 0) {
+                error_message = "Manual IPv6 requires a prefix between 1 and 128.";
+                profile_request = new WifiSavedProfileUpdateRequest ();
+                network_request = new WifiNetworkUpdateRequest ();
+                return false;
+            }
+            if (ipv6_gateway == "") {
+                error_message = "Manual IPv6 requires a gateway address.";
+                profile_request = new WifiSavedProfileUpdateRequest ();
+                network_request = new WifiNetworkUpdateRequest ();
+                return false;
+            }
+        }
+
+        string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
+        if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
+            error_message = "Manual IPv6 DNS is enabled; provide at least one DNS server.";
+            profile_request = new WifiSavedProfileUpdateRequest ();
+            network_request = new WifiNetworkUpdateRequest ();
+            return false;
+        }
+
+        profile_request = new WifiSavedProfileUpdateRequest () {
+            profile_name = this.profile_name_entry.get_text ().strip (),
+            ssid = this.ssid_entry.get_text ().strip (),
+            bssid = this.bssid_entry.get_text ().strip (),
+            security_mode = this.get_selected_security_mode_key (),
+            autoconnect = this.autoconnect_check.get_active (),
+            available_to_all_users = this.all_users_check.get_active ()
+        };
+
+        network_request = new WifiNetworkUpdateRequest () {
+            password = password,
+            ipv4_method = method,
+            ipv4_address = ipv4_address,
+            ipv4_prefix = ipv4_prefix,
+            ipv4_gateway_auto = gateway_auto,
+            ipv4_gateway = ipv4_gateway,
+            ipv4_dns_auto = dns_auto,
+            ipv4_dns_servers = dns_servers,
+            ipv6_method = method6,
+            ipv6_address = ipv6_address,
+            ipv6_prefix = ipv6_prefix,
+            ipv6_gateway_auto = ipv6_gateway_auto,
+            ipv6_gateway = ipv6_gateway,
+            ipv6_dns_auto = ipv6_dns_auto,
+            ipv6_dns_servers = ipv6_dns_servers
+        };
+
+        return true;
+    }
+
+
 
     private Gtk.Box build_section (string title, out Gtk.Box section_content) {
         var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
