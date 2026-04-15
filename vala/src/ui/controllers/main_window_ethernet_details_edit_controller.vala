@@ -59,7 +59,7 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
             NetworkIpSettings ip_settings = nm.get_ethernet_device_ip_settings.end (res);
 
             MainWindowHelpers.clear_box (ethernet_details_page.ip_rows);
-            append_ip_details_rows (ip_settings, dev.is_connected, ethernet_details_page.ip_rows);
+            MainWindowIpDetailsRowBuilder.populate_ip_rows (ethernet_details_page.ip_rows, ip_settings, dev.is_connected);
         });
 
         if (pending) {
@@ -132,7 +132,7 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
             }
 
             NetworkIpSettings ip_settings = nm.get_ethernet_device_ip_settings.end (res);
-            populate_ip_settings_to_form (ip_settings, ethernet_edit_page);
+            ethernet_edit_page.populate_ip_settings (ip_settings);
             ethernet_edit_page.ipv4_address_entry.grab_focus ();
         });
     }
@@ -151,8 +151,12 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
         uint epoch = capture_ui_epoch ();
         NetworkDevice dev = this.selected_device;
 
-        var request = build_ip_update_request (ethernet_edit_page);
+        string? error_message = null;
+        var request = ethernet_edit_page.build_ip_update_request (out error_message);
         if (request == null) {
+            if (error_message != null) {
+                host.show_error (error_message);
+            }
             return;
         }
 

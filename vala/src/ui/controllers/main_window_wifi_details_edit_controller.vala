@@ -252,7 +252,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             NetworkIpSettings ip_settings = nm.get_wifi_network_ip_settings.end (res);
 
             MainWindowHelpers.clear_box (page.ip_rows);
-            append_ip_details_rows (ip_settings, is_connected_now, page.ip_rows);
+            MainWindowIpDetailsRowBuilder.populate_ip_rows (page.ip_rows, ip_settings, is_connected_now);
         });
     }
 
@@ -299,7 +299,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         page.ipv6_gateway_entry.set_text ("");
         page.ipv6_dns_auto_switch.set_active (true);
         page.ipv6_dns_entry.set_text ("");
-        sync_edit_gateway_dns_sensitivity (page);
+        page.sync_edit_gateway_dns_sensitivity ();
 
         nm.get_wifi_network_ip_settings.begin (net, edit_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
@@ -317,7 +317,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             } else {
                 page.password_entry.set_text ("");
             }
-            populate_ip_settings_to_form (ip_settings, page);
+            page.populate_ip_settings (ip_settings);
         });
     }
 
@@ -337,8 +337,12 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         string net_key = net.network_key;
         string password = page.password_entry.get_text ().strip ();
 
-        var base_request = build_ip_update_request (page);
+        string? error_message = null;
+        var base_request = page.build_ip_update_request (out error_message);
         if (base_request == null) {
+            if (error_message != null) {
+                host.show_error (error_message);
+            }
             return false;
         }
 
