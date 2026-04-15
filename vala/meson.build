@@ -84,6 +84,7 @@ executable(
     'src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala',
     'src/ui/utils/main_window_ip_sensitivity_rules.vala',
     'src/ui/utils/main_window_password_prompt_manager.vala',
+    'src/ui/utils/main_window_css_classes.vala',
     'src/ui/utils/main_window_ip_details_row_builder.vala',
     'src/ui/utils/main_window_ip_edit_form_builder.vala',
     'src/ui/utils/main_window_ui_metrics.vala',

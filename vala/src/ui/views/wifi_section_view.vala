@@ -138,13 +138,13 @@ namespace NetworkManagerRebuild.UI.Views {
 
         private Gtk.Widget build_add_page () {
             var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
-            page.add_css_class ("nm-page");
-            page.add_css_class ("nm-page-shell-inset");
-            MainWindowCssClassResolver.add_best_class (page, {"nm-page-shell-inset", "nm-page"});
+            page.add_css_class (MainWindowCssClasses.PAGE);
+            page.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+            MainWindowCssClassResolver.add_best_class (page, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
             MainWindowCssClassResolver.add_hook_and_best_class (
                 page,
-                "nm-page-wifi-add",
-                {"nm-page-network-edit", "nm-page"}
+                MainWindowCssClasses.PAGE_WIFI_ADD,
+                {MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
             );
 
             var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -158,36 +158,36 @@ namespace NetworkManagerRebuild.UI.Views {
             var title = new Gtk.Label ("Add Hidden Network");
             title.set_xalign (0.0f);
             title.set_hexpand (true);
-            title.add_css_class ("nm-section-title");
+            title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
             header.append (title);
             page.append (header);
 
             var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_best_class (form, {"nm-edit-network-form", "nm-edit-form"});
-            form.add_css_class ("nm-details-scroll-body-inset");
+            MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM});
+            form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
             var note = new Gtk.Label ("Manually add a hidden Wi-Fi network.");
             note.set_xalign (0.0f);
             note.set_wrap (true);
-            MainWindowCssClassResolver.add_best_class (note, {"nm-edit-note", "nm-sub-label"});
+            MainWindowCssClassResolver.add_best_class (note, {MainWindowCssClasses.EDIT_NOTE, MainWindowCssClasses.SUB_LABEL});
             form.append (note);
 
             var ssid_label = new Gtk.Label ("SSID");
             ssid_label.set_xalign (0.0f);
-            MainWindowCssClassResolver.add_best_class (ssid_label, {"nm-edit-field-label", "nm-form-label"});
+            MainWindowCssClassResolver.add_best_class (ssid_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
             form.append (ssid_label);
 
             add_ssid_entry = new Gtk.Entry ();
             add_ssid_entry.set_placeholder_text ("Network name");
             MainWindowCssClassResolver.add_best_class (
                 add_ssid_entry,
-                {"nm-edit-field-entry", "nm-edit-field-control"}
+                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
             );
             form.append (add_ssid_entry);
 
             var security_label = new Gtk.Label ("Security");
             security_label.set_xalign (0.0f);
-            MainWindowCssClassResolver.add_best_class (security_label, {"nm-edit-field-label", "nm-form-label"});
+            MainWindowCssClassResolver.add_best_class (security_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
             form.append (security_label);
 
             var security_list = new Gtk.StringList (null);
@@ -197,15 +197,15 @@ namespace NetworkManagerRebuild.UI.Views {
             add_security_dropdown = new Gtk.DropDown (security_list, null);
             MainWindowCssClassResolver.add_best_class (
                 add_security_dropdown,
-                {"nm-edit-dropdown", "nm-edit-field-control"}
+                {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
             );
             add_security_dropdown.set_selected (
                 HiddenWifiSecurityModeUtils.to_dropdown_index (HiddenWifiSecurityMode.WPA_PSK)
             );
 
             var save_btn = new Gtk.Button.with_label ("Connect");
-            save_btn.add_css_class ("nm-button");
-            MainWindowCssClassResolver.add_best_class (save_btn, {"suggested-action", "nm-button"});
+            save_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
 
             add_security_dropdown.notify["selected"].connect (() => {
                 controller.sync_add_network_sensitivity (
@@ -220,7 +220,7 @@ namespace NetworkManagerRebuild.UI.Views {
             password_label.set_xalign (0.0f);
             MainWindowCssClassResolver.add_best_class (
                 password_label,
-                {"nm-edit-field-label", "nm-form-label"}
+                {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL}
             );
             form.append (password_label);
 
@@ -232,7 +232,7 @@ namespace NetworkManagerRebuild.UI.Views {
             );
             MainWindowCssClassResolver.add_best_class (
                 add_password_entry,
-                {"nm-edit-field-entry", "nm-edit-field-control", "nm-password-entry"}
+                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL, MainWindowCssClasses.PASSWORD_ENTRY}
             );
             add_password_entry.changed.connect (() => {
                 controller.sync_add_network_sensitivity (
@@ -256,7 +256,7 @@ namespace NetworkManagerRebuild.UI.Views {
             );
 
             var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            actions.add_css_class ("nm-edit-actions");
+            actions.add_css_class (MainWindowCssClasses.EDIT_ACTIONS);
 
             save_btn.clicked.connect (submit_add_hidden_network);
             actions.append (save_btn);

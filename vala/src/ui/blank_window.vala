@@ -36,7 +36,7 @@ public class BlankWindow : Gtk.ApplicationWindow {
         click_surface.set_vexpand (true);
         click_surface.set_can_target (true);
         click_surface.set_sensitive (true);
-        click_surface.add_css_class ("blank-window-surface");
+        click_surface.add_css_class (MainWindowCssClasses.BLANK_WINDOW_SURFACE);
         set_child (click_surface);
 
         blank_window_gesture = new Gtk.GestureClick ();
@@ -77,7 +77,7 @@ public class BlankWindow : Gtk.ApplicationWindow {
         GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.NONE);
         GtkLayerShell.set_exclusive_zone (this, -1);
 
-        add_css_class ("blank-window");
+        add_css_class (MainWindowCssClasses.BLANK_WINDOW);
         var provider = new Gtk.CssProvider ();
         provider.load_from_string (
             "window.blankwindow, .blank-window, .blank-window-surface {"

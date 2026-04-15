@@ -47,7 +47,7 @@ namespace NetworkManagerRebuild.UI.Views {
 
             stack = new Gtk.Stack ();
             stack.set_vexpand (true);
-            stack.add_css_class ("nm-content-stack");
+            stack.add_css_class (MainWindowCssClasses.CONTENT_STACK);
             stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
             stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
             stack.add_named (profiles_page, "list");

@@ -4,12 +4,12 @@ namespace MainWindowHelpers {
     public Gtk.Button build_back_button () {
         var back_btn = new Gtk.Button ();
         back_btn.add_css_class ("nm-nav-back");
-        MainWindowCssClassResolver.add_best_class (back_btn, {"nm-nav-back", "nm-button"});
+        MainWindowCssClassResolver.add_best_class (back_btn, {"nm-nav-back", MainWindowCssClasses.BUTTON});
 
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         var icon = new Gtk.Image.from_icon_name ("go-previous-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-14", "nm-icon-size"});
-        MainWindowCssClassResolver.add_hook_and_best_class (icon, "nm-back-icon", {"nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-14", MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_hook_and_best_class (icon, "nm-back-icon", {MainWindowCssClasses.ICON_SIZE});
 
         var label = new Gtk.Label ("Back");
         label.add_css_class ("nm-back-label");
@@ -93,7 +93,7 @@ namespace MainWindowHelpers {
         section.append (heading);
 
         var separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        separator.add_css_class ("nm-separator");
+        separator.add_css_class (MainWindowCssClasses.SEPARATOR);
         section.append (separator);
 
         rows_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);

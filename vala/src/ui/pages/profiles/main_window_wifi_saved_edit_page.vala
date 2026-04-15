@@ -244,15 +244,15 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
     private Gtk.Box build_section (string title, out Gtk.Box section_content) {
         var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        section.add_css_class ("nm-edit-collapsible");
+        section.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
 
         var heading = new Gtk.Label (title);
         heading.set_xalign (0.0f);
-        MainWindowCssClassResolver.add_best_class (heading, {"nm-edit-field-label", "nm-form-label"});
+        MainWindowCssClassResolver.add_best_class (heading, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
         section.append (heading);
 
         section_content = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        section_content.add_css_class ("nm-edit-section-content");
+        section_content.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
         section.append (section_content);
 
         return section;
@@ -261,13 +261,13 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public MainWindowWifiSavedEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-shell-inset");
-        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        this.add_css_class (MainWindowCssClasses.PAGE);
+        this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            "nm-page-wifi-edit",
-            {"nm-page-network-edit", "nm-page"}
+            MainWindowCssClasses.PAGE_WIFI_EDIT,
+            {MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -280,61 +280,61 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.title_label = new Gtk.Label ("Edit Saved Profile");
         this.title_label.set_xalign (0.0f);
         this.title_label.set_hexpand (true);
-        this.title_label.add_css_class ("nm-section-title");
+        this.title_label.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.append (this.title_label);
         this.append (header);
 
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class ("nm-scroll");
+        scroll.add_css_class (MainWindowCssClasses.SCROLL);
         scroll.set_vexpand (true);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        MainWindowCssClassResolver.add_best_class (form, {"nm-edit-network-form", "nm-edit-form"});
-        form.add_css_class ("nm-details-scroll-body-inset");
+        MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM});
+        form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         Gtk.Box profile_content;
         var profile_section = build_section ("Profile", out profile_content);
 
         var profile_name_label = new Gtk.Label ("Profile Name");
         profile_name_label.set_xalign (0.0f);
-        profile_name_label.add_css_class ("nm-form-label");
+        profile_name_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (profile_name_label);
 
         this.profile_name_entry = new Gtk.Entry ();
         MainWindowCssClassResolver.add_best_class (
             this.profile_name_entry,
-            {"nm-edit-field-entry", "nm-edit-field-control"}
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
         );
         profile_content.append (this.profile_name_entry);
 
         var ssid_label = new Gtk.Label ("SSID");
         ssid_label.set_xalign (0.0f);
-        ssid_label.add_css_class ("nm-form-label");
+        ssid_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (ssid_label);
 
         this.ssid_entry = new Gtk.Entry ();
         MainWindowCssClassResolver.add_best_class (
             this.ssid_entry,
-            {"nm-edit-field-entry", "nm-edit-field-control"}
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
         );
         profile_content.append (this.ssid_entry);
 
         var bssid_label = new Gtk.Label ("BSSID");
         bssid_label.set_xalign (0.0f);
-        bssid_label.add_css_class ("nm-form-label");
+        bssid_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (bssid_label);
 
         this.bssid_entry = new Gtk.Entry ();
         MainWindowCssClassResolver.add_best_class (
             this.bssid_entry,
-            {"nm-edit-field-entry", "nm-edit-field-control"}
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
         );
         profile_content.append (this.bssid_entry);
 
         var security_label = new Gtk.Label ("Security Mode");
         security_label.set_xalign (0.0f);
-        security_label.add_css_class ("nm-form-label");
+        security_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (security_label);
 
         var security_modes = new Gtk.StringList (null);
@@ -346,7 +346,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.security_mode_dropdown = new Gtk.DropDown (security_modes, null);
         MainWindowCssClassResolver.add_best_class (
             this.security_mode_dropdown,
-            {"nm-edit-dropdown", "nm-edit-field-control"}
+            {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
         );
         profile_content.append (this.security_mode_dropdown);
 
@@ -356,11 +356,11 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         var access_section = build_section ("Access", out access_content);
 
         this.autoconnect_check = new Gtk.CheckButton.with_label ("Connect automatically");
-        this.autoconnect_check.add_css_class ("nm-row-autoconnect-check");
+        this.autoconnect_check.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
         access_content.append (this.autoconnect_check);
 
         this.all_users_check = new Gtk.CheckButton.with_label ("Available to all users");
-        this.all_users_check.add_css_class ("nm-row-autoconnect-check");
+        this.all_users_check.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
         access_content.append (this.all_users_check);
 
         form.append (access_section);
@@ -370,7 +370,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         var password_label = new Gtk.Label ("Password");
         password_label.set_xalign (0.0f);
-        password_label.add_css_class ("nm-form-label");
+        password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         auth_content.append (password_label);
 
         this.password_entry = new Gtk.Entry ();
@@ -378,7 +378,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         MainWindowCssClassResolver.add_best_class (
             this.password_entry,
-            {"nm-edit-field-entry", "nm-edit-field-control", "nm-password-entry"}
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL, MainWindowCssClasses.PASSWORD_ENTRY}
         );
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
@@ -440,11 +440,11 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.ipv6_dns_entry = v6_dns;
 
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        actions.add_css_class ("nm-edit-actions");
+        actions.add_css_class (MainWindowCssClasses.EDIT_ACTIONS);
 
         var save_btn = new Gtk.Button.with_label ("Save");
-        save_btn.add_css_class ("nm-button");
-        MainWindowCssClassResolver.add_best_class (save_btn, {"suggested-action", "nm-button"});
+        save_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
         save_btn.clicked.connect (() => {
             this.save ();
         });

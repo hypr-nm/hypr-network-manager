@@ -45,13 +45,13 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
     public MainWindowEthernetEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-shell-inset");
-        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        this.add_css_class (MainWindowCssClasses.PAGE);
+        this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            "nm-page-ethernet-edit",
-            {"nm-page-network-edit", "nm-page"}
+            MainWindowCssClasses.PAGE_ETHERNET_EDIT,
+            {MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -64,21 +64,21 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.edit_title = new Gtk.Label ("Edit Ethernet");
         this.edit_title.set_xalign (0.0f);
         this.edit_title.set_hexpand (true);
-        this.edit_title.add_css_class ("nm-section-title");
+        this.edit_title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.append (this.edit_title);
         this.append (header);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         MainWindowCssClassResolver.add_best_class (
             form,
-            {"nm-edit-ethernet-form", "nm-edit-network-form", "nm-edit-form"}
+            {MainWindowCssClasses.EDIT_ETHERNET_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM}
         );
-        form.add_css_class ("nm-details-scroll-body-inset");
+        form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         this.note_label = new Gtk.Label ("");
         this.note_label.set_xalign (0.0f);
         this.note_label.set_wrap (true);
-        MainWindowCssClassResolver.add_best_class (this.note_label, {"nm-edit-note", "nm-sub-label"});
+        MainWindowCssClassResolver.add_best_class (this.note_label, {MainWindowCssClasses.EDIT_NOTE, MainWindowCssClasses.SUB_LABEL});
         form.append (this.note_label);
 
         Gtk.DropDown v4_method;
@@ -127,8 +127,8 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var save_btn = new Gtk.Button.with_label ("Apply");
-        save_btn.add_css_class ("nm-button");
-        MainWindowCssClassResolver.add_best_class (save_btn, {"suggested-action", "nm-button"});
+        save_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
         save_btn.clicked.connect (() => {
             this.apply ();
         });
@@ -138,7 +138,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class ("nm-scroll");
+        scroll.add_css_class (MainWindowCssClasses.SCROLL);
         scroll.set_vexpand (true);
         scroll.set_child (form);
 

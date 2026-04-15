@@ -16,18 +16,18 @@ public class MainWindowProfilesPage : Gtk.Box {
     public MainWindowProfilesPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-shell-inset");
-        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        this.add_css_class (MainWindowCssClasses.PAGE);
+        this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
-            "nm-page-saved-profiles",
-            {"nm-page"}
+            MainWindowCssClasses.PAGE_SAVED_PROFILES,
+            {MainWindowCssClasses.PAGE}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (header, {"nm-toolbar-inset", "nm-page-shell-inset"});
-        MainWindowCssClassResolver.add_best_class (header, {"nm-toolbar", "nm-status-bar"});
+        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR_INSET, MainWindowCssClasses.PAGE_SHELL_INSET});
+        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR, MainWindowCssClasses.STATUS_BAR});
 
         var back_btn = MainWindowHelpers.build_back_button ();
         back_btn.clicked.connect (() => {
@@ -38,15 +38,15 @@ public class MainWindowProfilesPage : Gtk.Box {
         var title = new Gtk.Label ("Profiles");
         title.set_xalign (0.0f);
         title.set_hexpand (true);
-        title.add_css_class ("nm-section-title");
+        title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.append (title);
 
         var refresh_btn = new Gtk.Button.with_label ("Refresh");
-        refresh_btn.add_css_class ("nm-button");
-        refresh_btn.add_css_class ("nm-toolbar-action");
-        refresh_btn.add_css_class ("nm-refresh-button");
+        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {"nm-toolbar-action", "nm-button"});
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION, MainWindowCssClasses.BUTTON});
         refresh_btn.set_tooltip_text ("Refresh Profiles");
         refresh_btn.clicked.connect (() => {
             this.refresh ();
@@ -57,31 +57,31 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class ("nm-scroll");
+        scroll.add_css_class (MainWindowCssClasses.SCROLL);
         scroll.set_vexpand (true);
 
         var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        body.add_css_class ("nm-profiles-page-body");
-        body.add_css_class ("nm-details-scroll-body-inset");
+        body.add_css_class (MainWindowCssClasses.PROFILES_PAGE_BODY);
+        body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         var wifi_heading = new Gtk.Label ("Wi-Fi Profiles");
         wifi_heading.set_xalign (0.0f);
-        wifi_heading.add_css_class ("nm-form-label");
+        wifi_heading.add_css_class (MainWindowCssClasses.FORM_LABEL);
         body.append (wifi_heading);
 
         this.wifi_saved_listbox = new Gtk.ListBox ();
         this.wifi_saved_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
-        this.wifi_saved_listbox.add_css_class ("nm-list");
+        this.wifi_saved_listbox.add_css_class (MainWindowCssClasses.LIST);
         body.append (this.wifi_saved_listbox);
 
         var ethernet_heading = new Gtk.Label ("Ethernet Profiles");
         ethernet_heading.set_xalign (0.0f);
-        ethernet_heading.add_css_class ("nm-form-label");
+        ethernet_heading.add_css_class (MainWindowCssClasses.FORM_LABEL);
         body.append (ethernet_heading);
 
         this.ethernet_saved_listbox = new Gtk.ListBox ();
         this.ethernet_saved_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
-        this.ethernet_saved_listbox.add_css_class ("nm-list");
+        this.ethernet_saved_listbox.add_css_class (MainWindowCssClasses.LIST);
         body.append (this.ethernet_saved_listbox);
 
         scroll.set_child (body);
@@ -103,9 +103,9 @@ public class MainWindowProfilesPage : Gtk.Box {
         if (profiles.length == 0) {
             var row = new Gtk.ListBoxRow ();
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-            box.add_css_class ("nm-empty-state");
+            box.add_css_class (MainWindowCssClasses.EMPTY_STATE);
             var label = new Gtk.Label ("No saved Wi-Fi profiles");
-            label.add_css_class ("nm-placeholder-label");
+            label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
             box.append (label);
             row.set_child (box);
             this.wifi_saved_listbox.append (row);
@@ -115,10 +115,10 @@ public class MainWindowProfilesPage : Gtk.Box {
         foreach (var profile in profiles) {
             var row_profile = profile;
             var row = new Gtk.ListBoxRow ();
-            row.add_css_class ("nm-wifi-row");
+            row.add_css_class (MainWindowCssClasses.WIFI_ROW);
 
             var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
-            root.add_css_class ("nm-row-content");
+            root.add_css_class (MainWindowCssClasses.ROW_CONTENT);
 
             var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
             info.set_hexpand (true);
@@ -128,7 +128,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var primary_lbl = new Gtk.Label (primary);
             primary_lbl.set_xalign (0.0f);
-            primary_lbl.add_css_class ("nm-ssid-label");
+            primary_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
             info.append (primary_lbl);
 
             string subtitle = "Saved profile";
@@ -138,13 +138,13 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var sub = new Gtk.Label (subtitle);
             sub.set_xalign (0.0f);
-            sub.add_css_class ("nm-sub-label");
+            sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
             info.append (sub);
             root.append (info);
 
             var delete_btn = new Gtk.Button.with_label ("Delete");
-            delete_btn.add_css_class ("nm-button");
-            MainWindowCssClassResolver.add_best_class (delete_btn, {"nm-delete-button", "nm-action-button", "nm-button"});
+            delete_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            MainWindowCssClassResolver.add_best_class (delete_btn, {MainWindowCssClasses.DELETE_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
             delete_btn.clicked.connect (() => {
                 this.delete_profile (row_profile);
             });
@@ -167,9 +167,9 @@ public class MainWindowProfilesPage : Gtk.Box {
         if (devices.length == 0) {
             var row = new Gtk.ListBoxRow ();
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-            box.add_css_class ("nm-empty-state");
+            box.add_css_class (MainWindowCssClasses.EMPTY_STATE);
             var label = new Gtk.Label ("No saved Ethernet profiles");
-            label.add_css_class ("nm-placeholder-label");
+            label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
             box.append (label);
             row.set_child (box);
             this.ethernet_saved_listbox.append (row);
@@ -179,10 +179,10 @@ public class MainWindowProfilesPage : Gtk.Box {
         foreach (var device in devices) {
             var row_device = device;
             var row = new Gtk.ListBoxRow ();
-            row.add_css_class ("nm-wifi-row");
+            row.add_css_class (MainWindowCssClasses.WIFI_ROW);
 
             var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
-            root.add_css_class ("nm-row-content");
+            root.add_css_class (MainWindowCssClasses.ROW_CONTENT);
 
             var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
             info.set_hexpand (true);
@@ -192,19 +192,19 @@ public class MainWindowProfilesPage : Gtk.Box {
             string primary = iface != "" ? iface : "Ethernet device";
             var primary_lbl = new Gtk.Label (primary);
             primary_lbl.set_xalign (0.0f);
-            primary_lbl.add_css_class ("nm-ssid-label");
+            primary_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
             info.append (primary_lbl);
 
             string subtitle = profile_name != "" ? "Profile: %s".printf (profile_name) : "Saved Ethernet profile";
             var sub = new Gtk.Label (subtitle);
             sub.set_xalign (0.0f);
-            sub.add_css_class ("nm-sub-label");
+            sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
             info.append (sub);
             root.append (info);
 
             var details_btn = new Gtk.Button.with_label ("Details");
-            details_btn.add_css_class ("nm-button");
-            MainWindowCssClassResolver.add_best_class (details_btn, {"nm-details-button", "nm-action-button", "nm-button"});
+            details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
             details_btn.clicked.connect (() => {
                 this.open_ethernet_profile (row_device);
             });

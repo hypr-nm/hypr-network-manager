@@ -30,7 +30,7 @@ namespace NetworkManagerRebuild.UI.Views {
 
         private void setup_widgets () {
             content_stack.set_vexpand (true);
-            content_stack.add_css_class ("nm-content-stack");
+            content_stack.add_css_class (MainWindowCssClasses.CONTENT_STACK);
             content_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
             content_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
 

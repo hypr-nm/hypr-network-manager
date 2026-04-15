@@ -65,9 +65,9 @@ namespace MainWindowWifiRowBuilder {
         owned MainWindowPasswordPromptHideCallback on_hide_password_prompt
     ) {
         var row = new Gtk.ListBoxRow ();
-        row.add_css_class ("nm-wifi-row");
+        row.add_css_class (MainWindowCssClasses.WIFI_ROW);
         if (is_connected_now) {
-            row.add_css_class ("connected");
+            row.add_css_class (MainWindowCssClasses.CONNECTED);
         }
 
         bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
@@ -77,11 +77,11 @@ namespace MainWindowWifiRowBuilder {
         row_root.add_css_class ("nm-row-root");
 
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
-        content.add_css_class ("nm-row-content");
+        content.add_css_class (MainWindowCssClasses.ROW_CONTENT);
 
         var signal_icon = new Gtk.Image.from_icon_name (signal_icon_name);
-        MainWindowCssClassResolver.add_best_class (signal_icon, {"nm-icon-size-16", "nm-icon-size"});
-        MainWindowCssClassResolver.add_best_class (signal_icon, {"nm-wifi-icon", "nm-signal-icon"});
+        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON, MainWindowCssClasses.SIGNAL_ICON});
         if (net.is_secured) {
             signal_icon.add_css_class ("nm-signal-icon-secured");
         }
@@ -98,7 +98,7 @@ namespace MainWindowWifiRowBuilder {
 
         var ssid_lbl = new Gtk.Label (ssid_text);
         ssid_lbl.set_xalign (0.0f);
-        ssid_lbl.add_css_class ("nm-ssid-label");
+        ssid_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
         ssid_row.append (ssid_lbl);
 
         if (is_connected_now) {
@@ -131,7 +131,7 @@ namespace MainWindowWifiRowBuilder {
 
         var sub = new Gtk.Label (subtitle);
         sub.set_xalign (0.0f);
-        sub.add_css_class ("nm-sub-label");
+        sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
         info.append (sub);
         content.append (info);
 
@@ -143,19 +143,19 @@ namespace MainWindowWifiRowBuilder {
         row.set_data<Gtk.Image> ("expand-hint", expand_hint);
 
         var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        actions_panel.add_css_class ("nm-row-actions");
+        actions_panel.add_css_class (MainWindowCssClasses.ROW_ACTIONS);
 
         var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         action_buttons.add_css_class ("nm-row-action-buttons");
         action_buttons.set_valign (Gtk.Align.CENTER);
 
         var details_btn = new Gtk.Button ();
-        details_btn.add_css_class ("row-icon-action");
+        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
         MainWindowCssClassResolver.add_best_class (
             details_btn,
-            {"row-icon-action", "nm-button"}
+            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
         );
-        MainWindowCssClassResolver.add_best_class (details_btn, {"nm-details-open-button", "row-icon-action"});
+        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON, MainWindowCssClasses.ROW_ICON_ACTION});
         details_btn.set_valign (Gtk.Align.CENTER);
         details_btn.set_tooltip_text ("Details");
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
@@ -172,10 +172,10 @@ namespace MainWindowWifiRowBuilder {
             var forget = new Gtk.Button.with_label ("Forget");
             MainWindowCssClassResolver.add_best_class (
                 forget,
-                {"row-link-action", "nm-button"}
+                {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
             );
-            forget.add_css_class ("nm-action-button");
-            forget.add_css_class ("nm-forget-button");
+            forget.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+            forget.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
             forget.set_valign (Gtk.Align.CENTER);
             forget.clicked.connect (() => {
                 on_forget_saved_network (net);
@@ -187,9 +187,9 @@ namespace MainWindowWifiRowBuilder {
         var action = new Gtk.Button.with_label (action_label);
         MainWindowCssClassResolver.add_best_class (
             action,
-            {"row-link-action", "nm-button"}
+            {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
         );
-        action.add_css_class (is_connected_now && !is_connecting ? "nm-disconnect-button" : "nm-connect-button");
+        action.add_css_class (is_connected_now && !is_connecting ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.set_valign (Gtk.Align.CENTER);
         action.set_sensitive (!is_connecting);
 
@@ -199,7 +199,7 @@ namespace MainWindowWifiRowBuilder {
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_label,
             "nm-inline-password-label",
-            {"nm-form-label"}
+            {MainWindowCssClasses.FORM_LABEL}
         );
         prompt_label.set_visible (net.is_secured);
 
@@ -209,7 +209,7 @@ namespace MainWindowWifiRowBuilder {
         MainWindowCssClassResolver.add_hook_and_best_class (
             hidden_ssid_label,
             "nm-inline-password-label",
-            {"nm-form-label"}
+            {MainWindowCssClasses.FORM_LABEL}
         );
 
         var hidden_ssid_entry = new Gtk.Entry ();
@@ -218,7 +218,7 @@ namespace MainWindowWifiRowBuilder {
         MainWindowCssClassResolver.add_hook_and_best_class (
             hidden_ssid_entry,
             "nm-inline-ssid-entry",
-            {"nm-inline-password-entry", "nm-password-entry"}
+            {"nm-inline-password-entry", MainWindowCssClasses.PASSWORD_ENTRY}
         );
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
@@ -233,7 +233,7 @@ namespace MainWindowWifiRowBuilder {
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_entry,
             "nm-inline-password-entry",
-            {"nm-password-entry"}
+            {MainWindowCssClasses.PASSWORD_ENTRY}
         );
         prompt_entry.set_visible (net.is_secured);
 
@@ -252,19 +252,19 @@ namespace MainWindowWifiRowBuilder {
         }
 
         var prompt_cancel = new Gtk.Button.with_label ("Cancel");
-        prompt_cancel.add_css_class ("nm-button");
+        prompt_cancel.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_cancel,
             "nm-inline-password-cancel",
-            {"nm-button"}
+            {MainWindowCssClasses.BUTTON}
         );
 
         var prompt_connect = new Gtk.Button.with_label ("Connect");
-        prompt_connect.add_css_class ("nm-button");
+        prompt_connect.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_connect,
             "nm-inline-password-connect",
-            {"suggested-action", "nm-button"}
+            {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON}
         );
         prompt_connect.set_sensitive (false);
 
@@ -394,7 +394,7 @@ namespace MainWindowWifiRowBuilder {
 
         if (has_resolvable_saved_profile) {
             var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
-            auto_connect.add_css_class ("nm-row-autoconnect-check");
+            auto_connect.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
             auto_connect.set_active (net.autoconnect);
             auto_connect.set_sensitive (!is_connecting);
             auto_connect.set_hexpand (true);
@@ -412,7 +412,7 @@ namespace MainWindowWifiRowBuilder {
         actions_panel.append (action_buttons);
 
         var actions_revealer = new Gtk.Revealer ();
-        actions_revealer.add_css_class ("nm-row-actions-revealer");
+        actions_revealer.add_css_class (MainWindowCssClasses.ROW_ACTIONS_REVEALER);
         actions_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         actions_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
         actions_revealer.set_reveal_child (false);

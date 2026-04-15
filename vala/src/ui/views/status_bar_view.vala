@@ -14,12 +14,12 @@ namespace NetworkManagerRebuild.UI.Views {
 
         private void build_ui () {
             root_widget = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_best_class (root_widget, {"nm-toolbar-inset", "nm-page-shell-inset"});
-            MainWindowCssClassResolver.add_best_class (root_widget, {"nm-status-bar", "nm-toolbar"});
+            MainWindowCssClassResolver.add_best_class (root_widget, {MainWindowCssClasses.TOOLBAR_INSET, MainWindowCssClasses.PAGE_SHELL_INSET});
+            MainWindowCssClassResolver.add_best_class (root_widget, {MainWindowCssClasses.STATUS_BAR, MainWindowCssClasses.TOOLBAR});
 
             status_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-            MainWindowCssClassResolver.add_best_class (status_icon, {"nm-icon-size-16", "nm-icon-size"});
-            MainWindowCssClassResolver.add_best_class (status_icon, {"nm-status-icon", "nm-icon-size"});
+            MainWindowCssClassResolver.add_best_class (status_icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
+            MainWindowCssClassResolver.add_best_class (status_icon, {"nm-status-icon", MainWindowCssClasses.ICON_SIZE});
             root_widget.append (status_icon);
 
             status_label = new Gtk.Label ("Loading networks…");

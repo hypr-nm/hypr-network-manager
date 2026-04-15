@@ -14,16 +14,16 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
     public MainWindowProfilesDetailsPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
-        this.add_css_class ("nm-page");
-        this.add_css_class ("nm-page-shell-inset");
-        MainWindowCssClassResolver.add_best_class (this, {"nm-page-shell-inset", "nm-page"});
+        this.add_css_class (MainWindowCssClasses.PAGE);
+        this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_best_class (
             this,
-            {"nm-page-network-details", "nm-page"}
+            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
         );
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
-        nav_row.add_css_class ("nm-details-nav-row");
+        nav_row.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
 
         var back_btn = MainWindowHelpers.build_back_button ();
         back_btn.clicked.connect (() => {
@@ -34,34 +34,34 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
 
         var header = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         header.set_halign (Gtk.Align.CENTER);
-        header.add_css_class ("nm-details-header");
+        header.add_css_class (MainWindowCssClasses.DETAILS_HEADER);
 
         var icon = new Gtk.Image.from_icon_name ("avatar-default-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-28", "nm-icon-size"});
-        MainWindowCssClassResolver.add_best_class (icon, {"nm-details-network-icon", "nm-icon-size"});
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_28, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.DETAILS_NETWORK_ICON, MainWindowCssClasses.ICON_SIZE});
         header.append (icon);
 
         this.title_label = new Gtk.Label ("Profile");
         this.title_label.set_xalign (0.5f);
         this.title_label.set_halign (Gtk.Align.CENTER);
-        this.title_label.add_css_class ("nm-details-network-title");
+        this.title_label.add_css_class (MainWindowCssClasses.DETAILS_NETWORK_TITLE);
         header.append (this.title_label);
 
         this.subtitle_label = new Gtk.Label ("");
         this.subtitle_label.set_xalign (0.5f);
         this.subtitle_label.set_halign (Gtk.Align.CENTER);
-        this.subtitle_label.add_css_class ("nm-sub-label");
+        this.subtitle_label.add_css_class (MainWindowCssClasses.SUB_LABEL);
         header.append (this.subtitle_label);
 
         var action_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         action_row.set_halign (Gtk.Align.CENTER);
-        action_row.add_css_class ("nm-details-action-row");
+        action_row.add_css_class (MainWindowCssClasses.DETAILS_ACTION_ROW);
 
         this.edit_button = new Gtk.Button.with_label ("Edit");
-        this.edit_button.add_css_class ("nm-button");
+        this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.edit_button,
-            {"nm-edit-button", "nm-details-action-button", "nm-action-button", "nm-button"}
+            {MainWindowCssClasses.EDIT_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
         );
         this.edit_button.clicked.connect (() => {
             this.edit ();
@@ -69,10 +69,10 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         action_row.append (this.edit_button);
 
         this.delete_button = new Gtk.Button.with_label ("Delete");
-        this.delete_button.add_css_class ("nm-button");
+        this.delete_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.delete_button,
-            {"nm-delete-button", "nm-details-action-button", "nm-action-button", "nm-button"}
+            {MainWindowCssClasses.DELETE_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
         );
         this.delete_button.clicked.connect (() => {
             this.delete_profile ();
@@ -83,16 +83,16 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         this.append (header);
 
         var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        sep.add_css_class ("nm-separator");
+        sep.add_css_class (MainWindowCssClasses.SEPARATOR);
         this.append (sep);
 
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class ("nm-scroll");
+        scroll.add_css_class (MainWindowCssClasses.SCROLL);
         scroll.set_vexpand (true);
 
         var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        body.add_css_class ("nm-details-scroll-body-inset");
+        body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         Gtk.Box rows_out;
         body.append (MainWindowHelpers.build_details_section ("Details", out rows_out));

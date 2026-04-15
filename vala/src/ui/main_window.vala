@@ -47,7 +47,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         set_size_request (WindowConfigContext.MIN_WINDOW_WIDTH, WindowConfigContext.MIN_WINDOW_HEIGHT);
         set_resizable (false);
         set_opacity (MainWindowUiMetrics.WINDOW_OPACITY);
-        add_css_class ("nm-window");
+        add_css_class (MainWindowCssClasses.WINDOW);
         nm = new NetworkManagerClient ();
         wifi_controller = new MainWindowWifiController (this, state_context);
         ethernet_controller = new MainWindowEthernetController (
@@ -317,7 +317,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private Gtk.Box build_root_container () {
         var root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
-        root.add_css_class ("nm-root");
+        root.add_css_class (MainWindowCssClasses.ROOT);
         set_child (root);
         return root;
     }
@@ -330,13 +330,13 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         root.append (status_bar_view.root_widget);
 
         status_separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        status_separator.add_css_class ("nm-separator");
+        status_separator.add_css_class (MainWindowCssClasses.SEPARATOR);
         root.append (status_separator);
     }
 
     private Gtk.Label build_tab_label (string text) {
         var tab = new Gtk.Label (text);
-        tab.add_css_class ("nm-tab-label");
+        tab.add_css_class (MainWindowCssClasses.TAB_LABEL);
         return tab;
     }
 
@@ -411,7 +411,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private Gtk.MenuButton build_tabs_menu_button () {
         var tabs_menu_popover = new Gtk.Popover ();
-        tabs_menu_popover.add_css_class ("nm-tabs-menu-popover");
+        tabs_menu_popover.add_css_class (MainWindowCssClasses.TABS_MENU_POPOVER);
         tabs_menu_popover.set_has_arrow (false);
         tabs_menu_popover.set_position (Gtk.PositionType.BOTTOM);
         // Bias the popover inward so it stays inside the right window edge.
@@ -423,15 +423,15 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
-            {"nm-popover-list-inset", "nm-row-content-inset"}
+            {"nm-popover-list-inset", MainWindowCssClasses.ROW_CONTENT_INSET}
         );
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
-            {"nm-tabs-menu-list", "nm-list"}
+            {"nm-tabs-menu-list", MainWindowCssClasses.LIST}
         );
 
         var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
-        saved_profiles_item.add_css_class ("nm-tabs-menu-item");
+        saved_profiles_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
         saved_profiles_item.clicked.connect (() => {
             tabs_menu_popover.popdown ();
             profiles_section.open_profiles_page (false);
@@ -440,7 +440,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         tabs_menu_popover.set_child (tabs_menu_box);
 
         var tabs_menu_button = new Gtk.MenuButton ();
-        tabs_menu_button.add_css_class ("nm-tabs-menu-button");
+        tabs_menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON);
         tabs_menu_button.set_tooltip_text ("Profiles");
         tabs_menu_button.set_popover (tabs_menu_popover);
 
