@@ -196,6 +196,46 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
     public signal void apply ();
     public signal void ok ();
 
+    public void setup_edit_form (WifiNetwork net) {
+        this.edit_title.set_text ("Edit: %s".printf (net.ssid));
+        this.password_entry.set_text ("");
+        this.password_entry.set_visibility (false);
+
+        if (net.is_secured) {
+            this.note_label.set_text (
+                "Current password is prefilled when available.\n"
+                + "IPv4 and IPv6 settings can be changed below (auto/manual/disabled)."
+            );
+        } else {
+            this.note_label.set_text ("Open network. Password is not required.");
+        }
+
+        this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
+        this.password_entry.grab_focus ();
+
+        this.ipv4_method_dropdown.set_selected (0);
+        this.ipv4_address_entry.set_text ("");
+        this.ipv4_prefix_entry.set_text ("");
+        this.ipv4_gateway_entry.set_text ("");
+        this.dns_auto_switch.set_active (true);
+        this.ipv4_dns_entry.set_text ("");
+        this.ipv6_method_dropdown.set_selected (0);
+        this.ipv6_address_entry.set_text ("");
+        this.ipv6_prefix_entry.set_text ("");
+        this.ipv6_gateway_entry.set_text ("");
+        this.ipv6_dns_auto_switch.set_active (true);
+        this.ipv6_dns_entry.set_text ("");
+        this.sync_edit_gateway_dns_sensitivity ();
+    }
+
+    public string get_password () {
+        return this.password_entry.get_text ().strip ();
+    }
+
+    public void set_password (string password) {
+        this.password_entry.set_text (password);
+    }
+
     public MainWindowWifiEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 

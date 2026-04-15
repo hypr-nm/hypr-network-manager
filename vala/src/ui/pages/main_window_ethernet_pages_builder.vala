@@ -196,6 +196,29 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
     public signal void back ();
     public signal void apply ();
 
+    public void setup_edit_form (NetworkDevice dev) {
+        this.edit_title.set_text ("Edit: %s".printf (dev.name));
+        string profile_display = MainWindowHelpers.safe_text (dev.connection).strip ();
+        if (profile_display == "") {
+            profile_display = "Profile %s".printf (MainWindowHelpers.safe_text (dev.connection_uuid));
+        }
+        this.note_label.set_text ("Update IPv4 and IPv6 settings for profile: %s".printf (profile_display));
+
+        this.ipv4_method_dropdown.set_selected (0);
+        this.ipv4_address_entry.set_text ("");
+        this.ipv4_prefix_entry.set_text ("");
+        this.ipv4_gateway_entry.set_text ("");
+        this.dns_auto_switch.set_active (true);
+        this.ipv4_dns_entry.set_text ("");
+        this.ipv6_method_dropdown.set_selected (0);
+        this.ipv6_address_entry.set_text ("");
+        this.ipv6_prefix_entry.set_text ("");
+        this.ipv6_gateway_entry.set_text ("");
+        this.ipv6_dns_auto_switch.set_active (true);
+        this.ipv6_dns_entry.set_text ("");
+        this.sync_edit_gateway_dns_sensitivity ();
+    }
+
     public MainWindowEthernetEditPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 

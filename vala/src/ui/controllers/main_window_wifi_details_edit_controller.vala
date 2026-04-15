@@ -210,37 +210,10 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         edit_request_cancellable = new Cancellable ();
         var edit_request = edit_request_cancellable;
 
-        page.edit_title.set_text ("Edit: %s".printf (net.ssid));
-        page.password_entry.set_text ("");
-        page.password_entry.set_visibility (false);
-
-        if (net.is_secured) {
-            page.note_label.set_text (
-                "Current password is prefilled when available.\n"
-                + "IPv4 and IPv6 settings can be changed below (auto/manual/disabled)."
-            );
-        } else {
-            page.note_label.set_text ("Open network. Password is not required.");
-        }
+        page.setup_edit_form (net);
 
         wifi_stack.set_visible_child_name ("edit");
         host.set_popup_text_input_mode (true);
-        page.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
-        page.password_entry.grab_focus ();
-
-        page.ipv4_method_dropdown.set_selected (0);
-        page.ipv4_address_entry.set_text ("");
-        page.ipv4_prefix_entry.set_text ("");
-        page.ipv4_gateway_entry.set_text ("");
-        page.dns_auto_switch.set_active (true);
-        page.ipv4_dns_entry.set_text ("");
-        page.ipv6_method_dropdown.set_selected (0);
-        page.ipv6_address_entry.set_text ("");
-        page.ipv6_prefix_entry.set_text ("");
-        page.ipv6_gateway_entry.set_text ("");
-        page.ipv6_dns_auto_switch.set_active (true);
-        page.ipv6_dns_entry.set_text ("");
-        page.sync_edit_gateway_dns_sensitivity ();
 
         nm.get_wifi_network_ip_settings.begin (net, edit_request, (obj, res) => {
             if (!is_ui_epoch_valid (epoch)) {
@@ -254,9 +227,9 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             NetworkIpSettings ip_settings = nm.get_wifi_network_ip_settings.end (res);
 
             if (net.is_secured) {
-                page.password_entry.set_text (MainWindowHelpers.safe_text (ip_settings.configured_password));
+                page.set_password (MainWindowHelpers.safe_text (ip_settings.configured_password));
             } else {
-                page.password_entry.set_text ("");
+                page.set_password ("");
             }
             page.populate_ip_settings (ip_settings);
         });
@@ -276,7 +249,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         action_request_cancellable = new Cancellable ();
         var action_request = action_request_cancellable;
         string net_key = net.network_key;
-        string password = page.password_entry.get_text ().strip ();
+        string password = page.get_password ();
 
         string? error_message = null;
         var base_request = page.build_ip_update_request (out error_message);

@@ -71,12 +71,8 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
         uint epoch = capture_ui_epoch ();
         edit_request_cancellable = new Cancellable ();
         var edit_request = edit_request_cancellable;
-        ethernet_edit_page.edit_title.set_text ("Edit: %s".printf (dev.name));
-        string profile_display = MainWindowHelpers.safe_text (dev.connection).strip ();
-        if (profile_display == "") {
-            profile_display = "Profile %s".printf (MainWindowHelpers.safe_text (dev.connection_uuid));
-        }
-        ethernet_edit_page.note_label.set_text ("Update IPv4 and IPv6 settings for profile: %s".printf (profile_display));
+
+        ethernet_edit_page.setup_edit_form (dev);
 
         ethernet_stack.set_visible_child_name ("edit");
         host.set_popup_text_input_mode (true);
