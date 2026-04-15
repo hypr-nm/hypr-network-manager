@@ -11,6 +11,7 @@ public class MainWindowWifiController : Object {
     private MainWindowWifiSavedProfilesController saved_profiles_controller;
     private MainWindowWifiSwitchController switch_controller;
     private MainWindowWifiPasswordUIController password_ui_controller;
+    private MainWindowPasswordPromptManager prompt_manager;
     private MainWindowWifiDetailsEditController details_edit_controller;
 
     public signal void saved_profile_update_succeeded ();
@@ -25,6 +26,7 @@ public class MainWindowWifiController : Object {
         saved_profiles_controller = new MainWindowWifiSavedProfilesController (host);
         switch_controller = new MainWindowWifiSwitchController (host);
         password_ui_controller = new MainWindowWifiPasswordUIController (host);
+        prompt_manager = new MainWindowPasswordPromptManager ();
         details_edit_controller = new MainWindowWifiDetailsEditController (host, state_context);
 
         saved_profiles_controller.saved_profile_update_succeeded.connect (() => {
@@ -275,43 +277,29 @@ public class MainWindowWifiController : Object {
     }
 
     public void show_wifi_password_prompt (
-        ref Gtk.Revealer? active_wifi_password_revealer,
-        ref Gtk.Entry? active_wifi_password_entry,
         Gtk.Revealer revealer,
         Gtk.Entry entry
     ) {
-        password_ui_controller.show_wifi_password_prompt (
-            ref active_wifi_password_revealer,
-            ref active_wifi_password_entry,
-            revealer,
-            entry
-        );
+        prompt_manager.show_prompt (revealer, entry);
+        password_ui_controller.set_popup_text_input_mode (true);
     }
 
     public void hide_wifi_password_prompt (
-        ref Gtk.Revealer? active_wifi_password_revealer,
-        ref Gtk.Entry? active_wifi_password_entry,
         Gtk.Revealer revealer,
         Gtk.Entry entry,
         string? value
     ) {
-        password_ui_controller.hide_wifi_password_prompt (
-            ref active_wifi_password_revealer,
-            ref active_wifi_password_entry,
-            revealer,
-            entry,
-            value
-        );
+        bool was_active = prompt_manager.hide_prompt (revealer, entry, value);
+        if (was_active) {
+            password_ui_controller.set_popup_text_input_mode (false);
+        }
     }
 
-    public void hide_active_wifi_password_prompt (
-        ref Gtk.Revealer? active_wifi_password_revealer,
-        ref Gtk.Entry? active_wifi_password_entry
-    ) {
-        password_ui_controller.hide_active_wifi_password_prompt (
-            ref active_wifi_password_revealer,
-            ref active_wifi_password_entry
-        );
+    public void hide_active_wifi_password_prompt () {
+        bool was_active = prompt_manager.hide_active_prompt ();
+        if (was_active) {
+            password_ui_controller.set_popup_text_input_mode (false);
+        }
     }
 
     public void forget_wifi_network (

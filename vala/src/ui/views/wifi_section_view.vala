@@ -452,8 +452,6 @@ namespace NetworkManagerRebuild.UI.Views {
             var rev = active_wifi_password_revealer;
             var ent = active_wifi_password_entry;
             controller.show_wifi_password_prompt (
-                ref rev,
-                ref ent,
                 revealer,
                 entry
             );
@@ -465,8 +463,6 @@ namespace NetworkManagerRebuild.UI.Views {
             var rev = active_wifi_password_revealer;
             var ent = active_wifi_password_entry;
             controller.hide_wifi_password_prompt (
-                ref rev,
-                ref ent,
                 revealer,
                 entry,
                 value
@@ -482,10 +478,7 @@ namespace NetworkManagerRebuild.UI.Views {
         public void hide_active_wifi_password_prompt () {
             var rev = active_wifi_password_revealer;
             var ent = active_wifi_password_entry;
-            controller.hide_active_wifi_password_prompt (
-                ref rev,
-                ref ent
-            );
+            controller.hide_active_wifi_password_prompt ();
             active_wifi_password_revealer = rev;
             active_wifi_password_entry = ent;
             active_wifi_password_row_id = null;
