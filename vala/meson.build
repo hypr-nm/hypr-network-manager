@@ -55,7 +55,6 @@ executable(
     'src/ui/controllers/main_window_wifi_controller.vala',
     'src/ui/controllers/main_window_refresh_coordinator.vala',
     'src/ui/controllers/main_window_wifi_details_edit_controller.vala',
-    'src/ui/controllers/main_window_wifi_row_action_callbacks.vala',
     'src/ui/controllers/main_window_wifi_runtime_controller.vala',
     'src/ui/controllers/main_window_wifi_row_reconciler.vala',
     'src/ui/controllers/main_window_wifi_saved_profile_form_utils.vala',
