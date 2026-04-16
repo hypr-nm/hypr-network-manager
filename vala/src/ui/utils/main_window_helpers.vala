@@ -3,16 +3,16 @@ using Gtk;
 namespace MainWindowHelpers {
     public Gtk.Button build_back_button () {
         var back_btn = new Gtk.Button ();
-        back_btn.add_css_class ("nm-nav-back");
-        MainWindowCssClassResolver.add_best_class (back_btn, {"nm-nav-back", MainWindowCssClasses.BUTTON});
+        back_btn.add_css_class (MainWindowCssClasses.NAV_BACK);
+        MainWindowCssClassResolver.add_best_class (back_btn, {MainWindowCssClasses.NAV_BACK, MainWindowCssClasses.BUTTON});
 
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         var icon = new Gtk.Image.from_icon_name ("go-previous-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {"nm-icon-size-14", MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_hook_and_best_class (icon, "nm-back-icon", {MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_14, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_hook_and_best_class (icon, MainWindowCssClasses.BACK_ICON, {MainWindowCssClasses.ICON_SIZE});
 
         var label = new Gtk.Label ("Back");
-        label.add_css_class ("nm-back-label");
+        label.add_css_class (MainWindowCssClasses.BACK_LABEL);
 
         content.append (icon);
         content.append (label);
@@ -58,7 +58,7 @@ namespace MainWindowHelpers {
 
     public Gtk.Widget build_details_row (string? key, string? value) {
         var row = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
-        MainWindowCssClassResolver.add_best_class (row, {"nm-details-item", "nm-details-row"});
+        MainWindowCssClassResolver.add_best_class (row, {MainWindowCssClasses.DETAILS_ITEM, MainWindowCssClasses.DETAILS_ROW});
 
         string key_text = display_text_or_na (key);
         string value_text = display_text_or_na (value);
@@ -67,7 +67,7 @@ namespace MainWindowHelpers {
         key_label.set_xalign (0.0f);
         key_label.set_halign (Gtk.Align.START);
         key_label.set_hexpand (false);
-        MainWindowCssClassResolver.add_best_class (key_label, {"nm-details-item-key", "nm-details-key"});
+        MainWindowCssClassResolver.add_best_class (key_label, {MainWindowCssClasses.DETAILS_ITEM_KEY, MainWindowCssClasses.DETAILS_KEY});
 
         var value_label = new Gtk.Label (value_text);
         value_label.set_xalign (0.0f);
@@ -75,7 +75,7 @@ namespace MainWindowHelpers {
         value_label.set_wrap (true);
         MainWindowCssClassResolver.add_best_class (
             value_label,
-            {"nm-details-item-value", "nm-details-value"}
+            {MainWindowCssClasses.DETAILS_ITEM_VALUE, MainWindowCssClasses.DETAILS_VALUE}
         );
 
         row.append (key_label);
@@ -85,11 +85,11 @@ namespace MainWindowHelpers {
 
     public Gtk.Widget build_details_section (string title, out Gtk.Box rows_container) {
         var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        section.add_css_class ("nm-details-section");
+        section.add_css_class (MainWindowCssClasses.DETAILS_SECTION);
 
         var heading = new Gtk.Label (title);
         heading.set_xalign (0.5f);
-        heading.add_css_class ("nm-details-group-title");
+        heading.add_css_class (MainWindowCssClasses.DETAILS_GROUP_TITLE);
         section.append (heading);
 
         var separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
@@ -97,7 +97,7 @@ namespace MainWindowHelpers {
         section.append (separator);
 
         rows_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-        rows_container.add_css_class ("nm-details-rows");
+        rows_container.add_css_class (MainWindowCssClasses.DETAILS_ROWS);
         section.append (rows_container);
 
         return section;

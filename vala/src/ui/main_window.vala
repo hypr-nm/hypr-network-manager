@@ -423,11 +423,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
-            {"nm-popover-list-inset", MainWindowCssClasses.ROW_CONTENT_INSET}
+            {MainWindowCssClasses.POPOVER_LIST_INSET, MainWindowCssClasses.ROW_CONTENT_INSET}
         );
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
-            {"nm-tabs-menu-list", MainWindowCssClasses.LIST}
+            {MainWindowCssClasses.TABS_MENU_LIST, MainWindowCssClasses.LIST}
         );
 
         var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
@@ -447,7 +447,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         var tabs_menu_icon = new Gtk.Image.from_icon_name ("view-more-symbolic");
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_icon,
-            {"nm-tabs-menu-icon", "nm-toolbar-icon"}
+            {MainWindowCssClasses.TABS_MENU_ICON, MainWindowCssClasses.TOOLBAR_ICON}
         );
         tabs_menu_button.set_child (tabs_menu_icon);
 

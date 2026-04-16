@@ -423,7 +423,7 @@ namespace NetworkManagerRebuild.UI.Views {
 
             for (Gtk.Widget? child = listbox.get_first_child (); child != null; child = child.get_next_sibling ()) {
                 var row = child as Gtk.ListBoxRow;
-                if (row == null || !row.get_data<bool> ("nm-actions-expanded")) {
+                if (row == null || !row.get_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED)) {
                     continue;
                 }
 
@@ -437,7 +437,7 @@ namespace NetworkManagerRebuild.UI.Views {
                     MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
                 }
 
-                row.set_data<bool> ("nm-actions-expanded", false);
+                row.set_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED, false);
             }
         }
 

@@ -35,7 +35,7 @@ namespace NetworkManagerRebuild.UI.Views {
             content_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
 
             notebook.set_show_border (false);
-            notebook.add_css_class ("nm-notebook");
+            notebook.add_css_class (MainWindowCssClasses.NOTEBOOK);
         }
 
         private void wire_signals () {

@@ -75,7 +75,7 @@ public class MainWindowWifiRowReconciler : Object {
                 continue;
             }
 
-            string? existing_row_id = (string?) existing_row.get_data<string> ("nm-row-id");
+            string? existing_row_id = (string?) existing_row.get_data<string> (MainWindowDataKeys.ROW_ID);
             if (existing_row_id == null || existing_row_id == "") {
                 continue;
             }
@@ -153,11 +153,11 @@ public class MainWindowWifiRowReconciler : Object {
             if (needs_rebuild) {
                 bool was_expanded = false;
                 if (row != null) {
-                    was_expanded = row.get_data<bool> ("nm-actions-expanded");
+                    was_expanded = row.get_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED);
                 }
 
                 var rebuilt_row = on_build_wifi_row (net);
-                rebuilt_row.set_data<string> ("nm-row-id", row_id);
+                rebuilt_row.set_data<string> (MainWindowDataKeys.ROW_ID, row_id);
 
                 if (was_expanded) {
                     for (Gtk.Widget? child = rebuilt_row.get_first_child ();
@@ -169,7 +169,7 @@ public class MainWindowWifiRowReconciler : Object {
                                 var rev = bchild as Gtk.Revealer;
                                 if (rev != null && rev.has_css_class (MainWindowCssClasses.ROW_ACTIONS_REVEALER)) {
                                     rev.set_reveal_child (true);
-                                    rebuilt_row.set_data<bool> ("nm-actions-expanded", true);
+                                    rebuilt_row.set_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED, true);
                                     break;
                                 }
                             }

@@ -19,19 +19,19 @@ namespace NetworkManagerRebuild.UI.Views {
 
             status_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
             MainWindowCssClassResolver.add_best_class (status_icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
-            MainWindowCssClassResolver.add_best_class (status_icon, {"nm-status-icon", MainWindowCssClasses.ICON_SIZE});
+            MainWindowCssClassResolver.add_best_class (status_icon, {MainWindowCssClasses.STATUS_ICON, MainWindowCssClasses.ICON_SIZE});
             root_widget.append (status_icon);
 
             status_label = new Gtk.Label ("Loading networks…");
             status_label.set_xalign (0.0f);
             status_label.set_hexpand (true);
-            status_label.add_css_class ("nm-status-label");
+            status_label.add_css_class (MainWindowCssClasses.STATUS_LABEL);
             root_widget.append (status_label);
 
             var switch_label = new Gtk.Label ("Networking");
-            switch_label.add_css_class ("nm-toggle-label");
+            switch_label.add_css_class (MainWindowCssClasses.TOGGLE_LABEL);
             networking_switch = new Gtk.Switch ();
-            networking_switch.add_css_class ("nm-switch");
+            networking_switch.add_css_class (MainWindowCssClasses.SWITCH);
             networking_switch.set_valign (Gtk.Align.CENTER);
 
             networking_switch.notify["active"].connect (() => {

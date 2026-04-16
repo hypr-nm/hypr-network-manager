@@ -3,7 +3,7 @@ namespace MainWindowWifiRowBuilder {
         var revealer = row.get_data<Gtk.Revealer> ("actions-revealer");
         if (revealer != null) {
             revealer.set_reveal_child (false);
-            row.set_data<bool> ("nm-actions-expanded", false);
+            row.set_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED, false);
         }
         var expand_hint = row.get_data<Gtk.Image> ("expand-hint");
         if (expand_hint != null) {
@@ -27,7 +27,7 @@ namespace MainWindowWifiRowBuilder {
                 continue;
             }
 
-            if (!other_row.get_data<bool> ("nm-actions-expanded")) {
+            if (!other_row.get_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED)) {
                 continue;
             }
 
@@ -74,7 +74,7 @@ namespace MainWindowWifiRowBuilder {
         bool requires_hidden_ssid = net.is_hidden;
 
         var row_root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
-        row_root.add_css_class ("nm-row-root");
+        row_root.add_css_class (MainWindowCssClasses.ROW_ROOT);
 
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
         content.add_css_class (MainWindowCssClasses.ROW_CONTENT);
@@ -83,13 +83,13 @@ namespace MainWindowWifiRowBuilder {
         MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
         MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON, MainWindowCssClasses.SIGNAL_ICON});
         if (net.is_secured) {
-            signal_icon.add_css_class ("nm-signal-icon-secured");
+            signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
         }
         content.append (signal_icon);
 
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
         info.set_hexpand (true);
-        info.add_css_class ("nm-row-info");
+        info.add_css_class (MainWindowCssClasses.ROW_INFO);
         string ssid_text = MainWindowHelpers.safe_text (net.ssid);
         string bssid_text = MainWindowHelpers.safe_text (net.bssid);
 
@@ -103,7 +103,7 @@ namespace MainWindowWifiRowBuilder {
 
         if (is_connected_now) {
             var connected_indicator = new Gtk.Label ("• Connected");
-            connected_indicator.add_css_class ("nm-connected-indicator");
+            connected_indicator.add_css_class (MainWindowCssClasses.CONNECTED_INDICATOR);
             ssid_row.append (connected_indicator);
         }
 
@@ -137,7 +137,7 @@ namespace MainWindowWifiRowBuilder {
 
         var expand_hint = new Gtk.Image ();
         MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
-        expand_hint.add_css_class ("nm-row-expand-icon");
+        expand_hint.add_css_class (MainWindowCssClasses.ROW_EXPAND_ICON);
         expand_hint.set_valign (Gtk.Align.CENTER);
         content.append (expand_hint);
         row.set_data<Gtk.Image> ("expand-hint", expand_hint);
@@ -146,7 +146,7 @@ namespace MainWindowWifiRowBuilder {
         actions_panel.add_css_class (MainWindowCssClasses.ROW_ACTIONS);
 
         var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        action_buttons.add_css_class ("nm-row-action-buttons");
+        action_buttons.add_css_class (MainWindowCssClasses.ROW_ACTION_BUTTONS);
         action_buttons.set_valign (Gtk.Align.CENTER);
 
         var details_btn = new Gtk.Button ();
@@ -161,7 +161,7 @@ namespace MainWindowWifiRowBuilder {
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
         MainWindowCssClassResolver.add_best_class (
             details_icon,
-            {"nm-details-button-icon", "nm-details-open-icon"}
+            {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
         );
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
@@ -198,7 +198,7 @@ namespace MainWindowWifiRowBuilder {
         prompt_label.set_hexpand (true);
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_label,
-            "nm-inline-password-label",
+            MainWindowCssClasses.INLINE_PASSWORD_LABEL,
             {MainWindowCssClasses.FORM_LABEL}
         );
         prompt_label.set_visible (net.is_secured);
@@ -208,7 +208,7 @@ namespace MainWindowWifiRowBuilder {
         hidden_ssid_label.set_hexpand (true);
         MainWindowCssClassResolver.add_hook_and_best_class (
             hidden_ssid_label,
-            "nm-inline-password-label",
+            MainWindowCssClasses.INLINE_PASSWORD_LABEL,
             {MainWindowCssClasses.FORM_LABEL}
         );
 
@@ -217,8 +217,8 @@ namespace MainWindowWifiRowBuilder {
         hidden_ssid_entry.set_placeholder_text ("Hidden network name");
         MainWindowCssClassResolver.add_hook_and_best_class (
             hidden_ssid_entry,
-            "nm-inline-ssid-entry",
-            {"nm-inline-password-entry", MainWindowCssClasses.PASSWORD_ENTRY}
+            MainWindowCssClasses.INLINE_SSID_ENTRY,
+            {MainWindowCssClasses.INLINE_PASSWORD_ENTRY, MainWindowCssClasses.PASSWORD_ENTRY}
         );
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
@@ -232,7 +232,7 @@ namespace MainWindowWifiRowBuilder {
         );
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_entry,
-            "nm-inline-password-entry",
+            MainWindowCssClasses.INLINE_PASSWORD_ENTRY,
             {MainWindowCssClasses.PASSWORD_ENTRY}
         );
         prompt_entry.set_visible (net.is_secured);
@@ -255,7 +255,7 @@ namespace MainWindowWifiRowBuilder {
         prompt_cancel.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_cancel,
-            "nm-inline-password-cancel",
+            MainWindowCssClasses.INLINE_PASSWORD_CANCEL,
             {MainWindowCssClasses.BUTTON}
         );
 
@@ -263,7 +263,7 @@ namespace MainWindowWifiRowBuilder {
         prompt_connect.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_connect,
-            "nm-inline-password-connect",
+            MainWindowCssClasses.INLINE_PASSWORD_CONNECT,
             {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON}
         );
         prompt_connect.set_sensitive (false);
@@ -295,13 +295,13 @@ namespace MainWindowWifiRowBuilder {
         );
 
         var prompt_actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        prompt_actions.add_css_class ("nm-inline-password-actions");
+        prompt_actions.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_ACTIONS);
         prompt_actions.set_halign (Gtk.Align.END);
         prompt_actions.append (prompt_cancel);
         prompt_actions.append (prompt_connect);
 
         var prompt_inner = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        prompt_inner.add_css_class ("nm-inline-password");
+        prompt_inner.add_css_class (MainWindowCssClasses.INLINE_PASSWORD);
         prompt_inner.append (hidden_ssid_label);
         prompt_inner.append (hidden_ssid_entry);
         prompt_inner.append (prompt_label);
@@ -309,7 +309,7 @@ namespace MainWindowWifiRowBuilder {
         prompt_inner.append (prompt_actions);
 
         var prompt_revealer = new Gtk.Revealer ();
-        prompt_revealer.add_css_class ("nm-inline-password-revealer");
+        prompt_revealer.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_REVEALER);
         prompt_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         prompt_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
         prompt_revealer.set_reveal_child (false);
@@ -428,7 +428,7 @@ namespace MainWindowWifiRowBuilder {
             }
 
             actions_revealer.set_reveal_child (expanded);
-            row.set_data<bool> ("nm-actions-expanded", expanded);
+            row.set_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED, expanded);
             MainWindowIconResources.set_expand_indicator_icon (expand_hint, expanded);
             if (!expanded) {
                 on_hide_password_prompt (prompt_revealer, prompt_entry, null);
