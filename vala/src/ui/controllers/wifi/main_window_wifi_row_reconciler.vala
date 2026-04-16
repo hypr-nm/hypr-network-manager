@@ -140,8 +140,13 @@ public class MainWindowWifiRowReconciler : Object {
         foreach (var row_id in ordered_row_ids) {
             var net = networks_by_row_id.lookup (row_id);
             string net_key = net.network_key;
-            bool is_connected_now = state_context.active_wifi_connections.contains (net_key);
-            bool is_connecting = state_context.pending_wifi_connect.contains (net_key);
+            bool is_connected_now = false;
+            bool is_connecting = false;
+            
+            if (state_context != null) {
+                is_connected_now = state_context.active_wifi_connections.contains (net_key);
+                is_connecting = state_context.pending_wifi_connect.contains (net_key);
+            }
             string new_signature = build_wifi_row_signature (net, is_connected_now, is_connecting);
 
             var row = visible_rows_by_id.lookup (row_id);
@@ -157,7 +162,7 @@ public class MainWindowWifiRowReconciler : Object {
                 }
 
                 var rebuilt_row = on_build_wifi_row (net);
-                rebuilt_row.set_data<string> (MainWindowDataKeys.ROW_ID, row_id);
+                rebuilt_row.set_data<string> (MainWindowDataKeys.ROW_ID, row_id.dup ());
 
                 if (was_expanded) {
                     for (Gtk.Widget? child = rebuilt_row.get_first_child ();

@@ -392,7 +392,7 @@ namespace NetworkManagerRebuild.UI.Views {
             return "%s|%s".printf (net.device_path, net.ap_path);
         }
 
-        public void perform_refresh (NetworkStateContext state_context) {
+        public void perform_refresh (NetworkStateContext state_ctx) {
             bool has_active_prompt_open = active_wifi_password_revealer != null
                 && active_wifi_password_revealer.get_reveal_child ();
 
@@ -405,7 +405,7 @@ namespace NetworkManagerRebuild.UI.Views {
                 active_wifi_password_row_id,
                 has_active_prompt_open,
                 (net) => {
-                    return build_wifi_row (net, state_context);
+                    return build_wifi_row (net, state_ctx);
                 }
             );
         }
