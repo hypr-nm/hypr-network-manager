@@ -165,6 +165,8 @@ Keys not listed above are ignored by the current app runtime.
 
 Themes are CSS-based and hot-swappable.
 
+Note: All guides provided bellow regarding theming are just a recommended patterns to get started, not a strict requirements. Themes can be structured in any way as long as the root `base.css` is present and valid.
+
 ### Base CSS Load Order
 
 1. `~/.config/hypr-network-manager/themes/base.css` (user-local)
@@ -187,8 +189,6 @@ Bundled themes follow this folder layout:
 * `themes/<name>/overrides.css`
 
 ### Compact Theme Workflow
-
-Note: This is just a recommended pattern to get started, not a strict requirement. Themes can be structured in any way as long as the root `base.css` is present and valid.
 
 1. Create a theme directory in `~/.config/hypr-network-manager/themes/` (for example `my-theme/`).
 2. Keep your root `base.css` small:
@@ -227,16 +227,19 @@ To integrate generated palettes, map generated colors into the theme token set.
 ```
 
 Matugen example:
+As the app follows Material color definitions by default, only custom tokens need to be mapped rather than the full palette.
 
 ```css
+/*
 @define-color surface @surface;
-@define-color surface_soft @surface_container_high;
-@define-color surface_raised @surface_container_highest;
 @define-color on_surface @on_surface;
 @define-color on_surface_variant @on_surface_variant;
 @define-color primary @primary;
 @define-color secondary @secondary;
 @define-color error @error;
+*/
+@define-color surface_soft @surface_container_high;
+@define-color surface_raised @surface_container_highest;
 @define-color success @tertiary;
 @define-color action @primary_fixed_dim;
 @define-color primary_hover @primary_fixed;
