@@ -238,3 +238,20 @@ popover.background listview row.activatable {
 .nm-scroll scrollbar slider:hover {
   background: alpha(@on_surface, .4);
 }
+
+list.boxed-list.nm-details-rows {
+  border: 1px solid @surface_raised;
+  background: @surface_soft;
+}
+
+list.boxed-list.nm-details-rows > row {
+  border-bottom: 1px solid @surface_raised;
+}
+
+list.boxed-list.nm-details-rows > row:last-child {
+  border-bottom: none;
+}
+
+list.boxed-list.nm-details-rows > row:hover {
+  background: @surface_raised;
+}

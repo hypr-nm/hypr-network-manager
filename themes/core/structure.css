@@ -387,20 +387,20 @@ button.nm-nav-back:hover label,
 
 .nm-details-row,
 .nm-details-item {
-  padding: 4px 0;
+  padding: 10px 14px;
 }
 
 .nm-details-key,
 .nm-details-item-key {
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: underline;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
 }
 
 .nm-details-value,
 .nm-details-item-value {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .nm-edit-form {

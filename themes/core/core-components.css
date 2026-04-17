@@ -874,3 +874,28 @@ dialog .suggested-action {
 dialog .suggested-action:hover {
   background: @primary_hover;
 }
+
+list.boxed-list.nm-details-rows {
+  background: alpha(@on_surface, .025);
+  border: 1px solid alpha(@on_surface, .08);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+list.boxed-list.nm-details-rows > row {
+  background: transparent;
+  border-bottom: 1px solid alpha(@on_surface, .08);
+  margin: 0;
+  border-radius: 0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+list.boxed-list.nm-details-rows > row:last-child {
+  border-bottom: none;
+}
+
+list.boxed-list.nm-details-rows > row:hover {
+  background: alpha(@secondary, .04);
+}
