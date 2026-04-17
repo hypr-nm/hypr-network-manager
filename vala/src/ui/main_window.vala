@@ -223,7 +223,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private void refresh_wifi () {
         if (wifi_section != null) {
-            wifi_section.perform_refresh (state_context);
+            wifi_section.perform_refresh ();
         }
     }
 

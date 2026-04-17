@@ -64,7 +64,7 @@ public class MainWindowWifiRefreshController : Object {
         Gtk.Image status_icon,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        MainWindowWifiRowBuildCallback on_build_wifi_row
+        IMainWindowWifiRowProvider row_provider
     ) {
         if (wifi_refresh_in_flight) {
             wifi_refresh_queued = true;
@@ -177,7 +177,7 @@ public class MainWindowWifiRefreshController : Object {
                     networks,
                     active_wifi_password_row_id,
                     has_active_wifi_password_prompt,
-                    on_build_wifi_row
+                    row_provider
                 );
 
                 if (current_view == "details" || current_view == "edit" || current_view == "add" ||

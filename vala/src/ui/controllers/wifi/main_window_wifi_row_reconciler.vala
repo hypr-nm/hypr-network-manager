@@ -66,7 +66,7 @@ public class MainWindowWifiRowReconciler : Object {
         WifiNetwork[] networks,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        MainWindowWifiRowBuildCallback on_build_wifi_row
+        IMainWindowWifiRowProvider row_provider
     ) {
         var visible_rows_by_id = new HashTable<string, Gtk.ListBoxRow> (str_hash, str_equal);
         for (Gtk.Widget? child = wifi_listbox.get_first_child (); child != null; child = child.get_next_sibling ()) {
@@ -161,7 +161,7 @@ public class MainWindowWifiRowReconciler : Object {
                     was_expanded = row.get_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED);
                 }
 
-                var rebuilt_row = on_build_wifi_row (net);
+                var rebuilt_row = row_provider.build_wifi_row (net);
                 rebuilt_row.set_data<string> (MainWindowDataKeys.ROW_ID, row_id.dup ());
 
                 if (was_expanded) {

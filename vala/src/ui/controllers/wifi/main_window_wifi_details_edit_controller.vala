@@ -241,8 +241,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,
         MainWindowWifiDetailsPage details_page,
-        bool close_after_apply,
-        MainWindowWifiNetworkCallback? on_open_details = null
+        bool close_after_apply
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_action_request ();

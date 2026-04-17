@@ -5,7 +5,7 @@ using NetworkManagerRebuild.UI.Interfaces;
 using NetworkManagerRebuild.Models;
 
 namespace NetworkManagerRebuild.UI.Views {
-    public class WifiSectionView : Object, IMainWindowWifiRowActionHandler {
+    public class WifiSectionView : Object, IMainWindowWifiRowActionHandler, IMainWindowWifiRowProvider, IMainWindowWifiPageActionHandler {
         public Gtk.Widget widget { get; private set; }
         public Gtk.Stack stack { get; private set; }
         public Gtk.ListBox listbox { get; private set; }
@@ -95,6 +95,10 @@ namespace NetworkManagerRebuild.UI.Views {
             wifi_switch.notify["active"].connect (() => {
                 on_wifi_switch_changed ();
             });
+        }
+
+        public void request_refresh (bool request_wifi_scan) {
+            refresh_requested ();
         }
 
         private void wire_details_page_signals () {
@@ -286,13 +290,11 @@ namespace NetworkManagerRebuild.UI.Views {
         }
 
         private void open_wifi_details (WifiNetwork net) {
+            populate_wifi_details (net);
             controller.open_details (
                 ref selected_wifi_network,
                 net,
-                stack,
-                (wifi_net) => {
-                    populate_wifi_details (wifi_net);
-                }
+                stack
             );
         }
 
@@ -415,7 +417,7 @@ namespace NetworkManagerRebuild.UI.Views {
             return "%s|%s".printf (net.device_path, net.ap_path);
         }
 
-        public void perform_refresh (NetworkStateContext state_ctx) {
+        public void perform_refresh () {
             bool has_active_prompt_open = active_wifi_password_revealer != null
                 && active_wifi_password_revealer.get_reveal_child ();
 
@@ -427,9 +429,7 @@ namespace NetworkManagerRebuild.UI.Views {
                 status_icon,
                 active_wifi_password_row_id,
                 has_active_prompt_open,
-                (net) => {
-                    return build_wifi_row (net, state_ctx);
-                }
+                this
             );
         }
 
@@ -478,6 +478,18 @@ namespace NetworkManagerRebuild.UI.Views {
             active_wifi_password_revealer = rev;
             active_wifi_password_entry = ent;
             active_wifi_password_row_id = null;
+        }
+    }
+}
+word_row_id = null;
+        }
+    }
+}
+sword_row_id = null;
+        }
+    }
+}
+word_row_id = null;
         }
     }
 }

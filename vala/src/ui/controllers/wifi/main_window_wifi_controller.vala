@@ -109,11 +109,9 @@ public class MainWindowWifiController : Object {
     public void open_details (
         ref WifiNetwork? selected_wifi_network,
         WifiNetwork net,
-        Gtk.Stack wifi_stack,
-        MainWindowWifiNetworkCallback on_populate_details
+        Gtk.Stack wifi_stack
     ) {
         selected_wifi_network = net;
-        on_populate_details (net);
         wifi_stack.set_visible_child_name ("details");
     }
 
@@ -170,7 +168,7 @@ public class MainWindowWifiController : Object {
         Gtk.Image status_icon,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        owned MainWindowWifiRowBuildCallback on_build_wifi_row
+        IMainWindowWifiRowProvider row_provider
     ) {
         refresh_controller.refresh_wifi (
             nm,
@@ -180,7 +178,7 @@ public class MainWindowWifiController : Object {
             status_icon,
             active_wifi_password_row_id,
             has_active_wifi_password_prompt,
-            (owned) on_build_wifi_row
+            row_provider
         );
     }
 
