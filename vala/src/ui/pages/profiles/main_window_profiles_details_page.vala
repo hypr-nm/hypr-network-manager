@@ -82,10 +82,6 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         header.append (action_row);
         this.append (header);
 
-        var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        sep.add_css_class (MainWindowCssClasses.SEPARATOR);
-        this.append (sep);
-
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
         scroll.add_css_class (MainWindowCssClasses.SCROLL);
