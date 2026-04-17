@@ -5,7 +5,8 @@ using HyprNetworkManager.UI.Interfaces;
 using HyprNetworkManager.Models;
 
 namespace HyprNetworkManager.UI.Views {
-    public class WifiSectionView : Object, IMainWindowWifiRowActionHandler, IMainWindowWifiRowProvider, IMainWindowWifiPageActionHandler {
+    public class WifiSectionView : Object, IMainWindowWifiRowActionHandler, IMainWindowWifiRowProvider,
+        IMainWindowWifiPageActionHandler {
         public Gtk.Widget widget { get; private set; }
         public Gtk.Stack stack { get; private set; }
         public Gtk.ListBox listbox { get; private set; }
@@ -31,7 +32,7 @@ namespace HyprNetworkManager.UI.Views {
 
         public signal void refresh_requested ();
         public signal void refresh_switch_states_requested ();
-        
+
         private Gtk.Label status_label;
         private Gtk.Image status_icon;
 
@@ -147,7 +148,8 @@ namespace HyprNetworkManager.UI.Views {
             var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
             page.add_css_class (MainWindowCssClasses.PAGE);
             page.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-            MainWindowCssClassResolver.add_best_class (page, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+            MainWindowCssClassResolver.add_best_class (page, {MainWindowCssClasses.PAGE_SHELL_INSET,
+                MainWindowCssClasses.PAGE});
             MainWindowCssClassResolver.add_hook_and_best_class (
                 page,
                 MainWindowCssClasses.PAGE_WIFI_ADD,
@@ -170,18 +172,21 @@ namespace HyprNetworkManager.UI.Views {
             page.append (header);
 
             var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM});
+            MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM,
+                MainWindowCssClasses.EDIT_FORM});
             form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
             var note = new Gtk.Label ("Manually add a hidden Wi-Fi network.");
             note.set_xalign (0.0f);
             note.set_wrap (true);
-            MainWindowCssClassResolver.add_best_class (note, {MainWindowCssClasses.EDIT_NOTE, MainWindowCssClasses.SUB_LABEL});
+            MainWindowCssClassResolver.add_best_class (note, {MainWindowCssClasses.EDIT_NOTE,
+                MainWindowCssClasses.SUB_LABEL});
             form.append (note);
 
             var ssid_label = new Gtk.Label ("SSID");
             ssid_label.set_xalign (0.0f);
-            MainWindowCssClassResolver.add_best_class (ssid_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            MainWindowCssClassResolver.add_best_class (ssid_label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
+                MainWindowCssClasses.FORM_LABEL});
             form.append (ssid_label);
 
             add_ssid_entry = new Gtk.Entry ();
@@ -194,7 +199,8 @@ namespace HyprNetworkManager.UI.Views {
 
             var security_label = new Gtk.Label ("Security");
             security_label.set_xalign (0.0f);
-            MainWindowCssClassResolver.add_best_class (security_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            MainWindowCssClassResolver.add_best_class (security_label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
+                MainWindowCssClasses.FORM_LABEL});
             form.append (security_label);
 
             var security_list = new Gtk.StringList (null);
@@ -212,7 +218,8 @@ namespace HyprNetworkManager.UI.Views {
 
             var save_btn = new Gtk.Button.with_label ("Connect");
             save_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
+            MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
+                MainWindowCssClasses.BUTTON});
 
             add_security_dropdown.notify["selected"].connect (() => {
                 controller.sync_add_network_sensitivity (
@@ -239,7 +246,8 @@ namespace HyprNetworkManager.UI.Views {
             );
             MainWindowCssClassResolver.add_best_class (
                 add_password_entry,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL, MainWindowCssClasses.PASSWORD_ENTRY}
+                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
+                    MainWindowCssClasses.PASSWORD_ENTRY}
             );
             add_password_entry.changed.connect (() => {
                 controller.sync_add_network_sensitivity (

@@ -66,7 +66,8 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
+            MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
             MainWindowCssClasses.PAGE_WIFI_EDIT,
@@ -90,14 +91,16 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         MainWindowCssClassResolver.add_best_class (
             form,
-            {MainWindowCssClasses.EDIT_WIFI_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM}
+            {MainWindowCssClasses.EDIT_WIFI_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM,
+                MainWindowCssClasses.EDIT_FORM}
         );
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         this.note_label = new Gtk.Label ("");
         this.note_label.set_xalign (0.0f);
         this.note_label.set_wrap (true);
-        MainWindowCssClassResolver.add_best_class (this.note_label, {MainWindowCssClasses.EDIT_NOTE, MainWindowCssClasses.SUB_LABEL});
+        MainWindowCssClassResolver.add_best_class (this.note_label, {MainWindowCssClasses.EDIT_NOTE,
+            MainWindowCssClasses.SUB_LABEL});
         form.append (this.note_label);
 
         var password_label = new Gtk.Label ("Password");
@@ -116,7 +119,8 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         MainWindowCssClassResolver.add_hook_and_best_class (
             this.password_entry,
             MainWindowCssClasses.EDIT_PASSWORD_ENTRY,
-            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL, MainWindowCssClasses.PASSWORD_ENTRY}
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
+                MainWindowCssClasses.PASSWORD_ENTRY}
         );
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
@@ -179,11 +183,13 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.ipv6_dns_entry = v6_dns;
 
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        MainWindowCssClassResolver.add_hook_and_best_class (actions, MainWindowCssClasses.EDIT_WIFI_ACTIONS, {MainWindowCssClasses.EDIT_ACTIONS});
+        MainWindowCssClassResolver.add_hook_and_best_class (actions, MainWindowCssClasses.EDIT_WIFI_ACTIONS,
+            {MainWindowCssClasses.EDIT_ACTIONS});
 
         var apply_btn = new Gtk.Button.with_label ("Apply");
         apply_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_hook_and_best_class (apply_btn, MainWindowCssClasses.EDIT_APPLY_BUTTON, {MainWindowCssClasses.BUTTON});
+        MainWindowCssClassResolver.add_hook_and_best_class (apply_btn, MainWindowCssClasses.EDIT_APPLY_BUTTON,
+            {MainWindowCssClasses.BUTTON});
         apply_btn.clicked.connect (() => {
             this.apply ();
         });
@@ -191,7 +197,8 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         var ok_btn = new Gtk.Button.with_label ("OK");
         ok_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (ok_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
+        MainWindowCssClassResolver.add_best_class (ok_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
+            MainWindowCssClasses.BUTTON});
         ok_btn.clicked.connect (() => {
             this.ok ();
         });

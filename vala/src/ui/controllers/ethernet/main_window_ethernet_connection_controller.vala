@@ -10,7 +10,8 @@ public class MainWindowEthernetConnectionController : Object {
     public HashTable<string, bool> pending_action;
     public HashTable<string, bool> pending_target_connected;
 
-    public MainWindowEthernetConnectionController (NetworkManagerClient nm, HyprNetworkManager.UI.Interfaces.IWindowHost host) {
+    public MainWindowEthernetConnectionController (NetworkManagerClient nm,
+        HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.nm = nm;
         this.host = host;
         pending_action = new HashTable<string, bool> (str_hash, str_equal);

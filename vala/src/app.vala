@@ -142,7 +142,7 @@ public class NetworkManager : Gtk.Application {
     protected override void startup () {
         base.startup ();
         // Always hold the process so it becomes a resident daemon automatically
-        this.hold (); 
+        this.hold ();
     }
 
     private void on_main_window_mapped () {
@@ -189,7 +189,7 @@ public class NetworkManager : Gtk.Application {
         }
         window.close_request.connect (() => {
             hide_dismiss_overlay ();
-            
+
             // We are always a daemon, just conceal the window when dismissed
             window.visible = false;
             return true;
@@ -200,7 +200,7 @@ public class NetworkManager : Gtk.Application {
         window.unmap.connect (() => {
             hide_dismiss_overlay ();
         });
-        
+
         if (is_daemon && !initial_activation_skipped) {
             initial_activation_skipped = true;
             // Load application logic in background to pre-warm the rendering pipeline

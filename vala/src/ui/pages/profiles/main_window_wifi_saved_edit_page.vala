@@ -1,7 +1,7 @@
 using Gtk;
 
 public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
-    private static string[] SECURITY_MODE_KEYS = {
+    private static string[] security_mode_keys = {
         "open",
         "wpa-psk",
         "sae",
@@ -225,16 +225,16 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
     public string get_selected_security_mode_key () {
         uint idx = this.security_mode_dropdown.get_selected ();
-        if (idx >= SECURITY_MODE_KEYS.length) {
+        if (idx >= security_mode_keys.length) {
             return "open";
         }
-        return SECURITY_MODE_KEYS[idx];
+        return security_mode_keys[idx];
     }
 
     public void set_selected_security_mode_key (string mode_key) {
         string key = mode_key.strip ().down ();
-        for (uint i = 0; i < SECURITY_MODE_KEYS.length; i++) {
-            if (SECURITY_MODE_KEYS[i] == key) {
+        for (uint i = 0; i < security_mode_keys.length; i++) {
+            if (security_mode_keys[i] == key) {
                 this.security_mode_dropdown.set_selected (i);
                 return;
             }
@@ -248,7 +248,8 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         var heading = new Gtk.Label (title);
         heading.set_xalign (0.0f);
-        MainWindowCssClassResolver.add_best_class (heading, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+        MainWindowCssClassResolver.add_best_class (heading, {MainWindowCssClasses.EDIT_FIELD_LABEL,
+            MainWindowCssClasses.FORM_LABEL});
         section.append (heading);
 
         section_content = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -263,7 +264,8 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
+            MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
             MainWindowCssClasses.PAGE_WIFI_EDIT,
@@ -290,7 +292,8 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         scroll.set_vexpand (true);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM});
+        MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM,
+            MainWindowCssClasses.EDIT_FORM});
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         Gtk.Box profile_content;
@@ -378,7 +381,8 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         MainWindowCssClassResolver.add_best_class (
             this.password_entry,
-            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL, MainWindowCssClasses.PASSWORD_ENTRY}
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
+                MainWindowCssClasses.PASSWORD_ENTRY}
         );
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
         this.password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
@@ -444,7 +448,8 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         var save_btn = new Gtk.Button.with_label ("Save");
         save_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
+        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
+            MainWindowCssClasses.BUTTON});
         save_btn.clicked.connect (() => {
             this.save ();
         });

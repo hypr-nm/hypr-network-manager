@@ -563,7 +563,8 @@ public class NmWifiClient : GLib.Object {
                         yield ((NM.RemoteConnection)existing_conn).commit_changes_async (true, cancellable);
                     }
                 }
-                string? specific_object = NmWifiUtils.is_valid_specific_object (network.ap_path) ? network.ap_path : null;
+                string? specific_object = (NmWifiUtils.is_valid_specific_object (network.ap_path)
+                 ? network.ap_path : null);
                 yield client.activate_connection_async (existing_conn, dev, specific_object, cancellable);
                 log_info (
                     "nm-wifi-client",
@@ -579,10 +580,10 @@ public class NmWifiClient : GLib.Object {
         }
 
         NM.Connection? partial = null;
-        
+
         if (network.is_hidden || (password != null && password != "")) {
             partial = (NM.SimpleConnection) NM.SimpleConnection.@new ();
-            
+
             if (network.is_hidden) {
                 var s_wifi = new NM.SettingWireless ();
                 uint8[] ssid_arr = network.ssid.data;
@@ -599,7 +600,7 @@ public class NmWifiClient : GLib.Object {
         }
 
         string? specific_object = network.is_hidden ? null : network.ap_path;
-        
+
         if (network.is_hidden && specific_object == null) {
             // For hidden networks, we must build a full connection manually
             // because specific_object is null and NM cannot infer settings.
@@ -623,7 +624,7 @@ public class NmWifiClient : GLib.Object {
         }
 
         yield client.add_and_activate_connection_async (partial, dev, specific_object, cancellable);
-        
+
         log_info (
             "nm-wifi-client",
             "connect_path: add-and-activate for ssid='%s' hidden=%s specific_object=%s"

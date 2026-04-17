@@ -84,7 +84,8 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
+            MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
             MainWindowCssClasses.PAGE_WIFI_DETAILS,
@@ -107,10 +108,12 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         network_header.add_css_class (MainWindowCssClasses.DETAILS_HEADER);
 
         var network_icon = new Gtk.Image.from_icon_name ("network-wireless-signal-excellent-symbolic");
-        MainWindowCssClassResolver.add_best_class (network_icon, {MainWindowCssClasses.ICON_SIZE_28, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (network_icon, {MainWindowCssClasses.ICON_SIZE_28,
+            MainWindowCssClasses.ICON_SIZE});
         MainWindowCssClassResolver.add_best_class (
             network_icon,
-            {MainWindowCssClasses.DETAILS_NETWORK_ICON, MainWindowCssClasses.WIFI_ICON, MainWindowCssClasses.SIGNAL_ICON}
+            {MainWindowCssClasses.DETAILS_NETWORK_ICON, MainWindowCssClasses.WIFI_ICON,
+                MainWindowCssClasses.SIGNAL_ICON}
         );
         network_header.append (network_icon);
 
@@ -128,7 +131,8 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         this.forget_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.forget_button,
-            {MainWindowCssClasses.FORGET_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
+            {MainWindowCssClasses.FORGET_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
+                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
         );
         this.forget_button.clicked.connect (() => {
             this.forget ();
@@ -139,7 +143,8 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.edit_button,
-            {MainWindowCssClasses.EDIT_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
+            {MainWindowCssClasses.EDIT_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
+                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
         );
         this.edit_button.clicked.connect (() => {
             this.edit ();

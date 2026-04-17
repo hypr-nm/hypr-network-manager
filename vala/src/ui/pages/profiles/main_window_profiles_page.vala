@@ -18,7 +18,8 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
+            MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
             MainWindowCssClasses.PAGE_SAVED_PROFILES,
@@ -26,8 +27,10 @@ public class MainWindowProfilesPage : Gtk.Box {
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR_INSET, MainWindowCssClasses.PAGE_SHELL_INSET});
-        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR, MainWindowCssClasses.STATUS_BAR});
+        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR_INSET,
+            MainWindowCssClasses.PAGE_SHELL_INSET});
+        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR,
+            MainWindowCssClasses.STATUS_BAR});
 
         var back_btn = MainWindowHelpers.build_back_button ();
         back_btn.clicked.connect (() => {
@@ -46,7 +49,8 @@ public class MainWindowProfilesPage : Gtk.Box {
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION, MainWindowCssClasses.BUTTON});
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
+            MainWindowCssClasses.BUTTON});
         refresh_btn.set_tooltip_text ("Refresh Profiles");
         refresh_btn.clicked.connect (() => {
             this.refresh ();
@@ -144,7 +148,8 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var delete_btn = new Gtk.Button.with_label ("Delete");
             delete_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            MainWindowCssClassResolver.add_best_class (delete_btn, {MainWindowCssClasses.DELETE_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
+            MainWindowCssClassResolver.add_best_class (delete_btn, {MainWindowCssClasses.DELETE_BUTTON,
+                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
             delete_btn.clicked.connect (() => {
                 this.delete_profile (row_profile);
             });
@@ -204,7 +209,8 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var details_btn = new Gtk.Button.with_label ("Details");
             details_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_BUTTON, MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
+            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_BUTTON,
+                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
             details_btn.clicked.connect (() => {
                 this.open_ethernet_profile (row_device);
             });

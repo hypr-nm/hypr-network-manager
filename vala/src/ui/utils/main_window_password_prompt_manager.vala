@@ -52,7 +52,7 @@ public class MainWindowPasswordPromptManager : Object {
         if (active_entry != null) {
             active_entry.set_text ("");
         }
-        
+
         bool had_active = active_revealer != null;
         active_revealer = null;
         active_entry = null;

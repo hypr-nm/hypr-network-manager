@@ -9,7 +9,8 @@ public class MainWindowWifiRefreshController : Object {
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
-    public MainWindowWifiRefreshController (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
+    public MainWindowWifiRefreshController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
         active_wifi_by_device = new HashTable<string, WifiNetwork> (str_hash, str_equal);

@@ -7,7 +7,8 @@ public class MainWindowWifiConnectionController : Object {
     private MainWindowWifiRefreshController refresh_controller;
 
     public MainWindowWifiConnectionController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
-        HyprNetworkManager.Models.NetworkStateContext state_context, MainWindowWifiRefreshController refresh_controller) {
+        HyprNetworkManager.Models.NetworkStateContext state_context,
+            MainWindowWifiRefreshController refresh_controller) {
         this.host = host;
         this.state_context = state_context;
         this.refresh_controller = refresh_controller;

@@ -67,11 +67,14 @@ public class MainWindowVpnPageBuilder : Object {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class (MainWindowCssClasses.PAGE);
-        MainWindowCssClassResolver.add_hook_and_best_class (page, MainWindowCssClasses.PAGE_VPN, {MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_hook_and_best_class (page, MainWindowCssClasses.PAGE_VPN,
+            {MainWindowCssClasses.PAGE});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR_INSET, MainWindowCssClasses.PAGE_SHELL_INSET});
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR, MainWindowCssClasses.STATUS_BAR});
+        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR_INSET,
+            MainWindowCssClasses.PAGE_SHELL_INSET});
+        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
+            MainWindowCssClasses.STATUS_BAR});
 
         var title = new Gtk.Label ("VPN");
         title.set_xalign (0.0f);
@@ -84,7 +87,8 @@ public class MainWindowVpnPageBuilder : Object {
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION, MainWindowCssClasses.BUTTON});
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
+            MainWindowCssClasses.BUTTON});
         refresh_btn.clicked.connect (() => {
             refresh ();
         });
@@ -105,7 +109,8 @@ public class MainWindowVpnPageBuilder : Object {
         vpn_placeholder.set_valign (Gtk.Align.CENTER);
         vpn_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
         var vpn_icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        MainWindowCssClassResolver.add_best_class (vpn_icon, {MainWindowCssClasses.ICON_SIZE_24, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (vpn_icon, {MainWindowCssClasses.ICON_SIZE_24,
+            MainWindowCssClasses.ICON_SIZE});
         MainWindowCssClassResolver.add_best_class (
             vpn_icon,
             {MainWindowCssClasses.VPN_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
@@ -144,8 +149,10 @@ public class MainWindowVpnPageBuilder : Object {
         content.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
 
         var icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.VPN_ICON, MainWindowCssClasses.SIGNAL_ICON});
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_16,
+            MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.VPN_ICON,
+            MainWindowCssClasses.SIGNAL_ICON});
         content.append (icon);
 
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
@@ -166,7 +173,8 @@ public class MainWindowVpnPageBuilder : Object {
             action,
             {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
         );
-        action.add_css_class (conn.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
+        action.add_css_class (
+            conn.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.clicked.connect (() => {
             uint epoch = capture_ui_epoch ();
             if (conn.is_connected) {

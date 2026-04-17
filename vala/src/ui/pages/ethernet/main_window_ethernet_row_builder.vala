@@ -22,8 +22,10 @@ public class MainWindowEthernetRowBuilder {
         content.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
 
         var icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ETHERNET_ICON, MainWindowCssClasses.SIGNAL_ICON});
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_16,
+            MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ETHERNET_ICON,
+            MainWindowCssClasses.SIGNAL_ICON});
         content.append (icon);
 
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
@@ -49,7 +51,8 @@ public class MainWindowEthernetRowBuilder {
             details_btn,
             {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
         );
-        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON, MainWindowCssClasses.ROW_ICON_ACTION});
+        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
+            MainWindowCssClasses.ROW_ICON_ACTION});
         details_btn.set_tooltip_text ("Details");
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
         details_btn.set_child (details_icon);
@@ -81,7 +84,8 @@ public class MainWindowEthernetRowBuilder {
             action,
             {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
         );
-        action.add_css_class (dev.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
+        action.add_css_class (
+            dev.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.set_sensitive (can_toggle);
         action.clicked.connect (() => {
             action_handler.trigger_toggle (dev);

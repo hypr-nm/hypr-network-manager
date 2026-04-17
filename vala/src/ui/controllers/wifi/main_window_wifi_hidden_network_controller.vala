@@ -5,7 +5,8 @@ public class MainWindowWifiHiddenNetworkController : Object {
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private MainWindowWifiConnectionController connection_controller;
 
-    public MainWindowWifiHiddenNetworkController (HyprNetworkManager.UI.Interfaces.IWindowHost host, MainWindowWifiConnectionController connection_controller) {
+    public MainWindowWifiHiddenNetworkController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        MainWindowWifiConnectionController connection_controller) {
         this.host = host;
         this.connection_controller = connection_controller;
     }

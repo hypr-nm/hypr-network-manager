@@ -16,7 +16,8 @@ public class MainWindowWifiController : Object {
 
     public signal void saved_profile_update_succeeded ();
 
-    public MainWindowWifiController (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
+    public MainWindowWifiController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
 

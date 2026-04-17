@@ -47,7 +47,8 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
+            MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
             MainWindowCssClasses.PAGE_ETHERNET_EDIT,
@@ -71,14 +72,16 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         MainWindowCssClassResolver.add_best_class (
             form,
-            {MainWindowCssClasses.EDIT_ETHERNET_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM}
+            {MainWindowCssClasses.EDIT_ETHERNET_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM,
+                MainWindowCssClasses.EDIT_FORM}
         );
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         this.note_label = new Gtk.Label ("");
         this.note_label.set_xalign (0.0f);
         this.note_label.set_wrap (true);
-        MainWindowCssClassResolver.add_best_class (this.note_label, {MainWindowCssClasses.EDIT_NOTE, MainWindowCssClasses.SUB_LABEL});
+        MainWindowCssClassResolver.add_best_class (this.note_label, {MainWindowCssClasses.EDIT_NOTE,
+            MainWindowCssClasses.SUB_LABEL});
         form.append (this.note_label);
 
         Gtk.DropDown v4_method;
@@ -128,7 +131,8 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var save_btn = new Gtk.Button.with_label ("Apply");
         save_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
+        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
+            MainWindowCssClasses.BUTTON});
         save_btn.clicked.connect (() => {
             this.apply ();
         });

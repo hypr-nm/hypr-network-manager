@@ -6,7 +6,8 @@ public class MainWindowWifiRowReconciler : Object {
     private HashTable<string, string> wifi_row_signatures;
     private string[] wifi_row_order = {};
 
-    public MainWindowWifiRowReconciler (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
+    public MainWindowWifiRowReconciler (HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
         wifi_row_signatures = new HashTable<string, string> (str_hash, str_equal);
@@ -142,7 +143,7 @@ public class MainWindowWifiRowReconciler : Object {
             string net_key = net.network_key;
             bool is_connected_now = false;
             bool is_connecting = false;
-            
+
             if (state_context != null) {
                 is_connected_now = state_context.active_wifi_connections.contains (net_key);
                 is_connecting = state_context.pending_wifi_connect.contains (net_key);

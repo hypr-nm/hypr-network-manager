@@ -5,7 +5,8 @@ public class MainWindowEthernetRefreshController : Object {
     private NetworkManagerClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
-    public MainWindowEthernetRefreshController (NetworkManagerClient nm, HyprNetworkManager.UI.Interfaces.IWindowHost host) {
+    public MainWindowEthernetRefreshController (NetworkManagerClient nm,
+        HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.nm = nm;
         this.host = host;
     }
@@ -87,11 +88,11 @@ public class MainWindowEthernetRefreshController : Object {
                     }
 
                     ethernet_devices.append (dev);
-                    
+
                     bool is_pending = connection_controller.pending_action.contains (dev.name);
                     bool can_connect = connection_controller.can_connect_with_profile (dev);
                     bool has_profile = connection_controller.has_saved_profile (dev);
-                    
+
                     ethernet_listbox.append (MainWindowEthernetRowBuilder.build_row (
                         dev,
                         is_pending,
@@ -115,7 +116,8 @@ public class MainWindowEthernetRefreshController : Object {
                         if (updated != null) {
                             details_edit_controller.selected_device = updated;
                             if (current_view == "details") {
-                                details_edit_controller.populate_details (updated, ethernet_details_page, connection_controller);
+                                details_edit_controller.populate_details (updated, ethernet_details_page,
+                                    connection_controller);
                             }
                             ethernet_stack.set_visible_child_name (current_view);
                         } else {

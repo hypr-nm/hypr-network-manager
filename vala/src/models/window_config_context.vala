@@ -13,17 +13,17 @@ namespace HyprNetworkManager.Models {
         public bool anchor_right { get; set; default = false; }
         public bool anchor_bottom { get; set; default = false; }
         public bool anchor_left { get; set; default = false; }
-        
+
         public int shell_margin_top { get; set; default = 8; }
         public int shell_margin_right { get; set; default = 8; }
         public int shell_margin_bottom { get; set; default = 8; }
         public int shell_margin_left { get; set; default = 8; }
         public string shell_layer { get; set; default = "overlay"; }
-        
+
         public uint refresh_interval_seconds { get; set; default = 30; }
         public uint pending_wifi_connect_timeout_ms { get; set; default = 45000; }
         public bool close_on_connect { get; set; default = false; }
-        
+
         public bool show_bssid { get; set; default = false; }
         public bool show_frequency { get; set; default = false; }
         public bool show_band { get; set; default = false; }
@@ -45,7 +45,7 @@ namespace HyprNetworkManager.Models {
             shell_margin_bottom = config.margin_bottom >= 0 ? config.margin_bottom : 0;
             shell_margin_left = config.margin_left >= 0 ? config.margin_left : 0;
 
-            string parsed_layer = config.layer.strip (); 
+            string parsed_layer = config.layer.strip ();
             shell_layer = parsed_layer != "" ? parsed_layer : "overlay";
 
             refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval : 30);

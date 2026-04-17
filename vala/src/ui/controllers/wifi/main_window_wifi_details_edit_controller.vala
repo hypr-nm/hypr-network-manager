@@ -9,7 +9,8 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
     private uint[] timeout_source_ids = {};
     private Cancellable? action_request_cancellable = null;
 
-    public MainWindowWifiDetailsEditController (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
+    public MainWindowWifiDetailsEditController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         base (host);
         this.state_context = state_context;
     }

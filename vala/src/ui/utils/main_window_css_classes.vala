@@ -9,7 +9,7 @@ namespace MainWindowCssClasses {
     public const string SCROLL = "nm-scroll";
     public const string SEPARATOR = "nm-separator";
     public const string CONTENT_STACK = "nm-content-stack";
-    
+
     // Specific Pages
     public const string PAGE_WIFI = "nm-page-wifi";
     public const string PAGE_WIFI_DETAILS = "nm-page-wifi-details";
@@ -23,7 +23,7 @@ namespace MainWindowCssClasses {
     public const string PAGE_NETWORK_DETAILS = "nm-page-network-details";
     public const string PAGE_NETWORK_EDIT = "nm-page-network-edit";
     public const string PAGE_NETWORK_ADD = "nm-page-network-add";
-    
+
     // Toolbar
     public const string TOOLBAR = "nm-toolbar";
     public const string TOOLBAR_INSET = "nm-toolbar-inset";
@@ -31,7 +31,7 @@ namespace MainWindowCssClasses {
     public const string TOOLBAR_ICON = "nm-toolbar-icon";
     public const string STATUS_BAR = "nm-status-bar";
     public const string SECTION_TITLE = "nm-section-title";
-    
+
     // Lists & Rows
     public const string LIST = "nm-list";
     public const string WIFI_ROW = "nm-wifi-row";
@@ -53,7 +53,7 @@ namespace MainWindowCssClasses {
     public const string ROW_ROOT = "nm-row-root";
     public const string ROW_EXPAND_ICON = "nm-row-expand-icon";
     public const string ROW_ACTION_BUTTONS = "nm-row-action-buttons";
-    
+
     // Typography
     public const string SSID_LABEL = "nm-ssid-label";
     public const string SUB_LABEL = "nm-sub-label";
@@ -63,7 +63,7 @@ namespace MainWindowCssClasses {
     public const string TOGGLE_LABEL = "nm-toggle-label";
     public const string STATUS_LABEL = "nm-status-label";
     public const string BACK_LABEL = "nm-back-label";
-    
+
     // Forms & Inputs
     public const string EDIT_FORM = "nm-edit-form";
     public const string EDIT_WIFI_FORM = "nm-edit-wifi-form";
@@ -80,7 +80,7 @@ namespace MainWindowCssClasses {
     public const string ADD_DROPDOWN = "nm-add-dropdown";
     public const string PASSWORD_BOX = "nm-password-box";
     public const string ROW_AUTOCONNECT_CHECK = "nm-row-autoconnect-check";
-    
+
     // Inline Password Form
     public const string INLINE_PASSWORD = "nm-inline-password";
     public const string INLINE_PASSWORD_ACTIONS = "nm-inline-password-actions";
@@ -112,7 +112,7 @@ namespace MainWindowCssClasses {
     public const string EDIT_APPLY_BUTTON = "nm-edit-apply-button";
     public const string SUGGESTED_ACTION = "suggested-action";
     public const string NAV_BACK = "nm-nav-back";
-    
+
     // Details Pages
     public const string DETAILS_NAV_ROW = "nm-details-nav-row";
     public const string DETAILS_HEADER = "nm-details-header";
@@ -132,7 +132,7 @@ namespace MainWindowCssClasses {
     public const string DETAILS_ROW = "nm-details-row";
     public const string DETAILS_BUTTON_ICON = "nm-details-button-icon";
     public const string DETAILS_OPEN_ICON = "nm-details-open-icon";
-    
+
     // Edit Sections
     public const string EDIT_ACTIONS = "nm-edit-actions";
     public const string EDIT_WIFI_ACTIONS = "nm-edit-wifi-actions";
@@ -195,7 +195,7 @@ namespace MainWindowCssClasses {
     public const string ETHERNET_PLACEHOLDER_ICON = "nm-ethernet-placeholder-icon";
     public const string VPN_PLACEHOLDER_ICON = "nm-vpn-placeholder-icon";
     public const string PLACEHOLDER_LABEL = "nm-placeholder-label";
-    
+
     // Icons
     public const string ICON_SIZE = "nm-icon-size";
     public const string ICON_SIZE_14 = "nm-icon-size-14";
@@ -221,7 +221,7 @@ namespace MainWindowCssClasses {
     public const string TABS_MENU_ICON = "nm-tabs-menu-icon";
     public const string TABS_MENU_LIST = "nm-tabs-menu-list";
     public const string POPOVER_LIST_INSET = "nm-popover-list-inset";
-    
+
     // Custom controls
     public const string WIFI_SWITCH = "nm-wifi-switch";
     public const string SWITCH = "nm-switch";

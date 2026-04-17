@@ -87,11 +87,12 @@ int main (string[] args) {
     if (!daemon_mode && !status && !toggle_wifi) {
         bool daemon_running = false;
         try {
-            var conn = Bus.get_sync(BusType.SESSION);
-            var msg = new DBusMessage.method_call("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "NameHasOwner");
-            msg.set_body(new Variant("(s)", "yeab212.hypr-network-manager"));
-            var reply = conn.send_message_with_reply_sync(msg, DBusSendMessageFlags.NONE, -1);
-            reply.get_body().get("(b)", out daemon_running);
+            var conn = Bus.get_sync (BusType.SESSION);
+            var msg = new DBusMessage.method_call ("org.freedesktop.DBus", "/org/freedesktop/DBus",
+                "org.freedesktop.DBus", "NameHasOwner");
+            msg.set_body (new Variant ("(s)", "yeab212.hypr-network-manager"));
+            var reply = conn.send_message_with_reply_sync (msg, DBusSendMessageFlags.NONE, -1);
+            reply.get_body ().get ("(b)", out daemon_running);
         } catch (Error e) {
             log_warn ("cli", "daemon ownership check failed; assuming daemon is not running error=" + e.message);
         }
@@ -100,10 +101,12 @@ int main (string[] args) {
             log_info ("cli", "daemon not running, spawning background instance.");
             try {
                 string[] spawn_args = { args[0], "--daemon" };
-                Process.spawn_async(null, spawn_args, null, SpawnFlags.SEARCH_PATH | SpawnFlags.STDOUT_TO_DEV_NULL | SpawnFlags.STDERR_TO_DEV_NULL, null, null);
-                
+                Process.spawn_async (null, spawn_args, null,
+                    SpawnFlags.SEARCH_PATH | SpawnFlags.STDOUT_TO_DEV_NULL | SpawnFlags.STDERR_TO_DEV_NULL, null, null);
+
                 var loop = new MainLoop ();
-                uint watch_id = Bus.watch_name (BusType.SESSION, "yeab212.hypr-network-manager", BusNameWatcherFlags.NONE,
+                uint watch_id = Bus.watch_name (BusType.SESSION, "yeab212.hypr-network-manager",
+                    BusNameWatcherFlags.NONE,
                     (conn, name, owner) => {
                         if (owner != null && owner != "") {
                             log_info ("cli", "Daemon grabbed DBus name dynamically!");
@@ -120,7 +123,7 @@ int main (string[] args) {
                     loop.quit ();
                     return false;
                 });
-                
+
                 loop.run ();
                 Bus.unwatch_name (watch_id);
             } catch (Error e) {

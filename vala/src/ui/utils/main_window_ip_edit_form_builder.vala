@@ -5,7 +5,8 @@ namespace MainWindowIpEditFormBuilder {
         var label = new Gtk.Label (text);
         label.set_xalign (0.0f);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            MainWindowCssClassResolver.add_best_class (label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
+                MainWindowCssClasses.FORM_LABEL});
         } else {
             label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         }
@@ -21,7 +22,8 @@ namespace MainWindowIpEditFormBuilder {
         }
 
         if (extra_class != null && extra_class != "") {
-            MainWindowCssClassResolver.add_hook_and_best_class (widget, extra_class, {MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            MainWindowCssClassResolver.add_hook_and_best_class (widget, extra_class,
+                {MainWindowCssClasses.EDIT_FIELD_CONTROL});
             return;
         }
 
@@ -56,7 +58,8 @@ namespace MainWindowIpEditFormBuilder {
     ) {
         var container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (container, css_class, {MainWindowCssClasses.EDIT_COLLAPSIBLE});
+            MainWindowCssClassResolver.add_hook_and_best_class (container, css_class,
+                {MainWindowCssClasses.EDIT_COLLAPSIBLE});
         } else {
             container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
         }

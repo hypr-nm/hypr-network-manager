@@ -10,11 +10,14 @@ namespace MainWindowEthernetPageBuilder {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class (MainWindowCssClasses.PAGE);
-        MainWindowCssClassResolver.add_hook_and_best_class (page, MainWindowCssClasses.PAGE_ETHERNET, {MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_hook_and_best_class (page, MainWindowCssClasses.PAGE_ETHERNET,
+            {MainWindowCssClasses.PAGE});
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR_INSET, MainWindowCssClasses.PAGE_SHELL_INSET});
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR, MainWindowCssClasses.STATUS_BAR});
+        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR_INSET,
+            MainWindowCssClasses.PAGE_SHELL_INSET});
+        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
+            MainWindowCssClasses.STATUS_BAR});
 
         var title = new Gtk.Label ("Ethernet");
         title.set_xalign (0.0f);
@@ -27,7 +30,8 @@ namespace MainWindowEthernetPageBuilder {
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION, MainWindowCssClasses.BUTTON});
+        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
+            MainWindowCssClasses.BUTTON});
         refresh_btn.clicked.connect (() => {
             controller.refresh ();
         });
@@ -49,7 +53,8 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_placeholder.set_valign (Gtk.Align.CENTER);
         ethernet_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
         var eth_icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
-        MainWindowCssClassResolver.add_best_class (eth_icon, {MainWindowCssClasses.ICON_SIZE_24, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (eth_icon, {MainWindowCssClasses.ICON_SIZE_24,
+            MainWindowCssClasses.ICON_SIZE});
         MainWindowCssClassResolver.add_best_class (
             eth_icon,
             {MainWindowCssClasses.ETHERNET_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}

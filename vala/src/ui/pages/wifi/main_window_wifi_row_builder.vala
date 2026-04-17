@@ -131,7 +131,8 @@ namespace MainWindowWifiRowBuilder {
             details_btn,
             {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
         );
-        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON, MainWindowCssClasses.ROW_ICON_ACTION});
+        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
+            MainWindowCssClasses.ROW_ICON_ACTION});
         details_btn.set_valign (Gtk.Align.CENTER);
         details_btn.set_tooltip_text ("Details");
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
@@ -165,7 +166,8 @@ namespace MainWindowWifiRowBuilder {
             action,
             {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
         );
-        action.add_css_class (is_connected_now && !is_connecting ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
+        action.add_css_class (is_connected_now &
+            !is_connecting ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.set_valign (Gtk.Align.CENTER);
         action.set_sensitive (!is_connecting);
 
@@ -337,7 +339,8 @@ namespace MainWindowWifiRowBuilder {
             if (!local_prompt_connect.get_sensitive ()) {
                 return;
             }
-            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, local_prompt_entry.get_text ());
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry,
+                local_prompt_entry.get_text ());
             action_handler.connect_network (
                 net,
                 net.is_secured ? local_prompt_entry.get_text () : null,
@@ -350,7 +353,8 @@ namespace MainWindowWifiRowBuilder {
             if (!local_prompt_connect.get_sensitive ()) {
                 return;
             }
-            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, local_prompt_entry.get_text ());
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry,
+                local_prompt_entry.get_text ());
             action_handler.connect_network (
                 net,
                 net.is_secured ? local_prompt_entry.get_text () : null,
@@ -369,7 +373,8 @@ namespace MainWindowWifiRowBuilder {
                 return;
             }
 
-            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, local_prompt_entry.get_text ());
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry,
+                local_prompt_entry.get_text ());
             action_handler.connect_network (
                 net,
                 null,
@@ -407,8 +412,10 @@ namespace MainWindowWifiRowBuilder {
         content.add_css_class (MainWindowCssClasses.ROW_CONTENT);
 
         var signal_icon = new Gtk.Image.from_icon_name (signal_icon_name);
-        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON, MainWindowCssClasses.SIGNAL_ICON});
+        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.ICON_SIZE_16,
+            MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON,
+            MainWindowCssClasses.SIGNAL_ICON});
         if (net.is_secured) {
             signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
         }

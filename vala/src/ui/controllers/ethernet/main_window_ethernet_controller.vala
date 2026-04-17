@@ -75,7 +75,8 @@ public class MainWindowEthernetController : Object, IMainWindowEthernetRowAction
     public void on_details_edit_requested () {
         if (details_edit_controller.selected_device != null) {
             profile_edit_mode = false;
-            details_edit_controller.open_edit (details_edit_controller.selected_device, ethernet_stack, ethernet_edit_page, connection_controller);
+            details_edit_controller.open_edit (details_edit_controller.selected_device, ethernet_stack,
+                ethernet_edit_page, connection_controller);
         }
     }
 
@@ -93,7 +94,8 @@ public class MainWindowEthernetController : Object, IMainWindowEthernetRowAction
             return;
         }
         if (details_edit_controller.selected_device != null) {
-            details_edit_controller.open_details (details_edit_controller.selected_device, ethernet_stack, ethernet_details_page, connection_controller);
+            details_edit_controller.open_details (details_edit_controller.selected_device, ethernet_stack,
+                ethernet_details_page, connection_controller);
         } else {
             ethernet_stack.set_visible_child_name ("list");
         }
