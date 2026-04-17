@@ -3,7 +3,7 @@ using Gtk;
 public class MainWindowProfilesDetailsPage : Gtk.Box {
     public Gtk.Label title_label { get; set; }
     public Gtk.Label subtitle_label { get; set; }
-    public Gtk.Box rows { get; set; }
+    public Gtk.ListBox rows { get; set; }
     public Gtk.Button edit_button { get; set; }
     public Gtk.Button delete_button { get; set; }
 
@@ -94,7 +94,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
         body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
-        Gtk.Box rows_out;
+        Gtk.ListBox rows_out;
         body.append (MainWindowHelpers.build_details_section ("Details", out rows_out));
         this.rows = rows_out;
 
@@ -103,7 +103,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
     }
 
     public void set_wifi_profile (WifiSavedProfile profile) {
-        MainWindowHelpers.clear_box (this.rows);
+        MainWindowHelpers.clear_listbox (this.rows);
 
         string profile_name = MainWindowHelpers.safe_text (profile.profile_name).strip ();
         string ssid = MainWindowHelpers.safe_text (profile.ssid).strip ();
@@ -129,7 +129,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
     }
 
     public void set_ethernet_profile (NetworkDevice device) {
-        MainWindowHelpers.clear_box (this.rows);
+        MainWindowHelpers.clear_listbox (this.rows);
 
         this.title_label.set_text (MainWindowHelpers.display_text_or_na (device.name));
         this.subtitle_label.set_text ("Ethernet profile");

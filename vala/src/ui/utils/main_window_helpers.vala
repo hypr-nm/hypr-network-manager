@@ -82,24 +82,22 @@ namespace MainWindowHelpers {
         row.append (value_label);
         return row;
     }
+public Gtk.Widget build_details_section (string title, out Gtk.ListBox rows_container) {
+    var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+    section.add_css_class (MainWindowCssClasses.DETAILS_SECTION);
 
-    public Gtk.Widget build_details_section (string title, out Gtk.Box rows_container) {
-        var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        section.add_css_class (MainWindowCssClasses.DETAILS_SECTION);
+    var heading = new Gtk.Label (title);
+    heading.set_xalign (0.0f);
+    heading.set_hexpand (true);
+    heading.add_css_class (MainWindowCssClasses.DETAILS_GROUP_TITLE);
+    section.append (heading);
 
-        var heading = new Gtk.Label (title);
-        heading.set_xalign (0.5f);
-        heading.add_css_class (MainWindowCssClasses.DETAILS_GROUP_TITLE);
-        section.append (heading);
+    rows_container = new Gtk.ListBox ();
+    rows_container.set_selection_mode (Gtk.SelectionMode.NONE);
+    rows_container.add_css_class ("boxed-list");
+    rows_container.add_css_class (MainWindowCssClasses.DETAILS_ROWS);
+    section.append (rows_container);
 
-        var separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        separator.add_css_class (MainWindowCssClasses.SEPARATOR);
-        section.append (separator);
-
-        rows_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-        rows_container.add_css_class (MainWindowCssClasses.DETAILS_ROWS);
-        section.append (rows_container);
-
-        return section;
-    }
+    return section;
+}
 }

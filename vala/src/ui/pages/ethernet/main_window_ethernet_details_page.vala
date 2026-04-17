@@ -2,9 +2,9 @@ using Gtk;
 
 public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
     public Gtk.Label details_title { get; set; }
-    public Gtk.Box basic_rows { get; set; }
-    public Gtk.Box advanced_rows { get; set; }
-    public Gtk.Box ip_rows { get; set; }
+    public Gtk.ListBox basic_rows { get; set; }
+    public Gtk.ListBox advanced_rows { get; set; }
+    public Gtk.ListBox ip_rows { get; set; }
     public Gtk.Box action_row { get; set; }
     public Gtk.Button primary_button { get; set; }
     public Gtk.Button edit_button { get; set; }
@@ -21,8 +21,8 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
     ) {
         this.details_title.set_text (MainWindowHelpers.safe_text (dev.name));
 
-        MainWindowHelpers.clear_box (this.basic_rows);
-        MainWindowHelpers.clear_box (this.advanced_rows);
+        MainWindowHelpers.clear_listbox (this.basic_rows);
+        MainWindowHelpers.clear_listbox (this.advanced_rows);
 
         string profile_name = MainWindowHelpers.display_text_or_na (dev.connection);
 
@@ -129,10 +129,6 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
         header.append (this.action_row);
         this.append (header);
 
-        var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        sep.add_css_class (MainWindowCssClasses.SEPARATOR);
-        this.append (sep);
-
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
         scroll.add_css_class (MainWindowCssClasses.SCROLL);
@@ -141,7 +137,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
         var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
         body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
-        Gtk.Box b_rows, a_rows, i_rows;
+        Gtk.ListBox b_rows, a_rows, i_rows;
         body.append (MainWindowHelpers.build_details_section ("Basic", out b_rows));
         body.append (MainWindowHelpers.build_details_section ("Advanced", out a_rows));
         body.append (MainWindowHelpers.build_details_section ("IP", out i_rows));

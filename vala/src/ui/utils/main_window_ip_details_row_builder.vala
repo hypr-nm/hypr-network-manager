@@ -1,7 +1,7 @@
 using Gtk;
 
 public class MainWindowIpDetailsRowBuilder {
-    public static void populate_ip_rows (Gtk.Box ip_rows, NetworkIpSettings ip_settings, bool is_connected) {
+    public static void populate_ip_rows (Gtk.ListBox ip_rows, NetworkIpSettings ip_settings, bool is_connected) {
         ip_rows.append (
             MainWindowHelpers.build_details_row (
                 "Configured IPv4 Method",
