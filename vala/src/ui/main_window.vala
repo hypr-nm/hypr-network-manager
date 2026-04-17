@@ -345,6 +345,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             nm,
             wifi_controller,
             this,
+            state_context,
             config_context,
             status_bar_view.status_label,
             status_bar_view.status_icon

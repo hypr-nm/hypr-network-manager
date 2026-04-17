@@ -15,6 +15,7 @@ namespace NetworkManagerRebuild.UI.Views {
         private MainWindowWifiController controller;
         private IWindowHost window_host;
         private WindowConfigContext config_context;
+        private NetworkStateContext state_context;
 
         private WifiNetwork? selected_wifi_network = null;
         private MainWindowWifiDetailsPage details_page;
@@ -38,6 +39,7 @@ namespace NetworkManagerRebuild.UI.Views {
             NetworkManagerClient nm,
             MainWindowWifiController controller,
             IWindowHost window_host,
+            NetworkStateContext state_context,
             WindowConfigContext config_context,
             Gtk.Label status_label,
             Gtk.Image status_icon
@@ -45,6 +47,7 @@ namespace NetworkManagerRebuild.UI.Views {
             this.nm = nm;
             this.controller = controller;
             this.window_host = window_host;
+            this.state_context = state_context;
             this.config_context = config_context;
             this.status_label = status_label;
             this.status_icon = status_icon;
@@ -396,7 +399,7 @@ namespace NetworkManagerRebuild.UI.Views {
             return MainWindowHelpers.resolve_wifi_row_icon_name (net);
         }
 
-        private Gtk.ListBoxRow build_wifi_row (WifiNetwork net, NetworkStateContext state_context) {
+        public Gtk.ListBoxRow build_wifi_row (WifiNetwork net) {
             string net_key = net.network_key;
             bool is_connected_now = state_context.active_wifi_connections.contains (net_key);
             bool is_connecting = state_context.pending_wifi_connect.contains (net_key);
@@ -478,18 +481,6 @@ namespace NetworkManagerRebuild.UI.Views {
             active_wifi_password_revealer = rev;
             active_wifi_password_entry = ent;
             active_wifi_password_row_id = null;
-        }
-    }
-}
-word_row_id = null;
-        }
-    }
-}
-sword_row_id = null;
-        }
-    }
-}
-word_row_id = null;
         }
     }
 }
