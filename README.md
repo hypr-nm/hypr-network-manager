@@ -1,8 +1,6 @@
 # hypr-network-manager
 
-A lightweight, themeable network manager applet for Wayland compositors such as Hyprland and Sway.
-
-Built with **Vala + GTK 4**, the app uses **layer-shell** for native popup-style placement and interacts with NetworkManager directly over **D-Bus**.
+A themeable network manager applet for Hyprland.
 
 ---
 
