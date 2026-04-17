@@ -56,8 +56,8 @@ namespace MainWindowHelpers {
         }
     }
 
-    public Gtk.Widget build_details_row (string? key, string? value) {
-        var row = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
+    public static Gtk.Widget build_details_row (string? key, string? value) {
+        var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
         MainWindowCssClassResolver.add_best_class (row, {MainWindowCssClasses.DETAILS_ITEM, MainWindowCssClasses.DETAILS_ROW});
 
         string key_text = display_text_or_na (key);
@@ -66,13 +66,16 @@ namespace MainWindowHelpers {
         var key_label = new Gtk.Label (key_text);
         key_label.set_xalign (0.0f);
         key_label.set_halign (Gtk.Align.START);
-        key_label.set_hexpand (false);
+        key_label.set_valign (Gtk.Align.CENTER);
+        key_label.set_hexpand (true);
         MainWindowCssClassResolver.add_best_class (key_label, {MainWindowCssClasses.DETAILS_ITEM_KEY, MainWindowCssClasses.DETAILS_KEY});
 
         var value_label = new Gtk.Label (value_text);
-        value_label.set_xalign (0.0f);
-        value_label.set_halign (Gtk.Align.START);
+        value_label.set_xalign (1.0f);
+        value_label.set_halign (Gtk.Align.END);
+        value_label.set_valign (Gtk.Align.CENTER);
         value_label.set_wrap (true);
+        value_label.set_max_width_chars (30);
         MainWindowCssClassResolver.add_best_class (
             value_label,
             {MainWindowCssClasses.DETAILS_ITEM_VALUE, MainWindowCssClasses.DETAILS_VALUE}
