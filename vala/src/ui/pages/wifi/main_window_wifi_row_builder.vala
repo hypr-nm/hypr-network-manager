@@ -1,3 +1,6 @@
+using GLib;
+using Gtk;
+
 namespace MainWindowWifiRowBuilder {
     private void collapse_row (Gtk.ListBoxRow row) {
         var revealer = row.get_data<Gtk.Revealer> ("actions-revealer");
@@ -48,42 +51,18 @@ namespace MainWindowWifiRowBuilder {
         prompt_connect.set_sensitive (has_hidden_ssid && has_valid_password);
     }
 
-    public static Gtk.ListBoxRow build_row (
+    private Gtk.Box build_info_box (
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting,
         bool show_frequency,
         bool show_band,
-        bool show_bssid,
-        string signal_icon_name,
-        IMainWindowWifiRowActionHandler action_handler
+        bool show_bssid
     ) {
-        var row = new Gtk.ListBoxRow ();
-        row.add_css_class (MainWindowCssClasses.WIFI_ROW);
-        if (is_connected_now) {
-            row.add_css_class (MainWindowCssClasses.CONNECTED);
-        }
-
-        bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
-        bool requires_hidden_ssid = net.is_hidden;
-
-        var row_root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
-        row_root.add_css_class (MainWindowCssClasses.ROW_ROOT);
-
-        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
-        content.add_css_class (MainWindowCssClasses.ROW_CONTENT);
-
-        var signal_icon = new Gtk.Image.from_icon_name (signal_icon_name);
-        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON, MainWindowCssClasses.SIGNAL_ICON});
-        if (net.is_secured) {
-            signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
-        }
-        content.append (signal_icon);
-
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
         info.set_hexpand (true);
         info.add_css_class (MainWindowCssClasses.ROW_INFO);
+
         string ssid_text = MainWindowHelpers.safe_text (net.ssid);
         string bssid_text = MainWindowHelpers.safe_text (net.bssid);
 
@@ -127,18 +106,21 @@ namespace MainWindowWifiRowBuilder {
         sub.set_xalign (0.0f);
         sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
         info.append (sub);
-        content.append (info);
 
-        var expand_hint = new Gtk.Image ();
-        MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
-        expand_hint.add_css_class (MainWindowCssClasses.ROW_EXPAND_ICON);
-        expand_hint.set_valign (Gtk.Align.CENTER);
-        content.append (expand_hint);
-        row.set_data<Gtk.Image> ("expand-hint", expand_hint);
+        return info;
+    }
 
-        var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        actions_panel.add_css_class (MainWindowCssClasses.ROW_ACTIONS);
-
+    private Gtk.Box build_action_buttons (
+        WifiNetwork net,
+        bool is_connected_now,
+        bool is_connecting,
+        bool has_resolvable_saved_profile,
+        bool requires_hidden_ssid,
+        IMainWindowWifiRowActionHandler action_handler,
+        Gtk.Revealer prompt_revealer,
+        Gtk.Entry prompt_entry,
+        Gtk.Entry hidden_ssid_entry
+    ) {
         var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         action_buttons.add_css_class (MainWindowCssClasses.ROW_ACTION_BUTTONS);
         action_buttons.set_valign (Gtk.Align.CENTER);
@@ -187,6 +169,37 @@ namespace MainWindowWifiRowBuilder {
         action.set_valign (Gtk.Align.CENTER);
         action.set_sensitive (!is_connecting);
 
+        action.clicked.connect (() => {
+            if (is_connected_now) {
+                action_handler.disconnect_network (net);
+                return;
+            }
+
+            if ((net.is_secured && !has_resolvable_saved_profile) || requires_hidden_ssid) {
+                action_handler.show_password_prompt (net, prompt_revealer, prompt_entry);
+                if (requires_hidden_ssid) {
+                    hidden_ssid_entry.grab_focus ();
+                } else {
+                    prompt_entry.grab_focus ();
+                }
+            } else {
+                action_handler.connect_network (net, null, null);
+            }
+        });
+
+        action_buttons.append (action);
+        action_buttons.append (details_btn);
+
+        return action_buttons;
+    }
+
+    private Gtk.Revealer build_password_prompt (
+        WifiNetwork net,
+        bool requires_hidden_ssid,
+        IMainWindowWifiRowActionHandler action_handler,
+        out Gtk.Entry prompt_entry,
+        out Gtk.Entry hidden_ssid_entry
+    ) {
         var prompt_label = new Gtk.Label ("Password for %s".printf (net.ssid));
         prompt_label.set_xalign (0.0f);
         prompt_label.set_hexpand (true);
@@ -206,7 +219,7 @@ namespace MainWindowWifiRowBuilder {
             {MainWindowCssClasses.FORM_LABEL}
         );
 
-        var hidden_ssid_entry = new Gtk.Entry ();
+        hidden_ssid_entry = new Gtk.Entry ();
         hidden_ssid_entry.set_hexpand (true);
         hidden_ssid_entry.set_placeholder_text ("Hidden network name");
         MainWindowCssClassResolver.add_hook_and_best_class (
@@ -217,7 +230,7 @@ namespace MainWindowWifiRowBuilder {
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
 
-        var prompt_entry = new Gtk.Entry ();
+        prompt_entry = new Gtk.Entry ();
         prompt_entry.set_hexpand (true);
         prompt_entry.set_visibility (false);
         prompt_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
@@ -236,12 +249,13 @@ namespace MainWindowWifiRowBuilder {
             prompt_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
             MainWindowHelpers.sync_password_visibility_icon (prompt_entry);
 
+            var local_prompt_entry = prompt_entry;
             prompt_entry.icon_press.connect ((icon_pos) => {
                 if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
                     return;
                 }
-                prompt_entry.set_visibility (!prompt_entry.get_visibility ());
-                MainWindowHelpers.sync_password_visibility_icon (prompt_entry);
+                local_prompt_entry.set_visibility (!local_prompt_entry.get_visibility ());
+                MainWindowHelpers.sync_password_visibility_icon (local_prompt_entry);
             });
         }
 
@@ -262,20 +276,24 @@ namespace MainWindowWifiRowBuilder {
         );
         prompt_connect.set_sensitive (false);
 
+        var local_prompt_connect = prompt_connect;
+        var local_hidden_ssid_entry = hidden_ssid_entry;
+        var local_prompt_entry = prompt_entry;
+
         prompt_entry.changed.connect (() => {
             sync_prompt_connect_button_sensitivity (
-                prompt_connect,
-                hidden_ssid_entry,
-                prompt_entry,
+                local_prompt_connect,
+                local_hidden_ssid_entry,
+                local_prompt_entry,
                 requires_hidden_ssid,
                 net.is_secured
             );
         });
         hidden_ssid_entry.changed.connect (() => {
             sync_prompt_connect_button_sensitivity (
-                prompt_connect,
-                hidden_ssid_entry,
-                prompt_entry,
+                local_prompt_connect,
+                local_hidden_ssid_entry,
+                local_prompt_entry,
                 requires_hidden_ssid,
                 net.is_secured
             );
@@ -309,82 +327,134 @@ namespace MainWindowWifiRowBuilder {
         prompt_revealer.set_reveal_child (false);
         prompt_revealer.set_child (prompt_inner);
 
+        var local_prompt_revealer = prompt_revealer;
         prompt_cancel.clicked.connect (() => {
-            hidden_ssid_entry.set_text ("");
-            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, null);
+            local_hidden_ssid_entry.set_text ("");
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, null);
         });
 
         prompt_connect.clicked.connect (() => {
-            if (!prompt_connect.get_sensitive ()) {
+            if (!local_prompt_connect.get_sensitive ()) {
                 return;
             }
-            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, local_prompt_entry.get_text ());
             action_handler.connect_network (
                 net,
-                net.is_secured ? prompt_entry.get_text () : null,
-                requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
+                net.is_secured ? local_prompt_entry.get_text () : null,
+                requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null
             );
-            hidden_ssid_entry.set_text ("");
+            local_hidden_ssid_entry.set_text ("");
         });
 
         prompt_entry.activate.connect (() => {
-            if (!prompt_connect.get_sensitive ()) {
+            if (!local_prompt_connect.get_sensitive ()) {
                 return;
             }
-            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, local_prompt_entry.get_text ());
             action_handler.connect_network (
                 net,
-                net.is_secured ? prompt_entry.get_text () : null,
-                requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
+                net.is_secured ? local_prompt_entry.get_text () : null,
+                requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null
             );
-            hidden_ssid_entry.set_text ("");
+            local_hidden_ssid_entry.set_text ("");
         });
 
         hidden_ssid_entry.activate.connect (() => {
             if (net.is_secured) {
-                prompt_entry.grab_focus ();
+                local_prompt_entry.grab_focus ();
                 return;
             }
 
-            if (!prompt_connect.get_sensitive ()) {
+            if (!local_prompt_connect.get_sensitive ()) {
                 return;
             }
 
-            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, local_prompt_entry.get_text ());
             action_handler.connect_network (
                 net,
                 null,
-                hidden_ssid_entry.get_text ().strip ()
+                local_hidden_ssid_entry.get_text ().strip ()
             );
-            hidden_ssid_entry.set_text ("");
+            local_hidden_ssid_entry.set_text ("");
         });
 
-        action.clicked.connect (() => {
-            if (is_connected_now) {
-                action_handler.disconnect_network (net);
-                return;
-            }
+        return prompt_revealer;
+    }
 
-            if ((net.is_secured && !has_resolvable_saved_profile) || requires_hidden_ssid) {
-                action_handler.show_password_prompt (net, prompt_revealer, prompt_entry);
-                if (requires_hidden_ssid) {
-                    hidden_ssid_entry.grab_focus ();
-                }
-            } else {
-                action_handler.connect_network (net, null, null);
-            }
-        });
+    public Gtk.ListBoxRow build_row (
+        WifiNetwork net,
+        bool is_connected_now,
+        bool is_connecting,
+        bool show_frequency,
+        bool show_band,
+        bool show_bssid,
+        string signal_icon_name,
+        IMainWindowWifiRowActionHandler action_handler
+    ) {
+        var row = new Gtk.ListBoxRow ();
+        row.add_css_class (MainWindowCssClasses.WIFI_ROW);
+        if (is_connected_now) {
+            row.add_css_class (MainWindowCssClasses.CONNECTED);
+        }
 
-        sync_prompt_connect_button_sensitivity (
-            prompt_connect,
-            hidden_ssid_entry,
-            prompt_entry,
+        bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
+        bool requires_hidden_ssid = net.is_hidden;
+
+        var row_root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
+        row_root.add_css_class (MainWindowCssClasses.ROW_ROOT);
+
+        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
+        content.add_css_class (MainWindowCssClasses.ROW_CONTENT);
+
+        var signal_icon = new Gtk.Image.from_icon_name (signal_icon_name);
+        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.ICON_SIZE_16, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON, MainWindowCssClasses.SIGNAL_ICON});
+        if (net.is_secured) {
+            signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
+        }
+        content.append (signal_icon);
+
+        var info = build_info_box (
+            net,
+            is_connected_now,
+            is_connecting,
+            show_frequency,
+            show_band,
+            show_bssid
+        );
+        content.append (info);
+
+        var expand_hint = new Gtk.Image ();
+        MainWindowIconResources.set_expand_indicator_icon (expand_hint, false);
+        expand_hint.add_css_class (MainWindowCssClasses.ROW_EXPAND_ICON);
+        expand_hint.set_valign (Gtk.Align.CENTER);
+        content.append (expand_hint);
+        row.set_data<Gtk.Image> ("expand-hint", expand_hint);
+
+        var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
+        actions_panel.add_css_class (MainWindowCssClasses.ROW_ACTIONS);
+
+        Gtk.Entry prompt_entry;
+        Gtk.Entry hidden_ssid_entry;
+        var prompt_revealer = build_password_prompt (
+            net,
             requires_hidden_ssid,
-            net.is_secured
+            action_handler,
+            out prompt_entry,
+            out hidden_ssid_entry
         );
 
-        action_buttons.append (action);
-        action_buttons.append (details_btn);
+        var action_buttons = build_action_buttons (
+            net,
+            is_connected_now,
+            is_connecting,
+            has_resolvable_saved_profile,
+            requires_hidden_ssid,
+            action_handler,
+            prompt_revealer,
+            prompt_entry,
+            hidden_ssid_entry
+        );
 
         if (has_resolvable_saved_profile) {
             var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
@@ -414,15 +484,16 @@ namespace MainWindowWifiRowBuilder {
         row.set_data<Gtk.Revealer> ("actions-revealer", actions_revealer);
 
         var click = new Gtk.GestureClick ();
+        var local_row = row;
         click.released.connect ((n_press, x, y) => {
             bool expanded = !actions_revealer.get_reveal_child ();
 
             if (expanded) {
-                collapse_other_expanded_rows (row);
+                collapse_other_expanded_rows (local_row);
             }
 
             actions_revealer.set_reveal_child (expanded);
-            row.set_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED, expanded);
+            local_row.set_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED, expanded);
             MainWindowIconResources.set_expand_indicator_icon (expand_hint, expanded);
             if (!expanded) {
                 action_handler.hide_password_prompt (prompt_revealer, prompt_entry, null);
