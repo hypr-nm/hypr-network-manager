@@ -4,11 +4,11 @@ public class MainWindowWifiSavedProfilesController : Object {
     private Cancellable? saved_profiles_cancellable = null;
     private Cancellable? saved_profile_settings_cancellable = null;
     private Cancellable? saved_profile_update_cancellable = null;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
     public signal void saved_profile_update_succeeded ();
 
-    public MainWindowWifiSavedProfilesController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host) {
+    public MainWindowWifiSavedProfilesController (HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.host = host;
     }
 

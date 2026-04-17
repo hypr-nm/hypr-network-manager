@@ -1,4 +1,4 @@
-namespace NetworkManagerRebuild.Models {
+namespace HyprNetworkManager.Models {
 
     /**
      * Context for application window configuration and display options.

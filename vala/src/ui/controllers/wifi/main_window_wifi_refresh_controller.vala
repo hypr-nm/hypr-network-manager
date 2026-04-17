@@ -6,10 +6,10 @@ public class MainWindowWifiRefreshController : Object {
     private bool wifi_refresh_in_flight = false;
     private bool wifi_refresh_queued = false;
     private MainWindowWifiRowReconciler row_reconciler;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
-    public MainWindowWifiRefreshController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
+    public MainWindowWifiRefreshController (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
         active_wifi_by_device = new HashTable<string, WifiNetwork> (str_hash, str_equal);

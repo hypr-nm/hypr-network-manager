@@ -7,8 +7,8 @@ public class MainWindowProfileAdapter : Object {
     private Gtk.Stack profiles_stack;
     private MainWindowProfilesPage profiles_page;
     private MainWindowWifiSavedEditPage wifi_saved_edit_page;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     private WifiSavedProfile? selected_profile = null;
 
@@ -18,8 +18,8 @@ public class MainWindowProfileAdapter : Object {
         Gtk.Stack profiles_stack,
         MainWindowProfilesPage profiles_page,
         MainWindowWifiSavedEditPage wifi_saved_edit_page,
-        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
-        NetworkManagerRebuild.Models.NetworkStateContext state_context
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context
     ) {
         this.nm = nm;
         this.wifi_controller = wifi_controller;

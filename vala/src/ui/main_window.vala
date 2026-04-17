@@ -9,28 +9,28 @@ using GLib;
 using Gtk;
 using Gdk;
 using GtkLayerShell;
-using NetworkManagerRebuild.UI.Interfaces;
-using NetworkManagerRebuild.Models;
+using HyprNetworkManager.UI.Interfaces;
+using HyprNetworkManager.Models;
 
 public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private WindowConfigContext config_context;
     private NetworkManagerClient nm;
-    private NetworkManagerRebuild.UI.Views.StatusBarView status_bar_view;
+    private HyprNetworkManager.UI.Views.StatusBarView status_bar_view;
     private Gtk.Widget status_separator;
-    private NetworkManagerRebuild.UI.Views.WifiSectionView wifi_section;
-    private NetworkManagerRebuild.UI.Views.SavedProfilesView profiles_section;
-    private NetworkManagerRebuild.UI.Views.EthernetSectionView ethernet_section;
+    private HyprNetworkManager.UI.Views.WifiSectionView wifi_section;
+    private HyprNetworkManager.UI.Views.SavedProfilesView profiles_section;
+    private HyprNetworkManager.UI.Views.EthernetSectionView ethernet_section;
     private MainWindowWifiController wifi_controller;
     private MainWindowRefreshCoordinator refresh_coordinator;
     private MainWindowEthernetController ethernet_controller;
     private MainWindowVpnController vpn_controller;
-    private NetworkManagerRebuild.UI.Views.VpnSectionView vpn_section;
+    private HyprNetworkManager.UI.Views.VpnSectionView vpn_section;
     private Gtk.Stack content_stack;
     private Gtk.Notebook notebook;
     private Gtk.EventControllerKey key_controller;
     private bool layer_shell_active = false;
     private NetworkStateContext state_context;
-    private NetworkManagerRebuild.UI.Views.AppContentNavigationManager nav_manager;
+    private HyprNetworkManager.UI.Views.AppContentNavigationManager nav_manager;
 
     public MainWindow (
         Gtk.Application app,
@@ -323,7 +323,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void build_status_chrome (Gtk.Box root) {
-        status_bar_view = new NetworkManagerRebuild.UI.Views.StatusBarView ();
+        status_bar_view = new HyprNetworkManager.UI.Views.StatusBarView ();
         status_bar_view.networking_switch_toggled.connect (() => {
             on_networking_switch_changed ();
         });
@@ -341,7 +341,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void build_sections_and_tabs () {
-        wifi_section = new NetworkManagerRebuild.UI.Views.WifiSectionView (
+        wifi_section = new HyprNetworkManager.UI.Views.WifiSectionView (
             nm,
             wifi_controller,
             this,
@@ -357,7 +357,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             refresh_switch_states ();
         });
 
-        profiles_section = new NetworkManagerRebuild.UI.Views.SavedProfilesView (
+        profiles_section = new HyprNetworkManager.UI.Views.SavedProfilesView (
             nm,
             wifi_controller,
             ethernet_controller,
@@ -371,8 +371,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             profiles_section.refresh_saved_profiles ();
         });
 
-        ethernet_section = new NetworkManagerRebuild.UI.Views.EthernetSectionView (ethernet_controller);
-        vpn_section = new NetworkManagerRebuild.UI.Views.VpnSectionView (vpn_controller);
+        ethernet_section = new HyprNetworkManager.UI.Views.EthernetSectionView (ethernet_controller);
+        vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (vpn_controller);
 
         notebook.append_page (wifi_section.widget, build_tab_label ("Wi-Fi"));
         notebook.append_page (ethernet_section.widget, build_tab_label ("Ethernet"));
@@ -383,7 +383,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void build_navigation_manager () {
-        nav_manager = new NetworkManagerRebuild.UI.Views.AppContentNavigationManager (
+        nav_manager = new HyprNetworkManager.UI.Views.AppContentNavigationManager (
             content_stack,
             notebook,
             wifi_section.stack,

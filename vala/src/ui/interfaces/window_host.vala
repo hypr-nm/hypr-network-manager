@@ -1,4 +1,4 @@
-namespace NetworkManagerRebuild.UI.Interfaces {
+namespace HyprNetworkManager.UI.Interfaces {
 
     /**
      * Interface that provides window operations back to the controllers.

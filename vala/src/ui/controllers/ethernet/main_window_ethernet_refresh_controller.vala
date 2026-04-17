@@ -3,9 +3,9 @@ public class MainWindowEthernetRefreshController : Object {
     private uint ui_epoch = 1;
     private Cancellable? refresh_cancellable = null;
     private NetworkManagerClient nm;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
-    public MainWindowEthernetRefreshController (NetworkManagerClient nm, NetworkManagerRebuild.UI.Interfaces.IWindowHost host) {
+    public MainWindowEthernetRefreshController (NetworkManagerClient nm, HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.nm = nm;
         this.host = host;
     }

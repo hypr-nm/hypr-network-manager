@@ -2,8 +2,8 @@ using GLib;
 using Gtk;
 
 public class MainWindowWifiController : Object {
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     private MainWindowWifiRefreshController refresh_controller;
     private MainWindowWifiConnectionController connection_controller;
@@ -16,7 +16,7 @@ public class MainWindowWifiController : Object {
 
     public signal void saved_profile_update_succeeded ();
 
-    public MainWindowWifiController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
+    public MainWindowWifiController (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
 

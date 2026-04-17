@@ -3,14 +3,14 @@ public class MainWindowEthernetConnectionController : Object {
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
     private NetworkManagerClient nm;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
     public signal void refresh_requested ();
 
     public HashTable<string, bool> pending_action;
     public HashTable<string, bool> pending_target_connected;
 
-    public MainWindowEthernetConnectionController (NetworkManagerClient nm, NetworkManagerRebuild.UI.Interfaces.IWindowHost host) {
+    public MainWindowEthernetConnectionController (NetworkManagerClient nm, HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.nm = nm;
         this.host = host;
         pending_action = new HashTable<string, bool> (str_hash, str_equal);

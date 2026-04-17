@@ -16,7 +16,7 @@ int main (string[] args) {
         {null}
     };
 
-    var context = new OptionContext ("- hypr-network-manager rebuild");
+    var context = new OptionContext ("- hypr-network-manager: A network manager for Hyprland");
     context.add_main_entries (entries, null);
 
     try {

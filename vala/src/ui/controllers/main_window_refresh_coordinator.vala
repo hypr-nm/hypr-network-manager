@@ -1,6 +1,6 @@
 using GLib;
 using Gtk;
-using NetworkManagerRebuild.UI.Interfaces;
+using HyprNetworkManager.UI.Interfaces;
 
 public class MainWindowRefreshCoordinator : Object {
     private NetworkManagerClient nm;

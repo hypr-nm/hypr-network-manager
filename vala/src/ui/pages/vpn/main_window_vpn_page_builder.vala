@@ -6,16 +6,16 @@ public class MainWindowVpnPageBuilder : Object {
     private uint[] timeout_source_ids = {};
 
     private NetworkManagerClient nm;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     private Gtk.ListBox? vpn_listbox = null;
     private Gtk.Stack? vpn_stack = null;
 
     public MainWindowVpnPageBuilder (
         NetworkManagerClient nm,
-        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
-        NetworkManagerRebuild.Models.NetworkStateContext state_context
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context
     ) {
         this.nm = nm;
         this.host = host;

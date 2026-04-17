@@ -2,10 +2,10 @@ public class MainWindowWifiHiddenNetworkController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private Cancellable? add_network_cancellable = null;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private MainWindowWifiConnectionController connection_controller;
 
-    public MainWindowWifiHiddenNetworkController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, MainWindowWifiConnectionController connection_controller) {
+    public MainWindowWifiHiddenNetworkController (HyprNetworkManager.UI.Interfaces.IWindowHost host, MainWindowWifiConnectionController connection_controller) {
         this.host = host;
         this.connection_controller = connection_controller;
     }

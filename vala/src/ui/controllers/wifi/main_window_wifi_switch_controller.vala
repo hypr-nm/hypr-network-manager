@@ -3,9 +3,9 @@ public class MainWindowWifiSwitchController : Object {
     private uint ui_epoch = 1;
     private bool updating_switches = false;
     private uint switch_refresh_epoch = 1;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
-    public MainWindowWifiSwitchController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host) {
+    public MainWindowWifiSwitchController (HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.host = host;
     }
 

@@ -3,8 +3,8 @@ using Gtk;
 
 public class MainWindowEthernetController : Object, IMainWindowEthernetRowActionHandler {
     private NetworkManagerClient nm;
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     private MainWindowEthernetRefreshController refresh_controller;
     private MainWindowEthernetConnectionController connection_controller;
@@ -21,8 +21,8 @@ public class MainWindowEthernetController : Object, IMainWindowEthernetRowAction
 
     public MainWindowEthernetController (
         NetworkManagerClient nm,
-        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
-        NetworkManagerRebuild.Models.NetworkStateContext state_context
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context
     ) {
         this.nm = nm;
         this.host = host;

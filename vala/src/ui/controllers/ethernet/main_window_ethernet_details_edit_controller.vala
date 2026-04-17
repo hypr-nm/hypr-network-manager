@@ -5,7 +5,7 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
 
     private NetworkManagerClient nm;
 
-    public MainWindowEthernetDetailsEditController (NetworkManagerClient nm, NetworkManagerRebuild.UI.Interfaces.IWindowHost host) {
+    public MainWindowEthernetDetailsEditController (NetworkManagerClient nm, HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         base (host);
         this.nm = nm;
     }

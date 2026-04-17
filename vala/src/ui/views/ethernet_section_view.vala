@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 using GLib;
 using Gtk;
-using NetworkManagerRebuild.UI.Interfaces;
+using HyprNetworkManager.UI.Interfaces;
 
-namespace NetworkManagerRebuild.UI.Views {
+namespace HyprNetworkManager.UI.Views {
     public class EthernetSectionView : Object {
         public Gtk.Widget widget { get; private set; }
         public Gtk.Stack stack { get; private set; }

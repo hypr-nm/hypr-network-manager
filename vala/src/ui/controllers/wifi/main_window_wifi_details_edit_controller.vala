@@ -2,14 +2,14 @@ using GLib;
 using Gtk;
 
 public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEditController {
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
     private const uint WIFI_RECONNECT_CHECK_INTERVAL_MS = 300;
     private const uint WIFI_RECONNECT_MAX_WAIT_MS = 10000;
 
     private uint[] timeout_source_ids = {};
     private Cancellable? action_request_cancellable = null;
 
-    public MainWindowWifiDetailsEditController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
+    public MainWindowWifiDetailsEditController (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
         base (host);
         this.state_context = state_context;
     }

@@ -1,12 +1,12 @@
 using Gtk;
 
 public class MainWindowWifiRowReconciler : Object {
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
     private HashTable<string, string> wifi_row_signatures;
     private string[] wifi_row_order = {};
 
-    public MainWindowWifiRowReconciler (NetworkManagerRebuild.UI.Interfaces.IWindowHost host, NetworkManagerRebuild.Models.NetworkStateContext state_context) {
+    public MainWindowWifiRowReconciler (HyprNetworkManager.UI.Interfaces.IWindowHost host, HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
         wifi_row_signatures = new HashTable<string, string> (str_hash, str_equal);

@@ -1,4 +1,4 @@
-namespace NetworkManagerRebuild.UI.Views {
+namespace HyprNetworkManager.UI.Views {
 
     public class StatusBarView : Object {
         public Gtk.Box root_widget { get; private set; }

@@ -2,7 +2,7 @@
 using GLib;
 using Gtk;
 
-namespace NetworkManagerRebuild.UI.Views {
+namespace HyprNetworkManager.UI.Views {
     public class VpnSectionView : Object {
         public Gtk.Widget widget { get; private set; }
         public Gtk.Stack stack { get; private set; }

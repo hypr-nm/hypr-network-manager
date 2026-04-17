@@ -1,7 +1,7 @@
 public class MainWindowWifiPasswordUIController : Object {
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
-    public MainWindowWifiPasswordUIController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host) {
+    public MainWindowWifiPasswordUIController (HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.host = host;
     }
 

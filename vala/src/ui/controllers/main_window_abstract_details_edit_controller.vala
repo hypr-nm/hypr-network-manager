@@ -7,9 +7,9 @@ public abstract class MainWindowAbstractDetailsEditController : Object {
     protected Cancellable? details_request_cancellable = null;
     protected Cancellable? edit_request_cancellable = null;
 
-    protected NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
+    protected HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
-    protected MainWindowAbstractDetailsEditController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host) {
+    protected MainWindowAbstractDetailsEditController (HyprNetworkManager.UI.Interfaces.IWindowHost host) {
         this.host = host;
     }
 

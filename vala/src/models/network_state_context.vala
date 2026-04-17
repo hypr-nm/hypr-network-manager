@@ -1,4 +1,4 @@
-namespace NetworkManagerRebuild.Models {
+namespace HyprNetworkManager.Models {
 
     /**
      * Context holding the volatile state dictionaries for Wi-Fi connections.

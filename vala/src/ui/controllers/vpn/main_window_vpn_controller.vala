@@ -3,8 +3,8 @@ public class MainWindowVpnController : Object {
 
     public MainWindowVpnController (
         NetworkManagerClient nm,
-        NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
-        NetworkManagerRebuild.Models.NetworkStateContext state_context
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context
     ) {
         page_builder = new MainWindowVpnPageBuilder (
             nm,

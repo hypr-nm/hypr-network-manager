@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 using GLib;
 using Gtk;
-using NetworkManagerRebuild.UI.Interfaces;
-using NetworkManagerRebuild.Models;
+using HyprNetworkManager.UI.Interfaces;
+using HyprNetworkManager.Models;
 
-namespace NetworkManagerRebuild.UI.Views {
+namespace HyprNetworkManager.UI.Views {
     public class SavedProfilesView : Object {
         public Gtk.Stack stack { get; private set; }
 

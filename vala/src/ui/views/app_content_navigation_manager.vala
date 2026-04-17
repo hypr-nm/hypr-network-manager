@@ -1,6 +1,6 @@
 using Gtk;
 
-namespace NetworkManagerRebuild.UI.Views {
+namespace HyprNetworkManager.UI.Views {
     public class AppContentNavigationManager : GLib.Object {
         private Gtk.Stack content_stack;
         private Gtk.Notebook notebook;

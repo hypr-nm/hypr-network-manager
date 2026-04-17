@@ -2,12 +2,12 @@ public class MainWindowWifiConnectionController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
-    private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
-    private NetworkManagerRebuild.Models.NetworkStateContext state_context;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
     private MainWindowWifiRefreshController refresh_controller;
 
-    public MainWindowWifiConnectionController (NetworkManagerRebuild.UI.Interfaces.IWindowHost host,
-        NetworkManagerRebuild.Models.NetworkStateContext state_context, MainWindowWifiRefreshController refresh_controller) {
+    public MainWindowWifiConnectionController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context, MainWindowWifiRefreshController refresh_controller) {
         this.host = host;
         this.state_context = state_context;
         this.refresh_controller = refresh_controller;
