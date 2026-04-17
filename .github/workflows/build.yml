@@ -2,6 +2,10 @@ name: Compile test
 
 on:
   push:
+  paths:
+    - 'vala/**'
+    - 'meson.build'
+    - '.github/workflows/build.yml'
   pull_request:
 
 permissions:
