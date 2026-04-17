@@ -48,17 +48,17 @@ For step-by-step guidance, see the relevant sections below.
 The easiest way to install the app and its dependencies automatically is via the web installer script:
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh | bash
+bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
 ```
 
 Alternatively, you can skip the interactive prompt and define the `INSTALL_SCOPE` directly:
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh | INSTALL_SCOPE=system bash
+INSTALL_SCOPE=system bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
 ```
 or 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh | INSTALL_SCOPE=user bash
+INSTALL_SCOPE=user bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
 ```
 
 ---
