@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/ZorEl212/hypr-network-manager.git"
+REPO_URL="https://github.com/hypr-nm/hypr-network-manager.git"
 
 echo "========================================="
 echo " hypr-network-manager Web Installer"
