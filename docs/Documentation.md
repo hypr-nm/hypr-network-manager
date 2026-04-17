@@ -48,17 +48,17 @@ For step-by-step guidance, see the relevant sections below.
 The easiest way to install the app and its dependencies automatically is via the web installer script:
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/ZorEl212/hypr-network-manager/master/setup.sh | bash
+curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh | bash
 ```
 
 Alternatively, you can skip the interactive prompt and define the `INSTALL_SCOPE` directly:
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/ZorEl212/hypr-network-manager/master/setup.sh | INSTALL_SCOPE=system bash
+curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh | INSTALL_SCOPE=system bash
 ```
 or 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/ZorEl212/hypr-network-manager/master/setup.sh | INSTALL_SCOPE=user bash
+curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh | INSTALL_SCOPE=user bash
 ```
 
 ---
@@ -77,7 +77,7 @@ The install script auto-installs dependencies when supported package managers ar
 Clone the repository and run the installation script:
 
 ```bash
-git clone https://github.com/ZorEl212/hypr-network-manager.git
+git clone https://github.com/hypr-nm/hypr-network-manager.git
 cd hypr-network-manager
 ./scripts/install.sh
 ```
