@@ -48,7 +48,7 @@ namespace MainWindowWifiRowBuilder {
         prompt_connect.set_sensitive (has_hidden_ssid && has_valid_password);
     }
 
-    public Gtk.ListBoxRow build_row (
+    public static Gtk.ListBoxRow build_row (
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting,
@@ -56,13 +56,7 @@ namespace MainWindowWifiRowBuilder {
         bool show_band,
         bool show_bssid,
         string signal_icon_name,
-        owned MainWindowWifiNetworkCallback on_open_details,
-        owned MainWindowWifiNetworkCallback on_forget_saved_network,
-        owned MainWindowWifiNetworkCallback on_disconnect,
-        owned MainWindowWifiNetworkPasswordCallback on_connect,
-        owned MainWindowWifiNetworkBoolCallback on_set_auto_connect,
-        owned MainWindowPasswordPromptShowCallback on_show_password_prompt,
-        owned MainWindowPasswordPromptHideCallback on_hide_password_prompt
+        IMainWindowWifiRowActionHandler action_handler
     ) {
         var row = new Gtk.ListBoxRow ();
         row.add_css_class (MainWindowCssClasses.WIFI_ROW);
@@ -165,7 +159,7 @@ namespace MainWindowWifiRowBuilder {
         );
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
-            on_open_details (net);
+            action_handler.open_details (net);
         });
 
         if (has_resolvable_saved_profile) {
@@ -178,7 +172,7 @@ namespace MainWindowWifiRowBuilder {
             forget.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
             forget.set_valign (Gtk.Align.CENTER);
             forget.clicked.connect (() => {
-                on_forget_saved_network (net);
+                action_handler.forget_saved_network (net);
             });
             action_buttons.append (forget);
         }
@@ -317,15 +311,15 @@ namespace MainWindowWifiRowBuilder {
 
         prompt_cancel.clicked.connect (() => {
             hidden_ssid_entry.set_text ("");
-            on_hide_password_prompt (prompt_revealer, prompt_entry, null);
+            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, null);
         });
 
         prompt_connect.clicked.connect (() => {
             if (!prompt_connect.get_sensitive ()) {
                 return;
             }
-            on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
-            on_connect (
+            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
+            action_handler.connect_network (
                 net,
                 net.is_secured ? prompt_entry.get_text () : null,
                 requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
@@ -337,8 +331,8 @@ namespace MainWindowWifiRowBuilder {
             if (!prompt_connect.get_sensitive ()) {
                 return;
             }
-            on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
-            on_connect (
+            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
+            action_handler.connect_network (
                 net,
                 net.is_secured ? prompt_entry.get_text () : null,
                 requires_hidden_ssid ? hidden_ssid_entry.get_text ().strip () : null
@@ -356,8 +350,8 @@ namespace MainWindowWifiRowBuilder {
                 return;
             }
 
-            on_hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
-            on_connect (
+            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, prompt_entry.get_text ());
+            action_handler.connect_network (
                 net,
                 null,
                 hidden_ssid_entry.get_text ().strip ()
@@ -367,17 +361,17 @@ namespace MainWindowWifiRowBuilder {
 
         action.clicked.connect (() => {
             if (is_connected_now) {
-                on_disconnect (net);
+                action_handler.disconnect_network (net);
                 return;
             }
 
             if ((net.is_secured && !has_resolvable_saved_profile) || requires_hidden_ssid) {
-                on_show_password_prompt (prompt_revealer, prompt_entry);
+                action_handler.show_password_prompt (net, prompt_revealer, prompt_entry);
                 if (requires_hidden_ssid) {
                     hidden_ssid_entry.grab_focus ();
                 }
             } else {
-                on_connect (net, null, null);
+                action_handler.connect_network (net, null, null);
             }
         });
 
@@ -400,7 +394,7 @@ namespace MainWindowWifiRowBuilder {
             auto_connect.set_hexpand (true);
             auto_connect.set_halign (Gtk.Align.START);
             auto_connect.toggled.connect (() => {
-                on_set_auto_connect (net, auto_connect.get_active ());
+                action_handler.set_auto_connect (net, auto_connect.get_active ());
             });
             actions_panel.append (auto_connect);
         } else {
@@ -431,7 +425,7 @@ namespace MainWindowWifiRowBuilder {
             row.set_data<bool> (MainWindowDataKeys.ACTIONS_EXPANDED, expanded);
             MainWindowIconResources.set_expand_indicator_icon (expand_hint, expanded);
             if (!expanded) {
-                on_hide_password_prompt (prompt_revealer, prompt_entry, null);
+                action_handler.hide_password_prompt (prompt_revealer, prompt_entry, null);
             }
         });
         content.add_controller (click);

@@ -1,7 +1,7 @@
 using GLib;
 using Gtk;
 
-public class MainWindowEthernetController : Object {
+public class MainWindowEthernetController : Object, IMainWindowEthernetRowActionHandler {
     private NetworkManagerClient nm;
     private NetworkManagerRebuild.UI.Interfaces.IWindowHost host;
     private NetworkManagerRebuild.Models.NetworkStateContext state_context;
@@ -114,13 +114,23 @@ public class MainWindowEthernetController : Object {
         details_edit_controller.open_edit (dev, ethernet_stack, ethernet_edit_page, connection_controller);
     }
 
+    public void open_details (NetworkDevice dev) {
+        profile_edit_mode = false;
+        details_edit_controller.open_details (dev, ethernet_stack, ethernet_details_page, connection_controller);
+    }
+
+    public void trigger_toggle (NetworkDevice dev) {
+        connection_controller.trigger_toggle (dev);
+    }
+
     public void refresh () {
         refresh_controller.refresh (
             ethernet_stack,
             ethernet_listbox,
             connection_controller,
             details_edit_controller,
-            ethernet_details_page
+            ethernet_details_page,
+            this
         );
     }
 }

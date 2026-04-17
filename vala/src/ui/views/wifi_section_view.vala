@@ -5,7 +5,7 @@ using NetworkManagerRebuild.UI.Interfaces;
 using NetworkManagerRebuild.Models;
 
 namespace NetworkManagerRebuild.UI.Views {
-    public class WifiSectionView : Object {
+    public class WifiSectionView : Object, IMainWindowWifiRowActionHandler {
         public Gtk.Widget widget { get; private set; }
         public Gtk.Stack stack { get; private set; }
         public Gtk.ListBox listbox { get; private set; }
@@ -331,20 +331,75 @@ namespace NetworkManagerRebuild.UI.Views {
             );
         }
 
+        public void open_details (WifiNetwork net) {
+            open_wifi_details (net);
+        }
+
+        public void forget_saved_network (WifiNetwork net) {
+            forget_wifi_network (net);
+        }
+
+        public void disconnect_network (WifiNetwork net) {
+            disconnect_wifi_network (net);
+        }
+
+        public void connect_network (WifiNetwork net, string? password, string? hidden_ssid) {
+            controller.connect_with_optional_password (
+                nm,
+                net,
+                password,
+                hidden_ssid,
+                config_context.pending_wifi_connect_timeout_ms,
+                config_context.close_on_connect
+            );
+        }
+
+        public void set_auto_connect (WifiNetwork net, bool auto_connect) {
+            controller.set_wifi_network_autoconnect (
+                nm,
+                net,
+                auto_connect
+            );
+        }
+
+        public void show_password_prompt (WifiNetwork net, Gtk.Revealer revealer, Gtk.Entry entry) {
+            active_wifi_password_row_id = get_wifi_row_id (net);
+            var rev = active_wifi_password_revealer;
+            var ent = active_wifi_password_entry;
+            controller.show_wifi_password_prompt (
+                revealer,
+                entry
+            );
+            active_wifi_password_revealer = rev;
+            active_wifi_password_entry = ent;
+        }
+
+        public void hide_password_prompt (Gtk.Revealer revealer, Gtk.Entry entry, string? value) {
+            var rev = active_wifi_password_revealer;
+            var ent = active_wifi_password_entry;
+            controller.hide_wifi_password_prompt (
+                revealer,
+                entry,
+                value
+            );
+            active_wifi_password_revealer = rev;
+            active_wifi_password_entry = ent;
+
+            if (active_wifi_password_revealer == null) {
+                active_wifi_password_row_id = null;
+            }
+        }
+
         private string resolve_wifi_row_icon_name (WifiNetwork net) {
             return MainWindowHelpers.resolve_wifi_row_icon_name (net);
         }
 
         private Gtk.ListBoxRow build_wifi_row (WifiNetwork net, NetworkStateContext state_context) {
-            var nm_client = nm;
-            var wifi_controller_ref = controller;
-            uint pending_timeout_ms = config_context.pending_wifi_connect_timeout_ms;
-            bool should_close_on_connect = config_context.close_on_connect;
             string net_key = net.network_key;
             bool is_connected_now = state_context.active_wifi_connections.contains (net_key);
             bool is_connecting = state_context.pending_wifi_connect.contains (net_key);
 
-            return controller.build_row (
+            return MainWindowWifiRowBuilder.build_row (
                 net,
                 is_connected_now,
                 is_connecting,
@@ -352,39 +407,7 @@ namespace NetworkManagerRebuild.UI.Views {
                 config_context.show_band,
                 config_context.show_bssid,
                 resolve_wifi_row_icon_name (net),
-                (wifi_net) => {
-                    open_wifi_details (wifi_net);
-                },
-                (wifi_net) => {
-                    forget_wifi_network (wifi_net);
-                },
-                (wifi_net) => {
-                    disconnect_wifi_network (wifi_net);
-                },
-                (wifi_net, password, hidden_ssid) => {
-                    wifi_controller_ref.connect_with_optional_password (
-                        nm_client,
-                        wifi_net,
-                        password,
-                        hidden_ssid,
-                        pending_timeout_ms,
-                        should_close_on_connect
-                    );
-                },
-                (wifi_net, enabled) => {
-                    wifi_controller_ref.set_wifi_network_autoconnect (
-                        nm_client,
-                        wifi_net,
-                        enabled
-                    );
-                },
-                (revealer, entry) => {
-                    active_wifi_password_row_id = get_wifi_row_id (net);
-                    show_wifi_password_prompt (revealer, entry);
-                },
-                (revealer, entry, value) => {
-                    hide_wifi_password_prompt (revealer, entry, value);
-                }
+                this
             );
         }
 
@@ -446,33 +469,6 @@ namespace NetworkManagerRebuild.UI.Views {
                 nm,
                 wifi_switch
             );
-        }
-
-        private void show_wifi_password_prompt (Gtk.Revealer revealer, Gtk.Entry entry) {
-            var rev = active_wifi_password_revealer;
-            var ent = active_wifi_password_entry;
-            controller.show_wifi_password_prompt (
-                revealer,
-                entry
-            );
-            active_wifi_password_revealer = rev;
-            active_wifi_password_entry = ent;
-        }
-
-        private void hide_wifi_password_prompt (Gtk.Revealer revealer, Gtk.Entry entry, string? value) {
-            var rev = active_wifi_password_revealer;
-            var ent = active_wifi_password_entry;
-            controller.hide_wifi_password_prompt (
-                revealer,
-                entry,
-                value
-            );
-            active_wifi_password_revealer = rev;
-            active_wifi_password_entry = ent;
-
-            if (active_wifi_password_revealer == null) {
-                active_wifi_password_row_id = null;
-            }
         }
 
         public void hide_active_wifi_password_prompt () {

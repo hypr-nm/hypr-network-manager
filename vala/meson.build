@@ -51,6 +51,8 @@ executable(
     'src/ui/blank_window.vala',
     'src/ui/interfaces/main_window_ip_edit_page.vala',
     'src/ui/interfaces/main_window_network_details_page.vala',
+    'src/ui/interfaces/main_window_wifi_row_action_handler.vala',
+    'src/ui/interfaces/main_window_ethernet_row_action_handler.vala',
     'src/ui/controllers/main_window_page_callbacks.vala',
     'src/ui/controllers/main_window_abstract_details_edit_controller.vala',
     'src/ui/controllers/ethernet/main_window_ethernet_refresh_controller.vala',

@@ -160,39 +160,7 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public Gtk.ListBoxRow build_row (
-        WifiNetwork net,
-        bool is_connected_now,
-        bool is_connecting,
-        bool show_frequency,
-        bool show_band,
-        bool show_bssid,
-        string wifi_row_icon_name,
-        owned MainWindowWifiNetworkCallback on_open_details,
-        owned MainWindowWifiNetworkCallback on_forget_saved_network,
-        owned MainWindowWifiNetworkCallback on_disconnect,
-        owned MainWindowWifiNetworkPasswordCallback on_connect,
-        owned MainWindowWifiNetworkBoolCallback on_set_auto_connect,
-        owned MainWindowPasswordPromptShowCallback on_show_password_prompt,
-        owned MainWindowPasswordPromptHideCallback on_hide_password_prompt
-    ) {
-        return MainWindowWifiRowBuilder.build_row (
-            net,
-            is_connected_now,
-            is_connecting,
-            show_frequency,
-            show_band,
-            show_bssid,
-            wifi_row_icon_name,
-            (owned) on_open_details,
-            (owned) on_forget_saved_network,
-            (owned) on_disconnect,
-            (owned) on_connect,
-            (owned) on_set_auto_connect,
-            (owned) on_show_password_prompt,
-            (owned) on_hide_password_prompt
-        );
-    }
+
 
     public void refresh (
         NetworkManagerClient nm,
@@ -202,7 +170,7 @@ public class MainWindowWifiController : Object {
         Gtk.Image status_icon,
         string? active_wifi_password_row_id,
         bool has_active_wifi_password_prompt,
-        MainWindowWifiRowBuildCallback on_build_wifi_row
+        owned MainWindowWifiRowBuildCallback on_build_wifi_row
     ) {
         refresh_controller.refresh_wifi (
             nm,
@@ -212,7 +180,7 @@ public class MainWindowWifiController : Object {
             status_icon,
             active_wifi_password_row_id,
             has_active_wifi_password_prompt,
-            on_build_wifi_row
+            (owned) on_build_wifi_row
         );
     }
 

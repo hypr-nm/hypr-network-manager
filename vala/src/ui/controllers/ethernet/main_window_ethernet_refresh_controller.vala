@@ -54,7 +54,8 @@ public class MainWindowEthernetRefreshController : Object {
         Gtk.ListBox ethernet_listbox,
         MainWindowEthernetConnectionController connection_controller,
         MainWindowEthernetDetailsEditController details_edit_controller,
-        MainWindowEthernetDetailsPage ethernet_details_page
+        MainWindowEthernetDetailsPage ethernet_details_page,
+        IMainWindowEthernetRowActionHandler action_handler
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_refresh_request ();
@@ -96,8 +97,7 @@ public class MainWindowEthernetRefreshController : Object {
                         is_pending,
                         can_connect,
                         has_profile,
-                        (d) => { details_edit_controller.open_details (d, ethernet_stack, ethernet_details_page, connection_controller); },
-                        (d) => { connection_controller.trigger_toggle (d); }
+                        action_handler
                     ));
                 }
 

@@ -10,8 +10,7 @@ public class MainWindowEthernetRowBuilder {
         bool is_pending,
         bool can_connect,
         bool has_profile,
-        owned MainWindowEthernetDeviceCallback on_open_details,
-        owned MainWindowEthernetDeviceCallback on_trigger_toggle
+        IMainWindowEthernetRowActionHandler action_handler
     ) {
         var row = new Gtk.ListBoxRow ();
         row.add_css_class (MainWindowCssClasses.DEVICE_ROW);
@@ -55,7 +54,7 @@ public class MainWindowEthernetRowBuilder {
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
-            on_open_details (dev);
+            action_handler.open_details (dev);
         });
         content.append (details_btn);
 
@@ -85,7 +84,7 @@ public class MainWindowEthernetRowBuilder {
         action.add_css_class (dev.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.set_sensitive (can_toggle);
         action.clicked.connect (() => {
-            on_trigger_toggle (dev);
+            action_handler.trigger_toggle (dev);
         });
         content.append (action);
 
