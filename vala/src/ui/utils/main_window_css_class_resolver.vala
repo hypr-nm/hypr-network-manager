@@ -65,12 +65,12 @@ namespace MainWindowCssClassResolver {
     private Regex? block_comment_regex = null;
     private Regex? selector_header_regex = null;
 
-    public static void initialize (string base_css_path) {
+    public static void initialize (string base_css_path, bool force_reload = false) {
         if (base_css_path.strip () == "") {
             return;
         }
 
-        if (indexed_classes != null && indexed_base_css_path == base_css_path) {
+        if (!force_reload && indexed_classes != null && indexed_base_css_path == base_css_path) {
             return;
         }
 

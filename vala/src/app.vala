@@ -8,12 +8,19 @@ private extern void gtk_style_provider_add_for_display (
     uint priority
 );
 
+[CCode (cname = "gtk_style_context_remove_provider_for_display", cheader_filename = "gtk/gtk.h")]
+private extern void gtk_style_provider_remove_for_display (
+    Gdk.Display display,
+    Gtk.StyleProvider provider
+);
+
 public class NetworkManager : Gtk.Application {
     private AppConfig config;
     private MainWindow? window;
     private BlankWindow? dismiss_overlay;
     private bool is_daemon;
     private bool initial_activation_skipped = false;
+    private Gtk.CssProvider? current_css_provider = null;
 
     public NetworkManager (AppConfig config, bool daemon_mode) {
         Object (application_id: "yeab212.hypr-network-manager");
@@ -79,6 +86,12 @@ public class NetworkManager : Gtk.Application {
         if (display == null) {
             return false;
         }
+
+        if (current_css_provider != null) {
+            gtk_style_provider_remove_for_display (display, current_css_provider);
+        }
+        current_css_provider = provider;
+
         gtk_style_provider_add_for_display (display, provider, priority);
         log_info (
             "app",
@@ -88,14 +101,14 @@ public class NetworkManager : Gtk.Application {
         return true;
     }
 
-    private void load_theme_css () {
+    private void load_theme_css (bool force_reload = false) {
         string? css_path = resolve_base_css_path ();
         if (css_path == null) {
             debug_log ("load_theme_css: no stylesheet found in local/system/bundled paths; outcome=skipping");
             return;
         }
 
-        MainWindowCssClassResolver.initialize (css_path);
+        MainWindowCssClassResolver.initialize (css_path, force_reload);
 
         if (!load_css (css_path, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)) {
             log_warn (
@@ -168,6 +181,7 @@ public class NetworkManager : Gtk.Application {
             if (window.visible) {
                  request_close ();
             } else {
+                 load_theme_css (true);
                  window.prepare_for_presentation ();
                  window.present ();
             }
@@ -175,7 +189,7 @@ public class NetworkManager : Gtk.Application {
         }
 
         register_app_icon_resources ();
-        load_theme_css ();
+        load_theme_css (true);
 
         try {
             window = new MainWindow (
