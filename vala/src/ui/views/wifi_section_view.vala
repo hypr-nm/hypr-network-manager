@@ -109,21 +109,25 @@ namespace HyprNetworkManager.UI.Views {
 
         private void wire_details_page_signals () {
             details_page.back.connect (() => {
-                selected_wifi_network = null;
                 window_host.set_popup_text_input_mode (false);
                 stack.set_visible_child_name ("list");
             });
 
             details_page.forget.connect (() => {
-                if (selected_wifi_network == null) return;
+                if (selected_wifi_network == null) {
+                    window_host.debug_log ("ERROR: forget clicked but selected_wifi_network is NULL!");
+                    return;
+                }
                 forget_wifi_network (selected_wifi_network);
                 stack.set_visible_child_name ("list");
             });
 
             details_page.edit.connect (() => {
-                if (selected_wifi_network != null) {
-                    open_wifi_edit (selected_wifi_network);
+                if (selected_wifi_network == null) {
+                    window_host.debug_log ("ERROR: edit clicked but selected_wifi_network is NULL!");
+                    return;
                 }
+                open_wifi_edit (selected_wifi_network);
             });
         }
 

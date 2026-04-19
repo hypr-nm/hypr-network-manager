@@ -75,7 +75,6 @@ public class MainWindowWifiRefreshController : Object {
         wifi_refresh_in_flight = true;
         uint epoch = capture_ui_epoch ();
         host.debug_log ("Refreshing Wi-Fi list");
-        string current_view = wifi_stack.get_visible_child_name ();
 
         var request_cancellable = new Cancellable ();
         wifi_refresh_cancellable = request_cancellable;
@@ -209,9 +208,10 @@ public class MainWindowWifiRefreshController : Object {
                     row_provider
                 );
 
-                if (current_view == "details" || current_view == "edit" || current_view == "add" ||
-                    current_view == "saved" || current_view == "saved-edit") {
-                    wifi_stack.set_visible_child_name (current_view);
+                string current_actual_view = wifi_stack.get_visible_child_name ();
+                if (current_actual_view == "details" || current_actual_view == "edit" || current_actual_view == "add" ||
+                    current_actual_view == "saved" || current_actual_view == "saved-edit") {
+                    // Leave the stack on the current user-facing page
                 } else {
                     wifi_stack.set_visible_child_name (networks.length > 0 ? "list" : "empty");
                 }

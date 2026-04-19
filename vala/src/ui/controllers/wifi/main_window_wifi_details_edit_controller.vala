@@ -295,14 +295,15 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                     return;
                 }
 
+                if (close_after_apply) {
+                    populate_wifi_details (nm, net, details_page);
+                    wifi_stack.set_visible_child_name ("details");
+                    host.set_popup_text_input_mode (false);
+                }
+
                 if (!net.connected) {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
-                    }
-                    if (close_after_apply) {
-                        populate_wifi_details (nm, net, details_page);
-                        wifi_stack.set_visible_child_name ("details");
-                        host.set_popup_text_input_mode (false);
                     }
                     host.refresh_after_action (base_request.ipv4_method != "disabled");
                     return;
@@ -329,7 +330,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                     reconnect_after_disconnect_with_retry (
                         nm,
                         net,
-                        close_after_apply,
+                        false, // Already closed if needed
                         wifi_stack,
                         details_page,
                         epoch,

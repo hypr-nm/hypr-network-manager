@@ -124,6 +124,7 @@ public class MainWindowWifiController : Object {
         Gtk.Stack wifi_stack
     ) {
         if (!net.saved) {
+            host.debug_log ("ERROR: net.saved is false in open_edit!");
             return;
         }
 
