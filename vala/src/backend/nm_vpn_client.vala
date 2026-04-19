@@ -25,8 +25,23 @@ public class NmVpnClient : GLib.Object {
             || normalize_connection_type (conn.get_connection_type ()) == "wireguard";
     }
 
+    private static bool is_tun_tap_connection (NM.Connection conn) {
+        return conn.get_setting_tun () != null
+            || conn.get_setting_by_name (NM.SettingTun.SETTING_NAME) != null
+            || normalize_connection_type (conn.get_connection_type ()) == "tun";
+    }
+
+    private static bool is_ip_tunnel_connection (NM.Connection conn) {
+        return conn.get_setting_ip_tunnel () != null
+            || conn.get_setting_by_name (NM.SettingIPTunnel.SETTING_NAME) != null
+            || normalize_connection_type (conn.get_connection_type ()) == "ip-tunnel";
+    }
+
     private static bool is_supported_vpn_profile (NM.Connection conn) {
-        return conn.get_setting_vpn () != null || is_wireguard_connection (conn);
+        return conn.get_setting_vpn () != null
+            || is_wireguard_connection (conn)
+            || is_tun_tap_connection (conn)
+            || is_ip_tunnel_connection (conn);
     }
 
     private static bool is_supported_vpn_active_connection (NM.ActiveConnection ac) {
@@ -39,7 +54,10 @@ public class NmVpnClient : GLib.Object {
             return true;
         }
 
-        return normalize_connection_type (ac.get_connection_type ()) == "wireguard";
+        string active_type = normalize_connection_type (ac.get_connection_type ());
+        return active_type == "wireguard"
+            || active_type == "tun"
+            || active_type == "ip-tunnel";
     }
 
     private static bool matches_connection_identity (
@@ -151,9 +169,59 @@ public class NmVpnClient : GLib.Object {
         return first ? "VPN" : builder.str;
     }
 
+    private static string describe_tun_mode (NM.SettingTunMode mode) {
+        switch (mode) {
+        case NM.SettingTunMode.TUN:
+            return "TUN";
+        case NM.SettingTunMode.TAP:
+            return "TAP";
+        default:
+            return "TUN/TAP";
+        }
+    }
+
+    private static string describe_ip_tunnel_mode (NM.IPTunnelMode mode) {
+        switch (mode) {
+        case NM.IPTunnelMode.IPIP:
+            return "IPIP";
+        case NM.IPTunnelMode.GRE:
+            return "GRE";
+        case NM.IPTunnelMode.SIT:
+            return "SIT";
+        case NM.IPTunnelMode.ISATAP:
+            return "ISATAP";
+        case NM.IPTunnelMode.VTI:
+            return "VTI";
+        case NM.IPTunnelMode.IP6IP6:
+            return "IP6IP6";
+        case NM.IPTunnelMode.IPIP6:
+            return "IPIP6";
+        case NM.IPTunnelMode.IP6GRE:
+            return "IP6GRE";
+        case NM.IPTunnelMode.VTI6:
+            return "VTI6";
+        case NM.IPTunnelMode.GRETAP:
+            return "GRETAP";
+        case NM.IPTunnelMode.IP6GRETAP:
+            return "IP6GRETAP";
+        default:
+            return "IP Tunnel";
+        }
+    }
+
     private static string describe_vpn_profile (NM.Connection conn) {
         if (is_wireguard_connection (conn)) {
             return "WireGuard";
+        }
+
+        var setting_tun = conn.get_setting_tun ();
+        if (setting_tun != null) {
+            return describe_tun_mode (setting_tun.get_mode ());
+        }
+
+        var setting_ip_tunnel = conn.get_setting_ip_tunnel ();
+        if (setting_ip_tunnel != null) {
+            return describe_ip_tunnel_mode (setting_ip_tunnel.get_mode ());
         }
 
         var setting_vpn = conn.get_setting_vpn ();
@@ -173,6 +241,14 @@ public class NmVpnClient : GLib.Object {
         var conn = ac.get_connection ();
         if (conn != null) {
             return describe_vpn_profile (conn);
+        }
+
+        string active_type = normalize_connection_type (ac.get_connection_type ());
+        if (active_type == "tun") {
+            return "TUN/TAP";
+        }
+        if (active_type == "ip-tunnel") {
+            return "IP Tunnel";
         }
 
         return humanize_plugin_name (ac.get_connection_type ());
