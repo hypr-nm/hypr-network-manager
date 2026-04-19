@@ -2,7 +2,31 @@
 
 A themeable network manager applet for Hyprland.
 
----
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="./screenshots/wifi.jpg" width="500"><br>
+      Wi-Fi
+    </td>
+    <td align="center">
+      <img src="./screenshots/ethernet.jpg" width="500"><br>
+      Ethernet
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./screenshots/details.jpg" width="500"><br>
+      Details
+    </td>
+    <td align="center">
+      <img src="./screenshots/edit.jpg" width="500"><br>
+      Edit
+    </td>
+  </tr>
+</table>
+
 
 ## Documentation
 
