@@ -105,6 +105,11 @@ public class MainWindowWifiRefreshController : Object {
                 }
 
                 var current_network_keys = new HashTable<string, bool> (str_hash, str_equal);
+                var old_active = new HashTable<string, bool> (str_hash, str_equal);
+                foreach (var k in state_context.active_wifi_connections.get_keys ()) {
+                    old_active.insert (k, true);
+                }
+
                 state_context.active_wifi_connections.remove_all ();
                 active_wifi_by_device.remove_all ();
 
@@ -122,6 +127,10 @@ public class MainWindowWifiRefreshController : Object {
                     }
 
                     state_context.active_wifi_connections.insert (net.network_key, true);
+                    if (!old_active.contains (net.network_key)) {
+                        state_context.clear_all_wifi_errors ();
+                    }
+
                     if (!active_wifi_by_device.contains (net.device_path)) {
                         active_wifi_by_device.insert (net.device_path, net);
                     }
@@ -151,7 +160,7 @@ public class MainWindowWifiRefreshController : Object {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
                         if (was_pending) {
-                            state_context.clear_wifi_error (net_key);
+                            state_context.clear_all_wifi_errors ();
                         }
                         continue;
                     }
