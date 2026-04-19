@@ -84,6 +84,8 @@ public class MainWindowProfileAdapter : Object {
             return false;
         }
 
+        host.show_edit_page_error ("");
+
         WifiSavedProfileUpdateRequest profile_request;
         WifiNetworkUpdateRequest network_request;
         string error_message;

@@ -514,6 +514,10 @@ namespace HyprNetworkManager.UI.Views {
 
         public void show_add_error (string message) {
             if (add_error_label != null && add_error_revealer != null) {
+                if (message == null || message == "") {
+                    add_error_revealer.set_reveal_child (false);
+                    return;
+                }
                 add_error_label.set_text (message);
                 add_error_revealer.set_reveal_child (true);
             }

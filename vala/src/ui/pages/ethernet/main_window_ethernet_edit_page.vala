@@ -45,6 +45,10 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
     }
 
     public void show_error (string message) {
+        if (message == null || message == "") {
+            this.error_revealer.set_reveal_child (false);
+            return;
+        }
         this.error_label.set_text (message);
         this.error_revealer.set_reveal_child (true);
     }

@@ -314,6 +314,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     public void show_error (string message) {
+        if (message == null || message == "") {
+            global_error_revealer.set_reveal_child (false);
+            return;
+        }
         global_error_label.set_text (message);
         global_error_revealer.set_reveal_child (true);
 

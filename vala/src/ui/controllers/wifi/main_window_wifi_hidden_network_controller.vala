@@ -113,6 +113,8 @@ public class MainWindowWifiHiddenNetworkController : Object {
         );
         string password = wifi_add_password_entry.get_text ().strip ();
 
+        host.show_add_page_error ("");
+
         if (ssid == "") {
             host.show_add_page_error ("SSID is required.");
             return;

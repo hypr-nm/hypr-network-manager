@@ -252,6 +252,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         string password = page.get_password ();
 
         state_context.clear_wifi_error (net_key);
+        host.show_edit_page_error ("");
 
         string? error_message = null;
         var base_request = page.build_ip_update_request (out error_message);

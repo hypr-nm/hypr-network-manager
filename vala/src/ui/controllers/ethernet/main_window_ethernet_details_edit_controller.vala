@@ -112,6 +112,8 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
         uint epoch = capture_ui_epoch ();
         NetworkDevice dev = this.selected_device;
 
+        host.show_edit_page_error ("");
+
         string? error_message = null;
         var request = ethernet_edit_page.build_ip_update_request (out error_message);
         if (request == null) {
