@@ -92,7 +92,7 @@ public class MainWindowProfileAdapter : Object {
             out network_request,
             out error_message
         )) {
-            host.show_error (error_message);
+            host.show_edit_page_error (error_message);
             return false;
         }
 

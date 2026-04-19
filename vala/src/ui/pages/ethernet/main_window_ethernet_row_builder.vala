@@ -10,6 +10,7 @@ public class MainWindowEthernetRowBuilder {
         bool is_pending,
         bool can_connect,
         bool has_profile,
+        string? error_message,
         IMainWindowEthernetRowActionHandler action_handler
     ) {
         var row = new Gtk.ListBoxRow ();
@@ -34,6 +35,15 @@ public class MainWindowEthernetRowBuilder {
         name_lbl.set_xalign (0.0f);
         name_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
         info.append (name_lbl);
+
+        if (error_message != null) {
+            var err = new Gtk.Label (error_message);
+            err.set_xalign (0.0f);
+            err.set_wrap (true);
+            err.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+            err.add_css_class (MainWindowCssClasses.ROW_ERROR_LABEL);
+            info.append (err);
+        }
 
         string subtitle = dev.state_label;
         if (dev.connection != "") {

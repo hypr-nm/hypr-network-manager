@@ -32,6 +32,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private NetworkStateContext state_context;
     private HyprNetworkManager.UI.Views.AppContentNavigationManager nav_manager;
 
+    private Gtk.Label global_error_label;
+    private Gtk.Revealer global_error_revealer;
+
     public MainWindow (
         Gtk.Application app,
         AppConfig config
@@ -251,6 +254,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void reset_ui_state () {
+        if (global_error_revealer != null) {
+            global_error_revealer.set_reveal_child (false);
+        }
         if (content_stack != null) {
             content_stack.set_visible_child_name ("main");
         }
@@ -308,11 +314,47 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     public void show_error (string message) {
-        var dialog = new Gtk.AlertDialog ("Network Error");
-        dialog.set_message ("Network Error");
-        dialog.set_detail (message);
-        dialog.set_modal (true);
-        dialog.show (this);
+        global_error_label.set_text (message);
+        global_error_revealer.set_reveal_child (true);
+
+        // Auto-hide after 5 seconds
+        Timeout.add (5000, () => {
+            if (global_error_label.get_text () == message) {
+                global_error_revealer.set_reveal_child (false);
+            }
+            return false;
+        });
+    }
+
+    public void show_wifi_error (string net_key, string message) {
+        state_context.mark_wifi_error (net_key, message);
+        refresh_all ();
+    }
+
+    public void show_ethernet_error (string iface_name, string message) {
+        state_context.mark_ethernet_error (iface_name, message);
+        refresh_all ();
+    }
+
+    public void show_vpn_error (string vpn_name, string message) {
+        state_context.mark_vpn_error (vpn_name, message);
+        refresh_all ();
+    }
+
+    public void show_edit_page_error (string message) {
+        if (wifi_section != null && wifi_section.stack.get_visible_child_name () == "edit") {
+            wifi_section.show_edit_error (message);
+        } else if (ethernet_section != null && ethernet_section.stack.get_visible_child_name () == "edit") {
+            ethernet_section.show_edit_error (message);
+        } else if (profiles_section != null && profiles_section.stack.get_visible_child_name () == "edit") {
+            profiles_section.show_edit_error (message);
+        }
+    }
+
+    public void show_add_page_error (string message) {
+        if (wifi_section != null && wifi_section.stack.get_visible_child_name () == "add") {
+            wifi_section.show_add_error (message);
+        }
     }
 
     private Gtk.Box build_root_container () {
@@ -458,6 +500,17 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private void build_ui () {
         var root = build_root_container ();
         build_status_chrome (root);
+
+        global_error_label = new Gtk.Label ("");
+        global_error_label.set_xalign (0.0f);
+        global_error_label.set_wrap (true);
+        global_error_label.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+        global_error_label.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
+
+        global_error_revealer = new Gtk.Revealer ();
+        global_error_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+        global_error_revealer.set_child (global_error_label);
+        root.append (global_error_revealer);
 
         content_stack = new Gtk.Stack ();
         notebook = new Gtk.Notebook ();

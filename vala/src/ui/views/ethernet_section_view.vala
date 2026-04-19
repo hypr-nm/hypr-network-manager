@@ -10,12 +10,13 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.ListBox listbox { get; private set; }
 
         private MainWindowEthernetController controller;
+        private MainWindowEthernetEditPage ethernet_edit_page;
 
         public EthernetSectionView (MainWindowEthernetController controller) {
             this.controller = controller;
 
             var ethernet_details_page = new MainWindowEthernetDetailsPage ();
-            var ethernet_edit_page = new MainWindowEthernetEditPage ();
+            this.ethernet_edit_page = new MainWindowEthernetEditPage ();
 
             ethernet_details_page.back.connect (() => {
                 controller.on_details_back_requested ();
@@ -27,10 +28,10 @@ namespace HyprNetworkManager.UI.Views {
                 controller.on_details_edit_requested ();
             });
 
-            ethernet_edit_page.back.connect (() => {
+            this.ethernet_edit_page.back.connect (() => {
                 controller.on_edit_back_requested ();
             });
-            ethernet_edit_page.apply.connect (() => {
+            this.ethernet_edit_page.apply.connect (() => {
                 controller.on_edit_apply_requested ();
             });
 
@@ -40,7 +41,7 @@ namespace HyprNetworkManager.UI.Views {
                 out ethernet_listbox,
                 out ethernet_stack_local,
                 ethernet_details_page,
-                ethernet_edit_page,
+                this.ethernet_edit_page,
                 controller
             );
 
@@ -53,7 +54,7 @@ namespace HyprNetworkManager.UI.Views {
                 ethernet_listbox,
                 ethernet_stack_local,
                 ethernet_details_page,
-                ethernet_edit_page
+                this.ethernet_edit_page
             );
 
             controller.configure_page (ethernet_view_context);
@@ -62,6 +63,12 @@ namespace HyprNetworkManager.UI.Views {
         public void reset_view_state () {
             if (stack != null) {
                 stack.set_visible_child_name ("list");
+            }
+        }
+
+        public void show_edit_error (string message) {
+            if (ethernet_edit_page != null) {
+                ethernet_edit_page.show_error (message);
             }
         }
     }

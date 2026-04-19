@@ -55,6 +55,7 @@ namespace MainWindowWifiRowBuilder {
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting,
+        string? error_message,
         bool show_frequency,
         bool show_band,
         bool show_bssid
@@ -81,6 +82,15 @@ namespace MainWindowWifiRowBuilder {
         }
 
         info.append (ssid_row);
+
+        if (error_message != null) {
+            var err = new Gtk.Label (error_message);
+            err.set_xalign (0.0f);
+            err.set_wrap (true);
+            err.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+            err.add_css_class (MainWindowCssClasses.ROW_ERROR_LABEL);
+            info.append (err);
+        }
 
         bool is_saved_only = net.saved && net.ap_path.has_prefix ("saved:");
         string subtitle;
@@ -390,6 +400,7 @@ namespace MainWindowWifiRowBuilder {
         WifiNetwork net,
         bool is_connected_now,
         bool is_connecting,
+        string? error_message,
         bool show_frequency,
         bool show_band,
         bool show_bssid,
@@ -425,6 +436,7 @@ namespace MainWindowWifiRowBuilder {
             net,
             is_connected_now,
             is_connecting,
+            error_message,
             show_frequency,
             show_band,
             show_bssid

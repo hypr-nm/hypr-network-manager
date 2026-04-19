@@ -260,11 +260,17 @@ namespace HyprNetworkManager.UI.Views {
             });
         }
 
-        private bool apply_saved_wifi_edit () {
+        public bool apply_saved_wifi_edit () {
             if (wifi_saved_flow == null) {
                 return false;
             }
             return wifi_saved_flow.apply_saved_edit ();
         }
-    }
-}
+
+        public void show_edit_error (string message) {
+            if (wifi_saved_edit_page != null) {
+                wifi_saved_edit_page.show_error (message);
+            }
+        }
+        }
+        }

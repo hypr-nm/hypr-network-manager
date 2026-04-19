@@ -4,6 +4,7 @@ public class MainWindowEthernetConnectionController : Object {
     private uint[] timeout_source_ids = {};
     private NetworkManagerClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     public signal void refresh_requested ();
 
@@ -11,9 +12,11 @@ public class MainWindowEthernetConnectionController : Object {
     public HashTable<string, bool> pending_target_connected;
 
     public MainWindowEthernetConnectionController (NetworkManagerClient nm,
-        HyprNetworkManager.UI.Interfaces.IWindowHost host) {
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.nm = nm;
         this.host = host;
+        this.state_context = state_context;
         pending_action = new HashTable<string, bool> (str_hash, str_equal);
         pending_target_connected = new HashTable<string, bool> (str_hash, str_equal);
     }
@@ -128,6 +131,8 @@ public class MainWindowEthernetConnectionController : Object {
 
         uint epoch = capture_ui_epoch ();
         bool target_connected = !dev.is_connected;
+        state_context.clear_ethernet_error (dev.name);
+        
         if (dev.is_connected) {
             nm.disconnect_device.begin (dev.name, null, (obj, res) => {
                 try {
@@ -141,7 +146,7 @@ public class MainWindowEthernetConnectionController : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    host.show_error ("Ethernet disconnect failed: " + e.message);
+                    host.show_ethernet_error (dev.name, "Ethernet disconnect failed: " + e.message);
                 }
             });
             return;
@@ -159,7 +164,7 @@ public class MainWindowEthernetConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                host.show_error ("Ethernet connect failed: " + e.message);
+                host.show_ethernet_error (dev.name, "Ethernet connect failed: " + e.message);
             }
         });
     }

@@ -162,6 +162,16 @@ public class MainWindowVpnPageBuilder : Object {
         name_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
         info.append (name_lbl);
 
+        string? error_message = state_context.vpn_errors.lookup (conn.name);
+        if (error_message != null) {
+            var err = new Gtk.Label (error_message);
+            err.set_xalign (0.0f);
+            err.set_wrap (true);
+            err.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+            err.add_css_class (MainWindowCssClasses.ROW_ERROR_LABEL);
+            info.append (err);
+        }
+
         var sub = new Gtk.Label (conn.vpn_type);
         sub.set_xalign (0.0f);
         sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
@@ -177,6 +187,8 @@ public class MainWindowVpnPageBuilder : Object {
             conn.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.clicked.connect (() => {
             uint epoch = capture_ui_epoch ();
+            state_context.clear_vpn_error (conn.name);
+
             if (conn.is_connected) {
                 nm.disconnect_vpn.begin (conn.name, null, (obj, res) => {
                     try {
@@ -185,7 +197,7 @@ public class MainWindowVpnPageBuilder : Object {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        host.show_error ("VPN disconnect failed: " + e.message);
+                        host.show_vpn_error (conn.name, "VPN disconnect failed: " + e.message);
                     }
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
@@ -202,7 +214,7 @@ public class MainWindowVpnPageBuilder : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    host.show_error ("VPN connect failed: " + e.message);
+                    host.show_vpn_error (conn.name, "VPN connect failed: " + e.message);
                 }
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
@@ -239,7 +251,7 @@ public class MainWindowVpnPageBuilder : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                host.show_error ("VPN refresh failed: " + e.message);
+                host.show_vpn_error ("all", "VPN refresh failed: " + e.message);
             }
         });
     }

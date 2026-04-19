@@ -50,6 +50,8 @@ namespace MainWindowCssClasses {
     public const string ROW_ACTIONS = "nm-row-actions";
     public const string WIFI_ROW_ACTIONS = "nm-wifi-row-actions";
     public const string ROW_INFO = "nm-row-info";
+    public const string ERROR_LABEL = "nm-error-label";
+    public const string ROW_ERROR_LABEL = "nm-row-error-label";
     public const string ROW_ROOT = "nm-row-root";
     public const string ROW_EXPAND_ICON = "nm-row-expand-icon";
     public const string ROW_ACTION_BUTTONS = "nm-row-action-buttons";

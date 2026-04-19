@@ -104,9 +104,12 @@ public class MainWindowWifiRefreshController : Object {
                     wifi_device_states.insert (dev.device_path, dev.state);
                 }
 
+                var current_network_keys = new HashTable<string, bool> (str_hash, str_equal);
                 state_context.active_wifi_connections.remove_all ();
                 active_wifi_by_device.remove_all ();
+
                 foreach (var net in networks) {
+                    current_network_keys.insert (net.network_key, true);
                     if (!net.connected) {
                         continue;
                     }
@@ -127,6 +130,16 @@ public class MainWindowWifiRefreshController : Object {
                     }
                 }
 
+                var keys_to_remove = new List<string> ();
+                foreach (var err_key in state_context.wifi_errors.get_keys ()) {
+                    if (!current_network_keys.contains (err_key)) {
+                        keys_to_remove.append (err_key);
+                    }
+                }
+                foreach (var stale_key in keys_to_remove) {
+                    state_context.clear_wifi_error (stale_key);
+                }
+
                 foreach (var net in networks) {
                     string net_key = net.network_key;
                     if (!state_context.pending_wifi_connect.contains (net_key)) {
@@ -134,8 +147,12 @@ public class MainWindowWifiRefreshController : Object {
                     }
 
                     if (state_context.active_wifi_connections.contains (net_key)) {
+                        bool was_pending = state_context.pending_wifi_connect.contains (net_key);
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
+                        if (was_pending) {
+                            state_context.clear_wifi_error (net_key);
+                        }
                         continue;
                     }
 
@@ -163,6 +180,7 @@ public class MainWindowWifiRefreshController : Object {
                     if (activated_on_other_network || matched_device.state == NM_DEVICE_STATE_FAILED) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
+                        state_context.mark_wifi_error (net_key, "Connection failed or interrupted.");
                         continue;
                     }
 
@@ -170,6 +188,7 @@ public class MainWindowWifiRefreshController : Object {
                         && matched_device.state <= NM_DEVICE_STATE_DISCONNECTED) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
+                        state_context.mark_wifi_error (net_key, "Connection failed.");
                     }
                 }
 

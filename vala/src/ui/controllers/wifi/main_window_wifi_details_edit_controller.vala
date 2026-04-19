@@ -131,7 +131,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                         }
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
-                        host.show_error ("Reconnect after edit failed: " + e.message);
+                        host.show_edit_page_error ("Reconnect after edit failed: " + e.message);
                         host.refresh_after_action (false);
                     }
                 });
@@ -141,7 +141,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             if (waited_ms >= WIFI_RECONNECT_MAX_WAIT_MS) {
                 state_context.pending_wifi_connect.remove (net_key);
                 state_context.pending_wifi_seen_connecting.remove (net_key);
-                host.show_error (
+                host.show_edit_page_error (
                     "Reconnect after edit timed out while waiting for disconnect to complete."
                 );
                 host.refresh_after_action (false);
@@ -251,11 +251,13 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         string net_key = net.network_key;
         string password = page.get_password ();
 
+        state_context.clear_wifi_error (net_key);
+
         string? error_message = null;
         var base_request = page.build_ip_update_request (out error_message);
         if (base_request == null) {
             if (error_message != null) {
-                host.show_error (error_message);
+                host.show_edit_page_error (error_message);
             }
             return false;
         }
@@ -288,7 +290,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                     if (is_cancelled_error (e)) {
                         return;
                     }
-                    host.show_error ("Apply failed: " + e.message);
+                    host.show_edit_page_error ("Apply failed: " + e.message);
                     return;
                 }
 
@@ -315,11 +317,12 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                         if (is_cancelled_error (e)) {
                             return;
                         }
-                        host.show_error ("Disconnect before reconnect failed: " + e.message);
+                        host.show_edit_page_error ("Disconnect before reconnect failed: " + e.message);
                         return;
                     }
 
-                    state_context.pending_wifi_connect.insert (net_key, true);
+                    state_context.clear_all_wifi_errors ();
+                    state_context.mark_wifi_connecting (net_key);
                     state_context.pending_wifi_seen_connecting.remove (net_key);
 
                     reconnect_after_disconnect_with_retry (

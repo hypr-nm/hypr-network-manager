@@ -25,6 +25,8 @@ namespace HyprNetworkManager.UI.Views {
         private Gtk.Entry add_ssid_entry;
         private Gtk.DropDown add_security_dropdown;
         private Gtk.Entry add_password_entry;
+        private Gtk.Label add_error_label;
+        private Gtk.Revealer add_error_revealer;
 
         public Gtk.Revealer? active_wifi_password_revealer { get; private set; }
         public Gtk.Entry? active_wifi_password_entry { get; private set; }
@@ -170,6 +172,16 @@ namespace HyprNetworkManager.UI.Views {
             title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
             header.append (title);
             page.append (header);
+
+            this.add_error_label = new Gtk.Label ("");
+            this.add_error_label.set_xalign (0.0f);
+            this.add_error_label.set_wrap (true);
+            this.add_error_label.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+
+            this.add_error_revealer = new Gtk.Revealer ();
+            this.add_error_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+            this.add_error_revealer.set_child (this.add_error_label);
+            page.append (this.add_error_revealer);
 
             var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
             MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM,
@@ -411,11 +423,13 @@ namespace HyprNetworkManager.UI.Views {
             string net_key = net.network_key;
             bool is_connected_now = state_context.active_wifi_connections.contains (net_key);
             bool is_connecting = state_context.pending_wifi_connect.contains (net_key);
+            string? error_message = state_context.wifi_errors.lookup (net_key);
 
             return MainWindowWifiRowBuilder.build_row (
                 net,
                 is_connected_now,
                 is_connecting,
+                error_message,
                 config_context.show_frequency,
                 config_context.show_band,
                 config_context.show_bssid,
@@ -489,6 +503,19 @@ namespace HyprNetworkManager.UI.Views {
             active_wifi_password_revealer = rev;
             active_wifi_password_entry = ent;
             active_wifi_password_row_id = null;
+        }
+
+        public void show_edit_error (string message) {
+            if (edit_page != null) {
+                edit_page.show_error (message);
+            }
+        }
+
+        public void show_add_error (string message) {
+            if (add_error_label != null && add_error_revealer != null) {
+                add_error_label.set_text (message);
+                add_error_revealer.set_reveal_child (true);
+            }
         }
     }
 }

@@ -93,8 +93,10 @@ public class MainWindowWifiConnectionController : Object {
         bool can_fallback_reconnect = fallback_network != null
             && fallback_network.network_key != net_key;
 
+        state_context.clear_all_wifi_errors ();
+
         if (!state_context.active_wifi_connections.contains (net_key)) {
-            state_context.pending_wifi_connect.insert (net_key, true);
+            state_context.mark_wifi_connecting (net_key);
             state_context.pending_wifi_seen_connecting.remove (net_key);
         }
 
@@ -136,6 +138,7 @@ public class MainWindowWifiConnectionController : Object {
         nm.connect_wifi.begin (connect_target, password, null, (obj, res) => {
             try {
                 nm.connect_wifi.end (res);
+                state_context.clear_all_wifi_errors ();
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
@@ -161,6 +164,7 @@ public class MainWindowWifiConnectionController : Object {
                     if (state_context.pending_wifi_connect.contains (pending_ssid)) {
                         state_context.pending_wifi_connect.remove (pending_ssid);
                         state_context.pending_wifi_seen_connecting.remove (pending_ssid);
+                        state_context.mark_wifi_error (pending_ssid, "Connection timed out.");
                         host.refresh_all ();
                     }
                     return false;
@@ -176,12 +180,14 @@ public class MainWindowWifiConnectionController : Object {
 
                 if (can_fallback_reconnect) {
                     string fallback_key = fallback_network.network_key;
-                    state_context.pending_wifi_connect.insert (fallback_key, true);
+                    host.show_wifi_error (net_key, "Connect failed: " + connect_error_message);
+                    state_context.mark_wifi_connecting (fallback_key);
                     state_context.pending_wifi_seen_connecting.remove (fallback_key);
 
                     nm.connect_wifi.begin (fallback_network, null, null, (obj2, res2) => {
                         try {
                             nm.connect_wifi.end (res2);
+                            state_context.clear_all_wifi_errors ();
                             if (!is_ui_epoch_valid (epoch)) {
                                 return;
                             }
@@ -192,7 +198,8 @@ public class MainWindowWifiConnectionController : Object {
                             }
                             state_context.pending_wifi_connect.remove (fallback_key);
                             state_context.pending_wifi_seen_connecting.remove (fallback_key);
-                            host.show_error (
+                            host.show_wifi_error (
+                                fallback_key,
                                 "Connect failed: %s. Reconnect to previous network failed: %s"
                                     .printf (connect_error_message, fallback_error.message)
                             );
@@ -202,7 +209,7 @@ public class MainWindowWifiConnectionController : Object {
                     return;
                 }
 
-                host.show_error ("Connect failed: " + connect_error_message);
+                host.show_wifi_error (net_key, "Connect failed: " + connect_error_message);
                 host.refresh_all ();
             }
         });
@@ -216,6 +223,8 @@ public class MainWindowWifiConnectionController : Object {
         string profile_uuid = net.saved_connection_uuid.strip ();
         string network_key = net.network_key;
 
+        state_context.clear_wifi_error (network_key);
+
         nm.forget_network.begin (profile_uuid, network_key, null, (obj, res) => {
             try {
                 nm.forget_network.end (res);
@@ -227,22 +236,23 @@ public class MainWindowWifiConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_error ("Forget failed: " + e.message);
+                host.show_wifi_error (network_key, "Forget failed: " + e.message);
             }
-        });
-    }
+            });
+            }
 
-    public void disconnect_wifi_network (
-        NetworkManagerClient nm,
-        WifiNetwork net
-    ) {
-        uint epoch = capture_ui_epoch ();
-        string wifi_key = net.network_key;
-        state_context.pending_wifi_connect.remove (wifi_key);
-        state_context.pending_wifi_seen_connecting.remove (wifi_key);
+            public void disconnect_wifi_network (
+            NetworkManagerClient nm,
+            WifiNetwork net
+            ) {
+            uint epoch = capture_ui_epoch ();
+            string wifi_key = net.network_key;
 
-        nm.disconnect_wifi.begin (net, null, (obj, res) => {
-            try {
+            state_context.pending_wifi_connect.remove (wifi_key);
+            state_context.pending_wifi_seen_connecting.remove (wifi_key);
+            state_context.clear_wifi_error (wifi_key);
+
+            nm.disconnect_wifi.begin (net, null, (obj, res) => {            try {
                 nm.disconnect_wifi.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
@@ -252,20 +262,22 @@ public class MainWindowWifiConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_error ("Disconnect failed: " + e.message);
+                host.show_wifi_error (wifi_key, "Disconnect failed: " + e.message);
                 refresh_after_action (nm, false, epoch);
             }
-        });
-    }
+            });
+            }
 
-    public void set_wifi_network_autoconnect (
-        NetworkManagerClient nm,
-        WifiNetwork net,
-        bool enabled
-    ) {
-        uint epoch = capture_ui_epoch ();
-        nm.set_wifi_network_autoconnect.begin (net, enabled, 10, null, (obj, res) => {
-            try {
+            public void set_wifi_network_autoconnect (
+            NetworkManagerClient nm,
+            WifiNetwork net,
+            bool enabled
+            ) {
+            uint epoch = capture_ui_epoch ();
+            string wifi_key = net.network_key;
+            state_context.clear_wifi_error (wifi_key);
+
+            nm.set_wifi_network_autoconnect.begin (net, enabled, 10, null, (obj, res) => {            try {
                 nm.set_wifi_network_autoconnect.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
@@ -275,7 +287,7 @@ public class MainWindowWifiConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_error ("Could not update auto-connect: " + e.message);
+                host.show_wifi_error (wifi_key, "Could not update auto-connect: " + e.message);
                 host.refresh_all ();
             }
         });

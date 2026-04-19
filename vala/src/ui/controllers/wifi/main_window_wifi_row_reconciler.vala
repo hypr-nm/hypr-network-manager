@@ -25,13 +25,15 @@ public class MainWindowWifiRowReconciler : Object {
     private string build_wifi_row_signature (
         WifiNetwork net,
         bool is_connected_now,
-        bool is_connecting
+        bool is_connecting,
+        string? error_message
     ) {
         int connected_flag = is_connected_now ? 1 : 0;
         int connecting_flag = is_connecting ? 1 : 0;
         int secured_flag = net.is_secured ? 1 : 0;
         int saved_flag = net.saved ? 1 : 0;
-        return "%s|%s|%s|%u|%d|%d|%d|%d|%s|%u|%u|%u|%u|%u|%u|%u|%s|%s".printf (
+        string safe_error = error_message != null ? error_message : "";
+        return "%s|%s|%s|%u|%d|%d|%d|%d|%s|%u|%u|%u|%u|%u|%u|%u|%s|%s|%s".printf (
             net.ssid,
             net.device_path,
             net.ap_path,
@@ -49,7 +51,8 @@ public class MainWindowWifiRowReconciler : Object {
             net.rsn_flags,
             net.connected ? 1u : 0u,
             net.signal_label,
-            net.signal_icon_name
+            net.signal_icon_name,
+            safe_error
         );
     }
 
@@ -143,12 +146,14 @@ public class MainWindowWifiRowReconciler : Object {
             string net_key = net.network_key;
             bool is_connected_now = false;
             bool is_connecting = false;
+            string? error_message = null;
 
             if (state_context != null) {
                 is_connected_now = state_context.active_wifi_connections.contains (net_key);
                 is_connecting = state_context.pending_wifi_connect.contains (net_key);
+                error_message = state_context.wifi_errors.lookup (net_key);
             }
-            string new_signature = build_wifi_row_signature (net, is_connected_now, is_connecting);
+            string new_signature = build_wifi_row_signature (net, is_connected_now, is_connecting, error_message);
 
             var row = visible_rows_by_id.lookup (row_id);
             string? existing_signature = wifi_row_signatures.lookup (row_id);

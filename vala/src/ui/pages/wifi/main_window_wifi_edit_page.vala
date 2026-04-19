@@ -16,11 +16,15 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Switch ipv6_dns_auto_switch { get; set; }
     public Gtk.Entry ipv6_dns_entry { get; set; }
 
+    private Gtk.Label error_label;
+    private Gtk.Revealer error_revealer;
+
     public signal void back ();
     public signal void apply ();
     public signal void ok ();
 
     public void setup_edit_form (WifiNetwork net) {
+        this.error_revealer.set_reveal_child (false);
         this.edit_title.set_text ("Edit: %s".printf (net.ssid));
         this.password_entry.set_text ("");
         this.password_entry.set_visibility (false);
@@ -41,6 +45,11 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.ipv6_dns_auto_switch.set_active (true);
         this.ipv6_dns_entry.set_text ("");
         this.sync_edit_gateway_dns_sensitivity ();
+    }
+
+    public void show_error (string message) {
+        this.error_label.set_text (message);
+        this.error_revealer.set_reveal_child (true);
     }
 
     public string get_password () {
@@ -77,6 +86,16 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.edit_title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.append (this.edit_title);
         this.append (header);
+
+        this.error_label = new Gtk.Label ("");
+        this.error_label.set_xalign (0.0f);
+        this.error_label.set_wrap (true);
+        this.error_label.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+
+        this.error_revealer = new Gtk.Revealer ();
+        this.error_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+        this.error_revealer.set_child (this.error_label);
+        this.append (this.error_revealer);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         MainWindowCssClassResolver.add_best_class (

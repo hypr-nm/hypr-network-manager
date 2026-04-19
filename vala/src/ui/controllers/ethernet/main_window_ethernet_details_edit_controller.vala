@@ -4,11 +4,14 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
     public NetworkDevice? selected_device { get; set; default = null; }
 
     private NetworkManagerClient nm;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     public MainWindowEthernetDetailsEditController (NetworkManagerClient nm,
-        HyprNetworkManager.UI.Interfaces.IWindowHost host) {
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         base (host);
         this.nm = nm;
+        this.state_context = state_context;
     }
 
     public void populate_details (
@@ -113,10 +116,12 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
         var request = ethernet_edit_page.build_ip_update_request (out error_message);
         if (request == null) {
             if (error_message != null) {
-                host.show_error (error_message);
+                host.show_edit_page_error (error_message);
             }
             return;
         }
+
+        state_context.clear_ethernet_error (dev.name);
 
         nm.update_ethernet_device_settings.begin (dev, request, null, (obj, res) => {
                 try {
@@ -125,7 +130,7 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    host.show_error ("Apply failed: " + e.message);
+                    host.show_edit_page_error ("Apply failed: " + e.message);
                     return;
                 }
 
@@ -152,7 +157,7 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        host.show_error ("Disconnect before reconnect failed: " + e.message);
+                        host.show_edit_page_error ("Disconnect before reconnect failed: " + e.message);
                         return;
                     }
 
@@ -171,7 +176,7 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
                         }
                         connection_controller.track_pending_action (dev, true, epoch);
                         if (!reconnect_ok) {
-                            host.show_error ("Reconnect after edit failed: " + reconnect_error);
+                            host.show_edit_page_error ("Reconnect after edit failed: " + reconnect_error);
                         }
                         host.refresh_after_action (false);
                         host.set_popup_text_input_mode (false);

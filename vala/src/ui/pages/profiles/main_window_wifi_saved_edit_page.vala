@@ -32,6 +32,9 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Switch ipv6_dns_auto_switch { get; set; }
     public Gtk.Entry ipv6_dns_entry { get; set; }
 
+    private Gtk.Label error_label;
+    private Gtk.Revealer error_revealer;
+
     public signal void back ();
     public signal void save ();
 
@@ -52,6 +55,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     }
 
     public void apply_settings_to_edit_page (WifiSavedProfileSettings settings) {
+        this.error_revealer.set_reveal_child (false);
         this.profile_name_entry.set_text (settings.profile_name);
         this.ssid_entry.set_text (settings.ssid);
         this.bssid_entry.set_text (settings.bssid);
@@ -81,6 +85,11 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.ipv6_gateway_entry.set_text (settings.configured_ipv6_gateway);
         this.ipv6_dns_auto_switch.set_active (settings.ipv6_dns_auto);
         this.ipv6_dns_entry.set_text (settings.configured_ipv6_dns);
+    }
+
+    public void show_error (string message) {
+        this.error_label.set_text (message);
+        this.error_revealer.set_reveal_child (true);
     }
 
     public bool build_update_requests (
@@ -285,6 +294,16 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.title_label.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.append (this.title_label);
         this.append (header);
+
+        this.error_label = new Gtk.Label ("");
+        this.error_label.set_xalign (0.0f);
+        this.error_label.set_wrap (true);
+        this.error_label.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+
+        this.error_revealer = new Gtk.Revealer ();
+        this.error_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+        this.error_revealer.set_child (this.error_label);
+        this.append (this.error_revealer);
 
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);

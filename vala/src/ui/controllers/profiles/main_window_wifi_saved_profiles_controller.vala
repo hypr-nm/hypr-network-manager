@@ -149,7 +149,7 @@ public class MainWindowWifiSavedProfilesController : Object {
                     || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_error ("Save profile failed: " + e.message);
+                host.show_edit_page_error ("Save profile failed: " + e.message);
                 return;
             }
 
@@ -171,7 +171,7 @@ public class MainWindowWifiSavedProfilesController : Object {
                             || is_cancelled_error (e)) {
                             return;
                         }
-                        host.show_error ("Save network settings failed: " + e.message);
+                        host.show_edit_page_error ("Save network settings failed: " + e.message);
                     }
                 }
             );

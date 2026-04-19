@@ -4,11 +4,14 @@ public class MainWindowEthernetRefreshController : Object {
     private Cancellable? refresh_cancellable = null;
     private NetworkManagerClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     public MainWindowEthernetRefreshController (NetworkManagerClient nm,
-        HyprNetworkManager.UI.Interfaces.IWindowHost host) {
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.nm = nm;
         this.host = host;
+        this.state_context = state_context;
     }
 
     public void on_page_leave () {
@@ -92,12 +95,14 @@ public class MainWindowEthernetRefreshController : Object {
                     bool is_pending = connection_controller.pending_action.contains (dev.name);
                     bool can_connect = connection_controller.can_connect_with_profile (dev);
                     bool has_profile = connection_controller.has_saved_profile (dev);
+                    string? error_message = state_context.ethernet_errors.lookup (dev.name);
 
                     ethernet_listbox.append (MainWindowEthernetRowBuilder.build_row (
                         dev,
                         is_pending,
                         can_connect,
                         has_profile,
+                        error_message,
                         action_handler
                     ));
                 }

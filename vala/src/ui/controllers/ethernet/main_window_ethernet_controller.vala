@@ -28,9 +28,9 @@ public class MainWindowEthernetController : Object, IMainWindowEthernetRowAction
         this.host = host;
         this.state_context = state_context;
 
-        refresh_controller = new MainWindowEthernetRefreshController (nm, host);
-        connection_controller = new MainWindowEthernetConnectionController (nm, host);
-        details_edit_controller = new MainWindowEthernetDetailsEditController (nm, host);
+        refresh_controller = new MainWindowEthernetRefreshController (nm, host, state_context);
+        connection_controller = new MainWindowEthernetConnectionController (nm, host, state_context);
+        details_edit_controller = new MainWindowEthernetDetailsEditController (nm, host, state_context);
 
         connection_controller.refresh_requested.connect (() => {
             refresh ();

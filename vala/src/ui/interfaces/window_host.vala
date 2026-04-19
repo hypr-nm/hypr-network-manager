@@ -6,6 +6,11 @@ namespace HyprNetworkManager.UI.Interfaces {
     public interface IWindowHost : Object {
         public abstract void set_popup_text_input_mode (bool enabled);
         public abstract void show_error (string message);
+        public abstract void show_wifi_error (string net_key, string message);
+        public abstract void show_ethernet_error (string iface_name, string message);
+        public abstract void show_vpn_error (string vpn_name, string message);
+        public abstract void show_edit_page_error (string message);
+        public abstract void show_add_page_error (string message);
         public abstract void refresh_after_action (bool request_wifi_scan);
         public abstract void refresh_all ();
         public abstract void refresh_switch_states ();
