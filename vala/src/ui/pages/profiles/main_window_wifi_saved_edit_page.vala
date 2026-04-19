@@ -299,6 +299,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.error_label.set_xalign (0.0f);
         this.error_label.set_wrap (true);
         this.error_label.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+        this.error_label.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
 
         this.error_revealer = new Gtk.Revealer ();
         this.error_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
