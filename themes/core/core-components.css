@@ -23,10 +23,7 @@ popover.background listview row.activatable {
 
 window.nm-window,
 .nm-window {
-  background:
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.0) 22%),
-    linear-gradient(130deg, alpha(@secondary, .06), alpha(@secondary, 0) 36%),
-    @surface;
+  background: @surface;
   color: @text;
   border: 1px solid @line_strong;
 }
