@@ -188,9 +188,10 @@ public class MainWindowVpnPageBuilder : Object {
         action.clicked.connect (() => {
             uint epoch = capture_ui_epoch ();
             state_context.clear_vpn_error (conn.name);
+            string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
 
             if (conn.is_connected) {
-                nm.disconnect_vpn.begin (conn.name, null, (obj, res) => {
+                nm.disconnect_vpn.begin (connection_id, null, (obj, res) => {
                     try {
                         nm.disconnect_vpn.end (res);
                     } catch (Error e) {
@@ -207,7 +208,7 @@ public class MainWindowVpnPageBuilder : Object {
                 return;
             }
 
-            nm.connect_vpn.begin (conn.name, null, (obj, res) => {
+            nm.connect_vpn.begin (connection_id, null, (obj, res) => {
                 try {
                     nm.connect_vpn.end (res);
                 } catch (Error e) {
