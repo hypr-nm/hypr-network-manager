@@ -2,7 +2,6 @@ using Gtk;
 
 public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Label edit_title { get; set; }
-    public Gtk.Label note_label { get; set; }
     public Gtk.DropDown ipv4_method_dropdown { get; set; }
     public Gtk.Entry ipv4_address_entry { get; set; }
     public Gtk.Entry ipv4_prefix_entry { get; set; }
@@ -25,7 +24,6 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         if (profile_display == "") {
             profile_display = "Profile %s".printf (MainWindowHelpers.safe_text (dev.connection_uuid));
         }
-        this.note_label.set_text ("Update IPv4 and IPv6 settings for profile: %s".printf (profile_display));
 
         this.ipv4_method_dropdown.set_selected (0);
         this.ipv4_address_entry.set_text ("");
@@ -76,13 +74,6 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
                 MainWindowCssClasses.EDIT_FORM}
         );
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
-
-        this.note_label = new Gtk.Label ("");
-        this.note_label.set_xalign (0.0f);
-        this.note_label.set_wrap (true);
-        MainWindowCssClassResolver.add_best_class (this.note_label, {MainWindowCssClasses.EDIT_NOTE,
-            MainWindowCssClasses.SUB_LABEL});
-        form.append (this.note_label);
 
         Gtk.DropDown v4_method;
         Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;

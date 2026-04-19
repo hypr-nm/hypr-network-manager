@@ -3,7 +3,6 @@ using Gtk;
 public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Label edit_title { get; set; }
     public Gtk.Entry password_entry { get; set; }
-    public Gtk.Label note_label { get; set; }
     public Gtk.DropDown ipv4_method_dropdown { get; set; }
     public Gtk.Entry ipv4_address_entry { get; set; }
     public Gtk.Entry ipv4_prefix_entry { get; set; }
@@ -25,15 +24,6 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.edit_title.set_text ("Edit: %s".printf (net.ssid));
         this.password_entry.set_text ("");
         this.password_entry.set_visibility (false);
-
-        if (net.is_secured) {
-            this.note_label.set_text (
-                "Current password is prefilled when available.\n"
-                + "IPv4 and IPv6 settings can be changed below (auto/manual/disabled)."
-            );
-        } else {
-            this.note_label.set_text ("Open network. Password is not required.");
-        }
 
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         this.password_entry.grab_focus ();
@@ -95,13 +85,6 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
                 MainWindowCssClasses.EDIT_FORM}
         );
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
-
-        this.note_label = new Gtk.Label ("");
-        this.note_label.set_xalign (0.0f);
-        this.note_label.set_wrap (true);
-        MainWindowCssClassResolver.add_best_class (this.note_label, {MainWindowCssClasses.EDIT_NOTE,
-            MainWindowCssClasses.SUB_LABEL});
-        form.append (this.note_label);
 
         var password_label = new Gtk.Label ("Password");
         password_label.set_xalign (0.0f);
