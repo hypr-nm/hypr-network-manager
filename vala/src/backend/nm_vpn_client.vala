@@ -2,9 +2,32 @@ using GLib;
 
 public class NmVpnClient : GLib.Object {
     private NetworkManagerClient core;
+    private static HashTable<string, string>? plugin_names = null;
 
     public NmVpnClient (NetworkManagerClient core) {
         this.core = core;
+    }
+
+    private static HashTable<string, string> get_plugin_names () {
+        if (plugin_names != null) {
+            return plugin_names;
+        }
+
+        var map = new HashTable<string, string> (str_hash, str_equal);
+        map.insert ("vpn", "VPN");
+        map.insert ("openvpn", "OpenVPN");
+        map.insert ("openconnect", "OpenConnect");
+        map.insert ("wireguard", "WireGuard");
+        map.insert ("vpnc", "VPNC");
+        map.insert ("l2tp", "L2TP");
+        map.insert ("pptp", "PPTP");
+        map.insert ("sstp", "SSTP");
+        map.insert ("openfortivpn", "OpenFortiVPN");
+        map.insert ("fortisslvpn", "FortiSSLVPN");
+        map.insert ("libreswan", "Libreswan");
+        map.insert ("strongswan", "strongSwan");
+        plugin_names = map;
+        return plugin_names;
     }
 
     private static string normalize_string (string? value) {
@@ -117,33 +140,9 @@ public class NmVpnClient : GLib.Object {
             return "VPN";
         }
 
-        switch (normalized) {
-        case "vpn":
-            return "VPN";
-        case "openvpn":
-            return "OpenVPN";
-        case "openconnect":
-            return "OpenConnect";
-        case "wireguard":
-            return "WireGuard";
-        case "vpnc":
-            return "VPNC";
-        case "l2tp":
-            return "L2TP";
-        case "pptp":
-            return "PPTP";
-        case "sstp":
-            return "SSTP";
-        case "openfortivpn":
-            return "OpenFortiVPN";
-        case "fortisslvpn":
-            return "FortiSSLVPN";
-        case "libreswan":
-            return "Libreswan";
-        case "strongswan":
-            return "strongSwan";
-        default:
-            break;
+        string? named_value = get_plugin_names ().lookup (normalized);
+        if (named_value != null) {
+            return named_value;
         }
 
         var pieces = normalized.split_set ("-_. ");
