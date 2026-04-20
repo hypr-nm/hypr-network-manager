@@ -14,6 +14,7 @@ public class AppConfig : Object {
     public int margin_bottom = 8;
     public int margin_left = 8;
     public string layer = "overlay";
+    public AppLogLevel log_level = AppLogLevel.INFO;
     public int scan_interval = 30;
     public int pending_wifi_connect_timeout_ms = 45000;
     public bool close_on_connect = true;
@@ -70,6 +71,23 @@ public class AppConfig : Object {
                 config_path,
                 expected_type,
                 describe_json_node_type (node)
+            )
+        );
+    }
+
+    private static void warn_invalid_config_value (
+        string config_path,
+        string key,
+        string value,
+        string expected_values
+    ) {
+        log_warn (
+            "config",
+            "ignoring config key '%s' in %s: invalid value='%s'; expected %s".printf (
+                key,
+                redact_fs_path (config_path),
+                value,
+                expected_values
             )
         );
     }
@@ -312,6 +330,25 @@ public class AppConfig : Object {
             );
             if (cfg_layer != null) {
                 cfg.layer = cfg_layer;
+            }
+
+            string? cfg_log_level = extract_json_string (
+                obj,
+                "log_level",
+                effective_config_path
+            );
+            if (cfg_log_level != null) {
+                AppLogLevel parsed_log_level;
+                if (parse_app_log_level (cfg_log_level, out parsed_log_level)) {
+                    cfg.log_level = parsed_log_level;
+                } else {
+                    warn_invalid_config_value (
+                        effective_config_path,
+                        "log_level",
+                        cfg_log_level,
+                        "debug|info|warn|error"
+                    );
+                }
             }
 
             string position = "top-right";

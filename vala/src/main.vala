@@ -5,13 +5,13 @@ int main (string[] args) {
     bool toggle_wifi = false;
     bool daemon_mode = false;
 
-    configure_global_logging (false);
+    configure_global_logging (AppLogLevel.INFO);
 
     OptionEntry[] entries = {
         {"config", 'c', 0, OptionArg.STRING, ref config_path, "Config JSON path", "PATH"},
         {"status", 0, 0, OptionArg.NONE, ref status, "Print JSON status for waybar/eww", null},
         {"toggle-wifi", 0, 0, OptionArg.NONE, ref toggle_wifi, "Toggle Wi-Fi and exit", null},
-        {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, "Enable debug logs", null},
+        {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, "Override log level to debug", null},
         {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, "Run as a background daemon", null},
         {null}
     };
@@ -26,10 +26,29 @@ int main (string[] args) {
         return 1;
     }
 
-    configure_global_logging (debug_enabled);
-    log_info ("cli", "startup: initialized logging and parsed options");
-
     var config = AppConfig.load (config_path);
+    AppLogLevel effective_log_level = config.log_level;
+    if (debug_enabled) {
+        effective_log_level = AppLogLevel.DEBUG;
+    }
+
+    configure_global_logging (effective_log_level);
+    string? active_log_file_path = get_active_runtime_log_file_path ();
+    if (active_log_file_path != null) {
+        log_info (
+            "cli",
+            "startup: initialized logging and parsed options log_level=%s log_file=%s".printf (
+                app_log_level_to_string (effective_log_level),
+                redact_fs_path (active_log_file_path)
+            )
+        );
+    } else {
+        log_warn (
+            "cli",
+            "startup: file logging unavailable path=%s; continuing with base writer only"
+                .printf (redact_fs_path (get_runtime_log_file_path ()))
+        );
+    }
 
     if (status) {
         log_info ("cli", "mode_select: status mode");
