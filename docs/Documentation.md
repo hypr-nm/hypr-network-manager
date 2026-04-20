@@ -45,7 +45,26 @@ For step-by-step guidance, see the relevant sections below.
 
 ## Installation
 
-The easiest way to install the app and its dependencies automatically is via the web installer script:
+### Arch Linux
+
+Install `hypr-network-manager-git` AUR package using yay or any AUR helper.
+
+```bash
+yay -S hypr-network-manager-git
+```
+
+### Fedora
+
+Enable the COPR repository and install the package:
+
+```bash
+dnf copr enable yeab212/hypr-network-manager
+dnf install hypr-network-manager
+```
+
+### Debian / Ubuntu / Other Distros
+
+Use the installer script:
 
 ```bash
 bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
