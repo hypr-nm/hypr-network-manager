@@ -12,11 +12,11 @@
   "layer_shell_margin_bottom": 8,
   "layer_shell_margin_left": 8,
 
-  "scan_interval": 30,
-  "close_on_connect": true,
+  "scan_interval": 20,
+  "close_on_connect": false,
   "show_bssid": false,
-  "show_frequency": true,
-  "show_band": false,
+  "show_frequency": false,
+  "show_band": true,
 
   "waybar_icon_font": "NotoSansMono Nerd Font"
 }
