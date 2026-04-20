@@ -4,11 +4,31 @@ private const string APP_LOG_DOMAIN_PREFIX = "hypr-nm";
 private const string APP_LOG_FILE_NAME = "hypr-network-manager.log";
 private const int APP_LOG_DIRECTORY_MODE = 0700;
 
+public enum AppLogLevel {
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR
+}
+
+private struct LogLevelMeta {
+    public string name;
+    public int rank;
+}
+
+private const LogLevelMeta[] LOG_LEVELS = {
+    { "debug", 0 },
+    { "info", 1 },
+    { "warn", 2 },
+    { "error", 3 }
+};
+
 private class LoggingState : Object {
     public static bool writer_installed = false;
     public static bool writer_uses_journald = false;
     public static bool file_logging_checked = false;
     public static string? active_log_file_path = null;
+    public static AppLogLevel current_log_level = AppLogLevel.INFO;
 }
 
 private string scoped_domain (string component) {
@@ -17,6 +37,77 @@ private string scoped_domain (string component) {
 
 private bool should_use_journald_writer () {
     return GLib.Log.writer_is_journald (1) || GLib.Log.writer_is_journald (2);
+}
+
+public string get_runtime_log_file_path () {
+    return get_log_file_path ();
+}
+
+public string? get_active_runtime_log_file_path () {
+    return LoggingState.active_log_file_path;
+}
+
+private LogLevelMeta get_log_level_meta (AppLogLevel level) {
+    int index = (int) level;
+
+    if (index >= 0 && index < LOG_LEVELS.length) {
+        return LOG_LEVELS[index];
+    }
+
+    return LOG_LEVELS[1];
+}
+
+public string app_log_level_to_string (AppLogLevel level) {
+    return get_log_level_meta (level).name;
+}
+
+public bool parse_app_log_level (string value, out AppLogLevel level) {
+    switch (value.strip ().down ()) {
+    case "debug":
+        level = AppLogLevel.DEBUG;
+        return true;
+    case "info":
+    case "message":
+        level = AppLogLevel.INFO;
+        return true;
+    case "warn":
+    case "warning":
+        level = AppLogLevel.WARN;
+        return true;
+    case "error":
+    case "critical":
+        level = AppLogLevel.ERROR;
+        return true;
+    default:
+        level = AppLogLevel.INFO;
+        return false;
+    }
+}
+
+private int app_log_level_rank (AppLogLevel level) {
+    return get_log_level_meta (level).rank;
+}
+
+private AppLogLevel classify_log_level (GLib.LogLevelFlags log_level) {
+    switch (log_level & GLib.LogLevelFlags.LEVEL_MASK) {
+    case GLib.LogLevelFlags.LEVEL_DEBUG:
+        return AppLogLevel.DEBUG;
+    case GLib.LogLevelFlags.LEVEL_INFO:
+    case GLib.LogLevelFlags.LEVEL_MESSAGE:
+        return AppLogLevel.INFO;
+    case GLib.LogLevelFlags.LEVEL_WARNING:
+        return AppLogLevel.WARN;
+    case GLib.LogLevelFlags.LEVEL_ERROR:
+    case GLib.LogLevelFlags.LEVEL_CRITICAL:
+        return AppLogLevel.ERROR;
+    default:
+        return AppLogLevel.INFO;
+    }
+}
+
+private bool should_emit_log (GLib.LogLevelFlags log_level) {
+    return app_log_level_rank (classify_log_level (log_level))
+        >= app_log_level_rank (LoggingState.current_log_level);
 }
 
 private string get_log_file_path () {
@@ -114,6 +205,10 @@ private GLib.LogWriterOutput app_log_writer (
     GLib.LogLevelFlags log_level,
     GLib.LogField[] fields
 ) {
+    if (!should_emit_log (log_level)) {
+        return GLib.LogWriterOutput.HANDLED;
+    }
+
     if (LoggingState.writer_uses_journald) {
         GLib.Log.writer_journald (log_level, fields);
     } else {
@@ -144,31 +239,16 @@ private string mask_middle (string value, int keep_start = 2, int keep_end = 2) 
         + trimmed.substring (trimmed.length - keep_end);
 }
 
-public void configure_global_logging (bool debug_enabled) {
-    GLib.Log.set_debug_enabled (debug_enabled);
-    GLib.Log.writer_default_set_use_stderr (true);
+public void configure_global_logging (AppLogLevel log_level) {
+    GLib.Log.set_debug_enabled (log_level == AppLogLevel.DEBUG);
+    LoggingState.current_log_level = log_level;
 
     if (!LoggingState.writer_installed) {
+        GLib.Log.writer_default_set_use_stderr (true);
         LoggingState.writer_uses_journald = should_use_journald_writer ();
         ensure_log_file_target ();
         GLib.Log.set_writer_func (app_log_writer);
         LoggingState.writer_installed = true;
-
-        log_info (
-            "logging",
-            "global logger initialized base=%s file=%s".printf (
-                LoggingState.writer_uses_journald ? "journald" : "standard-streams",
-                LoggingState.active_log_file_path ?? "<disabled>"
-            )
-        );
-
-        if (LoggingState.active_log_file_path == null) {
-            log_warn (
-                "logging",
-                "file logging unavailable path=%s; continuing with base writer only"
-                    .printf (get_log_file_path ())
-            );
-        }
     }
 }
 
