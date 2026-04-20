@@ -1,2 +1,3 @@
 /* hypr-network-manager active theme entrypoint */
+/* Avaiable themes: catppuccin, core, default, modern, nord */
 @import url("default/base.css");
