@@ -326,7 +326,7 @@ public class AppConfig : Object {
         }
     }
 
-    private static void apply_position_config (AppConfig cfg, Json.Object obj, string path) {
+    private void apply_position_config (Json.Object obj, string path) {
         string position = "top-right";
 
         string? cfg_position = extract_json_string (obj, "position", path);
@@ -337,28 +337,28 @@ public class AppConfig : Object {
         bool top, right, bottom, left;
         apply_position (position, out top, out right, out bottom, out left);
 
-        cfg.anchor_top = top;
-        cfg.anchor_right = right;
-        cfg.anchor_bottom = bottom;
-        cfg.anchor_left = left;
+        this.anchor_top = top;
+        this.anchor_right = right;
+        this.anchor_bottom = bottom;
+        this.anchor_left = left;
     }
 
-    private static void apply_window_config (AppConfig cfg, Json.Object obj, string path) {
+    private void apply_window_config (Json.Object obj, string path) {
         int? w = extract_json_int (obj, "window_width", path);
-        if (w != null && w > 0) cfg.window_width = w;
+        if (w != null && w > 0) this.window_width = w;
 
         int? h = extract_json_int (obj, "window_height", path);
-        if (h != null && h > 0) cfg.window_height = h;
+        if (h != null && h > 0) this.window_height = h;
     }
 
-    private static void apply_log_config (AppConfig cfg, Json.Object obj, string path) {
+    private void apply_log_config (Json.Object obj, string path) {
         string? lvl = extract_json_string (obj, "log_level", path);
 
         if (lvl == null) return;
 
         AppLogLevel parsed;
         if (parse_app_log_level (lvl, out parsed)) {
-            cfg.log_level = parsed;
+            this.log_level = parsed;
         } else {
             warn_invalid_config_value (
                 path,
@@ -369,32 +369,32 @@ public class AppConfig : Object {
         }
     }
 
-    private static void apply_margin_config (AppConfig cfg, Json.Object obj, string path) {
+    private void apply_margin_config (Json.Object obj, string path) {
         int? top = extract_json_int (obj, "layer_shell_margin_top", path);
         if (top != null) {
-            cfg.margin_top = top;
+            this.margin_top = top;
         }
 
         int? right = extract_json_int (obj, "layer_shell_margin_right", path);
         if (right != null) {
-            cfg.margin_right = right;
+            this.margin_right = right;
         }
 
         int? bottom = extract_json_int (obj, "layer_shell_margin_bottom", path);
         if (bottom != null) {
-            cfg.margin_bottom = bottom;
+            this.margin_bottom = bottom;
         }
 
         int? left = extract_json_int (obj, "layer_shell_margin_left", path);
         if (left != null) {
-            cfg.margin_left = left;
+            this.margin_left = left;
         }
     }
 
-    private static void apply_behavior_config (AppConfig cfg, Json.Object obj, string path) {
+    private void apply_behavior_config (Json.Object obj, string path) {
         int? scan_interval = extract_json_int (obj, "scan_interval", path);
         if (scan_interval != null && scan_interval > 0) {
-            cfg.scan_interval = scan_interval;
+            this.scan_interval = scan_interval;
         }
 
         int? timeout = extract_json_int (
@@ -403,7 +403,7 @@ public class AppConfig : Object {
             path
         );
         if (timeout != null && timeout > 0) {
-            cfg.pending_wifi_connect_timeout_ms = timeout;
+            this.pending_wifi_connect_timeout_ms = timeout;
         }
 
         bool? close_on_connect = extract_json_bool (
@@ -412,7 +412,7 @@ public class AppConfig : Object {
             path
         );
         if (close_on_connect != null) {
-            cfg.close_on_connect = close_on_connect;
+            this.close_on_connect = close_on_connect;
         }
 
         bool? show_bssid = extract_json_bool (
@@ -421,7 +421,7 @@ public class AppConfig : Object {
             path
         );
         if (show_bssid != null) {
-            cfg.show_bssid = show_bssid;
+            this.show_bssid = show_bssid;
         }
 
         bool? show_frequency = extract_json_bool (
@@ -430,7 +430,7 @@ public class AppConfig : Object {
             path
         );
         if (show_frequency != null) {
-            cfg.show_frequency = show_frequency;
+            this.show_frequency = show_frequency;
         }
 
         bool? show_band = extract_json_bool (
@@ -439,19 +439,18 @@ public class AppConfig : Object {
             path
         );
         if (show_band != null) {
-            cfg.show_band = show_band;
+            this.show_band = show_band;
         }
     }
-    private static void apply_config_fields (
-        AppConfig cfg,
+    private void apply_config_fields (
         Json.Object obj,
         string path
     ) {
-        apply_window_config (cfg, obj, path);
-        apply_log_config (cfg, obj, path);
-        apply_position_config (cfg, obj, path);
-        apply_margin_config (cfg, obj, path);
-        apply_behavior_config (cfg, obj, path);
+        apply_window_config (obj, path);
+        apply_log_config (obj, path);
+        apply_position_config (obj, path);
+        apply_margin_config (obj, path);
+        apply_behavior_config (obj, path);
     }
 
     public static AppConfig load (string? explicit_path) {
@@ -471,7 +470,7 @@ public class AppConfig : Object {
         Json.Object? obj = parse_config_json (content, path);
         if (obj == null) return cfg;
 
-        apply_config_fields (cfg, obj, path);
+        cfg.apply_config_fields (obj, path);
 
         log_debug (
             "config",
