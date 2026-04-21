@@ -131,6 +131,7 @@ Configuration is handled via JSON files.
   "window_width": 480,
   "window_height": 560,
   "layer_shell_layer": "overlay",
+  "log_level": "info",
   "position": "top-right",
   "layer_shell_margin_top": 8,
   "layer_shell_margin_right": 8,
@@ -157,6 +158,7 @@ The app reads `config.json` from this precedence order:
 | window_width | int (> 0) | 480 | Popup window width in pixels. |
 | window_height | int (> 0) | 560 | Popup window height in pixels. |
 | layer_shell_layer | string | overlay | Layer-shell layer. Supported values: `overlay`, `top`, `bottom`, `background`. |
+| log_level | string | info | Minimum emitted log severity. Supported values: `debug`, `info`, `warn`, `error`. |
 | position | string | top-right | Position preset used for placement anchors. Supported values: `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top`, `right`, `bottom`, `left`. Invalid values fallback to top-right. |
 | layer_shell_margin_top | int | 8 | Top margin in pixels. |
 | layer_shell_margin_right | int | 8 | Right margin in pixels. |
@@ -417,7 +419,7 @@ hypr-network-manager
 ### CLI Options
 
 ```bash
---debug             # Enable debug logging
+--debug             # Override log level to debug
 --status            # Output JSON for status bars
 --toggle-wifi       # Toggle Wi-Fi on/off
 ```
@@ -546,8 +548,9 @@ LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so hypr-network-manager --debug
 LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgtk4-layer-shell.so hypr-network-manager --debug
 ```
 
-* Check logs for D-Bus connection errors
-* Ensure NetworkManager service is running
+* Check logs for D-Bus connection errors:
+  `~/.local/state/hypr-network-manager/hypr-network-manager.log`
+* Make sure NetworkManager service is running
 
 ---
 
