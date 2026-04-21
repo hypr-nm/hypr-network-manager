@@ -198,13 +198,28 @@ public class NmWifiClient : GLib.Object {
             }
         }
 
-        var networks_arr = new WifiNetwork[deduped_map.size ()];
-        int i = 0;
+        var networks_list = new List<WifiNetwork> ();
         var deduped_iter = HashTableIter<string, WifiNetwork> (deduped_map);
         string dk;
         WifiNetwork dv;
         while (deduped_iter.next (out dk, out dv)) {
-            networks_arr[i++] = dv;
+            networks_list.append (dv);
+        }
+
+        networks_list.sort ((a, b) => {
+            if (a.connected != b.connected) {
+                return a.connected ? -1 : 1;
+            }
+            if (a.saved != b.saved) {
+                return a.saved ? -1 : 1;
+            }
+            return (int) b.signal - (int) a.signal;
+        });
+
+        var networks_arr = new WifiNetwork[networks_list.length ()];
+        int i = 0;
+        foreach (var net in networks_list) {
+            networks_arr[i++] = net;
         }
 
         var devices_arr = new NetworkDevice[devices_out.length ()];
