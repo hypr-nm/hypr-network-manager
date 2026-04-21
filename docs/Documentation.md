@@ -422,6 +422,7 @@ hypr-network-manager
 --debug             # Override log level to debug
 --status            # Output JSON for status bars
 --toggle-wifi       # Toggle Wi-Fi on/off
+--quit              # Terminate the daemon and exit
 ```
 
 ---
