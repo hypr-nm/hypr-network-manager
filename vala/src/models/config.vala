@@ -242,234 +242,242 @@ public class AppConfig : Object {
         );
     }
 
-    public static AppConfig load (string? explicit_path) {
-        var cfg = new AppConfig ();
-
-        string local_config_path = get_default_config_path ();
-        string system_config_path = get_system_config_path ();
-        string effective_config_path = local_config_path;
-        bool has_config = false;
+    private static bool resolve_config_path (
+        string? explicit_path,
+        out string effective_path
+    ) {
+        string local = get_default_config_path ();
+        string system = get_system_config_path ();
 
         if (explicit_path != null) {
-            effective_config_path = explicit_path;
-            has_config = FileUtils.test (effective_config_path, FileTest.EXISTS);
-        } else if (FileUtils.test (local_config_path, FileTest.EXISTS)) {
-            effective_config_path = local_config_path;
-            has_config = true;
-        } else if (FileUtils.test (system_config_path, FileTest.EXISTS)) {
-            effective_config_path = system_config_path;
-            has_config = true;
+            effective_path = explicit_path;
+            return FileUtils.test (effective_path, FileTest.EXISTS);
         }
 
-        if (!has_config) {
-            if (explicit_path != null) {
-                log_debug (
-                    "config",
-                    "load_config: file not found path=%s; outcome=using defaults"
-                        .printf (redact_fs_path (effective_config_path))
-                );
-            } else {
-                log_debug (
-                    "config",
-                    "load_config: file not found in search paths local=%s system=%s; outcome=using defaults"
-                        .printf (
-                        redact_fs_path (local_config_path),
-                        redact_fs_path (system_config_path)
-                    )
-                );
-            }
-            return cfg;
+        if (FileUtils.test (local, FileTest.EXISTS)) {
+            effective_path = local;
+            return true;
         }
 
+        if (FileUtils.test (system, FileTest.EXISTS)) {
+            effective_path = system;
+            return true;
+        }
+
+        effective_path = local; // fallback for logging
+        return false;
+    }
+
+    private static string? load_config_file (string path) {
         try {
             string content;
-            size_t content_length = 0;
-            FileUtils.get_contents (effective_config_path, out content, out content_length);
-            if ((int64) content_length > MAX_CONFIG_FILE_BYTES) {
+            size_t len = 0;
+
+            FileUtils.get_contents (path, out content, out len);
+
+            if ((int64) len > MAX_CONFIG_FILE_BYTES) {
                 log_warn (
                     "config",
-                    "load_config: rejected oversize file path=%s size=%s max=%s; outcome=using defaults"
+                    "load_config: rejected oversize file path=%s size=%s max=%s"
                         .printf (
-                            redact_fs_path (effective_config_path),
-                            content_length.to_string (),
+                            redact_fs_path (path),
+                            len.to_string (),
                             MAX_CONFIG_FILE_BYTES.to_string ()
                         )
                 );
-                return cfg;
+                return null;
             }
 
+            return content;
+        } catch (Error e) {
+            log_debug (
+                "config",
+                "load_config: read failed path=%s error=%s"
+                    .printf (redact_fs_path (path), e.message)
+            );
+            return null;
+        }
+    }
+
+    private static Json.Object? parse_config_json (string content, string path) {
+        try {
             var parser = new Json.Parser ();
             parser.load_from_data (content, content.length);
 
             Json.Node? root = parser.get_root ();
+
             if (root == null || root.get_node_type () != Json.NodeType.OBJECT) {
                 log_debug (
                     "config",
-                    "load_config: invalid JSON root path=%s expected=object; outcome=using defaults"
-                        .printf (redact_fs_path (effective_config_path))
+                    "load_config: invalid JSON root path=%s expected=object"
+                        .printf (redact_fs_path (path))
                 );
-                return cfg;
+                return null;
             }
 
-            Json.Object obj = root.get_object ();
-
-            int? cfg_width = extract_json_int (obj, "window_width", effective_config_path);
-            if (cfg_width != null && cfg_width > 0) {
-                cfg.window_width = cfg_width;
-            }
-
-            int? cfg_height = extract_json_int (obj, "window_height", effective_config_path);
-            if (cfg_height != null && cfg_height > 0) {
-                cfg.window_height = cfg_height;
-            }
-
-            string? cfg_layer = extract_json_string (
-                obj,
-                "layer_shell_layer",
-                effective_config_path
-            );
-            if (cfg_layer != null) {
-                cfg.layer = cfg_layer;
-            }
-
-            string? cfg_log_level = extract_json_string (
-                obj,
-                "log_level",
-                effective_config_path
-            );
-            if (cfg_log_level != null) {
-                AppLogLevel parsed_log_level;
-                if (parse_app_log_level (cfg_log_level, out parsed_log_level)) {
-                    cfg.log_level = parsed_log_level;
-                } else {
-                    warn_invalid_config_value (
-                        effective_config_path,
-                        "log_level",
-                        cfg_log_level,
-                        "debug|info|warn|error"
-                    );
-                }
-            }
-
-            string position = "top-right";
-            string? cfg_position = extract_json_string (
-                obj,
-                "position",
-                effective_config_path
-            );
-            if (cfg_position != null) {
-                position = cfg_position;
-            }
-
-            bool pos_top;
-            bool pos_right;
-            bool pos_bottom;
-            bool pos_left;
-            apply_position (position, out pos_top, out pos_right, out pos_bottom, out pos_left);
-            cfg.anchor_top = pos_top;
-            cfg.anchor_right = pos_right;
-            cfg.anchor_bottom = pos_bottom;
-            cfg.anchor_left = pos_left;
-
-            int? cfg_margin_top = extract_json_int (
-                obj,
-                "layer_shell_margin_top",
-                effective_config_path
-            );
-            if (cfg_margin_top != null) {
-                cfg.margin_top = cfg_margin_top;
-            }
-            int? cfg_margin_right = extract_json_int (
-                obj,
-                "layer_shell_margin_right",
-                effective_config_path
-            );
-            if (cfg_margin_right != null) {
-                cfg.margin_right = cfg_margin_right;
-            }
-            int? cfg_margin_bottom = extract_json_int (
-                obj,
-                "layer_shell_margin_bottom",
-                effective_config_path
-            );
-            if (cfg_margin_bottom != null) {
-                cfg.margin_bottom = cfg_margin_bottom;
-            }
-            int? cfg_margin_left = extract_json_int (
-                obj,
-                "layer_shell_margin_left",
-                effective_config_path
-            );
-            if (cfg_margin_left != null) {
-                cfg.margin_left = cfg_margin_left;
-            }
-
-            int? cfg_scan_interval = extract_json_int (
-                obj,
-                "scan_interval",
-                effective_config_path
-            );
-            if (cfg_scan_interval != null && cfg_scan_interval > 0) {
-                cfg.scan_interval = cfg_scan_interval;
-            }
-
-            int? cfg_pending_wifi_connect_timeout_ms = extract_json_int (
-                obj,
-                "pending_wifi_connect_timeout_ms",
-                effective_config_path
-            );
-            if (cfg_pending_wifi_connect_timeout_ms != null && cfg_pending_wifi_connect_timeout_ms > 0) {
-                cfg.pending_wifi_connect_timeout_ms = cfg_pending_wifi_connect_timeout_ms;
-            }
-
-            bool? cfg_close_on_connect = extract_json_bool (
-                obj,
-                "close_on_connect",
-                effective_config_path
-            );
-            if (cfg_close_on_connect != null) {
-                cfg.close_on_connect = cfg_close_on_connect;
-            }
-
-            bool? cfg_show_bssid = extract_json_bool (
-                obj,
-                "show_bssid",
-                effective_config_path
-            );
-            if (cfg_show_bssid != null) {
-                cfg.show_bssid = cfg_show_bssid;
-            }
-
-            bool? cfg_show_frequency = extract_json_bool (
-                obj,
-                "show_frequency",
-                effective_config_path
-            );
-            if (cfg_show_frequency != null) {
-                cfg.show_frequency = cfg_show_frequency;
-            }
-
-            bool? cfg_show_band = extract_json_bool (
-                obj,
-                "show_band",
-                effective_config_path
-            );
-            if (cfg_show_band != null) {
-                cfg.show_band = cfg_show_band;
-            }
-
-            log_debug (
-                "config",
-                "load_config: loaded path=%s"
-                    .printf (redact_fs_path (effective_config_path))
-            );
+            return root.get_object ();
         } catch (Error e) {
             log_debug (
                 "config",
-                "load_config: read/parse failed path=%s error=%s; outcome=using defaults"
-                    .printf (redact_fs_path (effective_config_path), e.message)
+                "load_config: parse failed path=%s error=%s"
+                    .printf (redact_fs_path (path), e.message)
+            );
+            return null;
+        }
+    }
+
+    private static void apply_position_config (AppConfig cfg, Json.Object obj, string path) {
+        string position = "top-right";
+
+        string? cfg_position = extract_json_string (obj, "position", path);
+        if (cfg_position != null) {
+            position = cfg_position;
+        }
+
+        bool top, right, bottom, left;
+        apply_position (position, out top, out right, out bottom, out left);
+
+        cfg.anchor_top = top;
+        cfg.anchor_right = right;
+        cfg.anchor_bottom = bottom;
+        cfg.anchor_left = left;
+    }
+
+    private static void apply_window_config (AppConfig cfg, Json.Object obj, string path) {
+        int? w = extract_json_int (obj, "window_width", path);
+        if (w != null && w > 0) cfg.window_width = w;
+
+        int? h = extract_json_int (obj, "window_height", path);
+        if (h != null && h > 0) cfg.window_height = h;
+    }
+
+    private static void apply_log_config (AppConfig cfg, Json.Object obj, string path) {
+        string? lvl = extract_json_string (obj, "log_level", path);
+
+        if (lvl == null) return;
+
+        AppLogLevel parsed;
+        if (parse_app_log_level (lvl, out parsed)) {
+            cfg.log_level = parsed;
+        } else {
+            warn_invalid_config_value (
+                path,
+                "log_level",
+                lvl,
+                "debug|info|warn|error"
             );
         }
+    }
+
+    private static void apply_margin_config (AppConfig cfg, Json.Object obj, string path) {
+        int? top = extract_json_int (obj, "layer_shell_margin_top", path);
+        if (top != null) {
+            cfg.margin_top = top;
+        }
+
+        int? right = extract_json_int (obj, "layer_shell_margin_right", path);
+        if (right != null) {
+            cfg.margin_right = right;
+        }
+
+        int? bottom = extract_json_int (obj, "layer_shell_margin_bottom", path);
+        if (bottom != null) {
+            cfg.margin_bottom = bottom;
+        }
+
+        int? left = extract_json_int (obj, "layer_shell_margin_left", path);
+        if (left != null) {
+            cfg.margin_left = left;
+        }
+    }
+
+    private static void apply_behavior_config (AppConfig cfg, Json.Object obj, string path) {
+        int? scan_interval = extract_json_int (obj, "scan_interval", path);
+        if (scan_interval != null && scan_interval > 0) {
+            cfg.scan_interval = scan_interval;
+        }
+
+        int? timeout = extract_json_int (
+            obj,
+            "pending_wifi_connect_timeout_ms",
+            path
+        );
+        if (timeout != null && timeout > 0) {
+            cfg.pending_wifi_connect_timeout_ms = timeout;
+        }
+
+        bool? close_on_connect = extract_json_bool (
+            obj,
+            "close_on_connect",
+            path
+        );
+        if (close_on_connect != null) {
+            cfg.close_on_connect = close_on_connect;
+        }
+
+        bool? show_bssid = extract_json_bool (
+            obj,
+            "show_bssid",
+            path
+        );
+        if (show_bssid != null) {
+            cfg.show_bssid = show_bssid;
+        }
+
+        bool? show_frequency = extract_json_bool (
+            obj,
+            "show_frequency",
+            path
+        );
+        if (show_frequency != null) {
+            cfg.show_frequency = show_frequency;
+        }
+
+        bool? show_band = extract_json_bool (
+            obj,
+            "show_band",
+            path
+        );
+        if (show_band != null) {
+            cfg.show_band = show_band;
+        }
+    }
+    private static void apply_config_fields (
+        AppConfig cfg,
+        Json.Object obj,
+        string path
+    ) {
+        apply_window_config (cfg, obj, path);
+        apply_log_config (cfg, obj, path);
+        apply_position_config (cfg, obj, path);
+        apply_margin_config (cfg, obj, path);
+        apply_behavior_config (cfg, obj, path);
+    }
+
+    public static AppConfig load (string? explicit_path) {
+        var cfg = new AppConfig ();
+
+        string path;
+        bool found = resolve_config_path (explicit_path, out path);
+
+        if (!found) {
+            log_debug ("config", "load_config: not found; using defaults");
+            return cfg;
+        }
+
+        string? content = load_config_file (path);
+        if (content == null) return cfg;
+
+        Json.Object? obj = parse_config_json (content, path);
+        if (obj == null) return cfg;
+
+        apply_config_fields (cfg, obj, path);
+
+        log_debug (
+            "config",
+            "load_config: loaded path=%s"
+                .printf (redact_fs_path (path))
+        );
 
         return cfg;
     }
