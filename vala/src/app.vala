@@ -156,6 +156,13 @@ public class NetworkManager : Gtk.Application {
         base.startup ();
         // Always hold the process so it becomes a resident daemon automatically
         this.hold ();
+
+        var quit_action = new SimpleAction ("quit", null);
+        quit_action.activate.connect (() => {
+            log_info ("app", "quit_action: received; exiting");
+            this.quit ();
+        });
+        this.add_action (quit_action);
     }
 
     private void on_main_window_mapped () {
