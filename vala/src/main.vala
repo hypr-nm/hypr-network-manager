@@ -4,6 +4,7 @@ int main (string[] args) {
     bool status = false;
     bool toggle_wifi = false;
     bool daemon_mode = false;
+    bool quit_mode = false;
 
     configure_global_logging (AppLogLevel.INFO);
 
@@ -13,6 +14,7 @@ int main (string[] args) {
         {"toggle-wifi", 0, 0, OptionArg.NONE, ref toggle_wifi, "Toggle Wi-Fi and exit", null},
         {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, "Override log level to debug", null},
         {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, "Run as a background daemon", null},
+        {"quit", 'q', 0, OptionArg.NONE, ref quit_mode, "Quit the running daemon", null},
         {null}
     };
 
@@ -103,7 +105,42 @@ int main (string[] args) {
         return 0;
     }
 
-    if (!daemon_mode && !status && !toggle_wifi) {
+    if (quit_mode) {
+        log_info ("cli", "mode_select: quit mode");
+        try {
+            var conn = Bus.get_sync (BusType.SESSION);
+            
+            var builder = new VariantBuilder (new VariantType ("(sava{sv})"));
+            builder.add ("s", "quit");
+            
+            // parameter_array (av)
+            builder.open (new VariantType ("av"));
+            builder.close ();
+            
+            // platform_data (a{sv})
+            builder.open (new VariantType ("a{sv}"));
+            builder.close ();
+
+            var msg = new DBusMessage.method_call (
+                "yeab212.hypr-network-manager",
+                "/yeab212/hypr_network_manager",
+                "org.freedesktop.Application",
+                "ActivateAction"
+            );
+            msg.set_body (builder.end ());
+
+            conn.send_message_with_reply_sync (msg, DBusSendMessageFlags.NONE, -1);
+            log_info ("cli", "Sent quit signal to daemon");
+            stdout.printf ("Terminating daemon.\n");
+        } catch (Error e) {
+            log_error ("cli", "Failed to send quit signal: " + e.message);
+            stdout.printf ("Failed to send quit signal: %s\n", e.message);
+            return 1;
+        }
+        return 0;
+    }
+
+    if (!daemon_mode && !status && !toggle_wifi && !quit_mode) {
         bool daemon_running = false;
         try {
             var conn = Bus.get_sync (BusType.SESSION);
