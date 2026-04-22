@@ -18,9 +18,8 @@ private extern void blank_window_style_provider_add_for_display (
 public class BlankWindow : Gtk.ApplicationWindow {
     private Gtk.Box click_surface;
     private Gtk.GestureClick blank_window_gesture;
-    private Gtk.GestureClick window_gesture;
 
-    public BlankWindow (NetworkManager app, Gdk.Monitor monitor) {
+    public BlankWindow (NetworkManager app, Gdk.Monitor monitor, GtkLayerShell.Layer layer) {
         Object (application: app, css_name: "blankwindow");
 
         Gdk.Rectangle monitor_geometry = monitor.get_geometry ();
@@ -40,31 +39,20 @@ public class BlankWindow : Gtk.ApplicationWindow {
         set_child (click_surface);
 
         blank_window_gesture = new Gtk.GestureClick ();
-        click_surface.add_controller (blank_window_gesture);
-        window_gesture = new Gtk.GestureClick ();
-        ((Gtk.Widget) this).add_controller (window_gesture);
+        ((Gtk.Widget) this).add_controller (blank_window_gesture);
 
         blank_window_gesture.touch_only = false;
-        blank_window_gesture.exclusive = false;
-        blank_window_gesture.button = 0;
-        blank_window_gesture.propagation_phase = Gtk.PropagationPhase.TARGET;
-
-        window_gesture.touch_only = false;
-        window_gesture.exclusive = false;
-        window_gesture.button = 0;
-        window_gesture.propagation_phase = Gtk.PropagationPhase.CAPTURE;
+        blank_window_gesture.exclusive = true;
+        blank_window_gesture.button = Gdk.BUTTON_PRIMARY;
+        blank_window_gesture.propagation_phase = Gtk.PropagationPhase.BUBBLE;
 
         blank_window_gesture.pressed.connect ((n_press, x, y) => {
             app.request_close ();
         });
 
-        window_gesture.pressed.connect ((n_press, x, y) => {
-            app.request_close ();
-        });
-
         GtkLayerShell.init_for_window (this);
         GtkLayerShell.set_namespace (this, "hypr-network-manager-dismiss");
-        GtkLayerShell.set_layer (this, GtkLayerShell.Layer.TOP);
+        GtkLayerShell.set_layer (this, layer);
         GtkLayerShell.set_monitor (this, monitor);
         GtkLayerShell.set_anchor (this, GtkLayerShell.Edge.TOP, true);
         GtkLayerShell.set_anchor (this, GtkLayerShell.Edge.RIGHT, true);
@@ -97,14 +85,13 @@ public class BlankWindow : Gtk.ApplicationWindow {
     }
 
     protected override void snapshot (Gtk.Snapshot snapshot) {
-        int w = this.get_width ();
-        int h = this.get_height ();
-        if (w <= 0 || h <= 0) {
-            w = 1;
-            h = 1;
-        }
-
-        Gdk.RGBA color = Gdk.RGBA () { red = 0, green = 0, blue = 0, alpha = 0.0004f };
-        snapshot.append_color (color, Graphene.Rect ().init (0, 0, (float) w, (float) h));
+        Gdk.RGBA color = Gdk.RGBA () {
+            red = 0,
+            green = 0,
+            blue = 0,
+            alpha = 0,
+        };
+        snapshot.append_color (color, Graphene.Rect.zero ());
+        base.snapshot (snapshot);
     }
 }

@@ -142,7 +142,7 @@ public class NetworkManager : Gtk.Application {
             return;
         }
 
-        dismiss_overlay = new BlankWindow (this, monitor);
+        dismiss_overlay = new BlankWindow (this, monitor, window.current_layer_mode);
         dismiss_overlay.present ();
     }
 
