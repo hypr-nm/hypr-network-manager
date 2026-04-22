@@ -255,6 +255,24 @@ menubutton.nm-tabs-menu-button > button:checked:focus-visible:not(:hover) {
   background: transparent;
 }
 
+button.nm-refresh-button:disabled,
+.nm-refresh-button:disabled,
+.nm-toolbar .nm-refresh-button:disabled,
+button.nm-refresh-button:disabled:hover,
+.nm-refresh-button:disabled:hover,
+.nm-toolbar .nm-refresh-button:disabled:hover {
+  color: alpha(@on_surface_variant, .48);
+  border-color: transparent;
+  background: transparent;
+}
+
+button.nm-refresh-button:disabled label,
+.nm-refresh-button:disabled label,
+.nm-toolbar .nm-refresh-button:disabled label {
+  color: alpha(@on_surface_variant, .48);
+  opacity: 0.62;
+}
+
 /* Keep outer GtkMenuButton surface transparent so only one hover bubble is shown. */
 menubutton.nm-tabs-menu-button,
 menubutton.nm-tabs-menu-button:hover,
