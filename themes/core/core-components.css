@@ -240,6 +240,15 @@ menubutton.nm-tabs-menu-button > button:checked:active {
   background: alpha(@primary, .18);
 }
 
+menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button:active:not(:hover),
+menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button.toggle:active:not(:hover),
+menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button:checked:active:not(:hover),
+menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button:checked:not(:hover) {
+  color: @on_surface_variant;
+  border-color: transparent;
+  background: transparent;
+}
+
 .nm-toolbar .nm-icon-button:focus:not(:hover),
 .nm-toolbar .nm-icon-button:focus-visible:not(:hover),
 .nm-toolbar .nm-toolbar-action:focus:not(:hover),
@@ -253,6 +262,17 @@ menubutton.nm-tabs-menu-button > button:checked:focus-visible:not(:hover) {
   color: @on_surface_variant;
   border-color: transparent;
   background: transparent;
+}
+
+menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button,
+menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button.toggle,
+menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:checked,
+menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:active,
+menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:focus:not(:hover),
+menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:focus-visible:not(:hover) {
+  color: @primary;
+  border-color: transparent;
+  background: alpha(@primary, .15);
 }
 
 button.nm-refresh-button:disabled,
