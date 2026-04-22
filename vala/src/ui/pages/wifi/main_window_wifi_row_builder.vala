@@ -83,15 +83,6 @@ namespace MainWindowWifiRowBuilder {
 
         info.append (ssid_row);
 
-        if (error_message != null) {
-            var err = new Gtk.Label (error_message);
-            err.set_xalign (0.0f);
-            err.set_wrap (true);
-            err.add_css_class (MainWindowCssClasses.ERROR_LABEL);
-            err.add_css_class (MainWindowCssClasses.ROW_ERROR_LABEL);
-            info.append (err);
-        }
-
         bool is_saved_only = net.saved && net.ap_path.has_prefix ("saved:");
         string subtitle;
         if (is_saved_only) {
@@ -112,9 +103,17 @@ namespace MainWindowWifiRowBuilder {
             }
         }
 
-        var sub = new Gtk.Label (subtitle);
+        string secondary_text = error_message != null ? error_message : subtitle;
+        var sub = new Gtk.Label (secondary_text);
         sub.set_xalign (0.0f);
-        sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
+        sub.set_ellipsize (Pango.EllipsizeMode.END);
+        if (error_message != null) {
+            sub.set_tooltip_text (error_message);
+            sub.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+            sub.add_css_class (MainWindowCssClasses.ROW_ERROR_LABEL);
+        } else {
+            sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
+        }
         info.append (sub);
 
         return info;
