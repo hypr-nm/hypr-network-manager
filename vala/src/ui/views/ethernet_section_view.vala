@@ -8,6 +8,7 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Widget widget { get; private set; }
         public Gtk.Stack stack { get; private set; }
         public Gtk.ListBox listbox { get; private set; }
+        public Gtk.Button refresh_button { get; private set; }
 
         private MainWindowEthernetController controller;
         private MainWindowEthernetEditPage ethernet_edit_page;
@@ -37,9 +38,11 @@ namespace HyprNetworkManager.UI.Views {
 
             Gtk.ListBox ethernet_listbox;
             Gtk.Stack ethernet_stack_local;
+            Gtk.Button ethernet_refresh_button;
             var page = MainWindowEthernetPageBuilder.build_page (
                 out ethernet_listbox,
                 out ethernet_stack_local,
+                out ethernet_refresh_button,
                 ethernet_details_page,
                 this.ethernet_edit_page,
                 controller
@@ -47,6 +50,7 @@ namespace HyprNetworkManager.UI.Views {
 
             this.listbox = ethernet_listbox;
             this.stack = ethernet_stack_local;
+            this.refresh_button = ethernet_refresh_button;
             this.widget = page;
 
             var ethernet_view_context = new MainWindowEthernetViewContext (
@@ -64,6 +68,11 @@ namespace HyprNetworkManager.UI.Views {
             if (stack != null) {
                 stack.set_visible_child_name ("list");
             }
+        }
+
+        public void set_refresh_button_enabled (bool enabled, string tooltip_text) {
+            refresh_button.set_sensitive (enabled);
+            refresh_button.set_tooltip_text (tooltip_text);
         }
 
         public void show_edit_error (string message) {

@@ -44,6 +44,7 @@ namespace MainWindowWifiPageBuilder {
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
+        refresh_btn.set_tooltip_text ("Refresh Wi-Fi networks");
         MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
         toolbar.append (refresh_btn);

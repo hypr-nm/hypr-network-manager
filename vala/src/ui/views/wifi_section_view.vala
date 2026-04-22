@@ -11,6 +11,7 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Stack stack { get; private set; }
         public Gtk.ListBox listbox { get; private set; }
         public Gtk.Switch wifi_switch { get; private set; }
+        public Gtk.Button refresh_button { get; private set; }
 
         private NetworkManagerClient nm;
         private MainWindowWifiController controller;
@@ -81,6 +82,7 @@ namespace HyprNetworkManager.UI.Views {
             );
 
             this.wifi_switch = local_wifi_switch;
+            this.refresh_button = local_refresh_button;
             this.listbox = local_wifi_listbox;
             this.stack = local_wifi_stack;
             this.widget = page;
@@ -105,6 +107,11 @@ namespace HyprNetworkManager.UI.Views {
 
         public void request_refresh (bool request_wifi_scan) {
             refresh_requested ();
+        }
+
+        public void set_refresh_button_enabled (bool enabled, string tooltip_text) {
+            refresh_button.set_sensitive (enabled);
+            refresh_button.set_tooltip_text (tooltip_text);
         }
 
         private void wire_details_page_signals () {
