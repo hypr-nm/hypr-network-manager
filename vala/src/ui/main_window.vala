@@ -24,6 +24,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private MainWindowRefreshCoordinator refresh_coordinator;
     private MainWindowEthernetController ethernet_controller;
     private MainWindowVpnController vpn_controller;
+    private MainWindowFlightModeController flight_mode_controller;
     private HyprNetworkManager.UI.Views.VpnSectionView vpn_section;
     private Gtk.Stack content_stack;
     private Gtk.Notebook notebook;
@@ -64,6 +65,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             this,
             state_context
         );
+        flight_mode_controller = new MainWindowFlightModeController (this);
         refresh_coordinator = new MainWindowRefreshCoordinator (
             nm,
             wifi_controller,
@@ -294,14 +296,17 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     public void refresh_switch_states () {
-        if (wifi_section == null || status_bar_view == null || flight_mode_button == null) {
+        if (wifi_section == null || status_bar_view == null) {
             return;
         }
 
         refresh_coordinator.refresh_switch_states (
-            wifi_section.wifi_switch,
-            flight_mode_button
+            wifi_section.wifi_switch
         );
+
+        if (flight_mode_button != null) {
+            flight_mode_controller.refresh_flight_mode_state (nm, flight_mode_button);
+        }
     }
 
     private void on_flight_mode_clicked () {
@@ -309,7 +314,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             return;
         }
 
-        wifi_controller.on_flight_mode_toggle_requested (
+        flight_mode_controller.toggle_flight_mode (
             nm,
             flight_mode_button
         );
@@ -545,6 +550,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         wifi_controller.dispose_controller ();
         ethernet_controller.dispose_controller ();
         vpn_controller.dispose_controller ();
+        flight_mode_controller.dispose_controller ();
     }
 
     ~MainWindow () {
