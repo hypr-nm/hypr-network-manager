@@ -472,7 +472,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
-            {MainWindowCssClasses.POPOVER_LIST_INSET, MainWindowCssClasses.ROW_CONTENT_INSET}
+            {MainWindowCssClasses.POPOVER_LIST_INSET}
         );
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
@@ -481,6 +481,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
         saved_profiles_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
+        var sp_label = saved_profiles_item.get_child () as Gtk.Label;
+        if (sp_label != null) sp_label.set_halign (Gtk.Align.START);
+        
         saved_profiles_item.clicked.connect (() => {
             tabs_menu_popover.popdown ();
             profiles_section.open_profiles_page (false);
@@ -489,6 +492,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         flight_mode_button = new Gtk.Button.with_label ("Turn on flight mode");
         flight_mode_button.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
+        var fm_label = flight_mode_button.get_child () as Gtk.Label;
+        if (fm_label != null) fm_label.set_halign (Gtk.Align.START);
+
         flight_mode_button.clicked.connect (() => {
             tabs_menu_popover.popdown ();
             on_flight_mode_clicked ();
