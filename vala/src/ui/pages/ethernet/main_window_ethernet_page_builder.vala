@@ -1,6 +1,28 @@
 using Gtk;
 
 namespace MainWindowEthernetPageBuilder {
+    private Gtk.Widget build_placeholder (MainWindowIconResources.NetworkPlaceholderIcon icon_type, string label_text) {
+        var placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+        placeholder.set_halign (Gtk.Align.CENTER);
+        placeholder.set_valign (Gtk.Align.CENTER);
+        placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
+
+        var icon = MainWindowIconResources.create_network_placeholder_icon (icon_type);
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_24,
+            MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (
+            icon,
+            {MainWindowCssClasses.ETHERNET_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
+        );
+
+        var label = new Gtk.Label (label_text);
+        label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
+
+        placeholder.append (icon);
+        placeholder.append (label);
+        return placeholder;
+    }
+
     public Gtk.Widget build_page (
         out Gtk.ListBox ethernet_listbox,
         out Gtk.Stack ethernet_stack,
@@ -51,29 +73,26 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_listbox.add_css_class (MainWindowCssClasses.LIST);
         scroll.set_child (ethernet_listbox);
 
-        var ethernet_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        ethernet_placeholder.set_halign (Gtk.Align.CENTER);
-        ethernet_placeholder.set_valign (Gtk.Align.CENTER);
-        ethernet_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
-        var eth_icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
-        MainWindowCssClassResolver.add_best_class (eth_icon, {MainWindowCssClasses.ICON_SIZE_24,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (
-            eth_icon,
-            {MainWindowCssClasses.ETHERNET_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
-        );
-        var eth_lbl = new Gtk.Label ("No Ethernet devices found");
-        eth_lbl.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
-        ethernet_placeholder.append (eth_icon);
-        ethernet_placeholder.append (eth_lbl);
-
         ethernet_stack = new Gtk.Stack ();
         ethernet_stack.set_vexpand (true);
         ethernet_stack.add_css_class (MainWindowCssClasses.CONTENT_STACK);
         ethernet_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
         ethernet_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
         ethernet_stack.add_named (scroll, "list");
-        ethernet_stack.add_named (ethernet_placeholder, "empty");
+        ethernet_stack.add_named (
+            build_placeholder (
+                MainWindowIconResources.NetworkPlaceholderIcon.ETHERNET_EMPTY,
+                "No Ethernet devices found"
+            ),
+            "empty"
+        );
+        ethernet_stack.add_named (
+            build_placeholder (
+                MainWindowIconResources.NetworkPlaceholderIcon.FLIGHT_MODE,
+                "Flight mode is on"
+            ),
+            "flight-mode"
+        );
         ethernet_stack.add_named (details_page, "details");
         ethernet_stack.add_named (edit_page, "edit");
         ethernet_stack.set_visible_child_name ("empty");
@@ -81,12 +100,13 @@ namespace MainWindowEthernetPageBuilder {
 
         ethernet_stack_ref.notify["visible-child-name"].connect (() => {
             string page_name = ethernet_stack_ref.get_visible_child_name ();
-            bool show_toolbar = page_name == "list" || page_name == "empty";
+            bool show_toolbar = page_name == "list" || page_name == "empty" || page_name == "flight-mode";
             toolbar.set_visible (show_toolbar);
         });
 
         string initial_page_name = ethernet_stack_ref.get_visible_child_name ();
-        bool show_toolbar_initial = initial_page_name == "list" || initial_page_name == "empty";
+        bool show_toolbar_initial = initial_page_name == "list" || initial_page_name == "empty"
+            || initial_page_name == "flight-mode";
         toolbar.set_visible (show_toolbar_initial);
 
         page.append (ethernet_stack);

@@ -1,6 +1,28 @@
 using Gtk;
 
 namespace MainWindowWifiPageBuilder {
+    private Gtk.Widget build_placeholder (MainWindowIconResources.NetworkPlaceholderIcon icon_type, string label_text) {
+        var placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+        placeholder.set_halign (Gtk.Align.CENTER);
+        placeholder.set_valign (Gtk.Align.CENTER);
+        placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
+
+        var icon = MainWindowIconResources.create_network_placeholder_icon (icon_type);
+        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_24,
+            MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (
+            icon,
+            {MainWindowCssClasses.WIFI_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
+        );
+
+        var label = new Gtk.Label (label_text);
+        label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
+
+        placeholder.append (icon);
+        placeholder.append (label);
+        return placeholder;
+    }
+
     public Gtk.Widget build_page (
         out Gtk.Switch wifi_switch,
         out Gtk.ListBox wifi_listbox,
@@ -72,29 +94,33 @@ namespace MainWindowWifiPageBuilder {
         });
         scroll.set_child (wifi_listbox);
 
-        var wifi_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        wifi_placeholder.set_halign (Gtk.Align.CENTER);
-        wifi_placeholder.set_valign (Gtk.Align.CENTER);
-        wifi_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
-        var ph_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-        MainWindowCssClassResolver.add_best_class (ph_icon, {MainWindowCssClasses.ICON_SIZE_24,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (
-            ph_icon,
-            {MainWindowCssClasses.WIFI_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
-        );
-        var ph_lbl = new Gtk.Label ("No networks found");
-        ph_lbl.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
-        wifi_placeholder.append (ph_icon);
-        wifi_placeholder.append (ph_lbl);
-
         wifi_stack = new Gtk.Stack ();
         wifi_stack.set_vexpand (true);
         wifi_stack.add_css_class (MainWindowCssClasses.CONTENT_STACK);
         wifi_stack.set_transition_type (Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
         wifi_stack.set_transition_duration (MainWindowUiMetrics.TRANSITION_STACK_MS);
         wifi_stack.add_named (scroll, "list");
-        wifi_stack.add_named (wifi_placeholder, "empty");
+        wifi_stack.add_named (
+            build_placeholder (
+                MainWindowIconResources.NetworkPlaceholderIcon.WIFI_EMPTY,
+                "No Wi-Fi networks found"
+            ),
+            "empty"
+        );
+        wifi_stack.add_named (
+            build_placeholder (
+                MainWindowIconResources.NetworkPlaceholderIcon.WIFI_DISABLED,
+                "Wi-Fi is disabled"
+            ),
+            "wifi-disabled"
+        );
+        wifi_stack.add_named (
+            build_placeholder (
+                MainWindowIconResources.NetworkPlaceholderIcon.FLIGHT_MODE,
+                "Flight mode is on"
+            ),
+            "flight-mode"
+        );
         wifi_stack.add_named (details_page, "details");
         wifi_stack.add_named (edit_page, "edit");
         wifi_stack.add_named (add_page, "add");
@@ -103,12 +129,14 @@ namespace MainWindowWifiPageBuilder {
 
         wifi_stack_ref.notify["visible-child-name"].connect (() => {
             string page_name = wifi_stack_ref.get_visible_child_name ();
-            bool show_toolbar = page_name == "list" || page_name == "empty";
+            bool show_toolbar = page_name == "list" || page_name == "empty" || page_name == "wifi-disabled"
+                || page_name == "flight-mode";
             toolbar.set_visible (show_toolbar);
         });
 
         string initial_page_name = wifi_stack_ref.get_visible_child_name ();
-        bool show_toolbar_initial = initial_page_name == "list" || initial_page_name == "empty";
+        bool show_toolbar_initial = initial_page_name == "list" || initial_page_name == "empty"
+            || initial_page_name == "wifi-disabled" || initial_page_name == "flight-mode";
         toolbar.set_visible (show_toolbar_initial);
 
         page.append (wifi_stack);
