@@ -36,6 +36,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private Gtk.Label global_error_label;
     private Gtk.Revealer global_error_revealer;
     private Gtk.Button flight_mode_button;
+    private bool flight_mode_active = false;
 
     public MainWindow (
         Gtk.Application app,
@@ -309,6 +310,31 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         }
     }
 
+    private void update_refresh_button_availability () {
+        if (wifi_section != null) {
+            bool wifi_enabled = wifi_section.wifi_switch.get_active ();
+            bool wifi_refresh_enabled = wifi_enabled && !flight_mode_active;
+            string wifi_tooltip = "Refresh Wi-Fi networks";
+
+            if (flight_mode_active) {
+                wifi_tooltip = "Refresh unavailable while flight mode is on";
+            } else if (!wifi_enabled) {
+                wifi_tooltip = "Refresh unavailable while Wi-Fi is off";
+            }
+
+            wifi_section.set_refresh_button_enabled (wifi_refresh_enabled, wifi_tooltip);
+        }
+
+        if (ethernet_section != null) {
+            bool ethernet_refresh_enabled = !flight_mode_active;
+            string ethernet_tooltip = ethernet_refresh_enabled
+                ? "Refresh Ethernet devices"
+                : "Refresh unavailable while flight mode is on";
+
+            ethernet_section.set_refresh_button_enabled (ethernet_refresh_enabled, ethernet_tooltip);
+        }
+    }
+
     private void on_flight_mode_clicked () {
         if (flight_mode_button == null) {
             return;
@@ -403,6 +429,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         });
         wifi_section.refresh_switch_states_requested.connect (() => {
             refresh_switch_states ();
+        });
+        wifi_section.wifi_switch.notify["active"].connect (() => {
+            update_refresh_button_availability ();
         });
 
         profiles_section = new HyprNetworkManager.UI.Views.SavedProfilesView (
@@ -547,11 +576,14 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         root.append (content_stack);
 
         flight_mode_controller.flight_mode_state_changed.connect ((is_flight_mode) => {
+            flight_mode_active = is_flight_mode;
             if (flight_mode_button != null) {
                 flight_mode_button.set_label (is_flight_mode ? "Turn off flight mode" : "Turn on flight mode");
             }
+            update_refresh_button_availability ();
         });
 
+        update_refresh_button_availability ();
         update_main_chrome_visibility (nav_manager.is_focus_mode_active ());
     }
 

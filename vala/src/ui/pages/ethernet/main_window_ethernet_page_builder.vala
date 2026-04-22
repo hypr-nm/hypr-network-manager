@@ -4,6 +4,7 @@ namespace MainWindowEthernetPageBuilder {
     public Gtk.Widget build_page (
         out Gtk.ListBox ethernet_listbox,
         out Gtk.Stack ethernet_stack,
+        out Gtk.Button refresh_button,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
         MainWindowEthernetController controller
@@ -30,12 +31,14 @@ namespace MainWindowEthernetPageBuilder {
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
+        refresh_btn.set_tooltip_text ("Refresh Ethernet devices");
         MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
         refresh_btn.clicked.connect (() => {
             controller.refresh ();
         });
         toolbar.append (refresh_btn);
+        refresh_button = refresh_btn;
 
         page.append (toolbar);
 
