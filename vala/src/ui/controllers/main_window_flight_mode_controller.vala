@@ -6,9 +6,11 @@ public class MainWindowFlightModeController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private bool updating = false;
+    private NetworkManagerClient nm;
     private IWindowHost host;
 
-    public MainWindowFlightModeController (IWindowHost host) {
+    public MainWindowFlightModeController (NetworkManagerClient nm, IWindowHost host) {
+        this.nm = nm;
         this.host = host;
     }
 
@@ -41,7 +43,6 @@ public class MainWindowFlightModeController : Object {
     }
 
     public void refresh_flight_mode_state (
-        NetworkManagerClient nm,
         Gtk.Button flight_mode_button
     ) {
         uint epoch = capture_ui_epoch ();
@@ -68,7 +69,6 @@ public class MainWindowFlightModeController : Object {
     }
 
     public void toggle_flight_mode (
-        NetworkManagerClient nm,
         Gtk.Button flight_mode_button
     ) {
         if (updating) {
