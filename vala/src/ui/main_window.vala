@@ -34,6 +34,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private Gtk.Label global_error_label;
     private Gtk.Revealer global_error_revealer;
+    private Gtk.Button flight_mode_button;
 
     public MainWindow (
         Gtk.Application app,
@@ -245,6 +246,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         }
         refresh_ethernet_section ();
         refresh_vpn_section ();
+        refresh_switch_states ();
     }
 
     public void prepare_for_presentation () {
@@ -292,24 +294,24 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     public void refresh_switch_states () {
-        if (wifi_section == null || status_bar_view == null) {
+        if (wifi_section == null || status_bar_view == null || flight_mode_button == null) {
             return;
         }
 
         refresh_coordinator.refresh_switch_states (
             wifi_section.wifi_switch,
-            status_bar_view.networking_switch
+            flight_mode_button
         );
     }
 
-    private void on_networking_switch_changed () {
-        if (status_bar_view == null) {
+    private void on_flight_mode_clicked () {
+        if (flight_mode_button == null) {
             return;
         }
 
-        wifi_controller.on_networking_switch_changed (
+        wifi_controller.on_flight_mode_toggle_requested (
             nm,
-            status_bar_view.networking_switch
+            flight_mode_button
         );
     }
 
@@ -370,9 +372,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private void build_status_chrome (Gtk.Box root) {
         status_bar_view = new HyprNetworkManager.UI.Views.StatusBarView ();
-        status_bar_view.networking_switch_toggled.connect (() => {
-            on_networking_switch_changed ();
-        });
         root.append (status_bar_view.root_widget);
 
         status_separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
@@ -484,6 +483,15 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             profiles_section.open_profiles_page (false);
         });
         tabs_menu_box.append (saved_profiles_item);
+
+        flight_mode_button = new Gtk.Button.with_label ("Turn on flight mode");
+        flight_mode_button.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
+        flight_mode_button.clicked.connect (() => {
+            tabs_menu_popover.popdown ();
+            on_flight_mode_clicked ();
+        });
+        tabs_menu_box.append (flight_mode_button);
+
         tabs_menu_popover.set_child (tabs_menu_box);
 
         var tabs_menu_button = new Gtk.MenuButton ();

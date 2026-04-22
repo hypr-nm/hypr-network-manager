@@ -4,9 +4,6 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Box root_widget { get; private set; }
         public Gtk.Label status_label { get; private set; }
         public Gtk.Image status_icon { get; private set; }
-        public Gtk.Switch networking_switch { get; private set; }
-
-        public signal void networking_switch_toggled ();
 
         public StatusBarView () {
             build_ui ();
@@ -31,21 +28,6 @@ namespace HyprNetworkManager.UI.Views {
             status_label.set_hexpand (true);
             status_label.add_css_class (MainWindowCssClasses.STATUS_LABEL);
             root_widget.append (status_label);
-
-            var switch_label = new Gtk.Label ("Networking");
-            switch_label.add_css_class (MainWindowCssClasses.TOGGLE_LABEL);
-            networking_switch = new Gtk.Switch ();
-            networking_switch.add_css_class (MainWindowCssClasses.SWITCH);
-            networking_switch.set_valign (Gtk.Align.CENTER);
-
-            networking_switch.notify["active"].connect (() => {
-                networking_switch_toggled ();
-            });
-
-            var switch_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_COMPACT);
-            switch_box.append (switch_label);
-            switch_box.append (networking_switch);
-            root_widget.append (switch_box);
         }
     }
 }

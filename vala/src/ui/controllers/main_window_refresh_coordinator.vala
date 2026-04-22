@@ -63,11 +63,11 @@ public class MainWindowRefreshCoordinator : Object {
         );
     }
 
-    public void refresh_switch_states (Gtk.Switch wifi_switch, Gtk.Switch networking_switch) {
+    public void refresh_switch_states (Gtk.Switch wifi_switch, Gtk.Button networking_button) {
         wifi_controller.refresh_switch_states (
             nm,
             wifi_switch,
-            networking_switch
+            networking_button
         );
     }
 

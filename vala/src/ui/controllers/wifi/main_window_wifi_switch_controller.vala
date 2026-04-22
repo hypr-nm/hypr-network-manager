@@ -48,7 +48,7 @@ public class MainWindowWifiSwitchController : Object {
     public void refresh_switch_states (
         NetworkManagerClient nm,
         Gtk.Switch wifi_switch,
-        Gtk.Switch networking_switch
+        Gtk.Button networking_button
     ) {
         uint epoch = capture_ui_epoch ();
         uint refresh_epoch = switch_refresh_epoch + 1;
@@ -74,7 +74,9 @@ public class MainWindowWifiSwitchController : Object {
                 try {
                     bool net_enabled = nm.get_networking_enabled_dbus.end (net_res);
                     if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
-                        networking_switch.set_active (net_enabled);
+                        networking_button.set_label (
+                            net_enabled ? "Turn on flight mode" : "Turn off flight mode"
+                        );
                     }
                 } catch (Error e) {
                     if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
@@ -118,24 +120,25 @@ public class MainWindowWifiSwitchController : Object {
         });
     }
 
-    public void on_networking_switch_changed (
+    public void on_flight_mode_toggle_requested (
         NetworkManagerClient nm,
-        Gtk.Switch networking_switch
+        Gtk.Button networking_button
     ) {
         if (updating_switches) {
             return;
         }
 
         uint epoch = capture_ui_epoch ();
-        bool enabled = networking_switch.get_active ();
+        bool currently_enabled = networking_button.get_label () == "Turn on flight mode";
+        bool target_enabled = !currently_enabled;
 
-        nm.set_networking_enabled.begin (enabled, null, (obj, res) => {
+        nm.set_networking_enabled.begin (target_enabled, null, (obj, res) => {
             try {
                 nm.set_networking_enabled.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                host.refresh_after_action (enabled);
+                host.refresh_after_action (target_enabled);
             } catch (Error e) {
                 string message = e.message;
                 if (!is_ui_epoch_valid (epoch)) {
