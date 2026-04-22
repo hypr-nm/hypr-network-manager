@@ -216,13 +216,11 @@ public class MainWindowWifiController : Object {
 
     public void refresh_switch_states (
         NetworkManagerClient nm,
-        Gtk.Switch wifi_switch,
-        Gtk.Button networking_button
+        Gtk.Switch wifi_switch
     ) {
         switch_controller.refresh_switch_states (
             nm,
-            wifi_switch,
-            networking_button
+            wifi_switch
         );
     }
 
@@ -233,16 +231,6 @@ public class MainWindowWifiController : Object {
         switch_controller.on_wifi_switch_changed (
             nm,
             wifi_switch
-        );
-    }
-
-    public void on_flight_mode_toggle_requested (
-        NetworkManagerClient nm,
-        Gtk.Button networking_button
-    ) {
-        switch_controller.on_flight_mode_toggle_requested (
-            nm,
-            networking_button
         );
     }
 
