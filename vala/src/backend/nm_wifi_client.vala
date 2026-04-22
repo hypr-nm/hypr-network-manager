@@ -540,9 +540,33 @@ public class NmWifiClient : GLib.Object {
         return true;
     }
 
+    private void apply_connection_autoconnect (
+        NM.Connection conn,
+        string ssid,
+        bool autoconnect
+    ) {
+        var s_conn = conn.get_setting_connection ();
+        if (s_conn == null) {
+            s_conn = new NM.SettingConnection ();
+            conn.add_setting (s_conn);
+        }
+
+        if (s_conn.id == null || s_conn.id.strip () == "") {
+            s_conn.id = ssid;
+        }
+        if (s_conn.type == null || s_conn.type.strip () == "") {
+            s_conn.type = "802-11-wireless";
+        }
+        if (s_conn.uuid == null || s_conn.uuid.strip () == "") {
+            s_conn.uuid = NM.Utils.uuid_generate ();
+        }
+        s_conn.autoconnect = autoconnect;
+    }
+
     public new async bool connect (
         WifiNetwork network,
         string? password,
+        bool autoconnect = true,
         Cancellable? cancellable = null
     ) throws Error {
         var client = core.nm_client;
@@ -567,6 +591,7 @@ public class NmWifiClient : GLib.Object {
         if (network.saved && network.saved_connection_uuid != "") {
             var existing_conn = client.get_connection_by_uuid (network.saved_connection_uuid);
             if (existing_conn != null) {
+                apply_connection_autoconnect (existing_conn, network.ssid, autoconnect);
                 if (password != null && password != "") {
                     var s_sec = existing_conn.get_setting_wireless_security ();
                     if (s_sec == null) {
@@ -574,9 +599,9 @@ public class NmWifiClient : GLib.Object {
                         existing_conn.add_setting (s_sec);
                     }
                     s_sec.psk = password;
-                    if (existing_conn is NM.RemoteConnection) {
-                        yield ((NM.RemoteConnection)existing_conn).commit_changes_async (true, cancellable);
-                    }
+                }
+                if (existing_conn is NM.RemoteConnection) {
+                    yield ((NM.RemoteConnection)existing_conn).commit_changes_async (true, cancellable);
                 }
                 string? specific_object = (NmWifiUtils.is_valid_specific_object (network.ap_path)
                  ? network.ap_path : null);
@@ -638,6 +663,13 @@ public class NmWifiClient : GLib.Object {
             partial = NmWifiUtils.create_hidden_wifi_connection (network.ssid, password, mode);
         }
 
+        if (partial != null || !autoconnect) {
+            if (partial == null) {
+                partial = (NM.SimpleConnection) NM.SimpleConnection.@new ();
+            }
+            apply_connection_autoconnect (partial, network.ssid, autoconnect);
+        }
+
         yield client.add_and_activate_connection_async (partial, dev, specific_object, cancellable);
 
         log_info (
@@ -655,9 +687,10 @@ public class NmWifiClient : GLib.Object {
     public async bool connect_with_password (
         WifiNetwork network,
         string password,
+        bool autoconnect = true,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield connect (network, password, cancellable);
+        return yield connect (network, password, autoconnect, cancellable);
     }
 
     public async bool connect_hidden_network (
