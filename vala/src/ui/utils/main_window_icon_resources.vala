@@ -7,6 +7,10 @@ namespace MainWindowIconResources {
     private const string ICON_PASSWORD_VISIBLE = "view-visible-off-symbolic";
     private const string ICON_COLLAPSED = "expand-element-symbolic";
     private const string ICON_EXPANDED = "collapse-element-symbolic";
+    private const string ICON_AIRPLANE = "network-flightmode-on-symbolic";
+    private const string ICON_WIFI_EMPTY = "network-wireless-offline-symbolic";
+    private const string ICON_WIFI_DISABLED = "network-wireless-disabled-symbolic";
+    private const string ICON_ETHERNET_EMPTY = "network-ethernet-offline-symbolic";
 
     private const string RESOURCE_PASSWORD_HIDDEN = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg";
     private const string RESOURCE_PASSWORD_VISIBLE = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg";
@@ -15,6 +19,11 @@ namespace MainWindowIconResources {
     private const string FALLBACK_PASSWORD_VISIBLE = "view-conceal-symbolic";
     private const string FALLBACK_COLLAPSED = "pan-up-symbolic";
     private const string FALLBACK_EXPANDED = "pan-down-symbolic";
+    private const string FALLBACK_AIRPLANE = "airplane-mode";
+    private const string FALLBACK_WIFI_EMPTY = "network-wireless-offline";
+    private const string FALLBACK_WIFI_DISABLED = "network-wireless-disabled";
+    private const string FALLBACK_ETHERNET_EMPTY = "network-ethernet-offline";
+
 
     public enum NetworkPlaceholderIcon {
         WIFI_EMPTY,
@@ -110,24 +119,27 @@ namespace MainWindowIconResources {
     }
 
     public Gtk.Image create_network_placeholder_icon (NetworkPlaceholderIcon icon_type) {
+        // Explicitly define arrays to ensure Vala passes them correctly to GIO
+        string[] wifi_empty = {ICON_WIFI_EMPTY, FALLBACK_WIFI_EMPTY};
+        string[] wifi_disabled = {ICON_WIFI_DISABLED, FALLBACK_WIFI_DISABLED};
+        string[] ethernet_empty = {ICON_ETHERNET_EMPTY, FALLBACK_ETHERNET_EMPTY};
+        string[] flight_mode = { ICON_AIRPLANE, FALLBACK_AIRPLANE };
+
         switch (icon_type) {
         case NetworkPlaceholderIcon.WIFI_EMPTY:
-            return new Gtk.Image.from_gicon (
-                new ThemedIcon.from_names ({"network-wireless-offline-symbolic", "network-offline-symbolic"})
-            );
+            return new Gtk.Image.from_gicon (new ThemedIcon.from_names (wifi_empty));
+            
         case NetworkPlaceholderIcon.WIFI_DISABLED:
-            return new Gtk.Image.from_gicon (
-                new ThemedIcon.from_names ({"network-wireless-disabled-symbolic", "network-offline-symbolic"})
-            );
+            return new Gtk.Image.from_gicon (new ThemedIcon.from_names (wifi_disabled));
+            
         case NetworkPlaceholderIcon.ETHERNET_EMPTY:
-            return new Gtk.Image.from_gicon (
-                new ThemedIcon.from_names ({"network-wired-symbolic", "network-offline-symbolic"})
-            );
+            return new Gtk.Image.from_gicon (new ThemedIcon.from_names (ethernet_empty));
+            
         case NetworkPlaceholderIcon.FLIGHT_MODE:
         default:
-            return new Gtk.Image.from_gicon (
-                new ThemedIcon.from_names ({"airplane-mode-symbolic", "network-offline-symbolic"})
-            );
+            // This ensures the ThemedIcon logic prioritizes your list
+            var icon = new ThemedIcon.from_names (flight_mode);
+            return new Gtk.Image.from_gicon (icon);
         }
     }
 }
