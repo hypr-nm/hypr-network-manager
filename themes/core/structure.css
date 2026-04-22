@@ -35,8 +35,8 @@
 .nm-popover-list-inset {
   margin-top: 6px;
   margin-bottom: 6px;
-  margin-left: 6px;
-  margin-right: 6px;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .nm-icon-size {

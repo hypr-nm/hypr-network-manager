@@ -486,7 +486,10 @@ button.nm-button:hover,
   min-height: 30px;
   border-radius: 8px;
   color: @text;
-  background: alpha(@surface, .34);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 6px 8px;
 }
 
 .nm-tabs-menu-list row.nm-tabs-menu-item:hover,
@@ -560,12 +563,13 @@ dropdown.nm-edit-dropdown:focus-within,
   border-color: @selected;
 }
 
+/* Compact popover menu geometry. */
 popover,
 popover.menu,
 popover.background,
 popover.background.menu,
 popover.menu.background {
-  background: alpha(@surface_soft, .94);
+  background: @surface_soft;
   border: 1px solid alpha(@on_surface, .1);
   border-radius: 10px;
   color: @text;
@@ -579,9 +583,34 @@ popover.background.menu > contents,
 popover.menu.background > contents {
   background: transparent;
   border-radius: 10px;
-  padding: 0;
+  padding: 4px;
   border: none;
   box-shadow: none;
+}
+
+popover.menu modelbutton,
+popover.menu box.modelbutton,
+popover.menu button,
+popover.menu button.model {
+  min-height: 28px;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 0;
+  border: none;
+  color: @text;
+  background: transparent;
+  box-shadow: none;
+  background-image: none;
+}
+
+popover.menu modelbutton:hover,
+popover.menu box.modelbutton:hover,
+popover.menu button:hover,
+popover.menu button.model:hover {
+  background: alpha(@secondary, .1);
+  border: none;
+  box-shadow: none;
+  background-image: none;
 }
 
 popover listview,
