@@ -29,7 +29,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private Gtk.Stack content_stack;
     private Gtk.Notebook notebook;
     private Gtk.EventControllerKey key_controller;
+    private Gtk.GestureClick blank_window_gesture;
+    private bool blank_window_down = false;
+    private bool blank_window_in = false;
     private bool layer_shell_active = false;
+    public GtkLayerShell.Layer current_layer_mode { get; private set; }
     private NetworkStateContext state_context;
     private HyprNetworkManager.UI.Views.AppContentNavigationManager nav_manager;
 
@@ -102,6 +106,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private bool configure_layer_shell () {
         GtkLayerShell.Layer layer_mode = parse_layer_mode (config_context.shell_layer);
+        this.current_layer_mode = layer_mode;
 
         if (!GtkLayerShell.is_supported ()) {
             log_warn (
@@ -132,7 +137,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         GtkLayerShell.set_margin (this, GtkLayerShell.Edge.BOTTOM, config_context.shell_margin_bottom);
         GtkLayerShell.set_margin (this, GtkLayerShell.Edge.LEFT, config_context.shell_margin_left);
 
-        GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+        GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
         GtkLayerShell.auto_exclusive_zone_enable (this);
         return true;
     }
@@ -166,6 +171,58 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         key_controller.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
         ((Gtk.Widget) this).add_controller (key_controller);
         key_controller.key_pressed.connect (key_press_event_cb);
+
+        blank_window_gesture = new Gtk.GestureClick ();
+        ((Gtk.Widget) this).add_controller (blank_window_gesture);
+        blank_window_gesture.touch_only = false;
+        blank_window_gesture.exclusive = true;
+        blank_window_gesture.button = Gdk.BUTTON_PRIMARY;
+        blank_window_gesture.propagation_phase = Gtk.PropagationPhase.BUBBLE;
+        
+        blank_window_gesture.pressed.connect ((n_press, x, y) => {
+            Graphene.Point click_point = Graphene.Point ().init ((float) x, (float) y);
+            Graphene.Rect? bounds = null;
+            var root = this.get_first_child ();
+            if (root != null) {
+                root.compute_bounds (this, out bounds);
+            }
+            blank_window_in = !(bounds != null && bounds.contains_point (click_point));
+            blank_window_down = true;
+        });
+
+        blank_window_gesture.released.connect ((n_press, x, y) => {
+            if (!blank_window_down) return;
+            blank_window_down = false;
+            
+            if (blank_window_in) {
+                this.close ();
+            }
+
+            if (blank_window_gesture.get_current_sequence () == null) {
+                blank_window_in = false;
+            }
+        });
+
+        blank_window_gesture.update.connect ((gesture, sequence) => {
+            Gtk.GestureSingle gesture_single = (Gtk.GestureSingle) gesture;
+            if (sequence != gesture_single.get_current_sequence ()) return;
+
+            double x, y;
+            gesture.get_point (sequence, out x, out y);
+            Graphene.Point click_point = Graphene.Point ().init ((float) x, (float) y);
+            Graphene.Rect? bounds = null;
+            var root = this.get_first_child ();
+            if (root != null) {
+                root.compute_bounds (this, out bounds);
+            }
+            if (bounds != null && bounds.contains_point (click_point)) {
+                blank_window_in = false;
+            }
+        });
+
+        blank_window_gesture.cancel.connect (() => {
+            blank_window_down = false;
+        });
     }
 
     private bool key_press_event_cb (uint keyval, uint keycode, Gdk.ModifierType state) {
@@ -195,7 +252,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         }
 
         if (enabled) {
-            GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+            GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
             return;
         }
 
@@ -210,11 +267,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         if (keep_input_for_wifi_edit || keep_input_for_saved_wifi_edit || keep_input_for_wifi_add ||
             keep_input_for_inline_prompt) {
-            GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.ON_DEMAND);
+            GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
             return;
         }
 
-        GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.NONE);
+        GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
     }
 
     private void update_main_chrome_visibility (bool focus_mode) {
