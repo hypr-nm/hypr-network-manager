@@ -65,7 +65,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             this,
             state_context
         );
-        flight_mode_controller = new MainWindowFlightModeController (this);
+        flight_mode_controller = new MainWindowFlightModeController (nm, this);
         refresh_coordinator = new MainWindowRefreshCoordinator (
             nm,
             wifi_controller,
@@ -305,7 +305,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         );
 
         if (flight_mode_button != null) {
-            flight_mode_controller.refresh_flight_mode_state (nm, flight_mode_button);
+            flight_mode_controller.refresh_flight_mode_state (flight_mode_button);
         }
     }
 
@@ -315,7 +315,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         }
 
         flight_mode_controller.toggle_flight_mode (
-            nm,
             flight_mode_button
         );
     }
