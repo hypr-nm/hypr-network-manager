@@ -4,16 +4,16 @@ using Gdk;
 namespace MainWindowIconResources {
     private const string ICON_PASSWORD_HIDDEN = "view-visible-symbolic";
     private const string ICON_PASSWORD_VISIBLE = "view-visible-off-symbolic";
-    private const string ICON_COLLAPSED = "collapse-element-symbolic";
-    private const string ICON_EXPANDED = "expand-element-symbolic";
+    private const string ICON_COLLAPSED = "expand-element-symbolic";
+    private const string ICON_EXPANDED = "collapse-element-symbolic";
 
     private const string RESOURCE_PASSWORD_HIDDEN = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg";
     private const string RESOURCE_PASSWORD_VISIBLE = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg";
 
     private const string FALLBACK_PASSWORD_HIDDEN = "view-reveal-symbolic";
     private const string FALLBACK_PASSWORD_VISIBLE = "view-conceal-symbolic";
-    private const string FALLBACK_COLLAPSED = "pan-down-symbolic";
-    private const string FALLBACK_EXPANDED = "pan-up-symbolic";
+    private const string FALLBACK_COLLAPSED = "pan-up-symbolic";
+    private const string FALLBACK_EXPANDED = "pan-down-symbolic";
 
     private bool looked_up = false;
     private bool has_password_hidden = false;
