@@ -189,6 +189,7 @@ public class MainWindowWifiController : Object {
         WifiNetwork net,
         string? password,
         string? hidden_ssid,
+        bool autoconnect,
         uint pending_wifi_connect_timeout_ms,
         bool close_on_connect
     ) {
@@ -197,6 +198,7 @@ public class MainWindowWifiController : Object {
             net,
             password,
             hidden_ssid,
+            autoconnect,
             pending_wifi_connect_timeout_ms,
             close_on_connect
         );

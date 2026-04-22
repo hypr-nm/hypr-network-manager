@@ -83,6 +83,7 @@ public class MainWindowWifiConnectionController : Object {
         WifiNetwork net,
         string? password,
         string? hidden_ssid,
+        bool autoconnect,
         uint pending_wifi_connect_timeout_ms,
         bool close_on_connect
     ) {
@@ -122,7 +123,7 @@ public class MainWindowWifiConnectionController : Object {
                 is_secured = net.is_secured,
                 is_hidden = net.is_hidden,
                 saved = false,
-                autoconnect = net.autoconnect,
+                autoconnect = autoconnect,
                 device_path = net.device_path,
                 ap_path = net.ap_path,
                 bssid = net.bssid,
@@ -135,7 +136,7 @@ public class MainWindowWifiConnectionController : Object {
             };
         }
 
-        nm.connect_wifi.begin (connect_target, password, null, (obj, res) => {
+        nm.connect_wifi.begin (connect_target, password, autoconnect, null, (obj, res) => {
             try {
                 nm.connect_wifi.end (res);
                 state_context.clear_all_wifi_errors ();
@@ -184,7 +185,12 @@ public class MainWindowWifiConnectionController : Object {
                     state_context.mark_wifi_connecting (fallback_key);
                     state_context.pending_wifi_seen_connecting.remove (fallback_key);
 
-                    nm.connect_wifi.begin (fallback_network, null, null, (obj2, res2) => {
+                    nm.connect_wifi.begin (
+                        fallback_network,
+                        null,
+                        fallback_network.autoconnect,
+                        null,
+                        (obj2, res2) => {
                         try {
                             nm.connect_wifi.end (res2);
                             state_context.clear_all_wifi_errors ();

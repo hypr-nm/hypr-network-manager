@@ -110,7 +110,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             }
 
             if (ready_to_reconnect) {
-                nm.connect_wifi.begin (net, null, request_cancellable, (obj2, res2) => {
+                nm.connect_wifi.begin (net, null, net.autoconnect, request_cancellable, (obj2, res2) => {
                     try {
                         nm.connect_wifi.end (res2);
                         if (!is_ui_epoch_valid (epoch)) {

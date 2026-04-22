@@ -373,12 +373,13 @@ namespace HyprNetworkManager.UI.Views {
             disconnect_wifi_network (net);
         }
 
-        public void connect_network (WifiNetwork net, string? password, string? hidden_ssid) {
+        public void connect_network (WifiNetwork net, string? password, string? hidden_ssid, bool autoconnect) {
             controller.connect_with_optional_password (
                 nm,
                 net,
                 password,
                 hidden_ssid,
+                autoconnect,
                 config_context.pending_wifi_connect_timeout_ms,
                 config_context.close_on_connect
             );
