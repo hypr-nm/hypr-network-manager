@@ -107,6 +107,10 @@ public class MainWindowEthernetRefreshController : Object {
                     ));
                 }
 
+                if (current_view == "flight-mode") {
+                    return;
+                }
+
                 if (current_view == "details" || current_view == "edit") {
                     if (details_edit_controller.selected_device != null) {
                         NetworkDevice? updated = null;

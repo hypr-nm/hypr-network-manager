@@ -75,6 +75,22 @@ namespace HyprNetworkManager.UI.Views {
             refresh_button.set_tooltip_text (tooltip_text);
         }
 
+        public void set_flight_mode_placeholder (bool flight_mode_active) {
+            string current_page = stack.get_visible_child_name ();
+            if (current_page == "details" || current_page == "edit") {
+                return;
+            }
+
+            if (flight_mode_active) {
+                stack.set_visible_child_name ("flight-mode");
+                return;
+            }
+
+            if (current_page == "flight-mode") {
+                stack.set_visible_child_name (listbox.get_first_child () != null ? "list" : "empty");
+            }
+        }
+
         public void show_edit_error (string message) {
             if (ethernet_edit_page != null) {
                 ethernet_edit_page.show_error (message);

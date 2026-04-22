@@ -210,7 +210,8 @@ public class MainWindowWifiRefreshController : Object {
 
                 string current_actual_view = wifi_stack.get_visible_child_name ();
                 if (current_actual_view == "details" || current_actual_view == "edit" || current_actual_view == "add" ||
-                    current_actual_view == "saved" || current_actual_view == "saved-edit") {
+                    current_actual_view == "saved" || current_actual_view == "saved-edit" ||
+                    current_actual_view == "wifi-disabled" || current_actual_view == "flight-mode") {
                     // Leave the stack on the current user-facing page
                 } else {
                     wifi_stack.set_visible_child_name (networks.length > 0 ? "list" : "empty");

@@ -324,6 +324,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             }
 
             wifi_section.set_refresh_button_enabled (wifi_refresh_enabled, wifi_tooltip);
+            wifi_section.set_availability_placeholder (wifi_enabled, flight_mode_active);
         }
 
         if (ethernet_section != null) {
@@ -333,6 +334,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
                 : "Refresh unavailable while flight mode is on";
 
             ethernet_section.set_refresh_button_enabled (ethernet_refresh_enabled, ethernet_tooltip);
+            ethernet_section.set_flight_mode_placeholder (flight_mode_active);
         }
     }
 

@@ -1,5 +1,6 @@
 using Gtk;
 using Gdk;
+using GLib;
 
 namespace MainWindowIconResources {
     private const string ICON_PASSWORD_HIDDEN = "view-visible-symbolic";
@@ -14,6 +15,13 @@ namespace MainWindowIconResources {
     private const string FALLBACK_PASSWORD_VISIBLE = "view-conceal-symbolic";
     private const string FALLBACK_COLLAPSED = "pan-up-symbolic";
     private const string FALLBACK_EXPANDED = "pan-down-symbolic";
+
+    public enum NetworkPlaceholderIcon {
+        WIFI_EMPTY,
+        WIFI_DISABLED,
+        ETHERNET_EMPTY,
+        FLIGHT_MODE
+    }
 
     private bool looked_up = false;
     private bool has_password_hidden = false;
@@ -99,5 +107,27 @@ namespace MainWindowIconResources {
                 ? (has_expanded ? ICON_EXPANDED : FALLBACK_EXPANDED)
                 : (has_collapsed ? ICON_COLLAPSED : FALLBACK_COLLAPSED)
         );
+    }
+
+    public Gtk.Image create_network_placeholder_icon (NetworkPlaceholderIcon icon_type) {
+        switch (icon_type) {
+        case NetworkPlaceholderIcon.WIFI_EMPTY:
+            return new Gtk.Image.from_gicon (
+                new ThemedIcon.from_names ({"network-wireless-offline-symbolic", "network-offline-symbolic"})
+            );
+        case NetworkPlaceholderIcon.WIFI_DISABLED:
+            return new Gtk.Image.from_gicon (
+                new ThemedIcon.from_names ({"network-wireless-disabled-symbolic", "network-offline-symbolic"})
+            );
+        case NetworkPlaceholderIcon.ETHERNET_EMPTY:
+            return new Gtk.Image.from_gicon (
+                new ThemedIcon.from_names ({"network-wired-symbolic", "network-offline-symbolic"})
+            );
+        case NetworkPlaceholderIcon.FLIGHT_MODE:
+        default:
+            return new Gtk.Image.from_gicon (
+                new ThemedIcon.from_names ({"airplane-mode-symbolic", "network-offline-symbolic"})
+            );
+        }
     }
 }

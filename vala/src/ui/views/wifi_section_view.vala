@@ -114,6 +114,27 @@ namespace HyprNetworkManager.UI.Views {
             refresh_button.set_tooltip_text (tooltip_text);
         }
 
+        public void set_availability_placeholder (bool wifi_enabled, bool flight_mode_active) {
+            string current_page = stack.get_visible_child_name ();
+            if (current_page == "details" || current_page == "edit" || current_page == "add") {
+                return;
+            }
+
+            if (flight_mode_active) {
+                stack.set_visible_child_name ("flight-mode");
+                return;
+            }
+
+            if (!wifi_enabled) {
+                stack.set_visible_child_name ("wifi-disabled");
+                return;
+            }
+
+            if (current_page == "flight-mode" || current_page == "wifi-disabled") {
+                stack.set_visible_child_name (listbox.get_first_child () != null ? "list" : "empty");
+            }
+        }
+
         private void wire_details_page_signals () {
             details_page.back.connect (() => {
                 window_host.set_popup_text_input_mode (false);
