@@ -47,8 +47,7 @@ public class MainWindowWifiSwitchController : Object {
 
     public void refresh_switch_states (
         NetworkManagerClient nm,
-        Gtk.Switch wifi_switch,
-        Gtk.Button networking_button
+        Gtk.Switch wifi_switch
     ) {
         uint epoch = capture_ui_epoch ();
         uint refresh_epoch = switch_refresh_epoch + 1;
@@ -68,26 +67,11 @@ public class MainWindowWifiSwitchController : Object {
                 if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
                     host.debug_log ("Could not read WirelessEnabled: " + e.message);
                 }
-            }
-
-            nm.get_networking_enabled_dbus.begin (null, (obj2, net_res) => {
-                try {
-                    bool net_enabled = nm.get_networking_enabled_dbus.end (net_res);
-                    if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
-                        networking_button.set_label (
-                            net_enabled ? "Turn on flight mode" : "Turn off flight mode"
-                        );
-                    }
-                } catch (Error e) {
-                    if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
-                        host.debug_log ("Could not read NetworkingEnabled: " + e.message);
-                    }
-                } finally {
-                    if (switch_refresh_epoch == refresh_epoch) {
-                        updating_switches = false;
-                    }
+            } finally {
+                if (switch_refresh_epoch == refresh_epoch) {
+                    updating_switches = false;
                 }
-            });
+            }
         });
     }
 
@@ -117,53 +101,6 @@ public class MainWindowWifiSwitchController : Object {
                 host.show_error ("Could not toggle Wi-Fi: " + message);
                 host.refresh_switch_states ();
             }
-        });
-    }
-
-    public void on_flight_mode_toggle_requested (
-        NetworkManagerClient nm,
-        Gtk.Button networking_button
-    ) {
-        if (updating_switches) {
-            return;
-        }
-
-        uint epoch = capture_ui_epoch ();
-        
-        nm.get_networking_enabled_dbus.begin (null, (obj, res) => {
-            bool currently_enabled = true;
-            try {
-                currently_enabled = nm.get_networking_enabled_dbus.end (res);
-            } catch (Error e) {
-                host.debug_log ("Could not fetch networking state: " + e.message);
-                // Fallback to label check if DBus fetch fails
-                currently_enabled = networking_button.get_label () == "Turn on flight mode";
-            }
-
-            bool target_enabled = !currently_enabled;
-
-            nm.set_networking_enabled.begin (target_enabled, null, (obj2, res2) => {
-                try {
-                    nm.set_networking_enabled.end (res2);
-                    if (!is_ui_epoch_valid (epoch)) {
-                        return;
-                    }
-                    
-                    // Immediately update label to provide feedback
-                    networking_button.set_label (
-                        target_enabled ? "Turn on flight mode" : "Turn off flight mode"
-                    );
-
-                    host.refresh_after_action (target_enabled);
-                } catch (Error e) {
-                    string message = e.message;
-                    if (!is_ui_epoch_valid (epoch)) {
-                        return;
-                    }
-                    host.show_error ("Could not toggle networking: " + message);
-                    host.refresh_switch_states ();
-                }
-            });
         });
     }
 }

@@ -63,6 +63,7 @@ executable(
     'src/ui/controllers/vpn/main_window_vpn_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_controller.vala',
     'src/ui/controllers/main_window_refresh_coordinator.vala',
+    'src/ui/controllers/main_window_flight_mode_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_details_edit_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_connection_controller.vala',
