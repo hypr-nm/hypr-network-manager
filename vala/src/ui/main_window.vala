@@ -305,7 +305,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         );
 
         if (flight_mode_button != null) {
-            flight_mode_controller.refresh_flight_mode_state (flight_mode_button);
+            flight_mode_controller.refresh_flight_mode_state ();
         }
     }
 
@@ -314,9 +314,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             return;
         }
 
-        flight_mode_controller.toggle_flight_mode (
-            flight_mode_button
-        );
+        bool is_flight_mode = flight_mode_button.get_label () == "Turn off flight mode";
+        flight_mode_controller.request_flight_mode_toggle (is_flight_mode);
     }
 
     public void show_error (string message) {
@@ -540,6 +539,12 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         notebook.set_action_widget (build_tabs_menu_button (), Gtk.PackType.END);
 
         root.append (content_stack);
+
+        flight_mode_controller.flight_mode_state_changed.connect ((is_flight_mode) => {
+            if (flight_mode_button != null) {
+                flight_mode_button.set_label (is_flight_mode ? "Turn off flight mode" : "Turn on flight mode");
+            }
+        });
 
         update_main_chrome_visibility (nav_manager.is_focus_mode_active ());
     }
