@@ -64,6 +64,11 @@ namespace MainWindowWifiPageBuilder {
         wifi_listbox = new Gtk.ListBox ();
         wifi_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         wifi_listbox.add_css_class (MainWindowCssClasses.LIST);
+        wifi_listbox.set_sort_func ((row1, row2) => {
+            int idx1 = row1.get_data<int> ("sort-index");
+            int idx2 = row2.get_data<int> ("sort-index");
+            return idx1 - idx2;
+        });
         scroll.set_child (wifi_listbox);
 
         var wifi_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
