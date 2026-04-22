@@ -218,6 +218,7 @@ namespace MainWindowCssClasses {
     public const string NOTEBOOK = "nm-notebook";
     public const string TAB_LABEL = "nm-tab-label";
     public const string TABS_MENU_BUTTON = "nm-tabs-menu-button";
+    public const string TABS_MENU_BUTTON_OPEN = "nm-tabs-menu-button-open";
     public const string TABS_MENU_ITEM = "nm-tabs-menu-item";
     public const string TABS_MENU_POPOVER = "nm-tabs-menu-popover";
     public const string TABS_MENU_ICON = "nm-tabs-menu-icon";

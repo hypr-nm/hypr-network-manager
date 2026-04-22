@@ -37,6 +37,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private Gtk.Revealer global_error_revealer;
     private Gtk.Button flight_mode_button;
     private bool flight_mode_active = false;
+    private Gtk.MenuButton? tabs_menu_button;
 
     public MainWindow (
         Gtk.Application app,
@@ -478,6 +479,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             if (page_num != 2) {
                 vpn_controller.on_page_leave ();
             }
+            reset_tabs_menu_button_state ();
         });
 
         nav_manager.focus_mode_changed.connect ((focus_mode) => {
@@ -485,6 +487,39 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         });
 
         content_stack.set_visible_child_name ("main");
+    }
+
+    private void clear_transient_menu_button_state (Gtk.Widget widget) {
+        widget.unset_state_flags (
+            Gtk.StateFlags.ACTIVE | Gtk.StateFlags.PRELIGHT | Gtk.StateFlags.CHECKED
+        );
+
+        for (Gtk.Widget? child = widget.get_first_child (); child != null; child = child.get_next_sibling ()) {
+            clear_transient_menu_button_state (child);
+        }
+    }
+
+    private void set_tabs_menu_button_open_state (bool open) {
+        if (tabs_menu_button == null) {
+            return;
+        }
+
+        if (open) {
+            tabs_menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON_OPEN);
+            return;
+        }
+
+        tabs_menu_button.remove_css_class (MainWindowCssClasses.TABS_MENU_BUTTON_OPEN);
+        clear_transient_menu_button_state (tabs_menu_button);
+    }
+
+    private void reset_tabs_menu_button_state () {
+        if (tabs_menu_button == null) {
+            return;
+        }
+
+        tabs_menu_button.popdown ();
+        set_tabs_menu_button_open_state (false);
     }
 
     private Gtk.MenuButton build_tabs_menu_button () {
@@ -531,15 +566,21 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         tabs_menu_box.append (flight_mode_button);
 
         tabs_menu_popover.map.connect (() => {
+            set_tabs_menu_button_open_state (true);
             refresh_switch_states ();
         });
 
         tabs_menu_popover.set_child (tabs_menu_box);
 
-        var tabs_menu_button = new Gtk.MenuButton ();
+        tabs_menu_button = new Gtk.MenuButton ();
         tabs_menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON);
+        tabs_menu_button.set_focus_on_click (false);
         tabs_menu_button.set_tooltip_text ("Profiles");
         tabs_menu_button.set_popover (tabs_menu_popover);
+
+        tabs_menu_popover.closed.connect (() => {
+            set_tabs_menu_button_open_state (false);
+        });
 
         var tabs_menu_icon = new Gtk.Image.from_icon_name ("view-more-symbolic");
         MainWindowCssClassResolver.add_best_class (
