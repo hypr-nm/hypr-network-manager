@@ -492,6 +492,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         });
         tabs_menu_box.append (flight_mode_button);
 
+        tabs_menu_popover.map.connect (() => {
+            refresh_switch_states ();
+        });
+
         tabs_menu_popover.set_child (tabs_menu_box);
 
         var tabs_menu_button = new Gtk.MenuButton ();
