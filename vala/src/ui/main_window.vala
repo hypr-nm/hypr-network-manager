@@ -592,7 +592,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             MainWindowUiMetrics.TABS_POPOVER_OFFSET_Y
         );
 
-        var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
+        var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         MainWindowCssClassResolver.add_best_class (
             tabs_menu_box,
             {MainWindowCssClasses.POPOVER_LIST_INSET}
