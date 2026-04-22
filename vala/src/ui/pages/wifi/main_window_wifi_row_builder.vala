@@ -128,7 +128,8 @@ namespace MainWindowWifiRowBuilder {
         IMainWindowWifiRowActionHandler action_handler,
         Gtk.Revealer prompt_revealer,
         Gtk.Entry prompt_entry,
-        Gtk.Entry hidden_ssid_entry
+        Gtk.Entry hidden_ssid_entry,
+        Gtk.CheckButton auto_connect
     ) {
         var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         action_buttons.add_css_class (MainWindowCssClasses.ROW_ACTION_BUTTONS);
@@ -194,7 +195,7 @@ namespace MainWindowWifiRowBuilder {
                     prompt_entry.grab_focus ();
                 }
             } else {
-                action_handler.connect_network (net, null, null);
+                action_handler.connect_network (net, null, null, auto_connect.get_active ());
             }
         });
 
@@ -208,6 +209,7 @@ namespace MainWindowWifiRowBuilder {
         WifiNetwork net,
         bool requires_hidden_ssid,
         IMainWindowWifiRowActionHandler action_handler,
+        Gtk.CheckButton auto_connect,
         out Gtk.Entry prompt_entry,
         out Gtk.Entry hidden_ssid_entry
     ) {
@@ -353,7 +355,8 @@ namespace MainWindowWifiRowBuilder {
             action_handler.connect_network (
                 net,
                 net.is_secured ? local_prompt_entry.get_text () : null,
-                requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null
+                requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null,
+                auto_connect.get_active ()
             );
             local_hidden_ssid_entry.set_text ("");
         });
@@ -367,7 +370,8 @@ namespace MainWindowWifiRowBuilder {
             action_handler.connect_network (
                 net,
                 net.is_secured ? local_prompt_entry.get_text () : null,
-                requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null
+                requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null,
+                auto_connect.get_active ()
             );
             local_hidden_ssid_entry.set_text ("");
         });
@@ -387,7 +391,8 @@ namespace MainWindowWifiRowBuilder {
             action_handler.connect_network (
                 net,
                 null,
-                local_hidden_ssid_entry.get_text ().strip ()
+                local_hidden_ssid_entry.get_text ().strip (),
+                auto_connect.get_active ()
             );
             local_hidden_ssid_entry.set_text ("");
         });
@@ -452,12 +457,25 @@ namespace MainWindowWifiRowBuilder {
         var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions_panel.add_css_class (MainWindowCssClasses.ROW_ACTIONS);
 
+        var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
+        auto_connect.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
+        auto_connect.set_active (net.autoconnect);
+        auto_connect.set_sensitive (!is_connecting);
+        auto_connect.set_hexpand (true);
+        auto_connect.set_halign (Gtk.Align.START);
+        auto_connect.toggled.connect (() => {
+            if (has_resolvable_saved_profile) {
+                action_handler.set_auto_connect (net, auto_connect.get_active ());
+            }
+        });
+
         Gtk.Entry prompt_entry;
         Gtk.Entry hidden_ssid_entry;
         var prompt_revealer = build_password_prompt (
             net,
             requires_hidden_ssid,
             action_handler,
+            auto_connect,
             out prompt_entry,
             out hidden_ssid_entry
         );
@@ -471,26 +489,11 @@ namespace MainWindowWifiRowBuilder {
             action_handler,
             prompt_revealer,
             prompt_entry,
-            hidden_ssid_entry
+            hidden_ssid_entry,
+            auto_connect
         );
 
-        if (has_resolvable_saved_profile) {
-            var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
-            auto_connect.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
-            auto_connect.set_active (net.autoconnect);
-            auto_connect.set_sensitive (!is_connecting);
-            auto_connect.set_hexpand (true);
-            auto_connect.set_halign (Gtk.Align.START);
-            auto_connect.toggled.connect (() => {
-                action_handler.set_auto_connect (net, auto_connect.get_active ());
-            });
-            actions_panel.append (auto_connect);
-        } else {
-            var spacer = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
-            spacer.set_hexpand (true);
-            actions_panel.append (spacer);
-        }
-
+        actions_panel.append (auto_connect);
         actions_panel.append (action_buttons);
 
         var actions_revealer = new Gtk.Revealer ();

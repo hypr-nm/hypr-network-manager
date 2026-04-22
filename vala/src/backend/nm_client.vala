@@ -315,17 +315,19 @@ public class NetworkManagerClient : GLib.Object {
     public async bool connect_wifi (
         WifiNetwork network,
         string? password,
+        bool autoconnect = true,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.connect (network, password, cancellable);
+        return yield wifi_client.connect (network, password, autoconnect, cancellable);
     }
 
     public async bool connect_wifi_with_password (
         WifiNetwork network,
         string password,
+        bool autoconnect = true,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.connect_with_password (network, password, cancellable);
+        return yield wifi_client.connect_with_password (network, password, autoconnect, cancellable);
     }
 
     public async bool connect_hidden_wifi (
