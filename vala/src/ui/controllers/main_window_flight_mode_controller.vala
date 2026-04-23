@@ -70,7 +70,7 @@ public class MainWindowFlightModeController : Object {
         }
 
         uint epoch = capture_ui_epoch ();
-        
+
         nm.get_networking_enabled_dbus.begin (null, (obj, res) => {
             bool current_net_enabled = !current_flight_mode_active;
             try {

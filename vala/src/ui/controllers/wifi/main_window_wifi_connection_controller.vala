@@ -258,7 +258,8 @@ public class MainWindowWifiConnectionController : Object {
             state_context.pending_wifi_seen_connecting.remove (wifi_key);
             state_context.clear_wifi_error (wifi_key);
 
-            nm.disconnect_wifi.begin (net, null, (obj, res) => {            try {
+            nm.disconnect_wifi.begin (net, null, (obj, res) => {
+            try {
                 nm.disconnect_wifi.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
@@ -283,7 +284,8 @@ public class MainWindowWifiConnectionController : Object {
             string wifi_key = net.network_key;
             state_context.clear_wifi_error (wifi_key);
 
-            nm.set_wifi_network_autoconnect.begin (net, enabled, 10, null, (obj, res) => {            try {
+            nm.set_wifi_network_autoconnect.begin (net, enabled, 10, null, (obj, res) => {
+            try {
                 nm.set_wifi_network_autoconnect.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
                     return;

@@ -572,7 +572,8 @@ namespace MainWindowWifiRowBuilder {
         auto_connect.set_halign (Gtk.Align.START);
         auto_connect.toggled.connect (() => {
             var latest_net = row.get_data<WifiNetwork> ("wifi-network");
-            bool latest_has_resolvable_saved_profile = latest_net.saved && latest_net.saved_connection_uuid.strip () != "";
+            bool latest_has_resolvable_saved_profile = latest_net.saved &
+                latest_net.saved_connection_uuid.strip () != "";
             if (latest_has_resolvable_saved_profile) {
                 action_handler.set_auto_connect (latest_net, auto_connect.get_active ());
             }

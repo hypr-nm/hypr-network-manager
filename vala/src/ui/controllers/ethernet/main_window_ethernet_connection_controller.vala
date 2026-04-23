@@ -132,7 +132,7 @@ public class MainWindowEthernetConnectionController : Object {
         uint epoch = capture_ui_epoch ();
         bool target_connected = !dev.is_connected;
         state_context.clear_ethernet_error (dev.name);
-        
+
         if (dev.is_connected) {
             nm.disconnect_device.begin (dev.name, null, (obj, res) => {
                 try {

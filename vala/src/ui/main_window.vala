@@ -182,7 +182,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         blank_window_gesture.exclusive = true;
         blank_window_gesture.button = Gdk.BUTTON_PRIMARY;
         blank_window_gesture.propagation_phase = Gtk.PropagationPhase.BUBBLE;
-        
+
         blank_window_gesture.pressed.connect ((n_press, x, y) => {
             Graphene.Point click_point = Graphene.Point ().init ((float) x, (float) y);
             Graphene.Rect? bounds = null;
@@ -197,7 +197,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         blank_window_gesture.released.connect ((n_press, x, y) => {
             if (!blank_window_down) return;
             blank_window_down = false;
-            
+
             if (blank_window_in) {
                 this.close ();
             }
@@ -601,7 +601,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         saved_profiles_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
         var sp_label = saved_profiles_item.get_child () as Gtk.Label;
         if (sp_label != null) sp_label.set_halign (Gtk.Align.START);
-        
+
         saved_profiles_item.clicked.connect (() => {
             tabs_menu_popover.popdown ();
             profiles_section.open_profiles_page (false);

@@ -213,7 +213,7 @@ public class NmWifiClient : GLib.Object {
             if (a.saved != b.saved) {
                 return a.saved ? -1 : 1;
             }
-            
+
             // Bucket signal to 5% increments to avoid jitter from tiny changes
             int bucket_a = (int) (a.signal / 5);
             int bucket_b = (int) (b.signal / 5);

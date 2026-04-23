@@ -128,13 +128,13 @@ namespace MainWindowIconResources {
         switch (icon_type) {
         case NetworkPlaceholderIcon.WIFI_EMPTY:
             return new Gtk.Image.from_gicon (new ThemedIcon.from_names (wifi_empty));
-            
+
         case NetworkPlaceholderIcon.WIFI_DISABLED:
             return new Gtk.Image.from_gicon (new ThemedIcon.from_names (wifi_disabled));
-            
+
         case NetworkPlaceholderIcon.ETHERNET_EMPTY:
             return new Gtk.Image.from_gicon (new ThemedIcon.from_names (ethernet_empty));
-            
+
         case NetworkPlaceholderIcon.FLIGHT_MODE:
         default:
             // This ensures the ThemedIcon logic prioritizes your list
