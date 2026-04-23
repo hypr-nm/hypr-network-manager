@@ -114,7 +114,8 @@ public class NmVpnClient : GLib.Object {
         }
 
         return normalize_key (ac.get_id ()) == normalize_key (conn.get_id ())
-            && normalize_connection_type (ac.get_connection_type ()) == normalize_connection_type (conn.get_connection_type ());
+            && normalize_connection_type (
+                ac.get_connection_type ()) == normalize_connection_type (conn.get_connection_type ());
     }
 
     private static string map_active_connection_state (NM.ActiveConnection ac) {

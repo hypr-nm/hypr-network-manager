@@ -122,14 +122,14 @@ int main (string[] args) {
         log_info ("cli", "mode_select: quit mode");
         try {
             var conn = Bus.get_sync (BusType.SESSION);
-            
+
             var builder = new VariantBuilder (new VariantType ("(sava{sv})"));
             builder.add ("s", "quit");
-            
+
             // parameter_array (av)
             builder.open (new VariantType ("av"));
             builder.close ();
-            
+
             // platform_data (a{sv})
             builder.open (new VariantType ("a{sv}"));
             builder.close ();
