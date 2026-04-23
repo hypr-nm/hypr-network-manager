@@ -472,8 +472,27 @@ namespace HyprNetworkManager.UI.Views {
             );
         }
 
+        public void update_wifi_row (Gtk.ListBoxRow row, WifiNetwork net) {
+            string net_key = net.network_key;
+            bool is_connected_now = state_context.active_wifi_connections.contains (net_key);
+            bool is_connecting = state_context.pending_wifi_connect.contains (net_key);
+            string? error_message = state_context.wifi_errors.lookup (net_key);
+
+            MainWindowWifiRowBuilder.update_row (
+                row,
+                net,
+                is_connected_now,
+                is_connecting,
+                error_message,
+                config_context.show_frequency,
+                config_context.show_band,
+                config_context.show_bssid,
+                resolve_wifi_row_icon_name (net)
+            );
+        }
+
         private string get_wifi_row_id (WifiNetwork net) {
-            return "%s|%s".printf (net.device_path, net.ap_path);
+            return net.network_key;
         }
 
         public void perform_refresh () {
