@@ -213,7 +213,23 @@ public class NmWifiClient : GLib.Object {
             if (a.saved != b.saved) {
                 return a.saved ? -1 : 1;
             }
-            return (int) b.signal - (int) a.signal;
+            
+            // Bucket signal to 5% increments to avoid jitter from tiny changes
+            int bucket_a = (int) (a.signal / 5);
+            int bucket_b = (int) (b.signal / 5);
+            if (bucket_a != bucket_b) {
+                return bucket_b - bucket_a;
+            }
+
+            // Tie-breakers for deterministic order
+            int ssid_cmp = a.ssid.collate (b.ssid);
+            if (ssid_cmp != 0) {
+                return ssid_cmp;
+            }
+
+            string bssid_a = a.bssid != null ? a.bssid : "";
+            string bssid_b = b.bssid != null ? b.bssid : "";
+            return bssid_a.collate (bssid_b);
         });
 
         var networks_arr = new WifiNetwork[networks_list.length ()];
