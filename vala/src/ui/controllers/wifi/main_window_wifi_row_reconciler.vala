@@ -136,5 +136,7 @@ public class MainWindowWifiRowReconciler : Object {
         if (should_invalidate_sort) {
             wifi_listbox.invalidate_sort ();
         }
+        
+        wifi_listbox.invalidate_headers ();
     }
 }
