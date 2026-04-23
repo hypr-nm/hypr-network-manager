@@ -1,4 +1,5 @@
 using Gtk;
+using HyprNetworkManager.UI.Utils;
 
 public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Label edit_title { get; set; }
@@ -53,7 +54,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.error_revealer.set_reveal_child (true);
     }
 
-    public MainWindowEthernetEditPage () {
+    public MainWindowEthernetEditPage (TransientSurfaceTracker surface_tracker) {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
@@ -111,6 +112,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
+            surface_tracker,
             true
         );
 
@@ -133,6 +135,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
+            surface_tracker,
             true
         );
 

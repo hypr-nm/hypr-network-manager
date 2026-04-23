@@ -1,4 +1,6 @@
 using Gtk;
+using HyprNetworkManager.UI.Utils;
+using HyprNetworkManager.UI.Widgets;
 
 namespace MainWindowIpEditFormBuilder {
     private Gtk.Label build_label (string text, bool with_extra_classes, string? extra_class = null) {
@@ -207,6 +209,7 @@ namespace MainWindowIpEditFormBuilder {
         out Gtk.Entry ipv4_gateway_entry,
         out Gtk.Switch dns_auto_switch,
         out Gtk.Entry ipv4_dns_entry,
+        TransientSurfaceTracker surface_tracker,
         bool with_extra_classes
     ) {
         Gtk.Box section;
@@ -236,7 +239,7 @@ namespace MainWindowIpEditFormBuilder {
         ipv4_method_list.append ("Automatic (DHCP)");
         ipv4_method_list.append ("Manual");
         ipv4_method_list.append ("Disabled");
-        ipv4_method_dropdown = new Gtk.DropDown (ipv4_method_list, null);
+        ipv4_method_dropdown = TrackedWidgets.dropdown (surface_tracker, ipv4_method_list, null);
         apply_control_classes (ipv4_method_dropdown, with_extra_classes, null);
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
@@ -458,6 +461,7 @@ namespace MainWindowIpEditFormBuilder {
         out Gtk.Entry ipv6_gateway_entry,
         out Gtk.Switch ipv6_dns_auto_switch,
         out Gtk.Entry ipv6_dns_entry,
+        TransientSurfaceTracker surface_tracker,
         bool with_extra_classes
     ) {
         Gtk.Box section;
@@ -488,7 +492,7 @@ namespace MainWindowIpEditFormBuilder {
         ipv6_method_list.append ("Manual");
         ipv6_method_list.append ("Disabled");
         ipv6_method_list.append ("Ignore");
-        ipv6_method_dropdown = new Gtk.DropDown (ipv6_method_list, null);
+        ipv6_method_dropdown = TrackedWidgets.dropdown (surface_tracker, ipv6_method_list, null);
         apply_control_classes (ipv6_method_dropdown, with_extra_classes, null);
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (

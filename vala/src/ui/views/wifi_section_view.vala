@@ -2,6 +2,8 @@
 using GLib;
 using Gtk;
 using HyprNetworkManager.UI.Interfaces;
+using HyprNetworkManager.UI.Utils;
+using HyprNetworkManager.UI.Widgets;
 using HyprNetworkManager.Models;
 
 namespace HyprNetworkManager.UI.Views {
@@ -16,6 +18,7 @@ namespace HyprNetworkManager.UI.Views {
         private NetworkManagerClient nm;
         private MainWindowWifiController controller;
         private IWindowHost window_host;
+        private TransientSurfaceTracker surface_tracker;
         private WindowConfigContext config_context;
         private NetworkStateContext state_context;
 
@@ -43,6 +46,7 @@ namespace HyprNetworkManager.UI.Views {
             NetworkManagerClient nm,
             MainWindowWifiController controller,
             IWindowHost window_host,
+            TransientSurfaceTracker surface_tracker,
             NetworkStateContext state_context,
             WindowConfigContext config_context,
             Gtk.Label status_label,
@@ -51,13 +55,14 @@ namespace HyprNetworkManager.UI.Views {
             this.nm = nm;
             this.controller = controller;
             this.window_host = window_host;
+            this.surface_tracker = surface_tracker;
             this.state_context = state_context;
             this.config_context = config_context;
             this.status_label = status_label;
             this.status_icon = status_icon;
 
             this.details_page = new MainWindowWifiDetailsPage ();
-            this.edit_page = new MainWindowWifiEditPage ();
+            this.edit_page = new MainWindowWifiEditPage (this.surface_tracker);
 
             wire_details_page_signals ();
             wire_edit_page_signals ();
@@ -252,7 +257,7 @@ namespace HyprNetworkManager.UI.Views {
             foreach (string label in HiddenWifiSecurityModeUtils.get_dropdown_labels ()) {
                 security_list.append (label);
             }
-            add_security_dropdown = new Gtk.DropDown (security_list, null);
+            add_security_dropdown = TrackedWidgets.dropdown (surface_tracker, security_list, null);
             MainWindowCssClassResolver.add_best_class (
                 add_security_dropdown,
                 {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
