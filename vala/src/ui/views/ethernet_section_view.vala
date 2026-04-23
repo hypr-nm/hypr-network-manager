@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 using GLib;
 using Gtk;
-using HyprNetworkManager.UI.Utils;
+using HyprNetworkManager.UI.Interfaces;
 
 namespace HyprNetworkManager.UI.Views {
     public class EthernetSectionView : Object {
@@ -13,11 +13,14 @@ namespace HyprNetworkManager.UI.Views {
         private MainWindowEthernetController controller;
         private MainWindowEthernetEditPage ethernet_edit_page;
 
-        public EthernetSectionView (MainWindowEthernetController controller, TransientSurfaceTracker surface_tracker) {
+        public EthernetSectionView (
+            MainWindowEthernetController controller,
+            IWindowHost window_host
+        ) {
             this.controller = controller;
 
             var ethernet_details_page = new MainWindowEthernetDetailsPage ();
-            this.ethernet_edit_page = new MainWindowEthernetEditPage (surface_tracker);
+            this.ethernet_edit_page = new MainWindowEthernetEditPage (window_host);
 
             ethernet_details_page.back.connect (() => {
                 controller.on_details_back_requested ();
