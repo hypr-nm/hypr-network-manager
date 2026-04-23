@@ -58,14 +58,14 @@ namespace MainWindowWifiRowBuilder {
         string? error_message,
         bool show_frequency,
         bool show_band,
-        bool show_bssid
+        bool show_bssid,
+        Gtk.ListBoxRow row
     ) {
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
         info.set_hexpand (true);
         info.add_css_class (MainWindowCssClasses.ROW_INFO);
 
         string ssid_text = MainWindowHelpers.safe_text (net.ssid);
-        string bssid_text = MainWindowHelpers.safe_text (net.bssid);
 
         var ssid_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         ssid_row.set_hexpand (true);
@@ -74,49 +74,69 @@ namespace MainWindowWifiRowBuilder {
         ssid_lbl.set_xalign (0.0f);
         ssid_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
         ssid_row.append (ssid_lbl);
+        row.set_data<Gtk.Label> ("ssid-label", ssid_lbl);
 
-        if (is_connected_now) {
-            var connected_indicator = new Gtk.Label ("• Connected");
-            connected_indicator.add_css_class (MainWindowCssClasses.CONNECTED_INDICATOR);
-            ssid_row.append (connected_indicator);
-        }
+        var connected_indicator = new Gtk.Label ("• Connected");
+        connected_indicator.add_css_class (MainWindowCssClasses.CONNECTED_INDICATOR);
+        ssid_row.append (connected_indicator);
+        connected_indicator.set_visible (is_connected_now);
+        row.set_data<Gtk.Label> ("connected-indicator", connected_indicator);
 
         info.append (ssid_row);
 
-        bool is_saved_only = net.saved && net.ap_path.has_prefix ("saved:");
-        string subtitle;
-        if (is_saved_only) {
-            subtitle = "Saved network";
-        } else {
-            subtitle = "%s (%u%%)".printf (net.signal_label, net.signal);
-            if (show_frequency && net.frequency_mhz > 0) {
-                subtitle += " - %u MHz".printf (net.frequency_mhz);
-            }
-            if (show_band && net.frequency_mhz > 0) {
-                string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
-                if (band != "") {
-                    subtitle += " - %s".printf (band);
-                }
-            }
-            if (show_bssid && bssid_text != "") {
-                subtitle += " - %s".printf (bssid_text);
-            }
-        }
+        string subtitle = resolve_subtitle (net, show_frequency, show_band, show_bssid);
 
         string secondary_text = error_message != null ? error_message : subtitle;
         var sub = new Gtk.Label (secondary_text);
         sub.set_xalign (0.0f);
         sub.set_ellipsize (Pango.EllipsizeMode.END);
+        update_sub_label_style (sub, error_message);
+        info.append (sub);
+        row.set_data<Gtk.Label> ("sub-label", sub);
+
+        return info;
+    }
+
+    private string resolve_subtitle (
+        WifiNetwork net,
+        bool show_frequency,
+        bool show_band,
+        bool show_bssid
+    ) {
+        bool is_saved_only = net.saved && net.ap_path.has_prefix ("saved:");
+        if (is_saved_only) {
+            return "Saved network";
+        }
+
+        string bssid_text = MainWindowHelpers.safe_text (net.bssid);
+        string subtitle = "%s (%u%%)".printf (net.signal_label, net.signal);
+        if (show_frequency && net.frequency_mhz > 0) {
+            subtitle += " - %u MHz".printf (net.frequency_mhz);
+        }
+        if (show_band && net.frequency_mhz > 0) {
+            string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
+            if (band != "") {
+                subtitle += " - %s".printf (band);
+            }
+        }
+        if (show_bssid && bssid_text != "") {
+            subtitle += " - %s".printf (bssid_text);
+        }
+        return subtitle;
+    }
+
+    private void update_sub_label_style (Gtk.Label sub, string? error_message) {
         if (error_message != null) {
             sub.set_tooltip_text (error_message);
             sub.add_css_class (MainWindowCssClasses.ERROR_LABEL);
             sub.add_css_class (MainWindowCssClasses.ROW_ERROR_LABEL);
+            sub.remove_css_class (MainWindowCssClasses.SUB_LABEL);
         } else {
+            sub.set_tooltip_text (null);
+            sub.remove_css_class (MainWindowCssClasses.ERROR_LABEL);
+            sub.remove_css_class (MainWindowCssClasses.ROW_ERROR_LABEL);
             sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
         }
-        info.append (sub);
-
-        return info;
     }
 
     private Gtk.Box build_action_buttons (
@@ -129,7 +149,8 @@ namespace MainWindowWifiRowBuilder {
         Gtk.Revealer prompt_revealer,
         Gtk.Entry prompt_entry,
         Gtk.Entry hidden_ssid_entry,
-        Gtk.CheckButton auto_connect
+        Gtk.CheckButton auto_connect,
+        Gtk.ListBoxRow row
     ) {
         var action_buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         action_buttons.add_css_class (MainWindowCssClasses.ROW_ACTION_BUTTONS);
@@ -155,54 +176,73 @@ namespace MainWindowWifiRowBuilder {
             action_handler.open_details (net);
         });
 
-        if (has_resolvable_saved_profile) {
-            var forget = new Gtk.Button.with_label ("Forget");
-            MainWindowCssClassResolver.add_best_class (
-                forget,
-                {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
-            );
-            forget.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
-            forget.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
-            forget.set_valign (Gtk.Align.CENTER);
-            forget.clicked.connect (() => {
-                action_handler.forget_saved_network (net);
-            });
-            action_buttons.append (forget);
-        }
+        var forget = new Gtk.Button.with_label ("Forget");
+        MainWindowCssClassResolver.add_best_class (
+            forget,
+            {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
+        );
+        forget.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        forget.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
+        forget.set_valign (Gtk.Align.CENTER);
+        forget.clicked.connect (() => {
+            action_handler.forget_saved_network (net);
+        });
+        forget.set_visible (has_resolvable_saved_profile);
+        action_buttons.append (forget);
+        row.set_data<Gtk.Button> ("forget-button", forget);
 
-        string action_label = is_connecting ? "Connecting…" : (is_connected_now ? "Disconnect" : "Connect");
-        var action = new Gtk.Button.with_label (action_label);
+        var action = new Gtk.Button ();
         MainWindowCssClassResolver.add_best_class (
             action,
             {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
         );
-        action.add_css_class (is_connected_now &
-            !is_connecting ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.set_valign (Gtk.Align.CENTER);
-        action.set_sensitive (!is_connecting);
+        update_action_button (action, is_connected_now, is_connecting);
 
         action.clicked.connect (() => {
-            if (is_connected_now) {
+            bool current_connected = action.has_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
+            bool current_connecting = action.get_label ().has_prefix ("Connecting");
+
+            if (current_connecting) return;
+
+            if (current_connected) {
                 action_handler.disconnect_network (net);
                 return;
             }
 
-            if ((net.is_secured && !has_resolvable_saved_profile) || requires_hidden_ssid) {
-                action_handler.show_password_prompt (net, prompt_revealer, prompt_entry);
-                if (requires_hidden_ssid) {
+            var latest_net = row.get_data<WifiNetwork> ("wifi-network");
+
+            if ((latest_net.is_secured && !latest_net.saved) || latest_net.is_hidden) {
+                action_handler.show_password_prompt (latest_net, prompt_revealer, prompt_entry);
+                if (latest_net.is_hidden) {
                     hidden_ssid_entry.grab_focus ();
                 } else {
                     prompt_entry.grab_focus ();
                 }
             } else {
-                action_handler.connect_network (net, null, null, auto_connect.get_active ());
+                action_handler.connect_network (latest_net, null, null, auto_connect.get_active ());
             }
         });
 
         action_buttons.append (action);
+        row.set_data<Gtk.Button> ("action-button", action);
         action_buttons.append (details_btn);
 
         return action_buttons;
+    }
+
+    private void update_action_button (Gtk.Button action, bool is_connected_now, bool is_connecting) {
+        string action_label = is_connecting ? "Connecting…" : (is_connected_now ? "Disconnect" : "Connect");
+        action.set_label (action_label);
+        action.set_sensitive (!is_connecting);
+
+        if (is_connected_now && !is_connecting) {
+            action.add_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
+            action.remove_css_class (MainWindowCssClasses.CONNECT_BUTTON);
+        } else {
+            action.add_css_class (MainWindowCssClasses.CONNECT_BUTTON);
+            action.remove_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
+        }
     }
 
     private Gtk.Revealer build_password_prompt (
@@ -400,6 +440,70 @@ namespace MainWindowWifiRowBuilder {
         return prompt_revealer;
     }
 
+    public void update_row (
+        Gtk.ListBoxRow row,
+        WifiNetwork net,
+        bool is_connected_now,
+        bool is_connecting,
+        string? error_message,
+        bool show_frequency,
+        bool show_band,
+        bool show_bssid,
+        string signal_icon_name
+    ) {
+        row.set_data<WifiNetwork> ("wifi-network", net);
+
+        if (is_connected_now) {
+            row.add_css_class (MainWindowCssClasses.CONNECTED);
+        } else {
+            row.remove_css_class (MainWindowCssClasses.CONNECTED);
+        }
+
+        var signal_icon = row.get_data<Gtk.Image> ("signal-icon");
+        if (signal_icon != null) {
+            signal_icon.set_from_icon_name (signal_icon_name);
+            if (net.is_secured) {
+                signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
+            } else {
+                signal_icon.remove_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
+            }
+        }
+
+        var ssid_lbl = row.get_data<Gtk.Label> ("ssid-label");
+        if (ssid_lbl != null) {
+            ssid_lbl.set_text (MainWindowHelpers.safe_text (net.ssid));
+        }
+
+        var connected_indicator = row.get_data<Gtk.Label> ("connected-indicator");
+        if (connected_indicator != null) {
+            connected_indicator.set_visible (is_connected_now);
+        }
+
+        var sub = row.get_data<Gtk.Label> ("sub-label");
+        if (sub != null) {
+            string subtitle = resolve_subtitle (net, show_frequency, show_band, show_bssid);
+            sub.set_text (error_message != null ? error_message : subtitle);
+            update_sub_label_style (sub, error_message);
+        }
+
+        var auto_connect = row.get_data<Gtk.CheckButton> ("auto-connect-check");
+        if (auto_connect != null) {
+            auto_connect.set_active (net.autoconnect);
+            auto_connect.set_sensitive (!is_connecting);
+        }
+
+        var forget = row.get_data<Gtk.Button> ("forget-button");
+        if (forget != null) {
+            bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
+            forget.set_visible (has_resolvable_saved_profile);
+        }
+
+        var action = row.get_data<Gtk.Button> ("action-button");
+        if (action != null) {
+            update_action_button (action, is_connected_now, is_connecting);
+        }
+    }
+
     public Gtk.ListBoxRow build_row (
         WifiNetwork net,
         bool is_connected_now,
@@ -412,6 +516,7 @@ namespace MainWindowWifiRowBuilder {
         IMainWindowWifiRowActionHandler action_handler
     ) {
         var row = new Gtk.ListBoxRow ();
+        row.set_data<WifiNetwork> ("wifi-network", net);
         row.add_css_class (MainWindowCssClasses.WIFI_ROW);
         if (is_connected_now) {
             row.add_css_class (MainWindowCssClasses.CONNECTED);
@@ -435,6 +540,7 @@ namespace MainWindowWifiRowBuilder {
             signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
         }
         content.append (signal_icon);
+        row.set_data<Gtk.Image> ("signal-icon", signal_icon);
 
         var info = build_info_box (
             net,
@@ -443,7 +549,8 @@ namespace MainWindowWifiRowBuilder {
             error_message,
             show_frequency,
             show_band,
-            show_bssid
+            show_bssid,
+            row
         );
         content.append (info);
 
@@ -464,10 +571,14 @@ namespace MainWindowWifiRowBuilder {
         auto_connect.set_hexpand (true);
         auto_connect.set_halign (Gtk.Align.START);
         auto_connect.toggled.connect (() => {
-            if (has_resolvable_saved_profile) {
-                action_handler.set_auto_connect (net, auto_connect.get_active ());
+            var latest_net = row.get_data<WifiNetwork> ("wifi-network");
+            bool latest_has_resolvable_saved_profile = latest_net.saved && latest_net.saved_connection_uuid.strip () != "";
+            if (latest_has_resolvable_saved_profile) {
+                action_handler.set_auto_connect (latest_net, auto_connect.get_active ());
             }
         });
+        actions_panel.append (auto_connect);
+        row.set_data<Gtk.CheckButton> ("auto-connect-check", auto_connect);
 
         Gtk.Entry prompt_entry;
         Gtk.Entry hidden_ssid_entry;
@@ -490,10 +601,10 @@ namespace MainWindowWifiRowBuilder {
             prompt_revealer,
             prompt_entry,
             hidden_ssid_entry,
-            auto_connect
+            auto_connect,
+            row
         );
 
-        actions_panel.append (auto_connect);
         actions_panel.append (action_buttons);
 
         var actions_revealer = new Gtk.Revealer ();
