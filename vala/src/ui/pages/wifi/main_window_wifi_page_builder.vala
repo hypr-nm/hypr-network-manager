@@ -92,6 +92,51 @@ namespace MainWindowWifiPageBuilder {
             int idx2 = row2.get_data<int> ("sort-index");
             return idx1 - idx2;
         });
+
+        wifi_listbox.set_header_func ((row, before) => {
+            if (row == null) {
+                return;
+            }
+
+            var net = row.get_data<WifiNetwork> ("wifi-network");
+            if (net == null) {
+                row.set_header (null);
+                return;
+            }
+
+            bool is_known = net.saved || net.connected;
+
+            bool before_is_known = false;
+            if (before != null) {
+                var before_net = before.get_data<WifiNetwork> ("wifi-network");
+                if (before_net != null) {
+                    before_is_known = before_net.saved || before_net.connected;
+                }
+            }
+
+            if (!is_known && before_is_known && before != null) {
+                var header_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+                header_box.set_margin_top (16);
+                header_box.set_margin_bottom (4);
+                header_box.set_margin_start (12);
+                header_box.set_margin_end (12);
+
+                var label = new Gtk.Label ("Other Networks");
+                label.set_xalign (0.0f);
+                label.add_css_class (MainWindowCssClasses.SUB_LABEL);
+
+                var attrs = new Pango.AttrList ();
+                attrs.insert (Pango.attr_weight_new (Pango.Weight.BOLD));
+                attrs.insert (Pango.attr_scale_new (0.85));
+                label.set_attributes (attrs);
+
+                header_box.append (label);
+                row.set_header (header_box);
+            } else {
+                row.set_header (null);
+            }
+        });
+
         scroll.set_child (wifi_listbox);
 
         wifi_stack = new Gtk.Stack ();
