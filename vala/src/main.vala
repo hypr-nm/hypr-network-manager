@@ -5,6 +5,7 @@ int main (string[] args) {
     bool toggle_wifi = false;
     bool daemon_mode = false;
     bool quit_mode = false;
+    bool version_mode = false;
 
     configure_global_logging (AppLogLevel.INFO);
 
@@ -15,6 +16,7 @@ int main (string[] args) {
         {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, "Override log level to debug", null},
         {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, "Run as a background daemon", null},
         {"quit", 'q', 0, OptionArg.NONE, ref quit_mode, "Quit the running daemon", null},
+        {"version", 'v', 0, OptionArg.NONE, ref version_mode, "Print version information", null},
         {null}
     };
 
@@ -26,6 +28,17 @@ int main (string[] args) {
     } catch (OptionError e) {
         log_error ("cli", e.message);
         return 1;
+    }
+
+    if (version_mode) {
+        stdout.printf ("hypr-network-manager %s\n", APP_VERSION);
+        try {
+            var nm = new NetworkManagerClient ();
+            stdout.printf ("NetworkManager %s\n", nm.nm_client.get_version ());
+        } catch (Error e) {
+            stdout.printf ("NetworkManager <unavailable>\n");
+        }
+        return 0;
     }
 
     var config = AppConfig.load (config_path);

@@ -1,3 +1,4 @@
+const string APP_VERSION = "0.1.0";
 const string NM_SERVICE = "org.freedesktop.NetworkManager";
 const string NM_PATH = "/org/freedesktop/NetworkManager";
 const string NM_IFACE = "org.freedesktop.NetworkManager";
