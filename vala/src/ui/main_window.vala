@@ -10,6 +10,8 @@ using Gtk;
 using Gdk;
 using GtkLayerShell;
 using HyprNetworkManager.UI.Interfaces;
+using HyprNetworkManager.UI.Utils;
+using HyprNetworkManager.UI.Widgets;
 using HyprNetworkManager.Models;
 
 public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
@@ -32,6 +34,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private Gtk.GestureClick blank_window_gesture;
     private bool blank_window_down = false;
     private bool blank_window_in = false;
+    private TransientSurfaceTracker transient_surface_tracker;
     private bool layer_shell_active = false;
     public GtkLayerShell.Layer current_layer_mode { get; private set; }
     private NetworkStateContext state_context;
@@ -83,6 +86,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         if (!layer_shell_active) {
             configure_regular_window_fallback ();
         }
+        transient_surface_tracker = new TransientSurfaceTracker (this, layer_shell_active);
         log_info ("gui", "window_init: starting");
         build_ui ();
         configure_key_handling ();
@@ -247,31 +251,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     public void set_popup_text_input_mode (bool enabled) {
-        if (!layer_shell_active) {
-            return;
-        }
-
-        if (enabled) {
-            GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
-            return;
-        }
-
-        bool keep_input_for_wifi_edit = wifi_section != null && wifi_section.stack != null
-            && wifi_section.stack.get_visible_child_name () == "edit";
-        bool keep_input_for_saved_wifi_edit = profiles_section != null && profiles_section.stack != null
-            && profiles_section.stack.get_visible_child_name () == "edit";
-        bool keep_input_for_wifi_add = wifi_section != null && wifi_section.stack != null
-            && wifi_section.stack.get_visible_child_name () == "add";
-        bool keep_input_for_inline_prompt = wifi_section != null && wifi_section.active_wifi_password_revealer != null
-            && wifi_section.active_wifi_password_revealer.get_reveal_child ();
-
-        if (keep_input_for_wifi_edit || keep_input_for_saved_wifi_edit || keep_input_for_wifi_add ||
-            keep_input_for_inline_prompt) {
-            GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
-            return;
-        }
-
-        GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
+        transient_surface_tracker.apply_keyboard_mode ();
     }
 
     private void update_main_chrome_visibility (bool focus_mode) {
@@ -317,6 +297,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void reset_ui_state () {
+        if (tabs_menu_button != null) {
+            tabs_menu_button.popdown ();
+        }
+        transient_surface_tracker.reset (this.get_first_child ());
+
         if (global_error_revealer != null) {
             global_error_revealer.set_reveal_child (false);
         }
@@ -479,6 +464,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             nm,
             wifi_controller,
             this,
+            transient_surface_tracker,
             state_context,
             config_context,
             status_bar_view.status_label,
@@ -499,6 +485,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             wifi_controller,
             ethernet_controller,
             this,
+            transient_surface_tracker,
             state_context,
             content_stack,
             wifi_section.stack,
@@ -508,7 +495,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             profiles_section.refresh_saved_profiles ();
         });
 
-        ethernet_section = new HyprNetworkManager.UI.Views.EthernetSectionView (ethernet_controller);
+        ethernet_section = new HyprNetworkManager.UI.Views.EthernetSectionView (
+            ethernet_controller,
+            transient_surface_tracker
+        );
         vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (vpn_controller);
 
         notebook.append_page (wifi_section.widget, build_tab_label ("Wi-Fi"));
@@ -582,7 +572,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private Gtk.MenuButton build_tabs_menu_button () {
-        var tabs_menu_popover = new Gtk.Popover ();
+        var tabs_menu_popover = new TrackedPopover (transient_surface_tracker);
         tabs_menu_popover.add_css_class (MainWindowCssClasses.TABS_MENU_POPOVER);
         tabs_menu_popover.set_has_arrow (false);
         tabs_menu_popover.set_position (Gtk.PositionType.BOTTOM);

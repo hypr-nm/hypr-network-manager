@@ -2,6 +2,7 @@
 using GLib;
 using Gtk;
 using HyprNetworkManager.UI.Interfaces;
+using HyprNetworkManager.UI.Utils;
 using HyprNetworkManager.Models;
 
 namespace HyprNetworkManager.UI.Views {
@@ -29,6 +30,7 @@ namespace HyprNetworkManager.UI.Views {
             MainWindowWifiController wifi_controller,
             MainWindowEthernetController ethernet_controller,
             IWindowHost window_host,
+            TransientSurfaceTracker surface_tracker,
             NetworkStateContext state_context,
             Gtk.Stack main_content_stack,
             Gtk.Stack main_wifi_stack,
@@ -43,7 +45,7 @@ namespace HyprNetworkManager.UI.Views {
 
             profiles_page = new MainWindowProfilesPage ();
             profiles_details_page = new MainWindowProfilesDetailsPage ();
-            wifi_saved_edit_page = new MainWindowWifiSavedEditPage ();
+            wifi_saved_edit_page = new MainWindowWifiSavedEditPage (surface_tracker);
 
             stack = new Gtk.Stack ();
             stack.set_vexpand (true);
