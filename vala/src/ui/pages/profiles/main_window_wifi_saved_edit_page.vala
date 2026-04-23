@@ -1,6 +1,5 @@
 using Gtk;
-using HyprNetworkManager.UI.Utils;
-using HyprNetworkManager.UI.Widgets;
+using HyprNetworkManager.UI.Interfaces;
 
 public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     private static string[] security_mode_keys = {
@@ -274,7 +273,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         return section;
     }
 
-    public MainWindowWifiSavedEditPage (TransientSurfaceTracker surface_tracker) {
+    public MainWindowWifiSavedEditPage (IWindowHost window_host) {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
@@ -372,7 +371,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         security_modes.append ("WPA3 Personal (SAE)");
         security_modes.append ("Enhanced Open (OWE)");
         security_modes.append ("WEP");
-        this.security_mode_dropdown = TrackedWidgets.dropdown (surface_tracker, security_modes, null);
+        this.security_mode_dropdown = window_host.create_tracked_dropdown (security_modes, null);
         MainWindowCssClassResolver.add_best_class (
             this.security_mode_dropdown,
             {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
@@ -437,7 +436,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
-            surface_tracker,
+            window_host.create_tracked_dropdown,
             true
         );
 
@@ -460,7 +459,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
-            surface_tracker,
+            window_host.create_tracked_dropdown,
             true
         );
 

@@ -254,6 +254,13 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         transient_surface_tracker.apply_keyboard_mode ();
     }
 
+    public Gtk.DropDown create_tracked_dropdown (
+        owned GLib.ListModel? model,
+        owned Gtk.Expression? expression
+    ) {
+        return TrackedWidgets.dropdown (transient_surface_tracker, model, expression);
+    }
+
     private void update_main_chrome_visibility (bool focus_mode) {
         if (status_bar_view != null) {
             status_bar_view.root_widget.set_visible (!focus_mode);
@@ -464,7 +471,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             nm,
             wifi_controller,
             this,
-            transient_surface_tracker,
             state_context,
             config_context,
             status_bar_view.status_label,
@@ -485,7 +491,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             wifi_controller,
             ethernet_controller,
             this,
-            transient_surface_tracker,
             state_context,
             content_stack,
             wifi_section.stack,
@@ -497,7 +502,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         ethernet_section = new HyprNetworkManager.UI.Views.EthernetSectionView (
             ethernet_controller,
-            transient_surface_tracker
+            this
         );
         vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (vpn_controller);
 
