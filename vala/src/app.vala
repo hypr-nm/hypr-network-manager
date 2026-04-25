@@ -75,7 +75,19 @@ public class NetworkManager : Gtk.Application {
         return null;
     }
 
-    private string inline_css_imports (string file_path) {
+    private string inline_css_imports (string file_path, int depth = 0, HashTable<string, bool>? visited = null) {
+        if (depth > 20) {
+            log_warn ("app", "inline_css_imports: Max recursion depth reached at " + file_path);
+            return "";
+        }
+
+        var _visited = visited ?? new HashTable<string, bool> (str_hash, str_equal);
+        if (_visited.contains (file_path)) {
+            log_warn ("app", "inline_css_imports: Circular import detected at " + file_path);
+            return "";
+        }
+        _visited.insert (file_path, true);
+
         string content = "";
         if (file_path.has_prefix ("resource:///")) {
             try {
@@ -88,7 +100,18 @@ public class NetworkManager : Gtk.Application {
             }
         } else {
             try {
-                FileUtils.get_contents (file_path, out content);
+                // Ensure the path is absolute to prevent arbitrary directory traversal from CWD
+                string abs_path = Path.is_absolute (file_path) ? file_path : Path.build_filename (Environment.get_current_dir (), file_path);
+                
+                // Add an arbitrary sanity limit to the file size (e.g. 5MB)
+                var file = File.new_for_path (abs_path);
+                var info = file.query_info (FileAttribute.STANDARD_SIZE, FileQueryInfoFlags.NONE, null);
+                if (info.get_size () > 5 * 1024 * 1024) {
+                    log_warn ("app", "inline_css_imports: File too large " + abs_path);
+                    return "";
+                }
+
+                FileUtils.get_contents (abs_path, out content);
             } catch (Error e) {
                 log_warn ("app", "inline_css_imports: Failed to load file " + file_path);
             }
@@ -99,34 +122,46 @@ public class NetworkManager : Gtk.Application {
         }
 
         try {
-            var regex = new Regex ("@import\\s+url\\([\"']([^\"']+)[\"']\\)\\s*;");
+            var regex = new Regex ("@import\\s+(?:url\\([\"']?([^\"']+)[\"']?\\)|[\"']([^\"']+)[\"'])\\s*;");
             return regex.replace_eval (content, content.length, 0, 0, (match_info, result) => {
                 string import_target = match_info.fetch (1);
+                if (import_target == null || import_target == "") {
+                     import_target = match_info.fetch (2);
+                }
+                
+                if (import_target == null || import_target == "") {
+                    return false;
+                }
+
                 string target_path = "";
                 
                 bool is_core = import_target.has_suffix ("core/structure.css") 
                     || import_target.has_suffix ("core/core-components.css");
 
                 if (is_core && config.load_core_styles) {
-                    // If we are already loading core styles internally, we skip explicit imports
-                    // of them in the user CSS to avoid double-loading.
                     return false; 
                 }
 
-                string dir = "";
-                if (file_path.has_prefix ("resource:///")) {
-                    int last_slash = file_path.last_index_of ("/");
-                    if (last_slash >= 0) {
-                        dir = file_path.substring (0, last_slash);
-                    } else {
-                        dir = "resource:///";
-                    }
+                if (import_target.has_prefix ("resource:///")) {
+                    target_path = import_target;
+                } else if (Path.is_absolute (import_target)) {
+                    target_path = import_target;
                 } else {
-                    dir = Path.get_dirname (file_path);
+                    string dir = "";
+                    if (file_path.has_prefix ("resource:///")) {
+                        int last_slash = file_path.last_index_of ("/");
+                        if (last_slash >= 0) {
+                            dir = file_path.substring (0, last_slash);
+                        } else {
+                            dir = "resource:///";
+                        }
+                    } else {
+                        dir = Path.get_dirname (file_path);
+                    }
+                    target_path = Path.build_filename (dir, import_target);
                 }
-                target_path = Path.build_filename (dir, import_target);
                 
-                string inlined = inline_css_imports (target_path);
+                string inlined = inline_css_imports (target_path, depth + 1, _visited);
                 result.append (inlined);
                 return false;
             });
