@@ -75,13 +75,77 @@ public class NetworkManager : Gtk.Application {
         return null;
     }
 
-    private bool load_css (string css_path, uint priority) {
-        if (!FileUtils.test (css_path, FileTest.EXISTS)) {
-            return false;
+    private string inline_css_imports (string file_path) {
+        string content = "";
+        if (file_path.has_prefix ("resource:///")) {
+            try {
+                Bytes bytes = resources_lookup_data (file_path.substring (11), ResourceLookupFlags.NONE);
+                if (bytes != null) {
+                    content = (string) bytes.get_data ();
+                }
+            } catch (Error e) {
+                log_warn ("app", "inline_css_imports: Failed to load resource " + file_path);
+            }
+        } else {
+            try {
+                FileUtils.get_contents (file_path, out content);
+            } catch (Error e) {
+                log_warn ("app", "inline_css_imports: Failed to load file " + file_path);
+            }
         }
 
+        if (content == "") {
+            return "";
+        }
+
+        try {
+            var regex = new Regex ("@import\\s+url\\([\"']([^\"']+)[\"']\\)\\s*;");
+            return regex.replace_eval (content, content.length, 0, 0, (match_info, result) => {
+                string import_target = match_info.fetch (1);
+                string target_path = "";
+                
+                bool is_core = import_target.has_suffix ("core/structure.css") 
+                    || import_target.has_suffix ("core/core-components.css");
+
+                if (is_core && config.load_core_styles) {
+                    // If we are already loading core styles internally, we skip explicit imports
+                    // of them in the user CSS to avoid double-loading.
+                    return false; 
+                }
+
+                if (is_core) {
+                    // If load_core_styles is false, but they explicitly imported them,
+                    // we still resolve to internal resources as a convenience fallback
+                    // if they didn't provide them on disk.
+                    target_path = "resource:///yeab212/hypr-network-manager/themes/" + 
+                        (import_target.has_suffix ("structure.css") ? "core/structure.css" : "core/core-components.css");
+                } else {
+                    string dir = "";
+                    if (file_path.has_prefix ("resource:///")) {
+                        int last_slash = file_path.last_index_of ("/");
+                        if (last_slash >= 0) {
+                            dir = file_path.substring (0, last_slash);
+                        } else {
+                            dir = "resource:///";
+                        }
+                    } else {
+                        dir = Path.get_dirname (file_path);
+                    }
+                    target_path = Path.build_filename (dir, import_target);
+                }
+                
+                string inlined = inline_css_imports (target_path);
+                result.append (inlined);
+                return false;
+            });
+        } catch (Error e) {
+            return content;
+        }
+    }
+
+    private bool load_css_from_string (string css_data, uint priority) {
         var provider = new Gtk.CssProvider ();
-        provider.load_from_path (css_path);
+        provider.load_from_string (css_data);
         var display = Gdk.Display.get_default ();
         if (display == null) {
             return false;
@@ -93,11 +157,7 @@ public class NetworkManager : Gtk.Application {
         current_css_provider = provider;
 
         gtk_style_provider_add_for_display (display, provider, priority);
-        log_info (
-            "app",
-            "load_theme_css: loaded stylesheet path=%s"
-                .printf (redact_fs_path (css_path))
-        );
+        log_info ("app", "load_theme_css: loaded and inlined stylesheet successfully");
         return true;
     }
 
@@ -108,14 +168,25 @@ public class NetworkManager : Gtk.Application {
             return;
         }
 
-        MainWindowCssClassResolver.initialize (css_path, force_reload);
+        var master_builder = new StringBuilder ();
 
-        if (!load_css (css_path, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)) {
-            log_warn (
-                "app",
-                "load_theme_css: failed to apply stylesheet path=%s; outcome=continuing"
-                    .printf (redact_fs_path (css_path))
-            );
+        if (config.load_core_styles) {
+            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/themes/core/structure.css"));
+            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/themes/core/core-components.css"));
+        }
+
+        master_builder.append (inline_css_imports (css_path));
+
+        string inlined_css = master_builder.str;
+        if (inlined_css == "") {
+            log_warn ("app", "load_theme_css: resolved stylesheet is empty; outcome=skipping");
+            return;
+        }
+
+        MainWindowCssClassResolver.initialize (inlined_css, css_path, force_reload);
+
+        if (!load_css_from_string (inlined_css, Gtk.STYLE_PROVIDER_PRIORITY_USER)) {
+            log_warn ("app", "load_theme_css: failed to apply inlined stylesheet; outcome=continuing");
         }
     }
 

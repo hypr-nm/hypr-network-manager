@@ -65,7 +65,7 @@ namespace MainWindowCssClassResolver {
     private Regex? block_comment_regex = null;
     private Regex? selector_header_regex = null;
 
-    public static void initialize (string base_css_path, bool force_reload = false) {
+    public static void initialize (string css_content, string base_css_path, bool force_reload = false) {
         if (base_css_path.strip () == "") {
             return;
         }
@@ -76,14 +76,9 @@ namespace MainWindowCssClassResolver {
 
         var class_set = new HashTable<string, ClassSpecificityStats> (str_hash, str_equal);
         var class_pattern_set = new HashTable<string, SelectorPatternIndex> (str_hash, str_equal);
-        var visited_files = new HashTable<string, bool> (str_hash, str_equal);
 
-        index_css_file (
-            to_absolute_path (base_css_path),
-            class_set,
-            class_pattern_set,
-            visited_files
-        );
+        string content_without_comments = strip_css_comments (css_content);
+        index_classes (content_without_comments, class_set, class_pattern_set);
 
         indexed_classes = class_set;
         indexed_class_patterns = class_pattern_set;
@@ -419,71 +414,6 @@ namespace MainWindowCssClassResolver {
         }
 
         return "";
-    }
-
-    private static void index_css_file (
-        string css_path,
-        HashTable<string, ClassSpecificityStats> class_set,
-        HashTable<string, SelectorPatternIndex> class_pattern_set,
-        HashTable<string, bool> visited_files
-    ) {
-        string normalized_path = css_path.strip ();
-        if (normalized_path == "" || visited_files.contains (normalized_path)) {
-            return;
-        }
-        visited_files.insert (normalized_path, true);
-
-        if (!FileUtils.test (normalized_path, FileTest.EXISTS)) {
-            return;
-        }
-
-        string content;
-        size_t content_length = 0;
-        try {
-            FileUtils.get_contents (normalized_path, out content, out content_length);
-        } catch (Error e) {
-            return;
-        }
-
-        string content_without_comments = strip_css_comments (content);
-
-        index_imported_files (
-            normalized_path,
-            content_without_comments,
-            class_set,
-            class_pattern_set,
-            visited_files
-        );
-        index_classes (content_without_comments, class_set, class_pattern_set);
-    }
-
-    private static void index_imported_files (
-        string importer_css_path,
-        string content,
-        HashTable<string, ClassSpecificityStats> class_set,
-        HashTable<string, SelectorPatternIndex> class_pattern_set,
-        HashTable<string, bool> visited_files
-    ) {
-        if (!ensure_regexes_initialized () || import_regex == null) {
-            return;
-        }
-
-        try {
-            MatchInfo match_info;
-            if (!import_regex.match (content, 0, out match_info)) {
-                return;
-            }
-
-            do {
-                string import_target = match_info.fetch (1);
-                string? import_path = resolve_import_path (importer_css_path, import_target);
-                if (import_path != null) {
-                    index_css_file (import_path, class_set, class_pattern_set, visited_files);
-                }
-            } while (match_info.next ());
-        } catch (RegexError e) {
-            return;
-        }
     }
 
     private static void index_classes (
@@ -928,31 +858,5 @@ namespace MainWindowCssClassResolver {
             selector_header_regex = null;
             return false;
         }
-    }
-
-    private static string to_absolute_path (string path) {
-        if (Path.is_absolute (path)) {
-            return path;
-        }
-
-        return Path.build_filename (Environment.get_current_dir (), path);
-    }
-
-    private static string? resolve_import_path (string importer_css_path, string import_target) {
-        string target = import_target.strip ();
-        if (target == "") {
-            return null;
-        }
-
-        if (target.index_of ("://") >= 0 || target.has_prefix ("~")) {
-            return null;
-        }
-
-        if (Path.is_absolute (target)) {
-            return target;
-        }
-
-        string importer_dir = Path.get_dirname (importer_css_path);
-        return Path.build_filename (importer_dir, target);
     }
 }

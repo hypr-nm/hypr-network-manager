@@ -6,4 +6,8 @@
     <file alias="hicolor/symbolic/actions/expand-element-symbolic.svg">icons/expand-element-symbolic.svg</file>
     <file alias="hicolor/symbolic/actions/collapse-element-symbolic.svg">icons/collapse-element-symbolic.svg</file>
   </gresource>
+  <gresource prefix="/yeab212/hypr-network-manager/themes/core">
+    <file alias="structure.css">../../themes/core/structure.css</file>
+    <file alias="core-components.css">../../themes/core/core-components.css</file>
+  </gresource>
 </gresources>
