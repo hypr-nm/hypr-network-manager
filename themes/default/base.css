@@ -1,5 +1,5 @@
 /* hypr-network-manager: Default theme loader */
 @import url("../core/structure.css");
-@import url("tokens.css");
 @import url("../core/core-components.css");
+@import url("tokens.css");
 @import url("overrides.css");

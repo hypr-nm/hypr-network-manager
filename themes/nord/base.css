@@ -1,5 +1,5 @@
 /* hypr-network-manager: Nord theme loader */
 @import url("../core/structure.css");
-@import url("tokens.css");  /* For Snow Storm variant, replace tokens.css with tokens-storm.css. */
 @import url("../core/core-components.css");
+@import url("tokens.css");  /* For Snow Storm variant, replace tokens.css with tokens-storm.css. */
 @import url("overrides.css");
