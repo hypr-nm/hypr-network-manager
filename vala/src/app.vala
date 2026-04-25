@@ -113,26 +113,18 @@ public class NetworkManager : Gtk.Application {
                     return false; 
                 }
 
-                if (is_core) {
-                    // If load_core_styles is false, but they explicitly imported them,
-                    // we still resolve to internal resources as a convenience fallback
-                    // if they didn't provide them on disk.
-                    target_path = "resource:///yeab212/hypr-network-manager/themes/" + 
-                        (import_target.has_suffix ("structure.css") ? "core/structure.css" : "core/core-components.css");
-                } else {
-                    string dir = "";
-                    if (file_path.has_prefix ("resource:///")) {
-                        int last_slash = file_path.last_index_of ("/");
-                        if (last_slash >= 0) {
-                            dir = file_path.substring (0, last_slash);
-                        } else {
-                            dir = "resource:///";
-                        }
+                string dir = "";
+                if (file_path.has_prefix ("resource:///")) {
+                    int last_slash = file_path.last_index_of ("/");
+                    if (last_slash >= 0) {
+                        dir = file_path.substring (0, last_slash);
                     } else {
-                        dir = Path.get_dirname (file_path);
+                        dir = "resource:///";
                     }
-                    target_path = Path.build_filename (dir, import_target);
+                } else {
+                    dir = Path.get_dirname (file_path);
                 }
+                target_path = Path.build_filename (dir, import_target);
                 
                 string inlined = inline_css_imports (target_path);
                 result.append (inlined);
