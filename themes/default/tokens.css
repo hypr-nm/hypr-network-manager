@@ -1,32 +1,34 @@
 /* hypr-network-manager: Default theme */
 
-@define-color surface #1c212a;
-@define-color surface_soft #242b36;
-@define-color surface_raised #2e3845;
-@define-color on_surface #e7edf7;
-@define-color on_surface_variant #9aa9bf;
-@define-color primary #79a8e8;
-@define-color secondary #5f7ea8;
-@define-color error #d18791;
-@define-color success #7fbe9a;
-@define-color action #79a8e8;
-@define-color primary_hover #a7cbf4;
+:root {
+  --surface: #1c212a;
+  --surface_soft: #242b36;
+  --surface_raised: #2e3845;
+  --on_surface: #e7edf7;
+  --on_surface_variant: #9aa9bf;
+  --primary: #79a8e8;
+  --secondary: #5f7ea8;
+  --error: #d18791;
+  --success: #7fbe9a;
+  --action: #79a8e8;
+  --primary_hover: #a7cbf4;
 
-@define-color text @on_surface;
-@define-color background-alt alpha(@surface, .4);
-@define-color selected @primary;
-@define-color hover alpha(@secondary, .16);
-@define-color urgent @error;
+  --text: var(--on_surface);
+  --background-alt: alpha(var(--surface), .4);
+  --selected: var(--primary);
+  --hover: alpha(var(--secondary), .16);
+  --urgent: var(--error);
 
-@define-color line alpha(@on_surface, .13);
-@define-color line_strong alpha(@on_surface, .24);
-@define-color active alpha(@secondary, .22);
-@define-color hover_soft alpha(@secondary, .11);
-@define-color hover_row alpha(@secondary, .06);
-@define-color selected_soft alpha(@secondary, .09);
+  --line: alpha(var(--on_surface), .13);
+  --line_strong: alpha(var(--on_surface), .24);
+  --active: alpha(var(--secondary), .22);
+  --hover_soft: alpha(var(--secondary), .11);
+  --hover_row: alpha(var(--secondary), .06);
+  --selected_soft: alpha(var(--secondary), .09);
 
+}
 * {
-  color: @text;
+  color: var(--text);
   font-size: 14px;
   font-family: "JetBrains Mono Nerd Font 10";
 }
