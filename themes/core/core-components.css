@@ -178,7 +178,7 @@ notebook.nm-notebook > header > tabs > tab:checked {
 }
 
 .nm-toolbar {
-  padding: 4px 10px 12px;
+  padding: 4px 10px 6px;
   margin-bottom: 0;
   border-bottom: 1px solid alpha(@on_surface, .08);
 }
