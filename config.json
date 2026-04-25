@@ -12,6 +12,7 @@
   "layer_shell_margin_bottom": 8,
   "layer_shell_margin_left": 8,
   "log_level": "info",
+  "load_core_styles": false,
 
   "scan_interval": 20,
   "close_on_connect": false,
