@@ -116,8 +116,8 @@ namespace MainWindowWifiPageBuilder {
 
             if (!is_known && before_is_known && before != null) {
                 var header_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
-                header_box.set_margin_top (16);
-                header_box.set_margin_bottom (4);
+                header_box.set_margin_top (8);
+                header_box.set_margin_bottom (2);
                 header_box.set_margin_start (12);
                 header_box.set_margin_end (12);
 
