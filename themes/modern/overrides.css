@@ -8,15 +8,15 @@ window.nm-window,
 .nm-window {
   /* Frosted layer: compositor performs the actual blur behind this alpha. */
   background:
-    linear-gradient(to bottom, alpha(@on_surface, .03), alpha(@on_surface, 0) 22%),
-    @surface_soft;
-  border-color: @line;
+    linear-gradient(to bottom, alpha(var(--on_surface), .03), alpha(var(--on_surface), 0) 22%),
+    var(--surface_soft);
+  border-color: var(--line);
 }
 
 .nm-page.nm-page-wifi,
 .nm-page.nm-page-ethernet,
 .nm-page.nm-page-vpn {
-  background: alpha(@surface, .18);
+  background: alpha(var(--surface), .18);
 }
 
 /* Rounded tab pills without the default underline highlight. */
@@ -32,13 +32,13 @@ notebook.nm-notebook > header > tabs > tab {
   border-radius: 999px;
   background: transparent;
   box-shadow: none;
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
 }
 
 .nm-notebook tab:hover,
 .nm-notebook > header > tabs > tab:hover,
 notebook.nm-notebook > header > tabs > tab:hover {
-  background: alpha(@secondary, .10);
+  background: alpha(var(--secondary), .10);
   box-shadow: none;
   border-color: transparent;
 }
@@ -46,8 +46,8 @@ notebook.nm-notebook > header > tabs > tab:hover {
 .nm-notebook tab:checked,
 .nm-notebook > header > tabs > tab:checked,
 notebook.nm-notebook > header > tabs > tab:checked {
-  background: @active;
-  color: @primary;
+  background: var(--active);
+  color: var(--primary);
   border-color: transparent;
   box-shadow: none;
 }
@@ -56,18 +56,18 @@ notebook.nm-notebook > header > tabs > tab:checked {
 switch.nm-switch,
 .nm-switch {
   border: none;
-  background: alpha(@on_surface, .16);
+  background: alpha(var(--on_surface), .16);
 }
 
 switch.nm-switch:checked,
 .nm-switch:checked {
   border-color: transparent;
-  background: @active;
+  background: var(--active);
 }
 
 switch.nm-switch slider,
 .nm-switch slider {
-  background: @on_surface;
+  background: var(--on_surface);
 }
 
 .nm-list row.nm-wifi-row,
@@ -76,19 +76,19 @@ switch.nm-switch slider,
 .nm-device-row {
   border: none;
   border-radius: 10px;
-  background: alpha(@on_surface, .01);
+  background: alpha(var(--on_surface), .01);
 }
 
 .nm-list row.nm-wifi-row:hover,
 .nm-list row.nm-device-row:hover {
   border-color: transparent;
-  background: @hover_row;
+  background: var(--hover_row);
 }
 
 .nm-wifi-row.connected,
 .nm-device-row.connected {
   border-color: transparent;
-  background: @selected_soft;
+  background: var(--selected_soft);
 }
 
 .nm-signal-icon {
@@ -105,24 +105,24 @@ button.nm-button,
 .nm-button {
   font-weight: 600;
   border-radius: 8px;
-  border-color: @line;
-  background: @active;
+  border-color: var(--line);
+  background: var(--active);
 }
 
 button.nm-button:hover,
 .nm-button:hover {
-  border-color: @line_strong;
-  background: @hover_soft;
+  border-color: var(--line_strong);
+  background: var(--hover_soft);
 }
 
 .row-link-action {
   border-radius: 6px;
-  color: @action;
+  color: var(--action);
 }
 
 .row-link-action:hover {
-  background: alpha(@secondary, .12);
-  color: @text;
+  background: alpha(var(--secondary), .12);
+  color: var(--text);
 }
 
 .row-link-action > label {
@@ -140,7 +140,7 @@ button.nm-button:hover,
 
 .row-icon-action:hover {
   border-color: transparent;
-  background: @hover_soft;
+  background: var(--hover_soft);
 }
 
 button.nm-nav-back,
@@ -150,15 +150,15 @@ button.nm-nav-back,
   padding: 0 2px;
   border: none;
   border-radius: 6px;
-  color: @action;
+  color: var(--action);
   background: transparent;
   box-shadow: none;
 }
 
 button.nm-nav-back:hover,
 .nm-nav-back:hover {
-  background: alpha(@secondary, .12);
-  color: @text;
+  background: alpha(var(--secondary), .12);
+  color: var(--text);
 }
 
 button.nm-nav-back label,
@@ -173,21 +173,21 @@ button.nm-nav-back:hover label,
 
 .nm-page-network-details > .nm-separator,
 .nm-page-network-details .nm-details-section .nm-separator {
-  color: alpha(@secondary, .34);
+  color: alpha(var(--secondary), .34);
 }
 
 .nm-edit-section-toggle {
   border: none;
   background: transparent;
   box-shadow: none;
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
 }
 
 .nm-edit-section-toggle:hover {
   border: none;
   box-shadow: none;
-  color: @text;
-  background: alpha(@secondary, .07);
+  color: var(--text);
+  background: alpha(var(--secondary), .07);
 }
 
 .nm-edit-section-toggle:active,
@@ -208,7 +208,7 @@ button.nm-nav-back:hover label,
 }
 
 .nm-edit-collapsible.is-expanded > .nm-edit-section-toggle {
-  color: @action;
+  color: var(--action);
 }
 
 .nm-edit-mode-row {
@@ -221,7 +221,7 @@ button.nm-nav-back:hover label,
 .nm-edit-dropdown:disabled,
 entry.nm-edit-field-entry:disabled {
   opacity: 0.55;
-  color: alpha(@on_surface, .58);
+  color: alpha(var(--on_surface), .58);
 }
 
 /* Crisper focus ring in forms/entries. */
@@ -234,7 +234,7 @@ entry.nm-inline-ssid-entry:focus,
 .nm-inline-ssid-entry:focus,
 dropdown.nm-edit-dropdown:focus-within,
 .nm-edit-dropdown:focus-within {
-  border-color: alpha(@primary, .70);
+  border-color: alpha(var(--primary), .70);
 }
 
 /* Compact popover menu geometry. */
@@ -243,7 +243,7 @@ popover.menu,
 popover.background,
 popover.background.menu,
 popover.menu.background {
-  background: alpha(@surface_soft, .96);
+  background: alpha(var(--surface_soft), .96);
 }
 
 popover > contents,
@@ -251,7 +251,7 @@ popover.menu > contents,
 popover.background > contents,
 popover.background.menu > contents,
 popover.menu.background > contents {
-  background: alpha(@surface_soft, .96);
+  background: alpha(var(--surface_soft), .96);
   padding: 4px;
 }
 
@@ -266,20 +266,20 @@ popover.background listview row.activatable {
 }
 
 .nm-scroll scrollbar slider {
-  background: alpha(@on_surface, .25);
+  background: alpha(var(--on_surface), .25);
 }
 
 .nm-scroll scrollbar slider:hover {
-  background: alpha(@on_surface, .4);
+  background: alpha(var(--on_surface), .4);
 }
 
 list.boxed-list.nm-details-rows {
-  border: 1px solid alpha(@on_surface, .05);
-  background: alpha(@on_surface, .01);
+  border: 1px solid alpha(var(--on_surface), .05);
+  background: alpha(var(--on_surface), .01);
 }
 
 list.boxed-list.nm-details-rows > row {
-  border-bottom: 1px solid alpha(@on_surface, .05);
+  border-bottom: 1px solid alpha(var(--on_surface), .05);
 }
 
 list.boxed-list.nm-details-rows > row:last-child {
@@ -287,5 +287,5 @@ list.boxed-list.nm-details-rows > row:last-child {
 }
 
 list.boxed-list.nm-details-rows > row:hover {
-  background: @hover_row;
+  background: var(--hover_row);
 }

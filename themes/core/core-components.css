@@ -23,9 +23,9 @@ popover.background listview row.activatable {
 
 window.nm-window,
 .nm-window {
-  background: @surface;
-  color: @text;
-  border: 1px solid @line_strong;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line_strong);
 }
 
 .nm-root,
@@ -44,7 +44,7 @@ window.nm-window,
 .nm-page.nm-page-wifi,
 .nm-page.nm-page-ethernet,
 .nm-page.nm-page-vpn {
-  background: alpha(@on_surface, .03);
+  background: alpha(var(--on_surface), .03);
 }
 
 /* Saved profiles should not render as a second slab over the main surface. */
@@ -112,17 +112,17 @@ notebook.nm-notebook > header,
 }
 
 .nm-status-icon {
-  color: @selected;
+  color: var(--selected);
 }
 
 .nm-status-label,
 .nm-title {
   letter-spacing: 0.4px;
-  color: @on_surface;
+  color: var(--on_surface);
 }
 
 .nm-toggle-label {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   font-size: 11px;
 }
 
@@ -130,7 +130,7 @@ switch.nm-switch,
 .nm-switch {
   border-radius: 20px;
   background: transparent;
-  border: 1px solid @line;
+  border: 1px solid var(--line);
   padding: 0;
   box-shadow: none;
   background-image: none;
@@ -138,8 +138,8 @@ switch.nm-switch,
 
 switch.nm-switch:checked,
 .nm-switch:checked {
-  background: alpha(@secondary, .38);
-  border-color: alpha(@selected, .82);
+  background: alpha(var(--secondary), .38);
+  border-color: alpha(var(--selected), .82);
 }
 
 switch.nm-switch slider,
@@ -164,27 +164,27 @@ notebook.nm-notebook > header > tabs > tab {
   margin-bottom: 0;
   background: transparent;
   box-shadow: inset 0 -2px transparent;
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   transition: box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.3s ease;
 }
 
 .nm-notebook tab:checked,
 .nm-notebook > header > tabs > tab:checked,
 notebook.nm-notebook > header > tabs > tab:checked {
-  color: @primary;
+  color: var(--primary);
   background: transparent;
-  box-shadow: inset 0 -2px @primary;
+  box-shadow: inset 0 -2px var(--primary);
   font-weight: bold;
 }
 
 .nm-toolbar {
   padding: 4px 10px 6px;
   margin-bottom: 0;
-  border-bottom: 1px solid alpha(@on_surface, .08);
+  border-bottom: 1px solid alpha(var(--on_surface), .08);
 }
 
 .nm-section-title {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.35px;
@@ -202,8 +202,8 @@ menubutton.nm-tabs-menu-button > button:checked {
   margin-bottom: 2px;
   border-radius: 6px;
   border: 1px solid transparent;
-  background: alpha(@surface, .22);
-  color: @on_surface_variant;
+  background: alpha(var(--surface), .22);
+  color: var(--on_surface_variant);
 }
 
 .nm-toolbar .nm-toolbar-action {
@@ -219,13 +219,13 @@ menubutton.nm-tabs-menu-button > button:checked {
 menubutton.nm-tabs-menu-button > button:hover,
 menubutton.nm-tabs-menu-button > button.toggle:hover,
 menubutton.nm-tabs-menu-button > button:checked:hover {
-  color: @primary;
+  color: var(--primary);
   border-color: transparent;
-  background: alpha(@primary, .15);
+  background: alpha(var(--primary), .15);
 }
 
 menubutton.nm-tabs-menu-button > button:checked {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   border-color: transparent;
   background: transparent;
 }
@@ -235,16 +235,16 @@ menubutton.nm-tabs-menu-button > button:checked {
 menubutton.nm-tabs-menu-button > button:active,
 menubutton.nm-tabs-menu-button > button.toggle:active,
 menubutton.nm-tabs-menu-button > button:checked:active {
-  color: @primary;
+  color: var(--primary);
   border-color: transparent;
-  background: alpha(@primary, .18);
+  background: alpha(var(--primary), .18);
 }
 
 menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button:active:not(:hover),
 menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button.toggle:active:not(:hover),
 menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button:checked:active:not(:hover),
 menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button:checked:not(:hover) {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   border-color: transparent;
   background: transparent;
 }
@@ -259,7 +259,7 @@ menubutton.nm-tabs-menu-button > button.toggle:focus:not(:hover),
 menubutton.nm-tabs-menu-button > button.toggle:focus-visible:not(:hover),
 menubutton.nm-tabs-menu-button > button:checked:focus:not(:hover),
 menubutton.nm-tabs-menu-button > button:checked:focus-visible:not(:hover) {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   border-color: transparent;
   background: transparent;
 }
@@ -270,9 +270,9 @@ menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:checked,
 menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:active,
 menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:focus:not(:hover),
 menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:focus-visible:not(:hover) {
-  color: @primary;
+  color: var(--primary);
   border-color: transparent;
-  background: alpha(@primary, .15);
+  background: alpha(var(--primary), .15);
 }
 
 button.nm-refresh-button:disabled,
@@ -281,7 +281,7 @@ button.nm-refresh-button:disabled,
 button.nm-refresh-button:disabled:hover,
 .nm-refresh-button:disabled:hover,
 .nm-toolbar .nm-refresh-button:disabled:hover {
-  color: alpha(@on_surface_variant, .48);
+  color: alpha(var(--on_surface_variant), .48);
   border-color: transparent;
   background: transparent;
 }
@@ -289,7 +289,7 @@ button.nm-refresh-button:disabled:hover,
 button.nm-refresh-button:disabled label,
 .nm-refresh-button:disabled label,
 .nm-toolbar .nm-refresh-button:disabled label {
-  color: alpha(@on_surface_variant, .48);
+  color: alpha(var(--on_surface_variant), .48);
   opacity: 0.62;
 }
 
@@ -313,38 +313,38 @@ menubutton.nm-tabs-menu-button:active {
 .nm-wifi-row,
 .nm-device-row {
   border-radius: 12px;
-  background: alpha(@on_surface, .015);
-  border: 1px solid alpha(@on_surface, .08);
+  background: alpha(var(--on_surface), .015);
+  border: 1px solid alpha(var(--on_surface), .08);
 }
 
 .nm-list row.nm-wifi-row:hover,
 .nm-list row.nm-device-row:hover {
-  background: alpha(@secondary, .03);
-  border-color: alpha(@selected, .22);
+  background: alpha(var(--secondary), .03);
+  border-color: alpha(var(--selected), .22);
 }
 
 .nm-wifi-row.connected,
 .nm-device-row.connected {
-  background: @selected_soft;
-  border-color: alpha(@selected, .56);
+  background: var(--selected_soft);
+  border-color: alpha(var(--selected), .56);
 }
 
 .nm-signal-icon {
-  color: @action;
+  color: var(--action);
   opacity: 0.95;
 }
 
 .nm-signal-icon-secured {
-  color: @text;
+  color: var(--text);
   opacity: 0.97;
 }
 
 .nm-sub-label {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   font-size: 11px;
 }
 .nm-connected-indicator {
-  color: alpha(@success, .95);
+  color: alpha(var(--success), .95);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -352,13 +352,13 @@ menubutton.nm-tabs-menu-button:active {
 }
 
 .nm-error-label {
-  color: @error;
+  color: var(--error);
   font-size: 11px;
   padding: 4px 0;
 }
 
 .nm-row-error-label {
-  color: @error;
+  color: var(--error);
   font-size: 10px;
   padding: 2px 0;
 }
@@ -372,7 +372,7 @@ button.nm-row-link-action {
 
 .nm-row-expand-icon {
   -gtk-icon-size: 14px;
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
 }
 
 button.nm-button,
@@ -380,57 +380,57 @@ button.nm-button,
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.25px;
-  border: 1px solid @line_strong;
+  border: 1px solid var(--line_strong);
   border-radius: 999px;
   background:
     linear-gradient(to bottom, alpha(#ffffff, .07), alpha(#ffffff, .01)),
-    @surface_soft;
-  color: @text;
+    var(--surface_soft);
+  color: var(--text);
   box-shadow: none;
   background-image: none;
 }
 
 button.nm-button:hover,
 .nm-button:hover {
-  background: @hover_soft;
-  border-color: alpha(@selected, .6);
+  background: var(--hover_soft);
+  border-color: alpha(var(--selected), .6);
 }
 
 .nm-connect-button {
-  color: @success;
-  border-color: alpha(@success, .55);
+  color: var(--success);
+  border-color: alpha(var(--success), .55);
 }
 
 .nm-connect-button:hover {
-  background: alpha(@success, .16);
+  background: alpha(var(--success), .16);
 }
 
 .nm-disconnect-button,
 .nm-delete-button,
 .nm-forget-button {
-  color: @urgent;
-  border-color: alpha(@urgent, .55);
+  color: var(--urgent);
+  border-color: alpha(var(--urgent), .55);
 }
 
 .nm-disconnect-button:hover,
 .nm-delete-button:hover,
 .nm-forget-button:hover {
-  background: alpha(@urgent, .16);
+  background: alpha(var(--urgent), .16);
 }
 
 .nm-action-button,
 .nm-edit-button,
 .nm-details-button,
 .nm-primary-action-button {
-  color: @action;
-  border-color: alpha(@action, .6);
+  color: var(--action);
+  border-color: alpha(var(--action), .6);
 }
 
 .nm-action-button:hover,
 .nm-edit-button:hover,
 .nm-details-button:hover,
 .nm-primary-action-button:hover {
-  background: alpha(@action, .16);
+  background: alpha(var(--action), .16);
 }
 
 .row-link-action {
@@ -439,21 +439,21 @@ button.nm-button:hover,
   box-shadow: none;
   border-radius: 0;
   padding: 0 2px;
-  color: @selected;
+  color: var(--selected);
 }
 
 .row-link-action:hover {
-  color: @primary_hover;
+  color: var(--primary_hover);
   background: transparent;
   border: none;
 }
 
 .row-link-action > label {
-  color: @selected;
+  color: var(--selected);
 }
 
 .row-link-action:hover > label {
-  color: @primary_hover;
+  color: var(--primary_hover);
 }
 
 .row-link-action.nm-connect-button,
@@ -466,7 +466,7 @@ button.nm-button:hover,
 .row-link-action.nm-primary-action-button {
   background: transparent;
   border: none;
-  color: @selected;
+  color: var(--selected);
 }
 
 .row-link-action.nm-connect-button:hover,
@@ -479,7 +479,7 @@ button.nm-button:hover,
 .row-link-action.nm-primary-action-button:hover {
   background: transparent;
   border: none;
-  color: @primary_hover;
+  color: var(--primary_hover);
 }
 
 /* Universal list details action: icon only by default, chip on interaction only. */
@@ -489,7 +489,7 @@ button.nm-button:hover,
   border: 1px solid transparent;
   box-shadow: none;
   background-image: none;
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   border-radius: 999px;
 }
 
@@ -501,7 +501,7 @@ button.nm-button:hover,
 .nm-page .row-icon-action:checked,
 .nm-page .row-icon-action:focus,
 .nm-page .row-icon-action:focus-visible {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   background: transparent;
   border-color: transparent;
   box-shadow: none;
@@ -509,13 +509,13 @@ button.nm-button:hover,
 
 .nm-page button.row-icon-action:hover,
 .nm-page .row-icon-action:hover {
-  color: @text;
-  background: @hover_soft;
-  border-color: alpha(@on_surface, .2);
+  color: var(--text);
+  background: var(--hover_soft);
+  border-color: alpha(var(--on_surface), .2);
 }
 
 .nm-tabs-menu-popover {
-  border: 1px solid @line;
+  border: 1px solid var(--line);
   border-radius: 10px;
 }
 
@@ -523,7 +523,7 @@ button.nm-button:hover,
 .nm-tabs-menu-item {
   min-height: 24px;
   border-radius: 8px;
-  color: @text;
+  color: var(--text);
   background: transparent;
   border: none;
   box-shadow: none;
@@ -532,16 +532,16 @@ button.nm-button:hover,
 
 .nm-tabs-menu-list row.nm-tabs-menu-item:hover,
 .nm-tabs-menu-item:hover {
-  background: @hover_soft;
+  background: var(--hover_soft);
 }
 
 .nm-password-entry,
 entry.nm-edit-field-entry,
 .nm-edit-field-entry {
-  border: 1px solid @line;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: alpha(#000000, .16);
-  color: @text;
+  color: var(--text);
   padding: 6px 10px;
 }
 
@@ -549,24 +549,24 @@ entry.nm-inline-password-entry,
 .nm-inline-password-entry,
 entry.nm-inline-ssid-entry,
 .nm-inline-ssid-entry {
-  border: 1px solid @line;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: alpha(#000000, .16);
-  color: @text;
+  color: var(--text);
   padding: 6px 10px;
 }
 
 .nm-password-entry:focus,
 entry.nm-edit-field-entry:focus,
 .nm-edit-field-entry:focus {
-  border-color: @selected;
+  border-color: var(--selected);
 }
 
 entry.nm-inline-password-entry:focus,
 .nm-inline-password-entry:focus,
 entry.nm-inline-ssid-entry:focus,
 .nm-inline-ssid-entry:focus {
-  border-color: @selected;
+  border-color: var(--selected);
 }
 
 /* Hide natively rendered arrows in GTK4 DropDowns for a sleeker look */
@@ -579,10 +579,10 @@ dropdown > button > arrow,
 
 dropdown.nm-edit-dropdown,
 .nm-edit-dropdown {
-  border: 1px solid @line;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: alpha(#000000, .16);
-  color: @text;
+  color: var(--text);
 }
 
 dropdown.nm-edit-dropdown > button,
@@ -598,7 +598,7 @@ dropdown.nm-edit-dropdown > button,
 
 dropdown.nm-edit-dropdown:focus-within,
 .nm-edit-dropdown:focus-within {
-  border-color: @selected;
+  border-color: var(--selected);
 }
 
 /* Compact popover menu geometry. */
@@ -607,10 +607,10 @@ popover.menu,
 popover.background,
 popover.background.menu,
 popover.menu.background {
-  background: @surface_soft;
-  border: 1px solid alpha(@on_surface, .1);
+  background: var(--surface_soft);
+  border: 1px solid alpha(var(--on_surface), .1);
   border-radius: 10px;
-  color: @text;
+  color: var(--text);
   box-shadow: none;
 }
 
@@ -635,7 +635,7 @@ popover.menu button.model {
   padding: 6px 10px;
   margin: 0;
   border: none;
-  color: @text;
+  color: var(--text);
   background: transparent;
   box-shadow: none;
   background-image: none;
@@ -645,7 +645,7 @@ popover.menu modelbutton:hover,
 popover.menu box.modelbutton:hover,
 popover.menu button:hover,
 popover.menu button.model:hover {
-  background: alpha(@secondary, .1);
+  background: alpha(var(--secondary), .1);
   border: none;
   box-shadow: none;
   background-image: none;
@@ -711,8 +711,8 @@ popover.background listview row.activatable {
   padding: 6px 10px;
   margin: 0;
   border: none;
-  color: @text;
-  background: alpha(@surface, .34);
+  color: var(--text);
+  background: alpha(var(--surface), .34);
 }
 
 popover listview row:hover,
@@ -721,7 +721,7 @@ popover.background listview row:hover,
 popover listview row.activatable:hover,
 popover.menu listview row.activatable:hover,
 popover.background listview row.activatable:hover {
-  background: alpha(@secondary, .1);
+  background: alpha(var(--secondary), .1);
 }
 
 popover listview row:selected,
@@ -730,11 +730,11 @@ popover.background listview row:selected,
 popover listview row:checked,
 popover.menu listview row:checked,
 popover.background listview row:checked {
-  background: alpha(@secondary, .12);
+  background: alpha(var(--secondary), .12);
   border: none;
   padding: 6px 10px;
   font-weight: 400;
-  color: @text;
+  color: var(--text);
 }
 
 popover listview row:selected:hover,
@@ -743,13 +743,13 @@ popover.background listview row:selected:hover,
 popover listview row:checked:hover,
 popover.menu listview row:checked:hover,
 popover.background listview row:checked:hover {
-  background: alpha(@secondary, .12);
+  background: alpha(var(--secondary), .12);
 }
 
 /* Keep back action link-like everywhere, matching connect/disconnect text actions. */
 .nm-page button.nm-nav-back,
 .nm-page .nm-nav-back {
-  color: @selected;
+  color: var(--selected);
   background: transparent;
   background-image: none;
   border: none;
@@ -771,7 +771,7 @@ popover.background listview row:checked:hover {
 .nm-page .nm-nav-back:checked,
 .nm-page .nm-nav-back:focus,
 .nm-page .nm-nav-back:focus-visible {
-  color: @primary_hover;
+  color: var(--primary_hover);
   background: transparent;
   background-image: none;
   border: none;
@@ -781,7 +781,7 @@ popover.background listview row:checked:hover {
 
 .nm-page button.nm-nav-back label,
 .nm-page .nm-nav-back label {
-  color: @selected;
+  color: var(--selected);
 }
 
 .nm-page button.nm-nav-back:hover label,
@@ -794,32 +794,32 @@ popover.background listview row:checked:hover {
 .nm-page .nm-nav-back:checked label,
 .nm-page .nm-nav-back:focus label,
 .nm-page .nm-nav-back:focus-visible label {
-  color: @primary_hover;
+  color: var(--primary_hover);
 }
 
 .nm-details-network-icon {
-  color: @action;
+  color: var(--action);
 }
 
 .nm-details-group-title,
 .nm-edit-field-label,
 .nm-edit-mode-label {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
 }
 
 .nm-details-key,
 .nm-details-item-key {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   text-decoration: none;
 }
 
 .nm-details-value,
 .nm-details-item-value {
-  color: @text;
+  color: var(--text);
 }
 
 .nm-edit-section-toggle {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
   background: transparent;
   border: 1px solid transparent;
   box-shadow: none;
@@ -827,9 +827,9 @@ popover.background listview row:checked:hover {
 }
 
 .nm-edit-section-toggle:hover {
-  color: @text;
-  background: @hover_soft;
-  border-color: alpha(@selected, .26);
+  color: var(--text);
+  background: var(--hover_soft);
+  border-color: alpha(var(--selected), .26);
 }
 
 .nm-edit-section-toggle:active,
@@ -846,7 +846,7 @@ popover.background listview row:checked:hover {
 }
 
 .nm-edit-collapsible.is-expanded > .nm-edit-section-toggle {
-  color: @action;
+  color: var(--action);
 }
 
 .nm-edit-collapsible.is-collapsed > .nm-edit-section-toggle {
@@ -871,62 +871,62 @@ popover.background listview row:checked:hover {
 .nm-edit-dropdown:disabled,
 entry.nm-edit-field-entry:disabled {
   opacity: 0.58;
-  color: alpha(@on_surface, .56);
+  color: alpha(var(--on_surface), .56);
 }
 
 checkbutton.nm-row-autoconnect-check,
 .nm-row-autoconnect-check {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
 }
 
 checkbutton.nm-row-autoconnect-check:hover,
 .nm-row-autoconnect-check:hover {
-  color: @text;
+  color: var(--text);
 }
 
 checkbutton.nm-row-autoconnect-check > check,
 .nm-row-autoconnect-check > check,
 checkbutton > check {
   background: alpha(#000000, .2);
-  border: 1px solid @line_strong;
+  border: 1px solid var(--line_strong);
 }
 
 checkbutton.nm-row-autoconnect-check:checked > check,
 .nm-row-autoconnect-check:checked > check,
 checkbutton:checked > check {
-  background: @selected;
-  border-color: @selected;
+  background: var(--selected);
+  border-color: var(--selected);
   color: #22262b;
 }
 
 checkbutton.nm-row-autoconnect-check:checked > label,
 .nm-row-autoconnect-check:checked > label,
 checkbutton:checked > label {
-  color: @text;
+  color: var(--text);
 }
 
 .nm-placeholder-label {
-  color: @on_surface_variant;
+  color: var(--on_surface_variant);
 }
 
 .nm-placeholder-icon {
-  color: alpha(@action, .38);
+  color: alpha(var(--action), .38);
 }
 
 separator.nm-separator,
 .nm-separator {
-  color: alpha(@on_surface, .08);
-  border-color: alpha(@on_surface, .08);
-  background-color: alpha(@on_surface, .08);
+  color: alpha(var(--on_surface), .08);
+  border-color: alpha(var(--on_surface), .08);
+  background-color: alpha(var(--on_surface), .08);
   min-height: 1px;
   min-width: 1px;
 }
 
 .nm-page-network-details > .nm-separator,
 .nm-page-network-details .nm-details-section .nm-separator {
-  color: alpha(@on_surface, .12);
-  border-color: alpha(@on_surface, .12);
-  background-color: alpha(@on_surface, .12);
+  color: alpha(var(--on_surface), .12);
+  border-color: alpha(var(--on_surface), .12);
+  background-color: alpha(var(--on_surface), .12);
   min-height: 1px;
   min-width: 1px;
 }
@@ -936,34 +936,34 @@ separator.nm-separator,
 }
 
 .nm-scroll scrollbar slider {
-  background: alpha(@on_surface, .24);
+  background: alpha(var(--on_surface), .24);
 }
 
 .nm-scroll scrollbar slider:hover {
-  background: alpha(@on_surface, .32);
+  background: alpha(var(--on_surface), .32);
 }
 
 dialog .suggested-action {
-  background: @selected;
+  background: var(--selected);
   color: #1f2328;
   border-radius: 8px;
   font-weight: 700;
 }
 
 dialog .suggested-action:hover {
-  background: @primary_hover;
+  background: var(--primary_hover);
 }
 
 list.boxed-list.nm-details-rows {
-  background: alpha(@on_surface, .025);
-  border: 1px solid alpha(@on_surface, .08);
+  background: alpha(var(--on_surface), .025);
+  border: 1px solid alpha(var(--on_surface), .08);
   border-radius: 12px;
   box-shadow: none;
 }
 
 list.boxed-list.nm-details-rows > row {
   background: transparent;
-  border-bottom: 1px solid alpha(@on_surface, .08);
+  border-bottom: 1px solid alpha(var(--on_surface), .08);
   margin: 0;
   border-radius: 0;
   border-top: none;
@@ -976,7 +976,7 @@ list.boxed-list.nm-details-rows > row:last-child {
 }
 
 list.boxed-list.nm-details-rows > row:hover {
-  background: alpha(@secondary, .04);
+  background: alpha(var(--secondary), .04);
 }
 
 @keyframes nm-wifi-row-enter {

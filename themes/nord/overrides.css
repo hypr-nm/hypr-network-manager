@@ -6,8 +6,8 @@
 
 window.nm-window,
 .nm-window {
-  background: @surface;
-  border-color: @line;
+  background: var(--surface);
+  border-color: var(--line);
   border-radius: 12px;
   opacity: 1.0;
 }
@@ -16,39 +16,39 @@ window.nm-window,
 switch.nm-switch,
 .nm-switch {
   border: none;
-  background: alpha(@on_surface, .16);
+  background: alpha(var(--on_surface), .16);
 }
 
 switch.nm-switch:checked,
 .nm-switch:checked {
   border-color: transparent;
-  background: @active;
+  background: var(--active);
 }
 
 switch.nm-switch slider,
 .nm-switch slider {
-  background: @switch_thumb;
+  background: var(--switch_thumb);
 }
 
 .nm-list row.nm-wifi-row,
 .nm-list row.nm-device-row,
 .nm-wifi-row,
 .nm-device-row {
-  border: 1px solid @surface_raised;
+  border: 1px solid var(--surface_raised);
   border-radius: 10px;
-  background: @surface_soft;
+  background: var(--surface_soft);
 }
 
 .nm-list row.nm-wifi-row:hover,
 .nm-list row.nm-device-row:hover {
-  border-color: alpha(@on_surface, .20);
-  background: @surface_raised;
+  border-color: alpha(var(--on_surface), .20);
+  background: var(--surface_raised);
 }
 
 .nm-wifi-row.connected,
 .nm-device-row.connected {
-  border-color: alpha(@secondary, .34);
-  background: @selected_soft;
+  border-color: alpha(var(--secondary), .34);
+  background: var(--selected_soft);
 }
 
 .nm-list row.nm-wifi-row:last-child,
@@ -58,12 +58,12 @@ switch.nm-switch slider,
 }
 
 .nm-sub-label {
-  color: alpha(@on_surface, .78);
+  color: alpha(var(--on_surface), .78);
 }
 
 .nm-row-info .nm-sub-label,
 .nm-row-info label.nm-sub-label {
-  color: alpha(@on_surface, .82);
+  color: alpha(var(--on_surface), .82);
 }
 
 /* Raise contrast for header titles and details labels on dark Nord surfaces. */
@@ -71,34 +71,34 @@ switch.nm-switch slider,
 .nm-status-label,
 .nm-section-title,
 .nm-details-network-title {
-  color: @on_surface_soft;
+  color: var(--on_surface_soft);
 }
 
 .nm-toggle-label,
 .nm-form-label,
 .nm-edit-field-label,
 .nm-edit-mode-label {
-  color: alpha(@on_surface, .78);
+  color: alpha(var(--on_surface), .78);
 }
 
 .nm-details-group-title {
-  color: alpha(@on_surface, .70);
+  color: alpha(var(--on_surface), .70);
 }
 
 .nm-details-key,
 .nm-details-item-key {
-  color: alpha(@on_surface, .62);
+  color: alpha(var(--on_surface), .62);
 }
 
 .nm-details-value,
 .nm-details-item-value {
-  color: @on_surface;
+  color: var(--on_surface);
 }
 
 .nm-page-network-details .nm-sub-label,
 .nm-page-network-edit .nm-sub-label,
 .nm-page-saved-profiles .nm-sub-label {
-  color: alpha(@on_surface, .84);
+  color: alpha(var(--on_surface), .84);
 }
 
 .nm-signal-icon {
@@ -111,13 +111,13 @@ switch.nm-switch slider,
 }
 
 .nm-row-expand-icon {
-  color: alpha(@on_surface, .55);
+  color: alpha(var(--on_surface), .55);
   opacity: 0.85;
 }
 
 .nm-wifi-row:hover .nm-row-expand-icon,
 .nm-device-row:hover .nm-row-expand-icon {
-  color: alpha(@on_surface, .85);
+  color: alpha(var(--on_surface), .85);
   opacity: 1.0;
 }
 
@@ -126,24 +126,24 @@ button.nm-button,
 .nm-button {
   font-weight: 600;
   border-radius: 8px;
-  border-color: @line;
-  background: @active;
+  border-color: var(--line);
+  background: var(--active);
 }
 
 button.nm-button:hover,
 .nm-button:hover {
-  border-color: alpha(@on_surface, .20);
-  background: @hover_soft;
+  border-color: alpha(var(--on_surface), .20);
+  background: var(--hover_soft);
 }
 
 .row-link-action {
   border-radius: 6px;
-  color: @action;
+  color: var(--action);
 }
 
 .row-link-action:hover {
-  background: alpha(@secondary, .12);
-  color: @text;
+  background: alpha(var(--secondary), .12);
+  color: var(--text);
 }
 
 .row-link-action > label {
@@ -172,21 +172,21 @@ button.nm-button:hover,
 .nm-edit-dropdown:disabled,
 entry.nm-edit-field-entry:disabled {
   opacity: 0.55;
-  color: alpha(@on_surface, .58);
+  color: alpha(var(--on_surface), .58);
 }
 
 checkbutton.nm-row-autoconnect-check > check,
 .nm-row-autoconnect-check > check,
 checkbutton > check {
-  background: alpha(@on_surface, .10);
-  border: 1px solid alpha(@on_surface, .28);
+  background: alpha(var(--on_surface), .10);
+  border: 1px solid alpha(var(--on_surface), .28);
 }
 
 checkbutton.nm-row-autoconnect-check:checked > check,
 .nm-row-autoconnect-check:checked > check,
 checkbutton:checked > check {
-  background: @selected;
-  border-color: @selected;
+  background: var(--selected);
+  border-color: var(--selected);
   color: #eceff4;
 }
 
@@ -200,7 +200,7 @@ entry.nm-inline-ssid-entry:focus,
 .nm-inline-ssid-entry:focus,
 dropdown.nm-edit-dropdown:focus-within,
 .nm-edit-dropdown:focus-within {
-  border-color: alpha(@primary, .70);
+  border-color: alpha(var(--primary), .70);
 }
 
 /* Compact popover menu geometry. */
@@ -209,7 +209,7 @@ popover.menu,
 popover.background,
 popover.background.menu,
 popover.menu.background {
-  background: @surface_soft;
+  background: var(--surface_soft);
 }
 
 popover > contents,
@@ -217,7 +217,7 @@ popover.menu > contents,
 popover.background > contents,
 popover.background.menu > contents,
 popover.menu.background > contents {
-  background: @surface_soft;
+  background: var(--surface_soft);
   padding: 4px;
 }
 
@@ -232,20 +232,20 @@ popover.background listview row.activatable {
 }
 
 .nm-scroll scrollbar slider {
-  background: alpha(@on_surface, .25);
+  background: alpha(var(--on_surface), .25);
 }
 
 .nm-scroll scrollbar slider:hover {
-  background: alpha(@on_surface, .4);
+  background: alpha(var(--on_surface), .4);
 }
 
 list.boxed-list.nm-details-rows {
-  border: 1px solid @surface_raised;
-  background: @surface_soft;
+  border: 1px solid var(--surface_raised);
+  background: var(--surface_soft);
 }
 
 list.boxed-list.nm-details-rows > row {
-  border-bottom: 1px solid @surface_raised;
+  border-bottom: 1px solid var(--surface_raised);
 }
 
 list.boxed-list.nm-details-rows > row:last-child {
@@ -253,5 +253,5 @@ list.boxed-list.nm-details-rows > row:last-child {
 }
 
 list.boxed-list.nm-details-rows > row:hover {
-  background: @surface_raised;
+  background: var(--surface_raised);
 }
