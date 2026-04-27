@@ -14,19 +14,19 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Entry profile_name_entry { get; set; }
     public Gtk.Entry ssid_entry { get; set; }
     public Gtk.Entry bssid_entry { get; set; }
-    public Gtk.DropDown security_mode_dropdown { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown security_mode_dropdown { get; set; }
     public Gtk.CheckButton autoconnect_check { get; set; }
     public Gtk.CheckButton all_users_check { get; set; }
     public Gtk.Entry password_entry { get; set; }
 
-    public Gtk.DropDown ipv4_method_dropdown { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown ipv4_method_dropdown { get; set; }
     public Gtk.Entry ipv4_address_entry { get; set; }
     public Gtk.Entry ipv4_prefix_entry { get; set; }
     public Gtk.Entry ipv4_gateway_entry { get; set; }
     public Gtk.Switch dns_auto_switch { get; set; }
     public Gtk.Entry ipv4_dns_entry { get; set; }
 
-    public Gtk.DropDown ipv6_method_dropdown { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown ipv6_method_dropdown { get; set; }
     public Gtk.Entry ipv6_address_entry { get; set; }
     public Gtk.Entry ipv6_prefix_entry { get; set; }
     public Gtk.Entry ipv6_gateway_entry { get; set; }
@@ -371,7 +371,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         security_modes.append ("WPA3 Personal (SAE)");
         security_modes.append ("Enhanced Open (OWE)");
         security_modes.append ("WEP");
-        this.security_mode_dropdown = window_host.create_tracked_dropdown (security_modes, null);
+        this.security_mode_dropdown = window_host.create_tracked_dropdown (security_modes);
         MainWindowCssClassResolver.add_best_class (
             this.security_mode_dropdown,
             {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
@@ -424,7 +424,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         form.append (auth_section);
 
-        Gtk.DropDown v4_method;
+        HyprNetworkManager.UI.Widgets.TrackedDropDown v4_method;
         Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;
         Gtk.Switch v4_dns_auto;
 
@@ -447,7 +447,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.dns_auto_switch = v4_dns_auto;
         this.ipv4_dns_entry = v4_dns;
 
-        Gtk.DropDown v6_method;
+        HyprNetworkManager.UI.Widgets.TrackedDropDown v6_method;
         Gtk.Entry v6_address, v6_prefix, v6_gw, v6_dns;
         Gtk.Switch v6_dns_auto;
 

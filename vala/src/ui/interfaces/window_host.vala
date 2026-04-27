@@ -1,16 +1,14 @@
 namespace HyprNetworkManager.UI.Interfaces {
-    public delegate Gtk.DropDown TrackedDropDownFactory (
-        owned GLib.ListModel? model,
-        owned Gtk.Expression? expression
+    public delegate HyprNetworkManager.UI.Widgets.TrackedDropDown TrackedDropDownFactory (
+        owned Gtk.StringList model
     );
 
     /**
      * Interface that provides window operations back to the controllers.
      */
     public interface IWindowHost : Object {
-        public abstract Gtk.DropDown create_tracked_dropdown (
-            owned GLib.ListModel? model,
-            owned Gtk.Expression? expression
+        public abstract HyprNetworkManager.UI.Widgets.TrackedDropDown create_tracked_dropdown (
+            owned Gtk.StringList model
         );
         public abstract void set_popup_text_input_mode (bool enabled);
         public abstract void show_error (string message);
