@@ -393,20 +393,19 @@ hypr-network-manager
 
 Bundled themes use standard CSS variables under the `:root` pseudo-class. This allows for easy integration with dynamic palette generation tools like Matugen, Pywal, or similar.
 
-To integrate generated palettes, map the generated output colors into the theme token set. Ensure the generated color file is imported **before** `tokens.css` if the tokens depend on them, or map them directly in `tokens.css`.
+To integrate generated palettes, you should import your generated colors into your theme's `tokens.css` (or `base.css`), while ensuring that the **derived variables** (like `--text`, `--hover_soft`, etc.) and typography settings remain intact.
 
 1. Generate a palette file as `~/.config/hypr-network-manager/themes/colors.css`.
-2. Create `~/.config/hypr-network-manager/themes/custom-theme/tokens.css` with token mappings.
+2. Create `~/.config/hypr-network-manager/themes/custom-theme/tokens.css` that imports the colors and defines the derived variables.
 3. Update `~/.config/hypr-network-manager/themes/custom-theme/base.css`:
 
 ```css
-/* Import dynamic colors */
-@import url("../colors.css");
+/* Import your tokens (which now include the dynamic colors) */
 @import url("tokens.css");
 @import url("overrides.css");
 ```
 
-Matugen example:
+#### Matugen Example
 
 1. Create a Matugen template (`~/.config/matugen/templates/colors.css`) that outputs standard CSS variables, including mapping the custom UI-specific tokens directly:
 
@@ -441,20 +440,47 @@ input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/hypr-network-manager/themes/colors.css'
 ```
 
-3. In the theme directory, the generated file can be used directly as `tokens.css`:
+3. In the theme directory, import the generated `colors.css` into your `tokens.css` and keep the derived variables:
 
 ```css
-/* ~/.config/hypr-network-manager/themes/custom-theme/base.css */
+/* ~/.config/hypr-network-manager/themes/custom-theme/tokens.css */
 
-/* Import dynamic colors as tokens */
 @import url("../colors.css");
-@import url("overrides.css");
+
+:root {
+  /* Derived variables */
+  --text: var(--on_surface);
+  --background-alt: alpha(var(--surface), .4);
+  --selected: var(--primary);
+  --hover: alpha(var(--secondary), .16);
+  --urgent: var(--error);
+
+  --line: alpha(var(--on_surface), .13);
+  --line_strong: alpha(var(--on_surface), .24);
+  --active: alpha(var(--secondary), .22);
+  --hover_soft: alpha(var(--secondary), .11);
+  --hover_row: alpha(var(--secondary), .06);
+  --selected_soft: alpha(var(--secondary), .09);
+}
+
+* {
+  color: var(--text);
+  font-size: 14px;
+  font-family: "JetBrains Mono Nerd Font 10", sans-serif;
+}
 ```
 
-Generic engine (non-Material naming such as `color1`, `color2`, ...) example:
+#### Generic Engine Example
+
+For engines with non-Material naming (e.g. `color1`, `color2`), create a similar `tokens.css` mapping those colors to the required base variables:
 
 ```css
+/* ~/.config/hypr-network-manager/themes/custom-theme/tokens.css */
+
+@import url("../colors.css");
+
 :root {
+  /* Map generic variables to application base variables */
   --surface: var(--color1);
   --surface_soft: var(--color2);
   --surface_raised: var(--color3);
@@ -466,11 +492,29 @@ Generic engine (non-Material naming such as `color1`, `color2`, ...) example:
   --success: var(--color10);
   --action: var(--color14);
   --primary_hover: var(--color12);
+
+  /* Derived variables */
+  --text: var(--on_surface);
+  --background-alt: alpha(var(--surface), .4);
+  --selected: var(--primary);
+  --hover: alpha(var(--secondary), .16);
+  --urgent: var(--error);
+  --line: alpha(var(--on_surface), .13);
+  --line_strong: alpha(var(--on_surface), .24);
+  --active: alpha(var(--secondary), .22);
+  --hover_soft: alpha(var(--secondary), .11);
+  --hover_row: alpha(var(--secondary), .06);
+  --selected_soft: alpha(var(--secondary), .09);
+}
+
+* {
+  color: var(--text);
+  font-size: 14px;
+  font-family: sans-serif;
 }
 ```
 
-Tip: Keep token names matching `default/tokens.css` stable and only change token-to-palette mappings. That keeps the shared component layer intact.
-
+Tip: Keep the derived token names stable. This ensures the bundled component layers remain intact and fully functional.
 ### Waybar Integration
 
 Add a custom module in Waybar:
