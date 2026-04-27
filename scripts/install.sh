@@ -209,7 +209,7 @@ install_defaults() {
   if [[ "$INSTALL_SCOPE" == "system" ]]; then
     log "Installing default config and themes to $CONFIG_TARGET_DIR"
     run_with_privilege install -d -m 755 "$CONFIG_TARGET_DIR"
-    run_with_privilege install -m 644 "$PROJECT_ROOT/config.json" "$CONFIG_TARGET_DIR/config.json"
+    run_with_privilege install -m 644 "$PROJECT_ROOT/dotfiles/hypr-network-manager/config.json" "$CONFIG_TARGET_DIR/config.json"
     install_theme_tree_system "$CONFIG_TARGET_DIR/themes"
     return
   fi
@@ -218,7 +218,7 @@ install_defaults() {
   install -d -m 755 "$user_config_dir"
 
   if [[ ! -f "$user_config_dir/config.json" ]]; then
-    install -m 644 "$PROJECT_ROOT/config.json" "$user_config_dir/config.json"
+    install -m 644 "$PROJECT_ROOT/dotfiles/hypr-network-manager/config.json" "$user_config_dir/config.json"
   fi
 
   install_theme_tree_user_missing "$user_config_dir/themes"
