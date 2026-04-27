@@ -178,7 +178,7 @@ install_theme_tree_system() {
   local dest_themes_dir="$1"
 
   run_with_privilege install -d -m 755 "$dest_themes_dir"
-  run_with_privilege cp -a "$PROJECT_ROOT/themes/." "$dest_themes_dir/"
+  run_with_privilege cp -a "$PROJECT_ROOT/dotfiles/hypr-network-manager/themes/." "$dest_themes_dir/"
 }
 
 install_theme_tree_user_missing() {
@@ -188,7 +188,7 @@ install_theme_tree_user_missing() {
   install -d -m 755 "$dest_themes_dir"
 
   while IFS= read -r -d '' src_file; do
-    rel_path="${src_file#"$PROJECT_ROOT/themes/"}"
+    rel_path="${src_file#"$PROJECT_ROOT/dotfiles/hypr-network-manager/themes/"}"
     dst_file="$dest_themes_dir/$rel_path"
     dst_dir="$(dirname "$dst_file")"
 
@@ -196,7 +196,7 @@ install_theme_tree_user_missing() {
     if [[ ! -e "$dst_file" ]]; then
       install -m 644 "$src_file" "$dst_file"
     fi
-  done < <(find "$PROJECT_ROOT/themes" -type f -print0)
+  done < <(find "$PROJECT_ROOT/dotfiles/hypr-network-manager/themes" -type f -print0)
 }
 
 install_defaults() {

@@ -198,8 +198,8 @@ public class NetworkManager : Gtk.Application {
         var master_builder = new StringBuilder ();
 
         if (config.load_core_styles) {
-            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/themes/core/structure.css"));
-            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/themes/core/core-components.css"));
+            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/styles/structure.css"));
+            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/styles/core-components.css"));
         }
 
         master_builder.append (inline_css_imports (css_path));
