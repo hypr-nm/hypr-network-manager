@@ -24,7 +24,7 @@ namespace HyprNetworkManager.UI.Views {
         private MainWindowWifiEditPage edit_page;
 
         private Gtk.Entry add_ssid_entry;
-        private Gtk.DropDown add_security_dropdown;
+        private HyprNetworkManager.UI.Widgets.TrackedDropDown add_security_dropdown;
         private Gtk.Entry add_password_entry;
         private Gtk.Label add_error_label;
         private Gtk.Revealer add_error_revealer;
@@ -252,7 +252,7 @@ namespace HyprNetworkManager.UI.Views {
             foreach (string label in HiddenWifiSecurityModeUtils.get_dropdown_labels ()) {
                 security_list.append (label);
             }
-            add_security_dropdown = window_host.create_tracked_dropdown (security_list, null);
+            add_security_dropdown = window_host.create_tracked_dropdown (security_list);
             MainWindowCssClassResolver.add_best_class (
                 add_security_dropdown,
                 {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
@@ -266,7 +266,7 @@ namespace HyprNetworkManager.UI.Views {
             MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
                 MainWindowCssClasses.BUTTON});
 
-            add_security_dropdown.notify["selected"].connect (() => {
+            add_security_dropdown.notify_selected.connect (() => {
                 controller.sync_add_network_sensitivity (
                     add_security_dropdown,
                     add_password_entry,

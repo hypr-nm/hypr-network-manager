@@ -54,7 +54,7 @@ public class MainWindowWifiController : Object {
     }
 
     public void sync_add_network_sensitivity (
-        Gtk.DropDown? wifi_add_security_dropdown,
+        HyprNetworkManager.UI.Widgets.TrackedDropDown? wifi_add_security_dropdown,
         Gtk.Entry? wifi_add_password_entry,
         Gtk.Button? wifi_add_connect_button = null
     ) {
@@ -68,7 +68,7 @@ public class MainWindowWifiController : Object {
     public void open_add_network (
         Gtk.Stack wifi_stack,
         Gtk.Entry wifi_add_ssid_entry,
-        Gtk.DropDown wifi_add_security_dropdown,
+        HyprNetworkManager.UI.Widgets.TrackedDropDown wifi_add_security_dropdown,
         Gtk.Entry wifi_add_password_entry
     ) {
         hidden_network_controller.open_add_network (
@@ -83,7 +83,7 @@ public class MainWindowWifiController : Object {
         NetworkManagerClient nm,
         Gtk.Stack wifi_stack,
         Gtk.Entry wifi_add_ssid_entry,
-        Gtk.DropDown wifi_add_security_dropdown,
+        HyprNetworkManager.UI.Widgets.TrackedDropDown wifi_add_security_dropdown,
         Gtk.Entry wifi_add_password_entry
     ) {
         hidden_network_controller.apply_add_network (

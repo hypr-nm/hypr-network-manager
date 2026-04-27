@@ -2,7 +2,7 @@ using GLib;
 using Gtk;
 
 namespace MainWindowWifiEditUtils {
-    public string get_selected_ipv4_method (Gtk.DropDown dropdown) {
+    public string get_selected_ipv4_method (HyprNetworkManager.UI.Widgets.TrackedDropDown dropdown) {
         switch (dropdown.get_selected ()) {
         case 1:
             return "manual";
@@ -14,7 +14,7 @@ namespace MainWindowWifiEditUtils {
         }
     }
 
-    public string get_selected_ipv6_method (Gtk.DropDown dropdown) {
+    public string get_selected_ipv6_method (HyprNetworkManager.UI.Widgets.TrackedDropDown dropdown) {
         switch (dropdown.get_selected ()) {
         case 1:
             return "manual";

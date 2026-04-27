@@ -151,7 +151,7 @@ namespace MainWindowIpEditFormBuilder {
     }
 
     private void sync_ipv4_section_sensitivity (
-        Gtk.DropDown method_dropdown,
+        HyprNetworkManager.UI.Widgets.TrackedDropDown method_dropdown,
         Gtk.Revealer manual_revealer,
         Gtk.Revealer override_revealer,
         Gtk.Switch dns_auto_switch,
@@ -176,7 +176,7 @@ namespace MainWindowIpEditFormBuilder {
     }
 
     private void sync_ipv6_section_sensitivity (
-        Gtk.DropDown method_dropdown,
+        HyprNetworkManager.UI.Widgets.TrackedDropDown method_dropdown,
         Gtk.Revealer manual_revealer,
         Gtk.Revealer override_revealer,
         Gtk.Switch dns_auto_switch,
@@ -202,7 +202,7 @@ namespace MainWindowIpEditFormBuilder {
 
     public void append_ipv4_section (
         Gtk.Box form,
-        out Gtk.DropDown ipv4_method_dropdown,
+        out HyprNetworkManager.UI.Widgets.TrackedDropDown ipv4_method_dropdown,
         out Gtk.Entry ipv4_address_entry,
         out Gtk.Entry ipv4_prefix_entry,
         out Gtk.Entry ipv4_gateway_entry,
@@ -238,7 +238,7 @@ namespace MainWindowIpEditFormBuilder {
         ipv4_method_list.append ("Automatic (DHCP)");
         ipv4_method_list.append ("Manual");
         ipv4_method_list.append ("Disabled");
-        ipv4_method_dropdown = create_dropdown (ipv4_method_list, null);
+        ipv4_method_dropdown = create_dropdown (ipv4_method_list);
         apply_control_classes (ipv4_method_dropdown, with_extra_classes, null);
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
@@ -419,11 +419,11 @@ namespace MainWindowIpEditFormBuilder {
         }
         override_fields.append (ipv4_dns_entry);
 
-        Gtk.DropDown local_ipv4_method_dropdown = ipv4_method_dropdown;
+        HyprNetworkManager.UI.Widgets.TrackedDropDown local_ipv4_method_dropdown = ipv4_method_dropdown;
         Gtk.Switch local_dns_auto_switch = dns_auto_switch;
         Gtk.Entry local_ipv4_dns_entry = ipv4_dns_entry;
 
-        local_ipv4_method_dropdown.notify["selected"].connect (() => {
+        local_ipv4_method_dropdown.notify_selected.connect (() => {
             sync_ipv4_section_sensitivity (
                 local_ipv4_method_dropdown,
                 manual_revealer,
@@ -454,7 +454,7 @@ namespace MainWindowIpEditFormBuilder {
 
     public void append_ipv6_section (
         Gtk.Box form,
-        out Gtk.DropDown ipv6_method_dropdown,
+        out HyprNetworkManager.UI.Widgets.TrackedDropDown ipv6_method_dropdown,
         out Gtk.Entry ipv6_address_entry,
         out Gtk.Entry ipv6_prefix_entry,
         out Gtk.Entry ipv6_gateway_entry,
@@ -491,7 +491,7 @@ namespace MainWindowIpEditFormBuilder {
         ipv6_method_list.append ("Manual");
         ipv6_method_list.append ("Disabled");
         ipv6_method_list.append ("Ignore");
-        ipv6_method_dropdown = create_dropdown (ipv6_method_list, null);
+        ipv6_method_dropdown = create_dropdown (ipv6_method_list);
         apply_control_classes (ipv6_method_dropdown, with_extra_classes, null);
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_best_class (
@@ -676,11 +676,11 @@ namespace MainWindowIpEditFormBuilder {
         }
         override_fields.append (ipv6_dns_entry);
 
-        Gtk.DropDown local_ipv6_method_dropdown = ipv6_method_dropdown;
+        HyprNetworkManager.UI.Widgets.TrackedDropDown local_ipv6_method_dropdown = ipv6_method_dropdown;
         Gtk.Switch local_ipv6_dns_auto_switch = ipv6_dns_auto_switch;
         Gtk.Entry local_ipv6_dns_entry = ipv6_dns_entry;
 
-        local_ipv6_method_dropdown.notify["selected"].connect (() => {
+        local_ipv6_method_dropdown.notify_selected.connect (() => {
             sync_ipv6_section_sensitivity (
                 local_ipv6_method_dropdown,
                 manual_revealer,
