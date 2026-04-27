@@ -57,11 +57,11 @@ namespace HyprNetworkManager.UI.Utils {
             }
             
             if (bounds_success && bounds != null) {
-                log_info ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
+                log_debug ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
                     " | bounds: x=" + bounds.origin.x.to_string () + ", y=" + bounds.origin.y.to_string () + 
                     ", w=" + bounds.size.width.to_string () + ", h=" + bounds.size.height.to_string ());
             } else {
-                log_info ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
+                log_debug ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
                     " | bounds_success=" + bounds_success.to_string () + " (root_container=" + (root_container != null).to_string() + ")");
             }
 
@@ -71,14 +71,14 @@ namespace HyprNetworkManager.UI.Utils {
                 if (blank_window_in
                     && tracker != null
                     && tracker.should_ignore_window_dismiss_click (x, y)) {
-                     log_info ("gui", "Gesture pressed eval: ignoring outside click because it intersects a transient surface.");
+                     log_debug ("gui", "Gesture pressed eval: ignoring outside click because it intersects a transient surface.");
                      blank_window_in = false;
                 } else {
-                     log_info ("gui", "Gesture pressed eval: point inside bounds? " + (!blank_window_in).to_string ());
+                     log_debug ("gui", "Gesture pressed eval: point inside bounds? " + (!blank_window_in).to_string ());
                 }
             } else {
                 blank_window_in = false;
-                log_info ("gui", "Gesture pressed eval: assuming inside because bounds are invalid or 0x0.");
+                log_debug ("gui", "Gesture pressed eval: assuming inside because bounds are invalid or 0x0.");
             }
             blank_window_down = true;
         }
@@ -86,7 +86,7 @@ namespace HyprNetworkManager.UI.Utils {
         private void on_released (int n_press, double x, double y) {
             if (!blank_window_down) return;
             
-            log_info ("gui", "Gesture released: down=" + blank_window_down.to_string () + 
+            log_debug ("gui", "Gesture released: down=" + blank_window_down.to_string () + 
                 ", in(outside bounds)=" + blank_window_in.to_string ());
             
             blank_window_down = false;
@@ -94,7 +94,7 @@ namespace HyprNetworkManager.UI.Utils {
             if (blank_window_in) {
                 if (tracker != null
                     && tracker.should_ignore_window_dismiss_click (x, y)) {
-                    log_info ("gui", "MainWindow NOT closing: release matched recent transient dismiss");
+                    log_debug ("gui", "MainWindow NOT closing: release matched recent transient dismiss");
                     blank_window_in = false;
                     return;
                 }
@@ -108,13 +108,13 @@ namespace HyprNetworkManager.UI.Utils {
                 
                 if (release_bounds_success && release_bounds != null && release_bounds.size.width > 0 && release_bounds.size.height > 0) {
                      if (release_bounds.contains_point (release_point)) {
-                         log_info ("gui", "MainWindow NOT closing: click released inside valid bounds");
+                         log_debug ("gui", "MainWindow NOT closing: click released inside valid bounds");
                          blank_window_in = false;
                          return;
                      }
                 }
 
-                log_info ("gui", "MainWindow closing: blank_window_gesture triggered close (clicked outside bounds)");
+                log_debug ("gui", "MainWindow closing: blank_window_gesture triggered close (clicked outside bounds)");
                 window.close ();
             }
 
