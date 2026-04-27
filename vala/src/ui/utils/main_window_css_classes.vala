@@ -79,7 +79,12 @@ namespace MainWindowCssClasses {
     public const string PASSWORD_ENTRY = "nm-password-entry";
     public const string EDIT_PASSWORD_ENTRY = "nm-edit-password-entry";
     public const string EDIT_DROPDOWN = "nm-edit-dropdown";
+    public const string EDIT_DROPDOWN_TRIGGER = "nm-edit-dropdown-trigger";
     public const string ADD_DROPDOWN = "nm-add-dropdown";
+    public const string DROPDOWN_OPEN = "nm-dropdown-open";
+    public const string DROPDOWN_PANEL = "nm-dropdown-panel";
+    public const string DROPDOWN_LIST = "nm-dropdown-list";
+    public const string DROPDOWN_ROW = "nm-dropdown-row";
     public const string PASSWORD_BOX = "nm-password-box";
     public const string ROW_AUTOCONNECT_CHECK = "nm-row-autoconnect-check";
 
