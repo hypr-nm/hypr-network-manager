@@ -12,8 +12,10 @@ namespace MainWindowIconResources {
     private const string ICON_WIFI_DISABLED = "network-wireless-disabled-symbolic";
     private const string ICON_ETHERNET_EMPTY = "network-ethernet-offline-symbolic";
 
-    private const string RESOURCE_PASSWORD_HIDDEN = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg";
-    private const string RESOURCE_PASSWORD_VISIBLE = "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg";
+    private const string RESOURCE_PASSWORD_HIDDEN = (
+        "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg");
+    private const string RESOURCE_PASSWORD_VISIBLE = (
+        "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg");
 
     private const string FALLBACK_PASSWORD_HIDDEN = "view-reveal-symbolic";
     private const string FALLBACK_PASSWORD_VISIBLE = "view-conceal-symbolic";
