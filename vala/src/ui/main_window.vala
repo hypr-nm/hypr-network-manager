@@ -30,12 +30,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private HyprNetworkManager.UI.Views.VpnSectionView vpn_section;
     private Gtk.Stack content_stack;
     private Gtk.Notebook notebook;
-    private Gtk.EventControllerKey key_controller;
-    private Gtk.GestureClick blank_window_gesture;
-    private bool blank_window_down = false;
-    private bool blank_window_in = false;
     private Gtk.Box root_container;
     private TransientSurfaceTracker transient_surface_tracker;
+    private MainWindowDismissHandler dismiss_handler;
     private bool layer_shell_active = false;
     public GtkLayerShell.Layer current_layer_mode { get; private set; }
     private NetworkStateContext state_context;
@@ -43,9 +40,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private Gtk.Label global_error_label;
     private Gtk.Revealer global_error_revealer;
-    private Gtk.Button flight_mode_button;
     private bool flight_mode_active = false;
-    private Gtk.MenuButton? tabs_menu_button;
+    private MainWindowTabsMenu? tabs_menu;
 
     public MainWindow (
         Gtk.Application app,
@@ -83,14 +79,17 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             this
         );
 
-        layer_shell_active = configure_layer_shell ();
+        layer_shell_active = MainWindowLayerShellConfigurator.configure (this, config_context);
         if (!layer_shell_active) {
-            configure_regular_window_fallback ();
+            MainWindowLayerShellConfigurator.configure_fallback (this);
         }
+        this.current_layer_mode = MainWindowLayerShellConfigurator.parse_layer_mode (config_context.shell_layer);
+
         transient_surface_tracker = new TransientSurfaceTracker (this, layer_shell_active);
+        dismiss_handler = new MainWindowDismissHandler (this, transient_surface_tracker);
+
         log_info ("gui", "window_init: starting");
         build_ui ();
-        configure_key_handling ();
         refresh_all ();
         refresh_coordinator.start ();
 
@@ -107,205 +106,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     public void debug_log (string message) {
         log_debug ("gui", message);
-    }
-
-    private bool configure_layer_shell () {
-        GtkLayerShell.Layer layer_mode = parse_layer_mode (config_context.shell_layer);
-        this.current_layer_mode = layer_mode;
-
-        if (!GtkLayerShell.is_supported ()) {
-            log_warn (
-                "gui",
-                "layer_shell_init: unsupported in current session; outcome=using regular window"
-            );
-            return false;
-        }
-
-        GtkLayerShell.init_for_window (this);
-        if (!GtkLayerShell.is_layer_window (this)) {
-            log_error (
-                "gui",
-                "layer_shell_init: failed to create layer surface; outcome=using regular window"
-            );
-            return false;
-        }
-
-        GtkLayerShell.set_namespace (this, "hypr-network-manager");
-        GtkLayerShell.set_layer (this, layer_mode);
-
-        GtkLayerShell.set_anchor (this, GtkLayerShell.Edge.TOP, config_context.anchor_top);
-        GtkLayerShell.set_anchor (this, GtkLayerShell.Edge.RIGHT, config_context.anchor_right);
-        GtkLayerShell.set_anchor (this, GtkLayerShell.Edge.BOTTOM, config_context.anchor_bottom);
-        GtkLayerShell.set_anchor (this, GtkLayerShell.Edge.LEFT, config_context.anchor_left);
-        GtkLayerShell.set_margin (this, GtkLayerShell.Edge.TOP, config_context.shell_margin_top);
-        GtkLayerShell.set_margin (this, GtkLayerShell.Edge.RIGHT, config_context.shell_margin_right);
-        GtkLayerShell.set_margin (this, GtkLayerShell.Edge.BOTTOM, config_context.shell_margin_bottom);
-        GtkLayerShell.set_margin (this, GtkLayerShell.Edge.LEFT, config_context.shell_margin_left);
-
-        GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.EXCLUSIVE);
-        GtkLayerShell.auto_exclusive_zone_enable (this);
-        return true;
-    }
-
-    private void configure_regular_window_fallback () {
-        log_warn (
-            "gui",
-            "layer_shell_fallback: enabled; outcome=placement/exclusive-zone constraints disabled"
-        );
-
-        // Keep the fallback window above most windows to mimic popup behavior.
-        this.set_modal (true);
-    }
-
-    private GtkLayerShell.Layer parse_layer_mode (string value) {
-        switch (value.strip ().down ()) {
-        case "top":
-            return GtkLayerShell.Layer.TOP;
-        case "bottom":
-            return GtkLayerShell.Layer.BOTTOM;
-        case "background":
-            return GtkLayerShell.Layer.BACKGROUND;
-        case "overlay":
-        default:
-            return GtkLayerShell.Layer.OVERLAY;
-        }
-    }
-
-    private void configure_key_handling () {
-        key_controller = new Gtk.EventControllerKey ();
-        key_controller.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
-        ((Gtk.Widget) this).add_controller (key_controller);
-        key_controller.key_pressed.connect (key_press_event_cb);
-
-        blank_window_gesture = new Gtk.GestureClick ();
-        ((Gtk.Widget) this).add_controller (blank_window_gesture);
-        blank_window_gesture.touch_only = false;
-        blank_window_gesture.exclusive = true;
-        blank_window_gesture.button = Gdk.BUTTON_PRIMARY;
-        blank_window_gesture.propagation_phase = Gtk.PropagationPhase.BUBBLE;
-
-        blank_window_gesture.pressed.connect ((n_press, x, y) => {
-            Graphene.Point click_point = Graphene.Point ().init ((float) x, (float) y);
-            Graphene.Rect? bounds = null;
-            bool bounds_success = false;
-            if (root_container != null) {
-                bounds_success = root_container.compute_bounds (this, out bounds);
-            }
-            
-            if (bounds_success && bounds != null) {
-                log_info ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
-                    " | bounds: x=" + bounds.origin.x.to_string () + ", y=" + bounds.origin.y.to_string () + 
-                    ", w=" + bounds.size.width.to_string () + ", h=" + bounds.size.height.to_string ());
-            } else {
-                log_info ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
-                    " | bounds_success=" + bounds_success.to_string () + " (root_container=" + (root_container != null).to_string() + ")");
-            }
-
-            // If the surface is re-allocating (e.g. after a popover closes), bounds might temporarily be 0x0.
-            // We assume the click is inside to prevent accidental closures.
-            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0) {
-                blank_window_in = !bounds.contains_point (click_point);
-                
-                // If a transient surface is open, the current click is likely the one dismissing it.
-                // We should completely ignore "outside" clicks while a popover is open.
-                if (blank_window_in
-                    && transient_surface_tracker != null
-                    && transient_surface_tracker.should_ignore_window_dismiss_click (x, y)) {
-                     log_info ("gui", "Gesture pressed eval: ignoring outside click because it intersects a transient surface.");
-                     blank_window_in = false;
-                } else {
-                     log_info ("gui", "Gesture pressed eval: point inside bounds? " + (!blank_window_in).to_string ());
-                }
-            } else {
-                blank_window_in = false;
-                log_info ("gui", "Gesture pressed eval: assuming inside because bounds are invalid or 0x0.");
-            }
-            blank_window_down = true;
-        });
-
-        blank_window_gesture.released.connect ((n_press, x, y) => {
-            if (!blank_window_down) return;
-            
-            log_info ("gui", "Gesture released: down=" + blank_window_down.to_string () + 
-                ", in(outside bounds)=" + blank_window_in.to_string ());
-            
-            blank_window_down = false;
-
-            if (blank_window_in) {
-                if (transient_surface_tracker != null
-                    && transient_surface_tracker.should_ignore_window_dismiss_click (x, y)) {
-                    log_info ("gui", "MainWindow NOT closing: release matched recent transient dismiss");
-                    blank_window_in = false;
-                    return;
-                }
-
-                // One more sanity check: sometimes pressed gives bad bounds but released is okay.
-                Graphene.Point release_point = Graphene.Point ().init ((float) x, (float) y);
-                Graphene.Rect? release_bounds = null;
-                bool release_bounds_success = false;
-                if (root_container != null) {
-                    release_bounds_success = root_container.compute_bounds (this, out release_bounds);
-                }
-                
-                if (release_bounds_success && release_bounds != null && release_bounds.size.width > 0 && release_bounds.size.height > 0) {
-                     if (release_bounds.contains_point (release_point)) {
-                         log_info ("gui", "MainWindow NOT closing: click released inside valid bounds");
-                         blank_window_in = false;
-                         return;
-                     }
-                }
-
-                log_info ("gui", "MainWindow closing: blank_window_gesture triggered close (clicked outside bounds)");
-                this.close ();
-            }
-
-            if (blank_window_gesture.get_current_sequence () == null) {
-                blank_window_in = false;
-            }
-        });
-
-        blank_window_gesture.update.connect ((gesture, sequence) => {
-            Gtk.GestureSingle gesture_single = (Gtk.GestureSingle) gesture;
-            if (sequence != gesture_single.get_current_sequence ()) return;
-
-            double x, y;
-            gesture.get_point (sequence, out x, out y);
-
-            Graphene.Point click_point = Graphene.Point ().init ((float) x, (float) y);
-            Graphene.Rect? bounds = null;
-            bool bounds_success = false;
-            if (root_container != null) {
-                bounds_success = root_container.compute_bounds (this, out bounds);
-            }
-            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0 && bounds.contains_point (click_point)) {
-                blank_window_in = false;
-            }
-        });
-
-        blank_window_gesture.cancel.connect (() => {
-            blank_window_down = false;
-        });
-    }
-
-    private bool key_press_event_cb (uint keyval, uint keycode, Gdk.ModifierType state) {
-        // Keep text entry usable (for Wi-Fi password prompts), but still allow Esc to close.
-        if (get_focus () is Gtk.Editable) {
-            if (Gdk.keyval_name (keyval) == "Escape") {
-                this.close ();
-                return true;
-            }
-            return false;
-        }
-
-        switch (Gdk.keyval_name (keyval)) {
-        case "Escape":
-            this.close ();
-            return true;
-        default:
-            break;
-        }
-
-        return false;
     }
 
     public void set_popup_text_input_mode (bool enabled) {
@@ -361,12 +161,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void reset_ui_state () {
-        if (tabs_menu_button != null) {
-            tabs_menu_button.popdown ();
+        if (tabs_menu != null) {
+            tabs_menu.popdown ();
         }
         transient_surface_tracker.reset (root_container);
-        blank_window_down = false;
-        blank_window_in = false;
+        dismiss_handler.reset_state ();
 
         if (global_error_revealer != null) {
             global_error_revealer.set_reveal_child (false);
@@ -414,7 +213,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             wifi_section.wifi_switch
         );
 
-        if (flight_mode_button != null) {
+        if (tabs_menu != null) {
             flight_mode_controller.refresh_flight_mode_state ();
         }
     }
@@ -447,12 +246,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private void on_flight_mode_clicked () {
-        if (flight_mode_button == null) {
-            return;
-        }
-
-        bool is_flight_mode = flight_mode_button.get_label () == "Turn off flight mode";
-        flight_mode_controller.request_flight_mode_toggle (is_flight_mode);
+        flight_mode_controller.request_flight_mode_toggle (!flight_mode_active);
     }
 
     public void show_error (string message) {
@@ -507,6 +301,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         root_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         root_container.add_css_class (MainWindowCssClasses.ROOT);
         set_child (root_container);
+        dismiss_handler.set_root_container (root_container);
         return root_container;
     }
 
@@ -592,7 +387,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             if (page_num != 2) {
                 vpn_controller.on_page_leave ();
             }
-            reset_tabs_menu_button_state ();
+            if (tabs_menu != null) {
+                tabs_menu.popdown ();
+            }
         });
 
         nav_manager.focus_mode_changed.connect ((focus_mode) => {
@@ -600,109 +397,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         });
 
         content_stack.set_visible_child_name ("main");
-    }
-
-    private void clear_transient_menu_button_state (Gtk.Widget widget) {
-        widget.unset_state_flags (
-            Gtk.StateFlags.ACTIVE | Gtk.StateFlags.PRELIGHT | Gtk.StateFlags.CHECKED
-        );
-
-        for (Gtk.Widget? child = widget.get_first_child (); child != null; child = child.get_next_sibling ()) {
-            clear_transient_menu_button_state (child);
-        }
-    }
-
-    private void set_tabs_menu_button_open_state (bool open) {
-        if (tabs_menu_button == null) {
-            return;
-        }
-
-        if (open) {
-            tabs_menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON_OPEN);
-            return;
-        }
-
-        tabs_menu_button.remove_css_class (MainWindowCssClasses.TABS_MENU_BUTTON_OPEN);
-        clear_transient_menu_button_state (tabs_menu_button);
-    }
-
-    private void reset_tabs_menu_button_state () {
-        if (tabs_menu_button == null) {
-            return;
-        }
-
-        tabs_menu_button.popdown ();
-        set_tabs_menu_button_open_state (false);
-    }
-
-    private Gtk.MenuButton build_tabs_menu_button () {
-        var tabs_menu_popover = new TrackedPopover (transient_surface_tracker);
-        tabs_menu_popover.add_css_class (MainWindowCssClasses.TABS_MENU_POPOVER);
-        tabs_menu_popover.set_has_arrow (false);
-        tabs_menu_popover.set_position (Gtk.PositionType.BOTTOM);
-        // Bias the popover inward so it stays inside the right window edge.
-        tabs_menu_popover.set_offset (
-            MainWindowUiMetrics.TABS_POPOVER_OFFSET_X,
-            MainWindowUiMetrics.TABS_POPOVER_OFFSET_Y
-        );
-
-        var tabs_menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
-        MainWindowCssClassResolver.add_best_class (
-            tabs_menu_box,
-            {MainWindowCssClasses.POPOVER_LIST_INSET}
-        );
-        MainWindowCssClassResolver.add_best_class (
-            tabs_menu_box,
-            {MainWindowCssClasses.TABS_MENU_LIST, MainWindowCssClasses.LIST}
-        );
-
-        var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
-        saved_profiles_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
-        var sp_label = saved_profiles_item.get_child () as Gtk.Label;
-        if (sp_label != null) sp_label.set_halign (Gtk.Align.START);
-
-        saved_profiles_item.clicked.connect (() => {
-            tabs_menu_popover.popdown ();
-            profiles_section.open_profiles_page (false);
-        });
-        tabs_menu_box.append (saved_profiles_item);
-
-        flight_mode_button = new Gtk.Button.with_label ("Turn on flight mode");
-        flight_mode_button.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
-        var fm_label = flight_mode_button.get_child () as Gtk.Label;
-        if (fm_label != null) fm_label.set_halign (Gtk.Align.START);
-
-        flight_mode_button.clicked.connect (() => {
-            tabs_menu_popover.popdown ();
-            on_flight_mode_clicked ();
-        });
-        tabs_menu_box.append (flight_mode_button);
-
-        tabs_menu_popover.map.connect (() => {
-            set_tabs_menu_button_open_state (true);
-            refresh_switch_states ();
-        });
-
-        tabs_menu_popover.set_child (tabs_menu_box);
-
-        tabs_menu_button = new Gtk.MenuButton ();
-        tabs_menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON);
-        tabs_menu_button.set_focus_on_click (false);
-        tabs_menu_button.set_tooltip_text ("Profiles");
-        tabs_menu_button.set_popover (tabs_menu_popover);
-
-        tabs_menu_popover.closed.connect (() => {
-            set_tabs_menu_button_open_state (false);
-        });
-
-        var tabs_menu_icon = new Gtk.Image.from_icon_name ("view-more-symbolic");
-        MainWindowCssClassResolver.add_best_class (
-            tabs_menu_icon,
-            {MainWindowCssClasses.TABS_MENU_ICON, MainWindowCssClasses.TOOLBAR_ICON}
-        );
-        tabs_menu_button.set_child (tabs_menu_icon);
-
-        return tabs_menu_button;
     }
 
     private void build_ui () {
@@ -725,14 +419,22 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         build_sections_and_tabs ();
         build_navigation_manager ();
-        notebook.set_action_widget (build_tabs_menu_button (), Gtk.PackType.END);
+
+        tabs_menu = new MainWindowTabsMenu (transient_surface_tracker);
+        tabs_menu.saved_profiles_clicked.connect (() => {
+            profiles_section.open_profiles_page (false);
+        });
+        tabs_menu.flight_mode_clicked.connect (on_flight_mode_clicked);
+        tabs_menu.popover_mapped.connect (refresh_switch_states);
+
+        notebook.set_action_widget (tabs_menu, Gtk.PackType.END);
 
         root.append (content_stack);
 
         flight_mode_controller.flight_mode_state_changed.connect ((is_flight_mode) => {
             flight_mode_active = is_flight_mode;
-            if (flight_mode_button != null) {
-                flight_mode_button.set_label (is_flight_mode ? "Turn off flight mode" : "Turn on flight mode");
+            if (tabs_menu != null) {
+                tabs_menu.set_flight_mode_label (is_flight_mode ? "Turn off flight mode" : "Turn on flight mode");
             }
             update_refresh_button_availability ();
         });
