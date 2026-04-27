@@ -1,0 +1,20 @@
+/*
+* Css Colors
+* Generated with Matugen
+*/
+:root {
+  --blur_background: {{colors.surface.default.rgba | set_alpha: 0.3}};
+  --blur_background8: {{colors.surface.default.rgba | set_alpha: 0.8}};
+
+  /* Material Base Colors */
+<* for name, value in colors *>
+  --{{name}}: {{value.default.hex}};
+<* endfor *>
+
+  /* Custom UI-specific mappings */
+  --surface_soft: {{colors.surface_container_high.default.hex}};
+  --surface_raised: {{colors.surface_container_highest.default.hex}};
+  --success: {{colors.tertiary.default.hex}};
+  --action: {{colors.primary_fixed_dim.default.hex}};
+  --primary_hover: {{colors.primary_fixed.default.hex}};
+}
