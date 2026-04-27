@@ -6,7 +6,7 @@ namespace HyprNetworkManager.UI.Utils {
         private Gtk.Window window;
         private TransientSurfaceTracker tracker;
         private Gtk.Box? root_container;
-        
+
         private Gtk.EventControllerKey key_controller;
         private Gtk.GestureClick blank_window_gesture;
         private bool blank_window_down = false;
@@ -55,23 +55,25 @@ namespace HyprNetworkManager.UI.Utils {
             if (root_container != null) {
                 bounds_success = root_container.compute_bounds (window, out bounds);
             }
-            
+
             if (bounds_success && bounds != null) {
                 log_debug ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
-                    " | bounds: x=" + bounds.origin.x.to_string () + ", y=" + bounds.origin.y.to_string () + 
+                    " | bounds: x=" + bounds.origin.x.to_string () + ", y=" + bounds.origin.y.to_string () +
                     ", w=" + bounds.size.width.to_string () + ", h=" + bounds.size.height.to_string ());
             } else {
                 log_debug ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
-                    " | bounds_success=" + bounds_success.to_string () + " (root_container=" + (root_container != null).to_string() + ")");
+                    " | bounds_success=" + bounds_success.to_string () + " (root_container=" +
+                        (root_container != null).to_string () + ")");
             }
 
             if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0) {
                 blank_window_in = !bounds.contains_point (click_point);
-                
+
                 if (blank_window_in
                     && tracker != null
                     && tracker.should_ignore_window_dismiss_click (x, y)) {
-                     log_debug ("gui", "Gesture pressed eval: ignoring outside click because it intersects a transient surface.");
+                     log_debug ("gui",
+                         "Gesture pressed eval: ignoring outside click because it intersects a transient surface.");
                      blank_window_in = false;
                 } else {
                      log_debug ("gui", "Gesture pressed eval: point inside bounds? " + (!blank_window_in).to_string ());
@@ -85,10 +87,10 @@ namespace HyprNetworkManager.UI.Utils {
 
         private void on_released (int n_press, double x, double y) {
             if (!blank_window_down) return;
-            
-            log_debug ("gui", "Gesture released: down=" + blank_window_down.to_string () + 
+
+            log_debug ("gui", "Gesture released: down=" + blank_window_down.to_string () +
                 ", in(outside bounds)=" + blank_window_in.to_string ());
-            
+
             blank_window_down = false;
 
             if (blank_window_in) {
@@ -105,8 +107,9 @@ namespace HyprNetworkManager.UI.Utils {
                 if (root_container != null) {
                     release_bounds_success = root_container.compute_bounds (window, out release_bounds);
                 }
-                
-                if (release_bounds_success && release_bounds != null && release_bounds.size.width > 0 && release_bounds.size.height > 0) {
+
+                if (release_bounds_success && release_bounds != null && release_bounds.size.width > 0 &
+                    release_bounds.size.height > 0) {
                      if (release_bounds.contains_point (release_point)) {
                          log_debug ("gui", "MainWindow NOT closing: click released inside valid bounds");
                          blank_window_in = false;
@@ -136,7 +139,8 @@ namespace HyprNetworkManager.UI.Utils {
             if (root_container != null) {
                 bounds_success = root_container.compute_bounds (window, out bounds);
             }
-            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0 && bounds.contains_point (click_point)) {
+            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0 &
+                bounds.contains_point (click_point)) {
                 blank_window_in = false;
             }
         }

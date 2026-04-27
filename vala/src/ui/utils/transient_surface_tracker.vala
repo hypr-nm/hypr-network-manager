@@ -37,7 +37,8 @@ namespace HyprNetworkManager.UI.Utils {
         public bool has_active_surfaces () {
             // Provide a 300ms grace period after a surface closes where we still
             // consider surfaces "active" to absorb the click that dismissed them.
-            return transient_surface_count > 0 || (GLib.get_monotonic_time () - last_surface_closed_time) < ACTIVE_SURFACE_GRACE_US;
+            return transient_surface_count > 0 |
+                (GLib.get_monotonic_time () - last_surface_closed_time) < ACTIVE_SURFACE_GRACE_US;
         }
 
         private void cancel_window_reclaim () {
@@ -181,9 +182,11 @@ namespace HyprNetworkManager.UI.Utils {
             double surface_y = window_y + surface_transform_y;
 
             return surface_x >= (recent_surface_bounds.x - RECENT_SURFACE_BOUNDS_MARGIN_PX)
-                && surface_x <= (recent_surface_bounds.x + recent_surface_bounds.width + RECENT_SURFACE_BOUNDS_MARGIN_PX)
+                && surface_x <= (recent_surface_bounds.x + recent_surface_bounds.width +
+                    RECENT_SURFACE_BOUNDS_MARGIN_PX)
                 && surface_y >= (recent_surface_bounds.y - RECENT_SURFACE_BOUNDS_MARGIN_PX)
-                && surface_y <= (recent_surface_bounds.y + recent_surface_bounds.height + RECENT_SURFACE_BOUNDS_MARGIN_PX);
+                && surface_y <= (recent_surface_bounds.y + recent_surface_bounds.height +
+                    RECENT_SURFACE_BOUNDS_MARGIN_PX);
         }
 
         private void queue_window_reclaim () {

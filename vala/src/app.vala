@@ -101,8 +101,9 @@ public class NetworkManager : Gtk.Application {
         } else {
             try {
                 // Ensure the path is absolute to prevent arbitrary directory traversal from CWD
-                string abs_path = Path.is_absolute (file_path) ? file_path : Path.build_filename (Environment.get_current_dir (), file_path);
-                
+                string abs_path = Path.is_absolute (file_path) ? file_path : Path.build_filename (
+                    Environment.get_current_dir (), file_path);
+
                 // Add an arbitrary sanity limit to the file size (e.g. 5MB)
                 var file = File.new_for_path (abs_path);
                 var info = file.query_info (FileAttribute.STANDARD_SIZE, FileQueryInfoFlags.NONE, null);
@@ -128,18 +129,18 @@ public class NetworkManager : Gtk.Application {
                 if (import_target == null || import_target == "") {
                      import_target = match_info.fetch (2);
                 }
-                
+
                 if (import_target == null || import_target == "") {
                     return false;
                 }
 
                 string target_path = "";
-                
-                bool is_core = import_target.has_suffix ("core/structure.css") 
+
+                bool is_core = import_target.has_suffix ("core/structure.css")
                     || import_target.has_suffix ("core/core-components.css");
 
                 if (is_core && config.load_core_styles) {
-                    return false; 
+                    return false;
                 }
 
                 if (import_target.has_prefix ("resource:///")) {
@@ -160,7 +161,7 @@ public class NetworkManager : Gtk.Application {
                     }
                     target_path = Path.build_filename (dir, import_target);
                 }
-                
+
                 string inlined = inline_css_imports (target_path, depth + 1, _visited);
                 result.append (inlined);
                 return false;
@@ -198,8 +199,10 @@ public class NetworkManager : Gtk.Application {
         var master_builder = new StringBuilder ();
 
         if (config.load_core_styles) {
-            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/styles/structure.css"));
-            master_builder.append (inline_css_imports ("resource:///yeab212/hypr-network-manager/styles/core-components.css"));
+            master_builder.append (inline_css_imports (
+                "resource:///yeab212/hypr-network-manager/styles/structure.css"));
+            master_builder.append (inline_css_imports (
+                "resource:///yeab212/hypr-network-manager/styles/core-components.css"));
         }
 
         master_builder.append (inline_css_imports (css_path));

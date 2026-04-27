@@ -7,7 +7,7 @@ namespace HyprNetworkManager.UI.Widgets {
         private Gtk.Button flight_mode_button;
         private TrackedPopover tracked_popover;
         private Gtk.MenuButton menu_button;
-        
+
         public signal void saved_profiles_clicked ();
         public signal void flight_mode_clicked ();
         public signal void popover_mapped ();
@@ -15,7 +15,7 @@ namespace HyprNetworkManager.UI.Widgets {
         public MainWindowTabsMenu (TransientSurfaceTracker tracker) {
             Object (orientation: Gtk.Orientation.HORIZONTAL, spacing: 0);
             this.tracker = tracker;
-            
+
             menu_button = new Gtk.MenuButton ();
             menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON);
             menu_button.set_focus_on_click (false);
