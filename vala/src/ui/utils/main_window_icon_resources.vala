@@ -11,6 +11,10 @@ namespace MainWindowIconResources {
     private const string ICON_WIFI_EMPTY = "network-wireless-offline-symbolic";
     private const string ICON_WIFI_DISABLED = "network-wireless-disabled-symbolic";
     private const string ICON_ETHERNET_EMPTY = "network-ethernet-offline-symbolic";
+    
+    private const string ICON_MENU_MORE = "view-more-symbolic";
+    private const string ICON_DROPDOWN_TRIGGER = "pan-down-symbolic";
+    private const string ICON_DROPDOWN_CHECK = "object-select-symbolic";
 
     private const string RESOURCE_PASSWORD_HIDDEN = (
         "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-symbolic.svg");
@@ -25,7 +29,9 @@ namespace MainWindowIconResources {
     private const string FALLBACK_WIFI_EMPTY = "network-wireless-offline";
     private const string FALLBACK_WIFI_DISABLED = "network-wireless-disabled";
     private const string FALLBACK_ETHERNET_EMPTY = "network-ethernet-offline";
-
+    private const string FALLBACK_MENU_MORE = "view-more-symbolic";
+    private const string FALLBACK_DROPDOWN_TRIGGER = "pan-down-symbolic";
+    private const string FALLBACK_DROPDOWN_CHECK = "object-select-symbolic";
 
     public enum NetworkPlaceholderIcon {
         WIFI_EMPTY,
@@ -143,5 +149,20 @@ namespace MainWindowIconResources {
             var icon = new ThemedIcon.from_names (flight_mode);
             return new Gtk.Image.from_gicon (icon);
         }
+    }
+
+    public Gtk.Image create_menu_more_icon () {
+        string[] names = {ICON_MENU_MORE, FALLBACK_MENU_MORE};
+        return new Gtk.Image.from_gicon (new ThemedIcon.from_names (names));
+    }
+
+    public Gtk.Image create_dropdown_trigger_icon () {
+        string[] names = {ICON_DROPDOWN_TRIGGER, FALLBACK_DROPDOWN_TRIGGER};
+        return new Gtk.Image.from_gicon (new ThemedIcon.from_names (names));
+    }
+
+    public Gtk.Image create_dropdown_check_icon () {
+        string[] names = {ICON_DROPDOWN_CHECK, FALLBACK_DROPDOWN_CHECK};
+        return new Gtk.Image.from_gicon (new ThemedIcon.from_names (names));
     }
 }
