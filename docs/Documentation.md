@@ -213,12 +213,10 @@ Core styles can be toggled via `config.json`:
 ```
 
 * **`true` (Default):** The app pre-loads structural and component CSS. Only color variables and minor tweaks need to be provided.
-* **`false`:** No internal styles are loaded. The application will be completely unstyled, and the theme must be built from the ground up in `base.css` (including layout and geometry).
+* **`false`:** Internal styles are not applied. Useful for complete control over layout, geometry, and visual design.
 
 #### Bundled Theme Structure
 Keeping `load_core_styles: true` is recommended for most setups. Bundled themes follow this organized layout:
-
-Bundled themes follow this folder layout:
 
 * `themes/<name>/base.css`
 * `themes/<name>/tokens.css`
@@ -382,7 +380,7 @@ hypr-network-manager
 
 ```bash
 --debug             # Override log level to debug
---status            # Output JSON for status bars
+--status            # Output JSON status of current network state.
 --toggle-wifi       # Toggle Wi-Fi on/off
 --quit              # Terminate the daemon and exit
 ```
