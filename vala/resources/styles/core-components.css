@@ -437,6 +437,8 @@ button.nm-button:hover,
   background: transparent;
   border: none;
   box-shadow: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
   border-radius: 0;
   padding: 0 2px;
   color: var(--selected);
@@ -446,6 +448,8 @@ button.nm-button:hover,
   color: var(--primary_hover);
   background: transparent;
   border: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
 }
 
 .row-link-action > label {
@@ -489,6 +493,8 @@ button.nm-button:hover,
   border: 1px solid transparent;
   box-shadow: none;
   background-image: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
   color: var(--on_surface_variant);
   border-radius: 999px;
 }
@@ -512,6 +518,8 @@ button.nm-button:hover,
   color: var(--text);
   background: var(--hover_soft);
   border-color: alpha(var(--on_surface), .2);
+  text-shadow: none;
+  -gtk-icon-shadow: none;
 }
 
 .nm-tabs-menu-popover {
@@ -826,6 +834,8 @@ popover.background list row:checked:hover {
   border: none;
   border-color: transparent;
   box-shadow: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
   border-radius: 0;
   padding: 0 2px;
   min-width: 0;
@@ -848,6 +858,8 @@ popover.background list row:checked:hover {
   border: none;
   border-color: transparent;
   box-shadow: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
 }
 
 .nm-page button.nm-nav-back label,
