@@ -17,6 +17,8 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
    * [CLI Options](#cli-options)
 6. [Integration](#integration)
 
+  * [Palette Engine Integration](#palette-engine-integration)
+
   * [Waybar Integration](#waybar-integration)
   * [Hyprland Integration](#hyprland-integration)
 7. [Development](#development)
@@ -70,7 +72,7 @@ Use the installer script:
 bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
 ```
 
-Alternatively, you can skip the interactive prompt and define the `INSTALL_SCOPE` directly:
+Alternatively, the interactive prompt can be skipped by defining the `INSTALL_SCOPE` directly:
 
 ```bash
 INSTALL_SCOPE=system bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
@@ -101,11 +103,11 @@ cd hypr-network-manager
 ./scripts/install.sh
 ```
 
-You will be prompted to select the install level for the binary and defaults:
+The script prompts for the install level for the binary and defaults:
 1. **System**: `/usr/local` and `/etc/xdg/hypr-network-manager`
 2. **User**: `~/.local` and `~/.config/hypr-network-manager`
 
-You can bypass the prompt by defining the `INSTALL_SCOPE` environment variable before running the script:
+The prompt can be bypassed by defining the `INSTALL_SCOPE` environment variable before running the script:
 
 ```bash
 INSTALL_SCOPE=system ./scripts/install.sh
@@ -159,6 +161,7 @@ The app reads `config.json` from this precedence order:
 | window_height | int (> 0) | 560 | Popup window height in pixels. |
 | layer_shell_layer | string | overlay | Layer-shell layer. Supported values: `overlay`, `top`, `bottom`, `background`. |
 | log_level | string | info | Minimum emitted log severity. Supported values: `debug`, `info`, `warn`, `error`. |
+| load_core_styles | bool | true | Whether to load bundled internal CSS for structure and base component visuals. |
 | position | string | top-right | Position preset used for placement anchors. Supported values: `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top`, `right`, `bottom`, `left`. Invalid values fallback to top-right. |
 | layer_shell_margin_top | int | 8 | Top margin in pixels. |
 | layer_shell_margin_right | int | 8 | Right margin in pixels. |
@@ -193,15 +196,27 @@ Note: All guides provided bellow regarding theming are just a recommended patter
 1. `~/.config/hypr-network-manager/themes/base.css` (user-local)
 2. `/etc/xdg/hypr-network-manager/themes/base.css` (system-wide fallback)
 
-
 ### Recommended Theme Architecture
 
-The bundled default theme is split into four layers:
+The application handles styling in two layers:
 
-1. `core/structure.css` (layout and core geometry)
-2. `<theme>/tokens.css` (color + typography tokens)
-3. `core/core-components.css` (shared component visuals that consume tokens)
-4. `<theme>/overrides.css` (optional theme-specific tweaks)
+1. **Core Styles (Internal):** Layout structure and base component visuals. These are bundled into the binary.
+2. **Theme Styles (External):** Color tokens and specific overrides located in the themes directory.
+
+#### Toggling Core Styles
+Core styles can be toggled via `config.json`:
+
+```json
+{
+  "load_core_styles": true
+}
+```
+
+* **`true` (Default):** The app pre-loads structural and component CSS. Only color variables and minor tweaks need to be provided.
+* **`false`:** No internal styles are loaded. The application will be completely unstyled, and the theme must be built from the ground up in `base.css` (including layout and geometry).
+
+#### Bundled Theme Structure
+Keeping `load_core_styles: true` is recommended for most setups. Bundled themes follow this organized layout:
 
 Bundled themes follow this folder layout:
 
@@ -211,78 +226,19 @@ Bundled themes follow this folder layout:
 
 ### Compact Theme Workflow
 
-1. Create a theme directory in `~/.config/hypr-network-manager/themes/` (for example `my-theme/`).
-2. Keep your root `base.css` small:
+1. Create a theme directory in `~/.config/hypr-network-manager/themes/` (for example `custom-theme/`).
+2. Keep the root `base.css` small. The `@import` system works relative to the file.
+3. Ideal `custom-theme/base.css` structure:
 
 ```css
-@import url("my-theme/base.css");
-```
-
-3. Ideal `my-theme/base.css` structure:
-
-```css
-@import url("../core/structure.css");
+/* Map tokens (static or generated colors) */
 @import url("tokens.css");
-@import url("../core/core-components.css");
+
+/* Apply custom tweaks */
 @import url("overrides.css");
 ```
 
-4. Add targeted component changes in `my-theme/overrides.css`.
-
-
-### Optional Palette Engine Integration
-
-Even though bundled themes are static by default, the token names and structure are designed with material design principles in mind. This allows you to easily integrate dynamic palette generation tools like Matugen or similar.
-
-To integrate generated palettes, map generated colors into the theme token set.
-
-1. Generate a palette file as `~/.config/hypr-network-manager/themes/colors.css`.
-2. Create `~/.config/hypr-network-manager/themes/my-theme/tokens.css` with token mappings.
-3. Update `~/.config/hypr-network-manager/themes/my-theme/base.css`:
-
-```css
-@import url("../structure.css");
-@import url("../colors.css");
-@import url("tokens.css");
-@import url("../shared-components.css");
-```
-
-Matugen example:
-As the app follows Material color definitions by default, only custom tokens need to be mapped rather than the full palette.
-
-```css
-/*
-@define-color surface @surface;
-@define-color on_surface @on_surface;
-@define-color on_surface_variant @on_surface_variant;
-@define-color primary @primary;
-@define-color secondary @secondary;
-@define-color error @error;
-*/
-@define-color surface_soft @surface_container_high;
-@define-color surface_raised @surface_container_highest;
-@define-color success @tertiary;
-@define-color action @primary_fixed_dim;
-@define-color primary_hover @primary_fixed;
-```
-
-Generic engine (non-Material naming such as `color_1`, `color_2`, ...) example:
-
-```css
-@define-color surface @color_1;
-@define-color surface_soft @color_2;
-@define-color surface_raised @color_3;
-@define-color on_surface @color_15;
-@define-color on_surface_variant @color_8;
-@define-color primary @color_6;
-@define-color secondary @color_5;
-@define-color error @color_9;
-@define-color success @color_10;
-@define-color action @color_14;
-@define-color primary_hover @color_12;
-```
-
-Tip: keep token names from `default/tokens.css` stable and only change token-to-palette mappings. That keeps the shared component layer unchanged.
+4. Add targeted component changes in `custom-theme/overrides.css`.
 
 ### Supported theming classes
 
@@ -331,6 +287,10 @@ These classes dictate the physical geometry, containers, positioning, padding, a
 | nm-details-section | Details section wrapper (basic/advanced) |
 | nm-details-rows | Details rows container |
 | nm-details-item | Vertical details item wrapper |
+| nm-dropdown-panel | Tracked dropdown popover panel |
+| nm-dropdown-list | Tracked dropdown internal ListBox |
+| nm-dropdown-row | Tracked dropdown ListBoxRow items |
+| nm-popover-list-inset | Box wrapper for popover list menus |
 | blank-window | Dismiss overlay window |
 | blank-window-surface | Click-capture surface inside dismiss overlay |
 
@@ -357,6 +317,8 @@ These classes represent base components or reusable elements without a specific 
 | nm-details-value | Value label class used in details rows |
 | nm-edit-field-entry | General text entries inside edits (IPv4/6, DNS) |
 | nm-edit-dropdown | General dropdown boxes inside edits (methods) |
+| nm-edit-dropdown-trigger | Dropdown open/trigger button |
+| nm-dropdown-open | State class added to dropdowns when popover is open |
 | nm-password-entry | Password entry base styling |
 | nm-placeholder-icon | Empty-state icons |
 | nm-placeholder-label | Empty-state labels |
@@ -428,6 +390,88 @@ hypr-network-manager
 ---
 
 ## Integration
+
+### Palette Engine Integration
+
+Bundled themes use standard CSS variables under the `:root` pseudo-class. This allows for easy integration with dynamic palette generation tools like Matugen, Pywal, or similar.
+
+To integrate generated palettes, map the generated output colors into the theme token set. Ensure the generated color file is imported **before** `tokens.css` if the tokens depend on them, or map them directly in `tokens.css`.
+
+1. Generate a palette file as `~/.config/hypr-network-manager/themes/colors.css`.
+2. Create `~/.config/hypr-network-manager/themes/custom-theme/tokens.css` with token mappings.
+3. Update `~/.config/hypr-network-manager/themes/custom-theme/base.css`:
+
+```css
+/* Import dynamic colors */
+@import url("../colors.css");
+@import url("tokens.css");
+@import url("overrides.css");
+```
+
+Matugen example:
+
+1. Create a Matugen template (`~/.config/matugen/templates/colors.css`) that outputs standard CSS variables, including mapping the custom UI-specific tokens directly:
+
+```css
+/*
+* Css Colors
+* Generated with Matugen
+*/
+:root {
+  --blur_background: {{colors.surface.default.rgba | set_alpha: 0.3}};
+  --blur_background8: {{colors.surface.default.rgba | set_alpha: 0.8}};
+
+  /* Material Base Colors */
+<* for name, value in colors *>
+  --{{name}}: {{value.default.hex}};
+<* endfor *>
+
+  /* Custom UI-specific mappings */
+  --surface_soft: {{colors.surface_container_high.default.hex}};
+  --surface_raised: {{colors.surface_container_highest.default.hex}};
+  --success: {{colors.tertiary.default.hex}};
+  --action: {{colors.primary_fixed_dim.default.hex}};
+  --primary_hover: {{colors.primary_fixed.default.hex}};
+}
+```
+
+2. Add the template to the Matugen configuration (`~/.config/matugen/config.toml`):
+
+```toml
+[templates.hypr-network-manager]
+input_path = '~/.config/matugen/templates/colors.css'
+output_path = '~/.config/hypr-network-manager/themes/colors.css'
+```
+
+3. In the theme directory, the generated file can be used directly as `tokens.css`:
+
+```css
+/* ~/.config/hypr-network-manager/themes/custom-theme/base.css */
+
+/* Import dynamic colors as tokens */
+@import url("../colors.css");
+@import url("overrides.css");
+```
+
+Generic engine (non-Material naming such as `color1`, `color2`, ...) example:
+
+```css
+:root {
+  --surface: var(--color1);
+  --surface_soft: var(--color2);
+  --surface_raised: var(--color3);
+  --on_surface: var(--color15);
+  --on_surface_variant: var(--color8);
+  --primary: var(--color6);
+  --secondary: var(--color5);
+  --error: var(--color9);
+  --success: var(--color10);
+  --action: var(--color14);
+  --primary_hover: var(--color12);
+}
+```
+
+Tip: Keep token names matching `default/tokens.css` stable and only change token-to-palette mappings. That keeps the shared component layer intact.
 
 ### Waybar Integration
 
