@@ -75,7 +75,7 @@ namespace HyprNetworkManager.UI.Widgets {
             tracked_popover.set_child (menu_box);
             menu_button.set_popover (tracked_popover);
 
-            var icon = new Gtk.Image.from_icon_name ("view-more-symbolic");
+            var icon = MainWindowIconResources.create_menu_more_icon ();
             MainWindowCssClassResolver.add_best_class (
                 icon,
                 {MainWindowCssClasses.TABS_MENU_ICON, MainWindowCssClasses.TOOLBAR_ICON}

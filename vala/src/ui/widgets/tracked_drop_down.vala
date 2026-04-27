@@ -21,7 +21,7 @@ namespace HyprNetworkManager.UI.Widgets {
             selected_label.set_hexpand (true);
             selected_label.set_ellipsize (Pango.EllipsizeMode.END);
 
-            var icon = new Gtk.Image.from_icon_name ("pan-down-symbolic");
+            var icon = MainWindowIconResources.create_dropdown_trigger_icon ();
 
             var button_content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
             button_content.append (selected_label);
@@ -54,7 +54,7 @@ namespace HyprNetworkManager.UI.Widgets {
                 label.set_halign (Gtk.Align.START);
                 label.set_hexpand (true);
 
-                var check_icon = new Gtk.Image.from_icon_name ("object-select-symbolic");
+                var check_icon = MainWindowIconResources.create_dropdown_check_icon ();
                 check_icon.set_opacity (0.0);
 
                 row_box.append (label);
