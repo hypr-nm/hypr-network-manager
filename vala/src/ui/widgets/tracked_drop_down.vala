@@ -24,8 +24,6 @@ namespace HyprNetworkManager.UI.Widgets {
             var icon = new Gtk.Image.from_icon_name ("pan-down-symbolic");
 
             var button_content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-            button_content.set_margin_start (6);
-            button_content.set_margin_end (6);
             button_content.append (selected_label);
             button_content.append (icon);
 
@@ -47,10 +45,10 @@ namespace HyprNetworkManager.UI.Widgets {
                 row.add_css_class ("menuitem");
 
                 var row_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-                row_box.set_margin_start (12);
-                row_box.set_margin_end (12);
-                row_box.set_margin_top (8);
-                row_box.set_margin_bottom (8);
+                row_box.set_margin_start (2);
+                row_box.set_margin_end (2);
+                row_box.set_margin_top (2);
+                row_box.set_margin_bottom (2);
 
                 var label = new Gtk.Label (item.get_string ());
                 label.set_halign (Gtk.Align.START);
