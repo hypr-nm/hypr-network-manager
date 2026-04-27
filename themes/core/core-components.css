@@ -12,12 +12,12 @@ button.nm-button,
 .nm-tabs-menu-button,
 menubutton.nm-tabs-menu-button > button,
 .nm-edit-section-toggle,
-popover listview row,
-popover.menu listview row,
-popover.background listview row,
-popover listview row.activatable,
-popover.menu listview row.activatable,
-popover.background listview row.activatable {
+popover list row,
+popover.menu list row,
+popover.background list row,
+popover list row.activatable,
+popover.menu list row.activatable,
+popover.background list row.activatable {
   transition: background-color 120ms, border-color 120ms, color 120ms;
 }
 
@@ -569,15 +569,6 @@ entry.nm-inline-ssid-entry:focus,
   border-color: var(--selected);
 }
 
-/* Hide natively rendered arrows in GTK4 DropDowns for a sleeker look */
-dropdown > button > arrow,
-.nm-edit-dropdown > button > arrow {
-  display: none;
-  min-width: 0;
-  min-height: 0;
-}
-
-dropdown.nm-edit-dropdown,
 .nm-edit-dropdown {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -585,23 +576,87 @@ dropdown.nm-edit-dropdown,
   color: var(--text);
 }
 
-dropdown.nm-edit-dropdown > button,
-.nm-edit-dropdown > button {
+menubutton.nm-edit-dropdown-trigger > button {
   border: none;
   box-shadow: none;
   background: transparent;
+  background-image: none;
   color: inherit;
   min-height: 30px;
   border-radius: 8px;
   padding: 0 10px;
 }
 
-dropdown.nm-edit-dropdown:focus-within,
+button.nm-edit-dropdown-trigger,
+togglebutton.nm-edit-dropdown-trigger {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  background-image: none;
+  color: inherit;
+  min-height: 30px;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
+/* Custom edit dropdowns use a dedicated trigger button, so style it explicitly
+ * instead of letting GTK theme defaults leak through. */
+menubutton.nm-edit-dropdown-trigger > button:hover,
+menubutton.nm-edit-dropdown-trigger > button:active,
+menubutton.nm-edit-dropdown-trigger > button:checked {
+  background: var(--hover_soft);
+  border: none;
+  box-shadow: none;
+  background-image: none;
+}
+
+button.nm-edit-dropdown-trigger:hover,
+button.nm-edit-dropdown-trigger:active,
+button.nm-edit-dropdown-trigger:checked,
+togglebutton.nm-edit-dropdown-trigger:hover,
+togglebutton.nm-edit-dropdown-trigger:active,
+togglebutton.nm-edit-dropdown-trigger:checked {
+  background: var(--hover_soft);
+  border: none;
+  box-shadow: none;
+  background-image: none;
+}
+
+menubutton.nm-edit-dropdown-trigger,
+menubutton.nm-edit-dropdown-trigger:hover,
+menubutton.nm-edit-dropdown-trigger:focus,
+menubutton.nm-edit-dropdown-trigger:focus-within,
+menubutton.nm-edit-dropdown-trigger:active {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+button.nm-edit-dropdown-trigger,
+button.nm-edit-dropdown-trigger:hover,
+button.nm-edit-dropdown-trigger:focus,
+button.nm-edit-dropdown-trigger:focus-visible,
+button.nm-edit-dropdown-trigger:active,
+togglebutton.nm-edit-dropdown-trigger,
+togglebutton.nm-edit-dropdown-trigger:hover,
+togglebutton.nm-edit-dropdown-trigger:focus,
+togglebutton.nm-edit-dropdown-trigger:focus-visible,
+togglebutton.nm-edit-dropdown-trigger:active {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
 .nm-edit-dropdown:focus-within {
   border-color: var(--selected);
 }
 
+.nm-edit-dropdown.nm-dropdown-open {
+  border-color: var(--selected);
+}
+
 /* Compact popover menu geometry. */
+.nm-dropdown-panel,
 popover,
 popover.menu,
 popover.background,
@@ -651,9 +706,10 @@ popover.menu button.model:hover {
   background-image: none;
 }
 
-popover listview,
-popover.menu listview,
-popover.background listview {
+.nm-dropdown-list,
+popover list,
+popover.menu list,
+popover.background list {
   background: transparent;
   border: none;
   border-radius: 0;
@@ -662,6 +718,8 @@ popover.background listview {
   margin: 0;
 }
 
+.nm-dropdown-panel scrolledwindow,
+.nm-dropdown-panel viewport,
 popover scrolledwindow,
 popover.menu scrolledwindow,
 popover.background scrolledwindow,
@@ -677,18 +735,23 @@ popover.background viewport {
 }
 
 /* Remove GTK default frame/shell styles inside dropdown popovers. */
+.nm-dropdown-panel scrolledwindow.frame,
+.nm-dropdown-list,
+.nm-dropdown-list > row,
+.nm-dropdown-list > row > box,
+.nm-dropdown-panel box,
 popover scrolledwindow.frame,
 popover.menu scrolledwindow.frame,
 popover.background scrolledwindow.frame,
-popover listview.view,
-popover.menu listview.view,
-popover.background listview.view,
-popover listview.view > row,
-popover.menu listview.view > row,
-popover.background listview.view > row,
-popover listview.view > row > box,
-popover.menu listview.view > row > box,
-popover.background listview.view > row > box,
+popover list.view,
+popover.menu list.view,
+popover.background list.view,
+popover list.view > row,
+popover.menu list.view > row,
+popover.background list.view > row,
+popover list.view > row > box,
+popover.menu list.view > row > box,
+popover.background list.view > row > box,
 popover box,
 popover.menu box,
 popover.background box {
@@ -700,12 +763,14 @@ popover.background box {
   margin: 0;
 }
 
-popover listview row,
-popover.menu listview row,
-popover.background listview row,
-popover listview row.activatable,
-popover.menu listview row.activatable,
-popover.background listview row.activatable {
+.nm-dropdown-list row,
+.nm-dropdown-list row.activatable,
+popover list row,
+popover.menu list row,
+popover.background list row,
+popover list row.activatable,
+popover.menu list row.activatable,
+popover.background list row.activatable {
   min-height: 28px;
   border-radius: 0;
   padding: 6px 10px;
@@ -715,21 +780,25 @@ popover.background listview row.activatable {
   background: alpha(var(--surface), .34);
 }
 
-popover listview row:hover,
-popover.menu listview row:hover,
-popover.background listview row:hover,
-popover listview row.activatable:hover,
-popover.menu listview row.activatable:hover,
-popover.background listview row.activatable:hover {
+.nm-dropdown-list row:hover,
+.nm-dropdown-list row.activatable:hover,
+popover list row:hover,
+popover.menu list row:hover,
+popover.background list row:hover,
+popover list row.activatable:hover,
+popover.menu list row.activatable:hover,
+popover.background list row.activatable:hover {
   background: alpha(var(--secondary), .1);
 }
 
-popover listview row:selected,
-popover.menu listview row:selected,
-popover.background listview row:selected,
-popover listview row:checked,
-popover.menu listview row:checked,
-popover.background listview row:checked {
+.nm-dropdown-list row:selected,
+.nm-dropdown-list row:checked,
+popover list row:selected,
+popover.menu list row:selected,
+popover.background list row:selected,
+popover list row:checked,
+popover.menu list row:checked,
+popover.background list row:checked {
   background: alpha(var(--secondary), .12);
   border: none;
   padding: 6px 10px;
@@ -737,12 +806,14 @@ popover.background listview row:checked {
   color: var(--text);
 }
 
-popover listview row:selected:hover,
-popover.menu listview row:selected:hover,
-popover.background listview row:selected:hover,
-popover listview row:checked:hover,
-popover.menu listview row:checked:hover,
-popover.background listview row:checked:hover {
+.nm-dropdown-list row:selected:hover,
+.nm-dropdown-list row:checked:hover,
+popover list row:selected:hover,
+popover.menu list row:selected:hover,
+popover.background list row:selected:hover,
+popover list row:checked:hover,
+popover.menu list row:checked:hover,
+popover.background list row:checked:hover {
   background: alpha(var(--secondary), .12);
 }
 
