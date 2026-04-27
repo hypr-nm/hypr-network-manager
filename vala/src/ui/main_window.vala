@@ -34,6 +34,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private Gtk.GestureClick blank_window_gesture;
     private bool blank_window_down = false;
     private bool blank_window_in = false;
+    private Gtk.Box root_container;
     private TransientSurfaceTracker transient_surface_tracker;
     private bool layer_shell_active = false;
     public GtkLayerShell.Layer current_layer_mode { get; private set; }
@@ -186,19 +187,75 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         blank_window_gesture.pressed.connect ((n_press, x, y) => {
             Graphene.Point click_point = Graphene.Point ().init ((float) x, (float) y);
             Graphene.Rect? bounds = null;
-            var root = this.get_first_child ();
-            if (root != null) {
-                root.compute_bounds (this, out bounds);
+            bool bounds_success = false;
+            if (root_container != null) {
+                bounds_success = root_container.compute_bounds (this, out bounds);
             }
-            blank_window_in = !(bounds != null && bounds.contains_point (click_point));
+            
+            if (bounds_success && bounds != null) {
+                log_info ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
+                    " | bounds: x=" + bounds.origin.x.to_string () + ", y=" + bounds.origin.y.to_string () + 
+                    ", w=" + bounds.size.width.to_string () + ", h=" + bounds.size.height.to_string ());
+            } else {
+                log_info ("gui", "Gesture pressed: x=" + x.to_string () + ", y=" + y.to_string () +
+                    " | bounds_success=" + bounds_success.to_string () + " (root_container=" + (root_container != null).to_string() + ")");
+            }
+
+            // If the surface is re-allocating (e.g. after a popover closes), bounds might temporarily be 0x0.
+            // We assume the click is inside to prevent accidental closures.
+            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0) {
+                blank_window_in = !bounds.contains_point (click_point);
+                
+                // If a transient surface is open, the current click is likely the one dismissing it.
+                // We should completely ignore "outside" clicks while a popover is open.
+                if (blank_window_in
+                    && transient_surface_tracker != null
+                    && transient_surface_tracker.should_ignore_window_dismiss_click (x, y)) {
+                     log_info ("gui", "Gesture pressed eval: ignoring outside click because it intersects a transient surface.");
+                     blank_window_in = false;
+                } else {
+                     log_info ("gui", "Gesture pressed eval: point inside bounds? " + (!blank_window_in).to_string ());
+                }
+            } else {
+                blank_window_in = false;
+                log_info ("gui", "Gesture pressed eval: assuming inside because bounds are invalid or 0x0.");
+            }
             blank_window_down = true;
         });
 
         blank_window_gesture.released.connect ((n_press, x, y) => {
             if (!blank_window_down) return;
+            
+            log_info ("gui", "Gesture released: down=" + blank_window_down.to_string () + 
+                ", in(outside bounds)=" + blank_window_in.to_string ());
+            
             blank_window_down = false;
 
             if (blank_window_in) {
+                if (transient_surface_tracker != null
+                    && transient_surface_tracker.should_ignore_window_dismiss_click (x, y)) {
+                    log_info ("gui", "MainWindow NOT closing: release matched recent transient dismiss");
+                    blank_window_in = false;
+                    return;
+                }
+
+                // One more sanity check: sometimes pressed gives bad bounds but released is okay.
+                Graphene.Point release_point = Graphene.Point ().init ((float) x, (float) y);
+                Graphene.Rect? release_bounds = null;
+                bool release_bounds_success = false;
+                if (root_container != null) {
+                    release_bounds_success = root_container.compute_bounds (this, out release_bounds);
+                }
+                
+                if (release_bounds_success && release_bounds != null && release_bounds.size.width > 0 && release_bounds.size.height > 0) {
+                     if (release_bounds.contains_point (release_point)) {
+                         log_info ("gui", "MainWindow NOT closing: click released inside valid bounds");
+                         blank_window_in = false;
+                         return;
+                     }
+                }
+
+                log_info ("gui", "MainWindow closing: blank_window_gesture triggered close (clicked outside bounds)");
                 this.close ();
             }
 
@@ -213,13 +270,14 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
             double x, y;
             gesture.get_point (sequence, out x, out y);
+
             Graphene.Point click_point = Graphene.Point ().init ((float) x, (float) y);
             Graphene.Rect? bounds = null;
-            var root = this.get_first_child ();
-            if (root != null) {
-                root.compute_bounds (this, out bounds);
+            bool bounds_success = false;
+            if (root_container != null) {
+                bounds_success = root_container.compute_bounds (this, out bounds);
             }
-            if (bounds != null && bounds.contains_point (click_point)) {
+            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0 && bounds.contains_point (click_point)) {
                 blank_window_in = false;
             }
         });
@@ -254,11 +312,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         transient_surface_tracker.apply_keyboard_mode ();
     }
 
-    public Gtk.DropDown create_tracked_dropdown (
-        owned GLib.ListModel? model,
-        owned Gtk.Expression? expression
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown create_tracked_dropdown (
+        owned Gtk.StringList model
     ) {
-        return TrackedWidgets.dropdown (transient_surface_tracker, model, expression);
+        return new HyprNetworkManager.UI.Widgets.TrackedDropDown (transient_surface_tracker, model);
     }
 
     private void update_main_chrome_visibility (bool focus_mode) {
@@ -307,7 +364,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         if (tabs_menu_button != null) {
             tabs_menu_button.popdown ();
         }
-        transient_surface_tracker.reset (this.get_first_child ());
+        transient_surface_tracker.reset (root_container);
+        blank_window_down = false;
+        blank_window_in = false;
 
         if (global_error_revealer != null) {
             global_error_revealer.set_reveal_child (false);
@@ -445,10 +504,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     private Gtk.Box build_root_container () {
-        var root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
-        root.add_css_class (MainWindowCssClasses.ROOT);
-        set_child (root);
-        return root;
+        root_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
+        root_container.add_css_class (MainWindowCssClasses.ROOT);
+        set_child (root_container);
+        return root_container;
     }
 
     private void build_status_chrome (Gtk.Box root) {
