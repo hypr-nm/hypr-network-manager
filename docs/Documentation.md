@@ -131,7 +131,7 @@ Configuration is handled via JSON files.
 ```json
 {
   "window_width": 480,
-  "window_height": 560,
+  "window_height": 680,
   "layer_shell_layer": "overlay",
   "log_level": "info",
   "position": "top-right",
@@ -158,7 +158,7 @@ The app reads `config.json` from this precedence order:
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | window_width | int (> 0) | 480 | Popup window width in pixels. |
-| window_height | int (> 0) | 560 | Popup window height in pixels. |
+| window_height | int (> 0) | 680 | Popup window height in pixels. |
 | layer_shell_layer | string | overlay | Layer-shell layer. Supported values: `overlay`, `top`, `bottom`, `background`. |
 | log_level | string | info | Minimum emitted log severity. Supported values: `debug`, `info`, `warn`, `error`. |
 | load_core_styles | bool | true | Whether to load bundled internal CSS for structure and base component visuals. |
@@ -177,7 +177,7 @@ The app reads `config.json` from this precedence order:
 
 Placement is controlled by `position`, and spacing is controlled by `layer_shell_margin_*`.
 
-The shell enforces a minimum size of `480x560` as that is a reasonable size for readability.
+The shell enforces a minimum size of `480x680` as that is a reasonable size for readability.
 
 ### Notes on extra keys
 
