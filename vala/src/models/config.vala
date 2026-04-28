@@ -4,7 +4,7 @@ public class AppConfig : Object {
     private const int64 MAX_CONFIG_FILE_BYTES = 1024 * 1024;
 
     public int window_width = 480;
-    public int window_height = 560;
+    public int window_height = 680;
     public bool anchor_top = true;
     public bool anchor_right = true;
     public bool anchor_bottom = false;
