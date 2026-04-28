@@ -1,7 +1,6 @@
 {
   "_comment": "hypr-network-manager default configuration",
   "_comment_edit": "Copy this file to ~/.config/hypr-network-manager/config.json to customise",
-  "_comment_theme": "Theme selection is done in themes/base.css via @import",
 
   "window_width": 480,
   "window_height": 680,
@@ -18,7 +17,5 @@
   "close_on_connect": false,
   "show_bssid": false,
   "show_frequency": false,
-  "show_band": true,
-
-  "waybar_icon_font": "NotoSansMono Nerd Font"
+  "show_band": true
 }
