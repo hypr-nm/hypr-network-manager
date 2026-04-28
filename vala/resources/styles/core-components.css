@@ -863,7 +863,9 @@ popover.background list row:checked:hover {
 }
 
 .nm-page button.nm-nav-back label,
-.nm-page .nm-nav-back label {
+.nm-page .nm-nav-back label,
+.nm-page button.nm-nav-back image,
+.nm-page .nm-nav-back image {
   color: var(--selected);
 }
 
@@ -876,7 +878,17 @@ popover.background list row:checked:hover {
 .nm-page .nm-nav-back:active label,
 .nm-page .nm-nav-back:checked label,
 .nm-page .nm-nav-back:focus label,
-.nm-page .nm-nav-back:focus-visible label {
+.nm-page .nm-nav-back:focus-visible label,
+.nm-page button.nm-nav-back:hover image,
+.nm-page button.nm-nav-back:active image,
+.nm-page button.nm-nav-back:checked image,
+.nm-page button.nm-nav-back:focus image,
+.nm-page button.nm-nav-back:focus-visible image,
+.nm-page .nm-nav-back:hover image,
+.nm-page .nm-nav-back:active image,
+.nm-page .nm-nav-back:checked image,
+.nm-page .nm-nav-back:focus image,
+.nm-page .nm-nav-back:focus-visible image {
   color: var(--primary_hover);
 }
 
