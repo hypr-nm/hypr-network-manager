@@ -136,10 +136,13 @@ public class NetworkManager : Gtk.Application {
 
                 string target_path = "";
 
-                bool is_core = import_target.has_suffix ("core/structure.css")
-                    || import_target.has_suffix ("core/core-components.css");
+                bool is_core = import_target == "structure.css"
+                    || import_target.has_suffix ("/structure.css")
+                    || import_target == "core-components.css"
+                    || import_target.has_suffix ("/core-components.css");
 
                 if (is_core && config.load_core_styles) {
+                    debug_log ("inline_css_imports: ignoring core import %s because load_core_styles is true".printf (import_target));
                     return false;
                 }
 
