@@ -187,10 +187,6 @@ button.nm-button,
   text-decoration-color: currentColor;
 }
 
-.row-link-action:hover > label {
-  font-weight: 700;
-}
-
 .row-icon-action {
   min-width: 24px;
   min-height: 24px;
@@ -309,11 +305,6 @@ button.nm-nav-back label,
   text-decoration-line: underline;
   text-decoration-style: solid;
   text-decoration-color: currentColor;
-}
-
-button.nm-nav-back:hover label,
-.nm-nav-back:hover label {
-  font-weight: 700;
 }
 
 .nm-details-header {
