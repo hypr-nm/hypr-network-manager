@@ -296,6 +296,19 @@ namespace HyprNetworkManager.UI.Views {
                 {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
                     MainWindowCssClasses.PASSWORD_ENTRY}
             );
+
+            add_password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
+            add_password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
+            MainWindowHelpers.sync_password_visibility_icon (add_password_entry);
+
+            add_password_entry.icon_press.connect ((icon_pos) => {
+                if (icon_pos != Gtk.EntryIconPosition.SECONDARY) {
+                    return;
+                }
+                add_password_entry.set_visibility (!add_password_entry.get_visibility ());
+                MainWindowHelpers.sync_password_visibility_icon (add_password_entry);
+            });
+
             add_password_entry.changed.connect (() => {
                 controller.sync_add_network_sensitivity (
                     add_security_dropdown,
