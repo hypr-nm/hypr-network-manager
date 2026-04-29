@@ -11,6 +11,7 @@ namespace MainWindowIconResources {
     private const string ICON_WIFI_EMPTY = "network-wireless-offline-symbolic";
     private const string ICON_WIFI_DISABLED = "network-wireless-disabled-symbolic";
     private const string ICON_ETHERNET_EMPTY = "network-ethernet-offline-symbolic";
+    private const string ICON_SECURE_LOCK = "network-wireless-encrypted-symbolic";
     
     private const string ICON_MENU_MORE = "view-more-symbolic";
     private const string ICON_DROPDOWN_TRIGGER = "pan-down-symbolic";
@@ -29,6 +30,7 @@ namespace MainWindowIconResources {
     private const string FALLBACK_WIFI_EMPTY = "network-wireless-offline";
     private const string FALLBACK_WIFI_DISABLED = "network-wireless-disabled";
     private const string FALLBACK_ETHERNET_EMPTY = "network-ethernet-offline";
+    private const string FALLBACK_SECURE_LOCK = "changes-prevent-symbolic";
     private const string FALLBACK_MENU_MORE = "view-more-symbolic";
     private const string FALLBACK_DROPDOWN_TRIGGER = "pan-down-symbolic";
     private const string FALLBACK_DROPDOWN_CHECK = "object-select-symbolic";
@@ -163,6 +165,11 @@ namespace MainWindowIconResources {
 
     public Gtk.Image create_dropdown_check_icon () {
         string[] names = {ICON_DROPDOWN_CHECK, FALLBACK_DROPDOWN_CHECK};
+        return new Gtk.Image.from_gicon (new ThemedIcon.from_names (names));
+    }
+
+    public Gtk.Image create_secure_lock_icon () {
+        string[] names = {ICON_SECURE_LOCK, FALLBACK_SECURE_LOCK};
         return new Gtk.Image.from_gicon (new ThemedIcon.from_names (names));
     }
 }
