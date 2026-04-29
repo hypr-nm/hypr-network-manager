@@ -12,6 +12,7 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.ListBox listbox { get; private set; }
         public Gtk.Switch wifi_switch { get; private set; }
         public Gtk.Button refresh_button { get; private set; }
+        public Gtk.Button add_button { get; private set; }
 
         private NetworkManagerClient nm;
         private MainWindowWifiController controller;
@@ -83,6 +84,7 @@ namespace HyprNetworkManager.UI.Views {
 
             this.wifi_switch = local_wifi_switch;
             this.refresh_button = local_refresh_button;
+            this.add_button = local_add_button;
             this.listbox = local_wifi_listbox;
             this.stack = local_wifi_stack;
             this.widget = page;
