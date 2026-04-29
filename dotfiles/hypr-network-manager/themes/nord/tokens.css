@@ -30,10 +30,11 @@
   --hover_soft: rgba(67, 76, 94, 0.35);
   --hover_row: rgba(67, 76, 94, 0.28);
   --selected_soft: rgba(136, 192, 208, 0.1);
-
 }
+
 * {
   color: var(--text);
   font-size: 13px;
   font-family: sans-serif;
 }
+

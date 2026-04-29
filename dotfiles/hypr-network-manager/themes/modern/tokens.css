@@ -26,10 +26,11 @@
   --hover_soft: alpha(var(--secondary), 0.08);
   --hover_row: alpha(var(--secondary), 0.08);
   --selected_soft: alpha(var(--secondary), 0.14);
-
 }
+
 * {
   color: var(--text);
   font-size: 13px;
   font-family: sans-serif;
 }
+
