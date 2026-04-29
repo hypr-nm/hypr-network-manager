@@ -230,7 +230,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
                 wifi_tooltip = "Refresh unavailable while Wi-Fi is off";
             }
 
+            wifi_section.wifi_switch.set_sensitive (!flight_mode_active);
+
             wifi_section.set_refresh_button_enabled (wifi_refresh_enabled, wifi_tooltip);
+            wifi_section.add_button.set_sensitive (wifi_refresh_enabled);
             wifi_section.set_availability_placeholder (wifi_enabled, flight_mode_active);
         }
 

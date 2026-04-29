@@ -142,6 +142,22 @@ switch.nm-switch:checked,
   border-color: alpha(var(--selected), .82);
 }
 
+switch.nm-switch:disabled,
+.nm-switch:disabled {
+  opacity: 0.5;
+}
+
+switch.nm-switch:checked:disabled,
+.nm-switch:checked:disabled {
+  background: alpha(var(--on_surface), 0.15);
+  border-color: alpha(var(--on_surface), 0.25);
+}
+
+switch.nm-switch:disabled slider,
+.nm-switch:disabled slider {
+  background: alpha(var(--on_surface), 0.4);
+}
+
 switch.nm-switch slider,
 .nm-switch slider {
   background: #f3f5f8;
@@ -280,7 +296,9 @@ button.nm-refresh-button:disabled,
 .nm-toolbar .nm-refresh-button:disabled,
 button.nm-refresh-button:disabled:hover,
 .nm-refresh-button:disabled:hover,
-.nm-toolbar .nm-refresh-button:disabled:hover {
+.nm-toolbar .nm-refresh-button:disabled:hover,
+.nm-toolbar button.nm-add-button:disabled,
+.nm-toolbar .nm-add-button:disabled {
   color: alpha(var(--on_surface_variant), .48);
   border-color: transparent;
   background: transparent;
@@ -288,7 +306,9 @@ button.nm-refresh-button:disabled:hover,
 
 button.nm-refresh-button:disabled label,
 .nm-refresh-button:disabled label,
-.nm-toolbar .nm-refresh-button:disabled label {
+.nm-toolbar .nm-refresh-button:disabled label,
+.nm-toolbar button.nm-add-button:disabled label,
+.nm-toolbar .nm-add-button:disabled label {
   color: alpha(var(--on_surface_variant), .48);
   opacity: 0.62;
 }
