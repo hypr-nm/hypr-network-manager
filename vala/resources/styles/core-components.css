@@ -180,14 +180,14 @@ notebook.nm-notebook > header > tabs > tab:checked {
 .nm-toolbar {
   padding: 4px 10px 6px;
   margin-bottom: 0;
-  border-bottom: 1px solid alpha(var(--on_surface), .08);
+  border-bottom: none;
 }
 
 .nm-section-title {
   color: var(--on_surface_variant);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.35px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
 }
 
 .nm-toolbar .nm-icon-button,
@@ -1010,20 +1010,24 @@ checkbutton:checked > label {
 
 separator.nm-separator,
 .nm-separator {
-  color: alpha(var(--on_surface), .08);
-  border-color: alpha(var(--on_surface), .08);
-  background-color: alpha(var(--on_surface), .08);
+  background: linear-gradient(to right, 
+    transparent, 
+    alpha(var(--on_surface), 0.08) 15%, 
+    alpha(var(--on_surface), 0.08) 85%, 
+    transparent);
+  background-color: transparent;
+  color: transparent;
   min-height: 1px;
-  min-width: 1px;
+  border: none;
+  margin: 2px 20px;
 }
 
 .nm-page-network-details > .nm-separator,
 .nm-page-network-details .nm-details-section .nm-separator {
-  color: alpha(var(--on_surface), .12);
-  border-color: alpha(var(--on_surface), .12);
-  background-color: alpha(var(--on_surface), .12);
+  background: alpha(var(--on_surface), .1);
   min-height: 1px;
-  min-width: 1px;
+  margin-left: 12px;
+  margin-right: 12px;
 }
 
 .nm-scroll scrollbar {
