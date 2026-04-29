@@ -13,7 +13,6 @@ public class NmWifiClient : GLib.Object {
         var connections = client.get_connections ();
 
         var networks_map = new HashTable<string, WifiNetwork> (str_hash, str_equal);
-        var seen_saved_uuids = new HashTable<string, bool> (str_hash, str_equal);
         var devices_out = new List<NetworkDevice> ();
         string primary_wifi_device_path = "";
 
@@ -79,9 +78,6 @@ public class NmWifiClient : GLib.Object {
                     var conn = (NM.Connection) valid_conns[0];
                     saved = true;
                     saved_uuid = conn.get_uuid ();
-                    if (saved_uuid != "") {
-                        seen_saved_uuids.insert (saved_uuid, true);
-                    }
                     var s_conn = conn.get_setting_connection ();
                     if (s_conn != null) {
                         autoconnect = s_conn.autoconnect;
