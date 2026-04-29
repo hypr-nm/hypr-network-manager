@@ -76,6 +76,14 @@ namespace MainWindowWifiRowBuilder {
         ssid_row.append (ssid_lbl);
         row.set_data<Gtk.Label> ("ssid-label", ssid_lbl);
 
+        var lock_icon = MainWindowIconResources.create_secure_lock_icon ();
+        MainWindowCssClassResolver.add_best_class (lock_icon, {MainWindowCssClasses.ICON_SIZE_14,
+            MainWindowCssClasses.ICON_SIZE});
+        lock_icon.add_css_class (MainWindowCssClasses.LOCK_ICON);
+        lock_icon.set_visible (net.is_secured);
+        ssid_row.append (lock_icon);
+        row.set_data<Gtk.Image> ("lock-icon", lock_icon);
+
         var connected_indicator = new Gtk.Label ("• Connected");
         connected_indicator.add_css_class (MainWindowCssClasses.CONNECTED_INDICATOR);
         ssid_row.append (connected_indicator);
@@ -462,11 +470,11 @@ namespace MainWindowWifiRowBuilder {
         var signal_icon = row.get_data<Gtk.Image> ("signal-icon");
         if (signal_icon != null) {
             signal_icon.set_from_icon_name (signal_icon_name);
-            if (net.is_secured) {
-                signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
-            } else {
-                signal_icon.remove_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
-            }
+        }
+
+        var lock_icon = row.get_data<Gtk.Image> ("lock-icon");
+        if (lock_icon != null) {
+            lock_icon.set_visible (net.is_secured);
         }
 
         var ssid_lbl = row.get_data<Gtk.Label> ("ssid-label");
@@ -536,9 +544,6 @@ namespace MainWindowWifiRowBuilder {
             MainWindowCssClasses.ICON_SIZE});
         MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON,
             MainWindowCssClasses.SIGNAL_ICON});
-        if (net.is_secured) {
-            signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON_SECURED);
-        }
         content.append (signal_icon);
         row.set_data<Gtk.Image> ("signal-icon", signal_icon);
 

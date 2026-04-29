@@ -53,19 +53,6 @@ namespace MainWindowHelpers {
     }
 
     public string resolve_wifi_row_icon_name (WifiNetwork net) {
-        if (!net.is_secured) {
-            return net.signal_icon_name;
-        }
-
-        string secure_signal_icon = get_secured_signal_icon_name (net.signal);
-        if (icon_exists (secure_signal_icon)) {
-            return secure_signal_icon;
-        }
-
-        if (icon_exists ("network-wireless-encrypted-symbolic")) {
-            return "network-wireless-encrypted-symbolic";
-        }
-
         return net.signal_icon_name;
     }
 
