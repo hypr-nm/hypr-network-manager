@@ -139,25 +139,6 @@ public class NmWifiClient : GLib.Object {
             }
         }
 
-        // Include saved Wi-Fi profiles even when the AP is not currently visible.
-        foreach (var conn in connections) {
-            string uuid = conn.get_uuid ();
-            if (uuid == "" || seen_saved_uuids.contains (uuid)) {
-                continue;
-            }
-
-            var net = NmWifiUtils.build_saved_network (conn, primary_wifi_device_path, primary_active_uuid);
-            if (net == null) {
-                continue;
-            }
-
-            string network_key = net.ssid + ":" + (net.is_secured ? "secured" : "open");
-
-            if (!networks_map.contains (network_key)) {
-                networks_map.insert (network_key, net);
-            }
-        }
-
         // collapse entries that point to the same BSSID so hidden placeholders
         // do not appear alongside the actual connected network for the same AP.
         var deduped_map = new HashTable<string, WifiNetwork> (str_hash, str_equal);
