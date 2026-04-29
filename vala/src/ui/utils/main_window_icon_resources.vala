@@ -12,7 +12,7 @@ namespace MainWindowIconResources {
     private const string ICON_WIFI_DISABLED = "network-wireless-disabled-symbolic";
     private const string ICON_ETHERNET_EMPTY = "network-ethernet-offline-symbolic";
     private const string ICON_SECURE_LOCK = "network-wireless-encrypted-symbolic";
-    
+
     private const string ICON_MENU_MORE = "view-more-symbolic";
     private const string ICON_DROPDOWN_TRIGGER = "pan-down-symbolic";
     private const string ICON_DROPDOWN_CHECK = "object-select-symbolic";
