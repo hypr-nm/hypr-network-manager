@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [0.1.1] - 2026-04-29
+## [0.2.0] - 2026-04-29
 
 ### Added
 - **Theming:** Built-in `catppuccin` theme (contributed by @alba4k)
