@@ -23,7 +23,7 @@ namespace HyprNetworkManager.UI.Views {
                 MainWindowCssClasses.ICON_SIZE});
             root_widget.append (status_icon);
 
-            status_label = new Gtk.Label ("Loading networks…");
+            status_label = new Gtk.Label (_("Loading networks…"));
             status_label.set_xalign (0.0f);
             status_label.set_hexpand (true);
             status_label.add_css_class (MainWindowCssClasses.STATUS_LABEL);

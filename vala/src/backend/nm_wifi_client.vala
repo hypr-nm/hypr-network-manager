@@ -60,7 +60,7 @@ public class NmWifiClient : GLib.Object {
                 if (is_hidden) {
                     hidden_index++;
                     if (hidden_total > 1) {
-                        ssid = "Hidden network %u".printf (hidden_index);
+                        ssid = _("Hidden network %u").printf (hidden_index);
                     } else {
                         ssid = "Hidden network";
                     }

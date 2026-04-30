@@ -63,7 +63,7 @@ public class MainWindowEthernetRowBuilder {
         );
         MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
             MainWindowCssClasses.ROW_ICON_ACTION});
-        details_btn.set_tooltip_text ("Details");
+        details_btn.set_tooltip_text (_("Details"));
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
@@ -75,17 +75,17 @@ public class MainWindowEthernetRowBuilder {
         bool can_toggle = true;
 
         if (is_pending) {
-            action_label = "Updating…";
+            action_label = _("Updating…");
             can_toggle = false;
         } else if (dev.is_connected) {
-            action_label = "Disconnect";
+            action_label = _("Disconnect");
         } else if (can_connect) {
-            action_label = "Connect";
+            action_label = _("Connect");
         } else if (has_profile) {
-            action_label = "Unavailable";
+            action_label = _("Unavailable");
             can_toggle = false;
         } else {
-            action_label = "No Profile";
+            action_label = _("No Profile");
             can_toggle = false;
         }
 

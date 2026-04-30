@@ -116,13 +116,13 @@ public class MainWindowWifiHiddenNetworkController : Object {
         host.show_add_page_error ("");
 
         if (ssid == "") {
-            host.show_add_page_error ("SSID is required.");
+            host.show_add_page_error (_("SSID is required."));
             return;
         }
 
         if (!HiddenWifiSecurityModeUtils.is_password_valid_for_mode (security_mode, password)) {
             host.show_add_page_error (
-                "Password must be at least %d characters for the selected security mode.".printf (
+                _("Password must be at least %d characters for the selected security mode.").printf (
                     HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH
                 )
             );
@@ -147,7 +147,7 @@ public class MainWindowWifiHiddenNetworkController : Object {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_add_page_error ("Add hidden network failed: " + e.message);
+                host.show_add_page_error (_("Add hidden network failed: %s").printf (e.message));
             }
         });
     }

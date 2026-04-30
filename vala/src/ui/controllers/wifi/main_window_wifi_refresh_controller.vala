@@ -188,7 +188,7 @@ public class MainWindowWifiRefreshController : Object {
                     if (activated_on_other_network || matched_device.state == NM_DEVICE_STATE_FAILED) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
-                        state_context.mark_wifi_error (net_key, "Connection failed or interrupted.");
+                        state_context.mark_wifi_error (net_key, _("Connection failed or interrupted."));
                         continue;
                     }
 
@@ -196,7 +196,7 @@ public class MainWindowWifiRefreshController : Object {
                         && matched_device.state <= NM_DEVICE_STATE_DISCONNECTED) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
-                        state_context.mark_wifi_error (net_key, "Connection failed.");
+                        state_context.mark_wifi_error (net_key, _("Connection failed."));
                     }
                 }
 
@@ -229,17 +229,17 @@ public class MainWindowWifiRefreshController : Object {
                     }
 
                     if (connected != null) {
-                        status_label.set_text ("Wi-Fi · %s (%u%%)".printf (connected.ssid, connected.signal));
+                        status_label.set_text (_("Wi-Fi · %s (%u%%)").printf (connected.ssid, connected.signal));
                         status_icon.set_from_icon_name (connected.signal_icon_name);
                     } else if (primary_connected_ssid != null) {
-                        status_label.set_text ("Wi-Fi · %s".printf (primary_connected_ssid));
+                        status_label.set_text (_("Wi-Fi · %s").printf (primary_connected_ssid));
                         status_icon.set_from_icon_name ("network-wireless-signal-good-symbolic");
                     } else {
-                        status_label.set_text ("Wi-Fi available (%u networks)".printf (networks.length));
+                        status_label.set_text (_("Wi-Fi available (%u networks)").printf (networks.length));
                         status_icon.set_from_icon_name ("network-wireless-signal-good-symbolic");
                     }
                 } else {
-                    status_label.set_text ("No Wi-Fi networks found");
+                    status_label.set_text (_("No Wi-Fi networks found"));
                     status_icon.set_from_icon_name ("network-wireless-offline-symbolic");
                 }
 

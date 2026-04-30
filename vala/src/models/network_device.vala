@@ -58,7 +58,7 @@ public class NetworkDevice : Object {
             case 120:
                 return "Failed";
             default:
-                return "State %u".printf (state);
+                return _("State %u").printf (state);
             }
         }
     }

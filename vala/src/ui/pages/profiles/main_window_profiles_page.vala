@@ -38,20 +38,20 @@ public class MainWindowProfilesPage : Gtk.Box {
         });
         header.append (back_btn);
 
-        var title = new Gtk.Label ("Profiles");
+        var title = new Gtk.Label (_("Profiles"));
         title.set_xalign (0.0f);
         title.set_hexpand (true);
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.append (title);
 
-        var refresh_btn = new Gtk.Button.with_label ("Refresh");
+        var refresh_btn = new Gtk.Button.with_label (_("Refresh"));
         refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
-        refresh_btn.set_tooltip_text ("Refresh Profiles");
+        refresh_btn.set_tooltip_text (_("Refresh Profiles"));
         refresh_btn.clicked.connect (() => {
             this.refresh ();
         });
@@ -68,7 +68,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         body.add_css_class (MainWindowCssClasses.PROFILES_PAGE_BODY);
         body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
-        var wifi_heading = new Gtk.Label ("Wi-Fi Profiles");
+        var wifi_heading = new Gtk.Label (_("Wi-Fi Profiles"));
         wifi_heading.set_xalign (0.0f);
         wifi_heading.add_css_class (MainWindowCssClasses.FORM_LABEL);
         body.append (wifi_heading);
@@ -78,7 +78,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         this.wifi_saved_listbox.add_css_class (MainWindowCssClasses.LIST);
         body.append (this.wifi_saved_listbox);
 
-        var ethernet_heading = new Gtk.Label ("Ethernet Profiles");
+        var ethernet_heading = new Gtk.Label (_("Ethernet Profiles"));
         ethernet_heading.set_xalign (0.0f);
         ethernet_heading.add_css_class (MainWindowCssClasses.FORM_LABEL);
         body.append (ethernet_heading);
@@ -108,7 +108,7 @@ public class MainWindowProfilesPage : Gtk.Box {
             var row = new Gtk.ListBoxRow ();
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             box.add_css_class (MainWindowCssClasses.EMPTY_STATE);
-            var label = new Gtk.Label ("No saved Wi-Fi profiles");
+            var label = new Gtk.Label (_("No saved Wi-Fi profiles"));
             label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
             box.append (label);
             row.set_child (box);
@@ -128,16 +128,16 @@ public class MainWindowProfilesPage : Gtk.Box {
             info.set_hexpand (true);
             string profile_name = MainWindowHelpers.safe_text (row_profile.profile_name).strip ();
             string ssid = MainWindowHelpers.safe_text (row_profile.ssid).strip ();
-            string primary = profile_name != "" ? profile_name : (ssid != "" ? ssid : "Saved profile");
+            string primary = profile_name != "" ? profile_name : (ssid != "" ? ssid : _("Saved profile"));
 
             var primary_lbl = new Gtk.Label (primary);
             primary_lbl.set_xalign (0.0f);
             primary_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
             info.append (primary_lbl);
 
-            string subtitle = "Saved profile";
+            string subtitle = _("Saved profile");
             if (ssid != "" && ssid != primary) {
-                subtitle = "SSID: %s".printf (ssid);
+                subtitle = _("SSID: %s").printf (ssid);
             }
 
             var sub = new Gtk.Label (subtitle);
@@ -146,7 +146,7 @@ public class MainWindowProfilesPage : Gtk.Box {
             info.append (sub);
             root.append (info);
 
-            var delete_btn = new Gtk.Button.with_label ("Delete");
+            var delete_btn = new Gtk.Button.with_label (_("Delete"));
             delete_btn.add_css_class (MainWindowCssClasses.BUTTON);
             MainWindowCssClassResolver.add_best_class (delete_btn, {MainWindowCssClasses.DELETE_BUTTON,
                 MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
@@ -173,7 +173,7 @@ public class MainWindowProfilesPage : Gtk.Box {
             var row = new Gtk.ListBoxRow ();
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             box.add_css_class (MainWindowCssClasses.EMPTY_STATE);
-            var label = new Gtk.Label ("No saved Ethernet profiles");
+            var label = new Gtk.Label (_("No saved Ethernet profiles"));
             label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
             box.append (label);
             row.set_child (box);
@@ -194,20 +194,20 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             string iface = MainWindowHelpers.safe_text (row_device.name).strip ();
             string profile_name = MainWindowHelpers.safe_text (row_device.connection).strip ();
-            string primary = iface != "" ? iface : "Ethernet device";
+            string primary = iface != "" ? iface : _("Ethernet device");
             var primary_lbl = new Gtk.Label (primary);
             primary_lbl.set_xalign (0.0f);
             primary_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
             info.append (primary_lbl);
 
-            string subtitle = profile_name != "" ? "Profile: %s".printf (profile_name) : "Saved Ethernet profile";
+            string subtitle = profile_name != "" ? _("Profile: %s").printf (profile_name) : _("Saved Ethernet profile");
             var sub = new Gtk.Label (subtitle);
             sub.set_xalign (0.0f);
             sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
             info.append (sub);
             root.append (info);
 
-            var details_btn = new Gtk.Button.with_label ("Details");
+            var details_btn = new Gtk.Button.with_label (_("Details"));
             details_btn.add_css_class (MainWindowCssClasses.BUTTON);
             MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_BUTTON,
                 MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});

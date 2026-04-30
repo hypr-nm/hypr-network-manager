@@ -16,42 +16,42 @@ public class NmStatusFormatter : GLib.Object {
         percentage = 0;
 
         if (!networking_on) {
-            text = "Offline";
+            text = _("Offline");
             alt = "offline";
-            tooltip = "Networking is disabled";
+            tooltip = _("Networking is disabled");
             klass = "offline";
             return;
         }
 
         if (active_eth != null) {
-            text = active_eth.connection != "" ? active_eth.connection : "Ethernet";
+            text = active_eth.connection != "" ? active_eth.connection : _("Ethernet");
             alt = "ethernet";
-            tooltip = "Ethernet: " + active_eth.name;
+            tooltip = _("Ethernet: %s").printf (active_eth.name);
             klass = "ethernet";
             percentage = 100;
             return;
         }
 
         if (active_wifi != null) {
-            text = active_wifi.connection != "" ? active_wifi.connection : "WiFi";
+            text = active_wifi.connection != "" ? active_wifi.connection : _("WiFi");
             alt = "wifi";
-            tooltip = "WiFi: " + text + " (" + wifi_signal.to_string () + "%)\nDevice: " + active_wifi.name;
+            tooltip = _("WiFi: %s (%d%%)\nDevice: %s").printf (text, (int) wifi_signal, active_wifi.name);
             klass = "wifi";
             percentage = (int) wifi_signal;
             return;
         }
 
         if (!wifi_on) {
-            text = "WiFi Off";
+            text = _("WiFi Off");
             alt = "wifi-off";
-            tooltip = "WiFi is disabled";
+            tooltip = _("WiFi is disabled");
             klass = "wifi-off";
             return;
         }
 
-        text = "Disconnected";
+        text = _("Disconnected");
         alt = "disconnected";
-        tooltip = "Not connected to any network";
+        tooltip = _("Not connected to any network");
         klass = "disconnected";
     }
 

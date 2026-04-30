@@ -50,7 +50,7 @@ public class MainWindowProfileAdapter : Object {
         if (title_name == "") {
             title_name = MainWindowHelpers.safe_text (profile.ssid).strip ();
         }
-        wifi_saved_edit_page.title_label.set_text ("Saved Profile: %s".printf (title_name));
+        wifi_saved_edit_page.title_label.set_text (_("Saved Profile: %s").printf (title_name));
         host.set_popup_text_input_mode (true);
         profiles_stack.set_visible_child_name ("edit");
 

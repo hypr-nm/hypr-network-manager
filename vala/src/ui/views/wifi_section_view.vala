@@ -200,7 +200,7 @@ namespace HyprNetworkManager.UI.Views {
             });
             header.append (back_btn);
 
-            var title = new Gtk.Label ("Add Hidden Network");
+            var title = new Gtk.Label (_("Add Hidden Network"));
             title.set_xalign (0.0f);
             title.set_hexpand (true);
             title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
@@ -223,28 +223,28 @@ namespace HyprNetworkManager.UI.Views {
                 MainWindowCssClasses.EDIT_FORM});
             form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
-            var note = new Gtk.Label ("Manually add a hidden Wi-Fi network.");
+            var note = new Gtk.Label (_("Manually add a hidden Wi-Fi network."));
             note.set_xalign (0.0f);
             note.set_wrap (true);
             MainWindowCssClassResolver.add_best_class (note, {MainWindowCssClasses.EDIT_NOTE,
                 MainWindowCssClasses.SUB_LABEL});
             form.append (note);
 
-            var ssid_label = new Gtk.Label ("SSID");
+            var ssid_label = new Gtk.Label (_("SSID"));
             ssid_label.set_xalign (0.0f);
             MainWindowCssClassResolver.add_best_class (ssid_label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
                 MainWindowCssClasses.FORM_LABEL});
             form.append (ssid_label);
 
             add_ssid_entry = new Gtk.Entry ();
-            add_ssid_entry.set_placeholder_text ("Network name");
+            add_ssid_entry.set_placeholder_text (_("Network name"));
             MainWindowCssClassResolver.add_best_class (
                 add_ssid_entry,
                 {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
             );
             form.append (add_ssid_entry);
 
-            var security_label = new Gtk.Label ("Security");
+            var security_label = new Gtk.Label (_("Security"));
             security_label.set_xalign (0.0f);
             MainWindowCssClassResolver.add_best_class (security_label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
                 MainWindowCssClasses.FORM_LABEL});
@@ -263,7 +263,7 @@ namespace HyprNetworkManager.UI.Views {
                 HiddenWifiSecurityModeUtils.to_dropdown_index (HiddenWifiSecurityMode.WPA_PSK)
             );
 
-            var save_btn = new Gtk.Button.with_label ("Connect");
+            var save_btn = new Gtk.Button.with_label (_("Connect"));
             save_btn.add_css_class (MainWindowCssClasses.BUTTON);
             MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
                 MainWindowCssClasses.BUTTON});
@@ -277,7 +277,7 @@ namespace HyprNetworkManager.UI.Views {
             });
             form.append (add_security_dropdown);
 
-            var password_label = new Gtk.Label ("Password");
+            var password_label = new Gtk.Label (_("Password"));
             password_label.set_xalign (0.0f);
             MainWindowCssClassResolver.add_best_class (
                 password_label,
@@ -289,7 +289,7 @@ namespace HyprNetworkManager.UI.Views {
             add_password_entry.set_visibility (false);
             add_password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
             add_password_entry.set_placeholder_text (
-                "Network password (min %d chars)".printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
+                _("Network password (min %d chars)").printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
             );
             MainWindowCssClassResolver.add_best_class (
                 add_password_entry,

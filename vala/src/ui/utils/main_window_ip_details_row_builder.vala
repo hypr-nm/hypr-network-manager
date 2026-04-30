@@ -4,13 +4,13 @@ public class MainWindowIpDetailsRowBuilder {
     public static void populate_ip_rows (Gtk.ListBox ip_rows, NetworkIpSettings ip_settings, bool is_connected) {
         ip_rows.append (
             MainWindowHelpers.build_details_row (
-                "Configured IPv4 Method",
+                _("Configured IPv4 Method"),
                 MainWindowHelpers.get_ipv4_method_label (ip_settings.ipv4_method)
             )
         );
         ip_rows.append (
             MainWindowHelpers.build_details_row (
-                "Configured IPv4 Address",
+                _("Configured IPv4 Address"),
                 MainWindowHelpers.format_ip_with_prefix (
                     ip_settings.configured_address,
                     ip_settings.configured_prefix
@@ -19,25 +19,25 @@ public class MainWindowIpDetailsRowBuilder {
         );
         ip_rows.append (
             MainWindowHelpers.build_details_row (
-                "Configured Gateway",
+                _("Configured Gateway"),
                 MainWindowHelpers.display_text_or_na (ip_settings.configured_gateway)
             )
         );
         ip_rows.append (
             MainWindowHelpers.build_details_row (
-                "Configured DNS",
+                _("Configured DNS"),
                 MainWindowHelpers.display_text_or_na (ip_settings.configured_dns)
             )
         );
         ip_rows.append (
             MainWindowHelpers.build_details_row (
-                "Configured IPv6 Method",
+                _("Configured IPv6 Method"),
                 MainWindowHelpers.get_ipv6_method_label (ip_settings.ipv6_method)
             )
         );
         ip_rows.append (
             MainWindowHelpers.build_details_row (
-                "Configured IPv6 Address",
+                _("Configured IPv6 Address"),
                 MainWindowHelpers.format_ip_with_prefix (
                     ip_settings.configured_ipv6_address,
                     ip_settings.configured_ipv6_prefix
@@ -46,7 +46,7 @@ public class MainWindowIpDetailsRowBuilder {
         );
         ip_rows.append (
             MainWindowHelpers.build_details_row (
-                "Configured IPv6 Gateway",
+                _("Configured IPv6 Gateway"),
                 MainWindowHelpers.display_text_or_na (ip_settings.configured_ipv6_gateway)
             )
         );
@@ -54,7 +54,7 @@ public class MainWindowIpDetailsRowBuilder {
         if (is_connected) {
             ip_rows.append (
                 MainWindowHelpers.build_details_row (
-                    "Current IPv4 Address",
+                    _("Current IPv4 Address"),
                     MainWindowHelpers.format_ip_with_prefix (
                         ip_settings.current_address,
                         ip_settings.current_prefix
@@ -63,19 +63,19 @@ public class MainWindowIpDetailsRowBuilder {
             );
             ip_rows.append (
                 MainWindowHelpers.build_details_row (
-                    "Current Gateway",
+                    _("Current Gateway"),
                     MainWindowHelpers.display_text_or_na (ip_settings.current_gateway)
                 )
             );
             ip_rows.append (
                 MainWindowHelpers.build_details_row (
-                    "Current DNS",
+                    _("Current DNS"),
                     MainWindowHelpers.display_text_or_na (ip_settings.current_dns)
                 )
             );
             ip_rows.append (
                 MainWindowHelpers.build_details_row (
-                    "Current IPv6 Address",
+                    _("Current IPv6 Address"),
                     MainWindowHelpers.format_ip_with_prefix (
                         ip_settings.current_ipv6_address,
                         ip_settings.current_ipv6_prefix
@@ -84,13 +84,13 @@ public class MainWindowIpDetailsRowBuilder {
             );
             ip_rows.append (
                 MainWindowHelpers.build_details_row (
-                    "Current IPv6 Gateway",
+                    _("Current IPv6 Gateway"),
                     MainWindowHelpers.display_text_or_na (ip_settings.current_ipv6_gateway)
                 )
             );
             ip_rows.append (
                 MainWindowHelpers.build_details_row (
-                    "Current IPv6 DNS",
+                    _("Current IPv6 DNS"),
                     MainWindowHelpers.display_text_or_na (ip_settings.current_ipv6_dns)
                 )
             );

@@ -43,11 +43,11 @@ namespace MainWindowIpEditFormBuilder {
         if (expanded) {
             container.add_css_class ("is-expanded");
             container.remove_css_class ("is-collapsed");
-            toggle_button.set_tooltip_text ("Collapse section");
+            toggle_button.set_tooltip_text (_("Collapse section"));
         } else {
             container.add_css_class ("is-collapsed");
             container.remove_css_class ("is-expanded");
-            toggle_button.set_tooltip_text ("Expand section");
+            toggle_button.set_tooltip_text (_("Expand section"));
         }
     }
 
@@ -213,7 +213,7 @@ namespace MainWindowIpEditFormBuilder {
     ) {
         Gtk.Box section;
         var collapsible = build_collapsible_section (
-            "IPv4 Settings",
+            _("IPv4 Settings"),
             with_extra_classes,
             MainWindowCssClasses.EDIT_IPV4_SECTION,
             out section
@@ -229,15 +229,15 @@ namespace MainWindowIpEditFormBuilder {
         }
 
         section.append (build_label (
-            "IPv4 Method",
+            _("IPv4 Method"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV4_METHOD_LABEL : null
         ));
 
         var ipv4_method_list = new Gtk.StringList (null);
-        ipv4_method_list.append ("Automatic (DHCP)");
-        ipv4_method_list.append ("Manual");
-        ipv4_method_list.append ("Disabled");
+        ipv4_method_list.append (_("Automatic (DHCP)"));
+        ipv4_method_list.append (_("Manual"));
+        ipv4_method_list.append (_("Disabled"));
         ipv4_method_dropdown = create_dropdown (ipv4_method_list);
         apply_control_classes (ipv4_method_dropdown, with_extra_classes, null);
         if (with_extra_classes) {
@@ -273,13 +273,13 @@ namespace MainWindowIpEditFormBuilder {
         section.append (manual_revealer);
 
         manual_fields.append (build_label (
-            "IPv4 Address",
+            _("IPv4 Address"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV4_ADDRESS_LABEL : null
         ));
 
         ipv4_address_entry = new Gtk.Entry ();
-        ipv4_address_entry.set_placeholder_text ("192.168.1.100");
+        ipv4_address_entry.set_placeholder_text (_("192.168.1.100"));
         apply_control_classes (
             ipv4_address_entry,
             with_extra_classes,
@@ -294,13 +294,13 @@ namespace MainWindowIpEditFormBuilder {
         manual_fields.append (ipv4_address_entry);
 
         manual_fields.append (build_label (
-            "Prefix (CIDR)",
+            _("Prefix (CIDR)"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV4_PREFIX_LABEL : null
         ));
 
         ipv4_prefix_entry = new Gtk.Entry ();
-        ipv4_prefix_entry.set_placeholder_text ("24");
+        ipv4_prefix_entry.set_placeholder_text (_("24"));
         apply_control_classes (
             ipv4_prefix_entry,
             with_extra_classes,
@@ -315,13 +315,13 @@ namespace MainWindowIpEditFormBuilder {
         manual_fields.append (ipv4_prefix_entry);
 
         manual_fields.append (build_label (
-            "Gateway",
+            _("Gateway"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_GATEWAY_LABEL : null
         ));
 
         ipv4_gateway_entry = new Gtk.Entry ();
-        ipv4_gateway_entry.set_placeholder_text ("192.168.1.1");
+        ipv4_gateway_entry.set_placeholder_text (_("192.168.1.1"));
         apply_control_classes (
             ipv4_gateway_entry,
             with_extra_classes,
@@ -356,7 +356,7 @@ namespace MainWindowIpEditFormBuilder {
         section.append (override_revealer);
 
         override_fields.append (build_label (
-            "DNS Servers (comma-separated)",
+            _("DNS Servers (comma-separated)"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_DNS_LABEL : null
         ));
@@ -371,7 +371,7 @@ namespace MainWindowIpEditFormBuilder {
             );
         }
 
-        var dns_mode_label = new Gtk.Label ("Automatic DNS");
+        var dns_mode_label = new Gtk.Label (_("Automatic DNS"));
         dns_mode_label.set_xalign (0.0f);
         dns_mode_label.set_hexpand (true);
         dns_mode_label.set_valign (Gtk.Align.CENTER);
@@ -405,7 +405,7 @@ namespace MainWindowIpEditFormBuilder {
         override_fields.append (dns_mode_row);
 
         ipv4_dns_entry = new Gtk.Entry ();
-        ipv4_dns_entry.set_placeholder_text ("1.1.1.1, 8.8.8.8");
+        ipv4_dns_entry.set_placeholder_text (_("1.1.1.1, 8.8.8.8"));
         apply_control_classes (
             ipv4_dns_entry,
             with_extra_classes,
@@ -465,7 +465,7 @@ namespace MainWindowIpEditFormBuilder {
     ) {
         Gtk.Box section;
         var collapsible = build_collapsible_section (
-            "IPv6 Settings",
+            _("IPv6 Settings"),
             with_extra_classes,
             MainWindowCssClasses.EDIT_IPV6_SECTION,
             out section
@@ -481,16 +481,16 @@ namespace MainWindowIpEditFormBuilder {
         }
 
         section.append (build_label (
-            "IPv6 Method",
+            _("IPv6 Method"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV6_METHOD_LABEL : null
         ));
 
         var ipv6_method_list = new Gtk.StringList (null);
-        ipv6_method_list.append ("Automatic");
-        ipv6_method_list.append ("Manual");
-        ipv6_method_list.append ("Disabled");
-        ipv6_method_list.append ("Ignore");
+        ipv6_method_list.append (_("Automatic"));
+        ipv6_method_list.append (_("Manual"));
+        ipv6_method_list.append (_("Disabled"));
+        ipv6_method_list.append (_("Ignore"));
         ipv6_method_dropdown = create_dropdown (ipv6_method_list);
         apply_control_classes (ipv6_method_dropdown, with_extra_classes, null);
         if (with_extra_classes) {
@@ -527,13 +527,13 @@ namespace MainWindowIpEditFormBuilder {
         section.append (manual_revealer);
 
         manual_fields.append (build_label (
-            "IPv6 Address",
+            _("IPv6 Address"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV6_ADDRESS_LABEL : null
         ));
 
         ipv6_address_entry = new Gtk.Entry ();
-        ipv6_address_entry.set_placeholder_text ("2001:db8::100");
+        ipv6_address_entry.set_placeholder_text (_("2001:db8::100"));
         apply_control_classes (
             ipv6_address_entry,
             with_extra_classes,
@@ -548,13 +548,13 @@ namespace MainWindowIpEditFormBuilder {
         manual_fields.append (ipv6_address_entry);
 
         manual_fields.append (build_label (
-            "IPv6 Prefix (CIDR)",
+            _("IPv6 Prefix (CIDR)"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV6_PREFIX_LABEL : null
         ));
 
         ipv6_prefix_entry = new Gtk.Entry ();
-        ipv6_prefix_entry.set_placeholder_text ("64");
+        ipv6_prefix_entry.set_placeholder_text (_("64"));
         apply_control_classes (
             ipv6_prefix_entry,
             with_extra_classes,
@@ -569,13 +569,13 @@ namespace MainWindowIpEditFormBuilder {
         manual_fields.append (ipv6_prefix_entry);
 
         manual_fields.append (build_label (
-            "IPv6 Gateway",
+            _("IPv6 Gateway"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV6_GATEWAY_LABEL : null
         ));
 
         ipv6_gateway_entry = new Gtk.Entry ();
-        ipv6_gateway_entry.set_placeholder_text ("fe80::1");
+        ipv6_gateway_entry.set_placeholder_text (_("fe80::1"));
         apply_control_classes (
             ipv6_gateway_entry,
             with_extra_classes,
@@ -610,7 +610,7 @@ namespace MainWindowIpEditFormBuilder {
         section.append (override_revealer);
 
         override_fields.append (build_label (
-            "IPv6 DNS",
+            _("IPv6 DNS"),
             with_extra_classes,
             with_extra_classes ? MainWindowCssClasses.EDIT_IPV6_DNS_LABEL : null
         ));
@@ -625,7 +625,7 @@ namespace MainWindowIpEditFormBuilder {
             );
         }
 
-        var dns_mode_label = new Gtk.Label ("Automatic IPv6 DNS");
+        var dns_mode_label = new Gtk.Label (_("Automatic IPv6 DNS"));
         dns_mode_label.set_xalign (0.0f);
         dns_mode_label.set_hexpand (true);
         dns_mode_label.set_valign (Gtk.Align.CENTER);
@@ -662,7 +662,7 @@ namespace MainWindowIpEditFormBuilder {
         override_fields.append (dns_mode_row);
 
         ipv6_dns_entry = new Gtk.Entry ();
-        ipv6_dns_entry.set_placeholder_text ("2606:4700:4700::1111, 2001:4860:4860::8888");
+        ipv6_dns_entry.set_placeholder_text (_("2606:4700:4700::1111, 2001:4860:4860::8888"));
         apply_control_classes (
             ipv6_dns_entry,
             with_extra_classes,

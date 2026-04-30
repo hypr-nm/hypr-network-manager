@@ -42,18 +42,18 @@ namespace MainWindowEthernetPageBuilder {
         MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
             MainWindowCssClasses.STATUS_BAR});
 
-        var title = new Gtk.Label ("Ethernet");
+        var title = new Gtk.Label (_("Ethernet"));
         title.set_xalign (0.0f);
         title.set_hexpand (true);
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         toolbar.append (title);
 
-        var refresh_btn = new Gtk.Button.with_label ("Refresh");
+        var refresh_btn = new Gtk.Button.with_label (_("Refresh"));
         refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        refresh_btn.set_tooltip_text ("Refresh Ethernet devices");
+        refresh_btn.set_tooltip_text (_("Refresh Ethernet devices"));
         MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
         refresh_btn.clicked.connect (() => {
@@ -82,14 +82,14 @@ namespace MainWindowEthernetPageBuilder {
         ethernet_stack.add_named (
             build_placeholder (
                 MainWindowIconResources.NetworkPlaceholderIcon.ETHERNET_EMPTY,
-                "No Ethernet devices found"
+                _("No Ethernet devices found")
             ),
             "empty"
         );
         ethernet_stack.add_named (
             build_placeholder (
                 MainWindowIconResources.NetworkPlaceholderIcon.FLIGHT_MODE,
-                "Flight mode is on"
+                _("Flight mode is on")
             ),
             "flight-mode"
         );

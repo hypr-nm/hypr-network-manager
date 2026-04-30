@@ -29,50 +29,50 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
 
         this.basic_rows.append (
             MainWindowHelpers.build_details_row (
-                "Connection Status",
-                is_connected_now ? "Connected" : "Not connected"
+                _("Connection Status"),
+                is_connected_now ? _("Connected") : _("Not connected")
             )
         );
         this.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Signal Strength", "%u%%".printf (net.signal))
+            MainWindowHelpers.build_details_row (_("Signal Strength"), "%u%%".printf (net.signal))
         );
         this.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Bars", MainWindowHelpers.get_signal_bars (net.signal))
+            MainWindowHelpers.build_details_row (_("Bars"), MainWindowHelpers.get_signal_bars (net.signal))
         );
         this.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Security", net.is_secured ? "Secured" : "Open")
+            MainWindowHelpers.build_details_row (_("Security"), net.is_secured ? _("Secured") : _("Open"))
         );
         this.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Saved Profile", net.saved ? "Yes" : "No")
+            MainWindowHelpers.build_details_row (_("Saved Profile"), net.saved ? _("Yes") : _("No"))
         );
 
         string band = MainWindowHelpers.get_band_label (net.frequency_mhz);
         int channel = MainWindowHelpers.get_channel_from_frequency (net.frequency_mhz);
         this.advanced_rows.append (
             MainWindowHelpers.build_details_row (
-                "Frequency",
-                net.frequency_mhz > 0 ? "%.1f GHz".printf ((double) net.frequency_mhz / 1000.0) : "n/a"
+                _("Frequency"),
+                net.frequency_mhz > 0 ? "%.1f GHz".printf ((double) net.frequency_mhz / 1000.0) : _("n/a")
             )
         );
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Channel", channel > 0 ? "%d".printf (channel) : "n/a")
+            MainWindowHelpers.build_details_row (_("Channel"), channel > 0 ? "%d".printf (channel) : _("n/a"))
         );
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Band", band != "" ? band : "n/a")
+            MainWindowHelpers.build_details_row (_("Band"), band != "" ? band : _("n/a"))
         );
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("BSSID", MainWindowHelpers.display_text_or_na (net.bssid))
+            MainWindowHelpers.build_details_row (_("BSSID"), MainWindowHelpers.display_text_or_na (net.bssid))
         );
         this.advanced_rows.append (
             MainWindowHelpers.build_details_row (
-                "Max bitrate",
+                _("Max bitrate"),
                 net.max_bitrate_kbps > 0
                     ? "%.1f Mbps".printf ((double) net.max_bitrate_kbps / 1000.0)
-                    : "n/a"
+                    : _("n/a")
             )
         );
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Mode", MainWindowHelpers.get_mode_label (net.mode))
+            MainWindowHelpers.build_details_row (_("Mode"), MainWindowHelpers.get_mode_label (net.mode))
         );
 
         this.forget_button.set_sensitive (net.saved && !pending);
@@ -117,7 +117,7 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         );
         network_header.append (network_icon);
 
-        this.details_title = new Gtk.Label ("Network");
+        this.details_title = new Gtk.Label (_("Network"));
         this.details_title.set_xalign (0.5f);
         this.details_title.set_halign (Gtk.Align.CENTER);
         this.details_title.add_css_class (MainWindowCssClasses.DETAILS_NETWORK_TITLE);
@@ -127,7 +127,7 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         this.action_row.set_halign (Gtk.Align.CENTER);
         this.action_row.add_css_class (MainWindowCssClasses.DETAILS_ACTION_ROW);
 
-        this.forget_button = new Gtk.Button.with_label ("Forget");
+        this.forget_button = new Gtk.Button.with_label (_("Forget"));
         this.forget_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.forget_button,
@@ -139,7 +139,7 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         });
         this.action_row.append (this.forget_button);
 
-        this.edit_button = new Gtk.Button.with_label ("Edit");
+        this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.edit_button,
@@ -163,9 +163,9 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         Gtk.ListBox b_rows, a_rows, i_rows;
-        body.append (MainWindowHelpers.build_details_section ("Basic", out b_rows));
-        body.append (MainWindowHelpers.build_details_section ("Advanced", out a_rows));
-        body.append (MainWindowHelpers.build_details_section ("IP", out i_rows));
+        body.append (MainWindowHelpers.build_details_section (_("Basic"), out b_rows));
+        body.append (MainWindowHelpers.build_details_section (_("Advanced"), out a_rows));
+        body.append (MainWindowHelpers.build_details_section (_("IP"), out i_rows));
 
         this.basic_rows = b_rows;
         this.advanced_rows = a_rows;

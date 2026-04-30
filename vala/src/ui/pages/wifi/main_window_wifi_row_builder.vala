@@ -84,7 +84,7 @@ namespace MainWindowWifiRowBuilder {
         ssid_row.append (lock_icon);
         row.set_data<Gtk.Image> ("lock-icon", lock_icon);
 
-        var connected_indicator = new Gtk.Label ("• Connected");
+        var connected_indicator = new Gtk.Label (_("• Connected"));
         connected_indicator.add_css_class (MainWindowCssClasses.CONNECTED_INDICATOR);
         ssid_row.append (connected_indicator);
         connected_indicator.set_visible (is_connected_now);
@@ -173,7 +173,7 @@ namespace MainWindowWifiRowBuilder {
         MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
             MainWindowCssClasses.ROW_ICON_ACTION});
         details_btn.set_valign (Gtk.Align.CENTER);
-        details_btn.set_tooltip_text ("Details");
+        details_btn.set_tooltip_text (_("Details"));
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
         MainWindowCssClassResolver.add_best_class (
             details_icon,
@@ -184,7 +184,7 @@ namespace MainWindowWifiRowBuilder {
             action_handler.open_details (net);
         });
 
-        var forget = new Gtk.Button.with_label ("Forget");
+        var forget = new Gtk.Button.with_label (_("Forget"));
         MainWindowCssClassResolver.add_best_class (
             forget,
             {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
@@ -240,7 +240,7 @@ namespace MainWindowWifiRowBuilder {
     }
 
     private void update_action_button (Gtk.Button action, bool is_connected_now, bool is_connecting) {
-        string action_label = is_connecting ? "Connecting…" : (is_connected_now ? "Disconnect" : "Connect");
+        string action_label = is_connecting ? _("Connecting…") : (is_connected_now ? _("Disconnect") : _("Connect"));
         action.set_label (action_label);
         action.set_sensitive (!is_connecting);
 
@@ -261,7 +261,7 @@ namespace MainWindowWifiRowBuilder {
         out Gtk.Entry prompt_entry,
         out Gtk.Entry hidden_ssid_entry
     ) {
-        var prompt_label = new Gtk.Label ("Password for %s".printf (net.ssid));
+        var prompt_label = new Gtk.Label (_("Password for %s").printf (net.ssid));
         prompt_label.set_xalign (0.0f);
         prompt_label.set_hexpand (true);
         MainWindowCssClassResolver.add_hook_and_best_class (
@@ -271,7 +271,7 @@ namespace MainWindowWifiRowBuilder {
         );
         prompt_label.set_visible (net.is_secured);
 
-        var hidden_ssid_label = new Gtk.Label ("SSID");
+        var hidden_ssid_label = new Gtk.Label (_("SSID"));
         hidden_ssid_label.set_xalign (0.0f);
         hidden_ssid_label.set_hexpand (true);
         MainWindowCssClassResolver.add_hook_and_best_class (
@@ -282,7 +282,7 @@ namespace MainWindowWifiRowBuilder {
 
         hidden_ssid_entry = new Gtk.Entry ();
         hidden_ssid_entry.set_hexpand (true);
-        hidden_ssid_entry.set_placeholder_text ("Hidden network name");
+        hidden_ssid_entry.set_placeholder_text (_("Hidden network name"));
         MainWindowCssClassResolver.add_hook_and_best_class (
             hidden_ssid_entry,
             MainWindowCssClasses.INLINE_SSID_ENTRY,
@@ -296,7 +296,7 @@ namespace MainWindowWifiRowBuilder {
         prompt_entry.set_visibility (false);
         prompt_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         prompt_entry.set_placeholder_text (
-            "Wi-Fi password (min %d chars)".printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
+            _("Wi-Fi password (min %d chars)").printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
         );
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_entry,
@@ -320,7 +320,7 @@ namespace MainWindowWifiRowBuilder {
             });
         }
 
-        var prompt_cancel = new Gtk.Button.with_label ("Cancel");
+        var prompt_cancel = new Gtk.Button.with_label (_("Cancel"));
         prompt_cancel.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_cancel,
@@ -328,7 +328,7 @@ namespace MainWindowWifiRowBuilder {
             {MainWindowCssClasses.BUTTON}
         );
 
-        var prompt_connect = new Gtk.Button.with_label ("Connect");
+        var prompt_connect = new Gtk.Button.with_label (_("Connect"));
         prompt_connect.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_hook_and_best_class (
             prompt_connect,
@@ -569,7 +569,7 @@ namespace MainWindowWifiRowBuilder {
         var actions_panel = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions_panel.add_css_class (MainWindowCssClasses.ROW_ACTIONS);
 
-        var auto_connect = new Gtk.CheckButton.with_label ("Connect automatically");
+        var auto_connect = new Gtk.CheckButton.with_label (_("Connect automatically"));
         auto_connect.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
         auto_connect.set_active (net.autoconnect);
         auto_connect.set_sensitive (!is_connecting);

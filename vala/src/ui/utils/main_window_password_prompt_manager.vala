@@ -22,7 +22,7 @@ public class MainWindowPasswordPromptManager : Object {
         entry.set_visibility (false);
         entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         MainWindowIconResources.set_password_visibility_icon (entry, false);
-        entry.set_icon_tooltip_text (Gtk.EntryIconPosition.SECONDARY, "Show password");
+        entry.set_icon_tooltip_text (Gtk.EntryIconPosition.SECONDARY, _("Show password"));
         revealer.set_reveal_child (true);
         entry.grab_focus ();
     }

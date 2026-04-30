@@ -14,7 +14,7 @@ namespace MainWindowHelpers {
         MainWindowCssClassResolver.add_hook_and_best_class (icon, MainWindowCssClasses.BACK_ICON,
             {MainWindowCssClasses.ICON_SIZE});
 
-        var label = new Gtk.Label ("Back");
+        var label = new Gtk.Label (_("Back"));
         label.add_css_class (MainWindowCssClasses.BACK_LABEL);
 
         content.append (icon);
@@ -29,7 +29,7 @@ namespace MainWindowHelpers {
         MainWindowIconResources.set_password_visibility_icon (entry, reveal);
         entry.set_icon_tooltip_text (
             Gtk.EntryIconPosition.SECONDARY,
-            reveal ? "Hide password" : "Show password"
+            reveal ? _("Hide password") : _("Show password")
         );
     }
 

@@ -5,6 +5,17 @@ json_glib_dep = dependency('json-glib-1.0')
 libnm_dep = dependency('libnm', version: '>= 1.0')
 gnome = import('gnome')
 
+conf_data = configuration_data()
+conf_data.set_quoted('GETTEXT_PACKAGE', meson.project_name())
+conf_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+conf_data.set_quoted('VERSION', meson.project_version())
+
+config_file = configure_file(
+  input: 'src/config.vala.in',
+  output: 'config.vala',
+  configuration: conf_data
+)
+
 app_resources = gnome.compile_resources(
   'hypr_network_manager_resources',
   'resources/hypr-network-manager.gresource.xml',
@@ -14,12 +25,14 @@ app_resources = gnome.compile_resources(
 
 add_project_arguments(
   '-w',
+  '-DGETTEXT_PACKAGE="' + meson.project_name() + '"',
   language: 'c'
 )
 
 executable(
   'hypr-network-manager',
   [
+    config_file,
     app_resources,
     'src/logging.vala',
     'src/constants.vala',

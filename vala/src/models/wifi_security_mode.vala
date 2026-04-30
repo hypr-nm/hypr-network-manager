@@ -22,17 +22,17 @@ public class HiddenWifiSecurityModeUtils : Object {
     public static string get_label (HiddenWifiSecurityMode mode) {
         switch (mode) {
         case HiddenWifiSecurityMode.OPEN:
-            return "Open";
+            return _("Open");
         case HiddenWifiSecurityMode.WPA_PSK:
-            return "WPA/WPA2 Personal";
+            return _("WPA/WPA2 Personal");
         case HiddenWifiSecurityMode.SAE:
-            return "WPA3 Personal";
+            return _("WPA3 Personal");
         case HiddenWifiSecurityMode.WPA_PSK_SAE:
-            return "WPA2/WPA3 Personal";
+            return _("WPA2/WPA3 Personal");
         case HiddenWifiSecurityMode.WEP:
-            return "WEP (Legacy)";
+            return _("WEP (Legacy)");
         default:
-            return "WPA/WPA2 Personal";
+            return _("WPA/WPA2 Personal");
         }
     }
 

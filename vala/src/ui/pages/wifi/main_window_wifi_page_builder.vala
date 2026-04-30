@@ -44,29 +44,29 @@ namespace MainWindowWifiPageBuilder {
         MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
             MainWindowCssClasses.STATUS_BAR});
 
-        var title = new Gtk.Label ("Wi-Fi");
+        var title = new Gtk.Label (_("Wi-Fi"));
         title.set_xalign (0.0f);
         title.set_hexpand (true);
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         toolbar.append (title);
 
-        var add_btn = new Gtk.Button.with_label ("Add Network");
+        var add_btn = new Gtk.Button.with_label (_("Add Network"));
         add_btn.add_css_class (MainWindowCssClasses.BUTTON);
         add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         add_btn.add_css_class (MainWindowCssClasses.ADD_BUTTON);
         add_btn.set_valign (Gtk.Align.CENTER);
         MainWindowCssClassResolver.add_best_class (add_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
-        add_btn.set_tooltip_text ("Add Hidden Network");
+        add_btn.set_tooltip_text (_("Add Hidden Network"));
         toolbar.append (add_btn);
         add_network_button = add_btn;
 
-        var refresh_btn = new Gtk.Button.with_label ("Refresh");
+        var refresh_btn = new Gtk.Button.with_label (_("Refresh"));
         refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
-        refresh_btn.set_tooltip_text ("Refresh Wi-Fi networks");
+        refresh_btn.set_tooltip_text (_("Refresh Wi-Fi networks"));
         MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
         toolbar.append (refresh_btn);
@@ -121,7 +121,7 @@ namespace MainWindowWifiPageBuilder {
                 header_box.set_margin_start (12);
                 header_box.set_margin_end (12);
 
-                var label = new Gtk.Label ("Other Networks");
+                var label = new Gtk.Label (_("Other Networks"));
                 label.set_xalign (0.0f);
                 label.add_css_class (MainWindowCssClasses.SUB_LABEL);
 
@@ -148,21 +148,21 @@ namespace MainWindowWifiPageBuilder {
         wifi_stack.add_named (
             build_placeholder (
                 MainWindowIconResources.NetworkPlaceholderIcon.WIFI_EMPTY,
-                "No Wi-Fi networks found"
+                _("No Wi-Fi networks found")
             ),
             "empty"
         );
         wifi_stack.add_named (
             build_placeholder (
                 MainWindowIconResources.NetworkPlaceholderIcon.WIFI_DISABLED,
-                "Wi-Fi is disabled"
+                _("Wi-Fi is disabled")
             ),
             "wifi-disabled"
         );
         wifi_stack.add_named (
             build_placeholder (
                 MainWindowIconResources.NetworkPlaceholderIcon.FLIGHT_MODE,
-                "Flight mode is on"
+                _("Flight mode is on")
             ),
             "flight-mode"
         );

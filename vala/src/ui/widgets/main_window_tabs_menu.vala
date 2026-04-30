@@ -19,7 +19,7 @@ namespace HyprNetworkManager.UI.Widgets {
             menu_button = new Gtk.MenuButton ();
             menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON);
             menu_button.set_focus_on_click (false);
-            menu_button.set_tooltip_text ("Profiles");
+            menu_button.set_tooltip_text (_("Profiles"));
 
             tracked_popover = new TrackedPopover (tracker);
             tracked_popover.add_css_class (MainWindowCssClasses.TABS_MENU_POPOVER);
@@ -40,7 +40,7 @@ namespace HyprNetworkManager.UI.Widgets {
                 {MainWindowCssClasses.TABS_MENU_LIST, MainWindowCssClasses.LIST}
             );
 
-            var saved_profiles_item = new Gtk.Button.with_label ("Saved Profiles");
+            var saved_profiles_item = new Gtk.Button.with_label (_("Saved Profiles"));
             saved_profiles_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
             var sp_label = saved_profiles_item.get_child () as Gtk.Label;
             if (sp_label != null) sp_label.set_halign (Gtk.Align.START);
@@ -51,7 +51,7 @@ namespace HyprNetworkManager.UI.Widgets {
             });
             menu_box.append (saved_profiles_item);
 
-            flight_mode_button = new Gtk.Button.with_label ("Turn on flight mode");
+            flight_mode_button = new Gtk.Button.with_label (_("Turn on flight mode"));
             flight_mode_button.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
             var fm_label = flight_mode_button.get_child () as Gtk.Label;
             if (fm_label != null) fm_label.set_halign (Gtk.Align.START);

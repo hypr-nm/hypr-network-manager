@@ -22,17 +22,17 @@ int main (string[] args) {
     configure_global_logging (AppLogLevel.INFO);
 
     OptionEntry[] entries = {
-        {"config", 'c', 0, OptionArg.STRING, ref config_path, "Config JSON path", "PATH"},
-        {"status", 0, 0, OptionArg.NONE, ref status, "Print JSON status for waybar/eww", null},
-        {"toggle-wifi", 0, 0, OptionArg.NONE, ref toggle_wifi, "Toggle Wi-Fi and exit", null},
-        {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, "Override log level to debug", null},
-        {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, "Run as a background daemon", null},
-        {"quit", 'q', 0, OptionArg.NONE, ref quit_mode, "Quit the running daemon", null},
-        {"version", 'v', 0, OptionArg.NONE, ref version_mode, "Print version information", null},
+        {"config", 'c', 0, OptionArg.STRING, ref config_path, _("Config JSON path"), "PATH"},
+        {"status", 0, 0, OptionArg.NONE, ref status, _("Print JSON status for waybar/eww"), null},
+        {"toggle-wifi", 0, 0, OptionArg.NONE, ref toggle_wifi, _("Toggle Wi-Fi and exit"), null},
+        {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, _("Override log level to debug"), null},
+        {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, _("Run as a background daemon"), null},
+        {"quit", 'q', 0, OptionArg.NONE, ref quit_mode, _("Quit the running daemon"), null},
+        {"version", 'v', 0, OptionArg.NONE, ref version_mode, _("Print version information"), null},
         {null}
     };
 
-    var context = new OptionContext ("- hypr-network-manager: A network manager for Hyprland");
+    var context = new OptionContext (_("- hypr-network-manager: A network manager for Hyprland"));
     context.add_main_entries (entries, null);
 
     try {

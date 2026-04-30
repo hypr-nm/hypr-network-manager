@@ -26,7 +26,7 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
 
     public void setup_edit_form (WifiNetwork net) {
         this.error_revealer.set_reveal_child (false);
-        this.edit_title.set_text ("Edit: %s".printf (net.ssid));
+        this.edit_title.set_text (_("Edit: %s").printf (net.ssid));
         this.password_entry.set_text ("");
         this.password_entry.set_visibility (false);
 
@@ -85,7 +85,7 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         });
         header.append (back_btn);
 
-        this.edit_title = new Gtk.Label ("Edit Network");
+        this.edit_title = new Gtk.Label (_("Edit Network"));
         this.edit_title.set_xalign (0.0f);
         this.edit_title.set_hexpand (true);
         this.edit_title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
@@ -111,7 +111,7 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         );
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
-        var password_label = new Gtk.Label ("Password");
+        var password_label = new Gtk.Label (_("Password"));
         password_label.set_xalign (0.0f);
         MainWindowCssClassResolver.add_hook_and_best_class (
             password_label,
@@ -123,7 +123,7 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.password_entry = new Gtk.Entry ();
         this.password_entry.set_visibility (false);
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
-        this.password_entry.set_placeholder_text ("Password");
+        this.password_entry.set_placeholder_text (_("Password"));
         MainWindowCssClassResolver.add_hook_and_best_class (
             this.password_entry,
             MainWindowCssClasses.EDIT_PASSWORD_ENTRY,
@@ -196,7 +196,7 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         MainWindowCssClassResolver.add_hook_and_best_class (actions, MainWindowCssClasses.EDIT_WIFI_ACTIONS,
             {MainWindowCssClasses.EDIT_ACTIONS});
 
-        var apply_btn = new Gtk.Button.with_label ("Apply");
+        var apply_btn = new Gtk.Button.with_label (_("Apply"));
         apply_btn.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_hook_and_best_class (apply_btn, MainWindowCssClasses.EDIT_APPLY_BUTTON,
             {MainWindowCssClasses.BUTTON});
@@ -205,7 +205,7 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         });
         actions.append (apply_btn);
 
-        var ok_btn = new Gtk.Button.with_label ("OK");
+        var ok_btn = new Gtk.Button.with_label (_("OK"));
         ok_btn.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (ok_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
             MainWindowCssClasses.BUTTON});

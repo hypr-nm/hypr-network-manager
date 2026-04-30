@@ -26,34 +26,34 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
 
         string profile_name = MainWindowHelpers.display_text_or_na (dev.connection);
 
-        this.basic_rows.append (MainWindowHelpers.build_details_row ("Interface", dev.name));
-        this.basic_rows.append (MainWindowHelpers.build_details_row ("Profile", profile_name));
-        this.basic_rows.append (MainWindowHelpers.build_details_row ("State", dev.state_label));
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("Interface"), dev.name));
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("Profile"), profile_name));
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), dev.state_label));
         this.basic_rows.append (
-            MainWindowHelpers.build_details_row ("Connected", dev.is_connected ? "Yes" : "No")
+            MainWindowHelpers.build_details_row (_("Connected"), dev.is_connected ? _("Yes") : _("No"))
         );
 
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("Device Path", dev.device_path)
+            MainWindowHelpers.build_details_row (_("Device Path"), dev.device_path)
         );
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row ("State Code", "%u".printf (dev.state))
+            MainWindowHelpers.build_details_row (_("State Code"), "%u".printf (dev.state))
         );
 
         if (pending) {
-            this.primary_button.set_label ("Updating…");
+            this.primary_button.set_label (_("Updating…"));
             this.primary_button.set_sensitive (false);
         } else if (dev.is_connected) {
-            this.primary_button.set_label ("Disconnect");
+            this.primary_button.set_label (_("Disconnect"));
             this.primary_button.set_sensitive (true);
         } else if (can_connect) {
-            this.primary_button.set_label ("Connect");
+            this.primary_button.set_label (_("Connect"));
             this.primary_button.set_sensitive (true);
         } else if (has_profile) {
-            this.primary_button.set_label ("Unavailable");
+            this.primary_button.set_label (_("Unavailable"));
             this.primary_button.set_sensitive (false);
         } else {
-            this.primary_button.set_label ("No Profile");
+            this.primary_button.set_label (_("No Profile"));
             this.primary_button.set_sensitive (false);
         }
 
@@ -97,7 +97,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
         );
         header.append (icon);
 
-        this.details_title = new Gtk.Label ("Ethernet");
+        this.details_title = new Gtk.Label (_("Ethernet"));
         this.details_title.set_xalign (0.5f);
         this.details_title.set_halign (Gtk.Align.CENTER);
         this.details_title.add_css_class (MainWindowCssClasses.DETAILS_NETWORK_TITLE);
@@ -107,7 +107,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
         this.action_row.set_halign (Gtk.Align.CENTER);
         this.action_row.add_css_class (MainWindowCssClasses.DETAILS_ACTION_ROW);
 
-        this.primary_button = new Gtk.Button.with_label ("Connect");
+        this.primary_button = new Gtk.Button.with_label (_("Connect"));
         this.primary_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.primary_button,
@@ -119,7 +119,7 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
         });
         this.action_row.append (this.primary_button);
 
-        this.edit_button = new Gtk.Button.with_label ("Edit");
+        this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (
             this.edit_button,
@@ -143,9 +143,9 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
         body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         Gtk.ListBox b_rows, a_rows, i_rows;
-        body.append (MainWindowHelpers.build_details_section ("Basic", out b_rows));
-        body.append (MainWindowHelpers.build_details_section ("Advanced", out a_rows));
-        body.append (MainWindowHelpers.build_details_section ("IP", out i_rows));
+        body.append (MainWindowHelpers.build_details_section (_("Basic"), out b_rows));
+        body.append (MainWindowHelpers.build_details_section (_("Advanced"), out a_rows));
+        body.append (MainWindowHelpers.build_details_section (_("IP"), out i_rows));
 
         this.basic_rows = b_rows;
         this.advanced_rows = a_rows;

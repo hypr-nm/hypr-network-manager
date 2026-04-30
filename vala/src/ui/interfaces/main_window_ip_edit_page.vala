@@ -116,43 +116,43 @@ public interface IMainWindowIpEditPage : Object {
 
         if (method == "manual") {
             if (ipv4_address == "") {
-                error_message = "Manual IPv4 requires an address.";
+                error_message = _("Manual IPv4 requires an address.");
                 return null;
             }
             if (ipv4_prefix == 0) {
-                error_message = "Manual IPv4 requires a prefix between 1 and 32.";
+                error_message = _("Manual IPv4 requires a prefix between 1 and 32.");
                 return null;
             }
             if (ipv4_gateway == "") {
-                error_message = "Manual IPv4 requires a gateway address.";
+                error_message = _("Manual IPv4 requires a gateway address.");
                 return null;
             }
         }
 
         string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
         if (!dns_auto && dns_servers.length == 0) {
-            error_message = "Manual DNS is enabled; provide at least one DNS server.";
+            error_message = _("Manual DNS is enabled; provide at least one DNS server.");
             return null;
         }
 
         if (method6 == "manual") {
             if (ipv6_address == "") {
-                error_message = "Manual IPv6 requires an address.";
+                error_message = _("Manual IPv6 requires an address.");
                 return null;
             }
             if (ipv6_prefix == 0) {
-                error_message = "Manual IPv6 requires a prefix between 1 and 128.";
+                error_message = _("Manual IPv6 requires a prefix between 1 and 128.");
                 return null;
             }
             if (ipv6_gateway == "") {
-                error_message = "Manual IPv6 requires a gateway address.";
+                error_message = _("Manual IPv6 requires a gateway address.");
                 return null;
             }
         }
 
         string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
         if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
-            error_message = "Manual IPv6 DNS is enabled; provide at least one DNS server.";
+            error_message = _("Manual IPv6 DNS is enabled; provide at least one DNS server.");
             return null;
         }
 

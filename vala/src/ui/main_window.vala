@@ -47,7 +47,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         Gtk.Application app,
         AppConfig config
     ) throws Error {
-        Object (application: app, title: "Network Manager");
+        Object (application: app, title: _("Network Manager"));
         this.state_context = new NetworkStateContext ();
         this.config_context = new WindowConfigContext.from_app_config (config);
 

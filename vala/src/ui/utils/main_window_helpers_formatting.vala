@@ -8,19 +8,19 @@ namespace MainWindowHelpers {
 
     public string display_text_or_na (string? value) {
         string normalized = safe_text (value).strip ();
-        return normalized != "" ? normalized : "n/a";
+        return normalized != "" ? normalized : _("n/a");
     }
 
     public string get_mode_label (uint32 mode) {
         switch (mode) {
         case 1:
-            return "Ad-hoc";
+            return _("Ad-hoc");
         case 2:
-            return "Infrastructure";
+            return _("Infrastructure");
         case 3:
-            return "Access Point";
+            return _("Access Point");
         default:
-            return "Unknown";
+            return _("Unknown");
         }
     }
 
@@ -59,32 +59,32 @@ namespace MainWindowHelpers {
     public string get_ipv4_method_label (string? method) {
         switch (safe_text (method).strip ().down ()) {
         case "manual":
-            return "Manual";
+            return _("Manual");
         case "disabled":
-            return "Disabled";
+            return _("Disabled");
         case "auto":
         default:
-            return "Automatic (DHCP)";
+            return _("Automatic (DHCP)");
         }
     }
 
     public string get_ipv6_method_label (string? method) {
         switch (safe_text (method).strip ().down ()) {
         case "manual":
-            return "Manual";
+            return _("Manual");
         case "disabled":
-            return "Disabled";
+            return _("Disabled");
         case "ignore":
-            return "Ignore";
+            return _("Ignore");
         case "dhcp":
-            return "DHCPv6";
+            return _("DHCPv6");
         case "link-local":
-            return "Link-local";
+            return _("Link-local");
         case "shared":
-            return "Shared";
+            return _("Shared");
         case "auto":
         default:
-            return "Automatic";
+            return _("Automatic");
         }
     }
 
@@ -117,7 +117,7 @@ namespace MainWindowHelpers {
     public string format_ip_with_prefix (string? address, uint32 prefix) {
         string ip = safe_text (address).strip ();
         if (ip == "") {
-            return "n/a";
+            return _("n/a");
         }
         if (prefix > 0) {
             return "%s/%u".printf (ip, prefix);

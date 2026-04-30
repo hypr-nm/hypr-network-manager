@@ -76,13 +76,13 @@ public class MainWindowVpnPageBuilder : Object {
         MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
             MainWindowCssClasses.STATUS_BAR});
 
-        var title = new Gtk.Label ("VPN");
+        var title = new Gtk.Label (_("VPN"));
         title.set_xalign (0.0f);
         title.set_hexpand (true);
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         toolbar.append (title);
 
-        var refresh_btn = new Gtk.Button.with_label ("Refresh");
+        var refresh_btn = new Gtk.Button.with_label (_("Refresh"));
         refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
@@ -115,7 +115,7 @@ public class MainWindowVpnPageBuilder : Object {
             vpn_icon,
             {MainWindowCssClasses.VPN_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
         );
-        var vpn_lbl = new Gtk.Label ("No VPN profiles found");
+        var vpn_lbl = new Gtk.Label (_("No VPN profiles found"));
         vpn_lbl.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
         vpn_placeholder.append (vpn_icon);
         vpn_placeholder.append (vpn_lbl);
@@ -178,7 +178,7 @@ public class MainWindowVpnPageBuilder : Object {
         info.append (sub);
         content.append (info);
 
-        var action = new Gtk.Button.with_label (conn.is_connected ? "Disconnect" : "Connect");
+        var action = new Gtk.Button.with_label (conn.is_connected ? _("Disconnect") : _("Connect"));
         MainWindowCssClassResolver.add_best_class (
             action,
             {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
@@ -198,7 +198,7 @@ public class MainWindowVpnPageBuilder : Object {
                         if (!is_ui_epoch_valid (epoch)) {
                             return;
                         }
-                        host.show_vpn_error (conn.name, "VPN disconnect failed: " + e.message);
+                        host.show_vpn_error (conn.name, _("VPN disconnect failed: %s").printf (e.message));
                     }
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
@@ -215,7 +215,7 @@ public class MainWindowVpnPageBuilder : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    host.show_vpn_error (conn.name, "VPN connect failed: " + e.message);
+                    host.show_vpn_error (conn.name, _("VPN connect failed: %s").printf (e.message));
                 }
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
@@ -252,7 +252,7 @@ public class MainWindowVpnPageBuilder : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                host.show_vpn_error ("all", "VPN refresh failed: " + e.message);
+                host.show_vpn_error ("all", _("VPN refresh failed: %s").printf (e.message));
             }
         });
     }

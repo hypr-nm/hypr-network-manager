@@ -24,10 +24,10 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
 
     public void setup_edit_form (NetworkDevice dev) {
         this.error_revealer.set_reveal_child (false);
-        this.edit_title.set_text ("Edit: %s".printf (dev.name));
+        this.edit_title.set_text (_("Edit: %s").printf (dev.name));
         string profile_display = MainWindowHelpers.safe_text (dev.connection).strip ();
         if (profile_display == "") {
-            profile_display = "Profile %s".printf (MainWindowHelpers.safe_text (dev.connection_uuid));
+            profile_display = _("Profile %s").printf (MainWindowHelpers.safe_text (dev.connection_uuid));
         }
 
         this.ipv4_method_dropdown.set_selected (0);
@@ -74,7 +74,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         });
         header.append (back_btn);
 
-        this.edit_title = new Gtk.Label ("Edit Ethernet");
+        this.edit_title = new Gtk.Label (_("Edit Ethernet"));
         this.edit_title.set_xalign (0.0f);
         this.edit_title.set_hexpand (true);
         this.edit_title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
@@ -147,7 +147,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.ipv6_dns_entry = v6_dns;
 
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        var save_btn = new Gtk.Button.with_label ("Apply");
+        var save_btn = new Gtk.Button.with_label (_("Apply"));
         save_btn.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
             MainWindowCssClasses.BUTTON});

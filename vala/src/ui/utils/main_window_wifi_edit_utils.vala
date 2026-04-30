@@ -39,7 +39,7 @@ namespace MainWindowWifiEditUtils {
 
         uint parsed_prefix;
         if (!uint.try_parse (trimmed, out parsed_prefix) || parsed_prefix > 32) {
-            error_message = "IPv4 prefix must be a number between 0 and 32.";
+            error_message = _("IPv4 prefix must be a number between 0 and 32.");
             return false;
         }
 
@@ -58,7 +58,7 @@ namespace MainWindowWifiEditUtils {
 
         uint parsed_prefix;
         if (!uint.try_parse (trimmed, out parsed_prefix) || parsed_prefix > 128) {
-            error_message = "IPv6 prefix must be a number between 0 and 128.";
+            error_message = _("IPv6 prefix must be a number between 0 and 128.");
             return false;
         }
 

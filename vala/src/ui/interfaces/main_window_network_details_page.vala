@@ -14,6 +14,6 @@ public interface IMainWindowNetworkDetailsPage : Object {
 
     public virtual void show_loading_ip () {
         MainWindowHelpers.clear_listbox (this.ip_rows);
-        this.ip_rows.append (MainWindowHelpers.build_details_row ("Loading", "Reading IP settings…"));
+        this.ip_rows.append (MainWindowHelpers.build_details_row (_("Loading"), "Reading IP settings…"));
     }
 }

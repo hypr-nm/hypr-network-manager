@@ -221,7 +221,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                 return;
             }
 
-            if (page.edit_title.get_text () != "Edit: %s".printf (net.ssid)) {
+            if (page.edit_title.get_text () != _("Edit: %s").printf (net.ssid)) {
                 return;
             }
 

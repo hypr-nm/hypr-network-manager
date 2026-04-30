@@ -151,19 +151,19 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         if (method == "manual") {
             if (ipv4_address == "") {
-                error_message = "Manual IPv4 requires an address.";
+                error_message = _("Manual IPv4 requires an address.");
                 profile_request = new WifiSavedProfileUpdateRequest ();
                 network_request = new WifiNetworkUpdateRequest ();
                 return false;
             }
             if (ipv4_prefix == 0) {
-                error_message = "Manual IPv4 requires a prefix between 1 and 32.";
+                error_message = _("Manual IPv4 requires a prefix between 1 and 32.");
                 profile_request = new WifiSavedProfileUpdateRequest ();
                 network_request = new WifiNetworkUpdateRequest ();
                 return false;
             }
             if (ipv4_gateway == "") {
-                error_message = "Manual IPv4 requires a gateway address.";
+                error_message = _("Manual IPv4 requires a gateway address.");
                 profile_request = new WifiSavedProfileUpdateRequest ();
                 network_request = new WifiNetworkUpdateRequest ();
                 return false;
@@ -172,7 +172,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
         if (!dns_auto && dns_servers.length == 0) {
-            error_message = "Manual DNS is enabled; provide at least one DNS server.";
+            error_message = _("Manual DNS is enabled; provide at least one DNS server.");
             profile_request = new WifiSavedProfileUpdateRequest ();
             network_request = new WifiNetworkUpdateRequest ();
             return false;
@@ -180,19 +180,19 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         if (method6 == "manual") {
             if (ipv6_address == "") {
-                error_message = "Manual IPv6 requires an address.";
+                error_message = _("Manual IPv6 requires an address.");
                 profile_request = new WifiSavedProfileUpdateRequest ();
                 network_request = new WifiNetworkUpdateRequest ();
                 return false;
             }
             if (ipv6_prefix == 0) {
-                error_message = "Manual IPv6 requires a prefix between 1 and 128.";
+                error_message = _("Manual IPv6 requires a prefix between 1 and 128.");
                 profile_request = new WifiSavedProfileUpdateRequest ();
                 network_request = new WifiNetworkUpdateRequest ();
                 return false;
             }
             if (ipv6_gateway == "") {
-                error_message = "Manual IPv6 requires a gateway address.";
+                error_message = _("Manual IPv6 requires a gateway address.");
                 profile_request = new WifiSavedProfileUpdateRequest ();
                 network_request = new WifiNetworkUpdateRequest ();
                 return false;
@@ -201,7 +201,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
         if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
-            error_message = "Manual IPv6 DNS is enabled; provide at least one DNS server.";
+            error_message = _("Manual IPv6 DNS is enabled; provide at least one DNS server.");
             profile_request = new WifiSavedProfileUpdateRequest ();
             network_request = new WifiNetworkUpdateRequest ();
             return false;
@@ -293,7 +293,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         });
         header.append (back_btn);
 
-        this.title_label = new Gtk.Label ("Edit Saved Profile");
+        this.title_label = new Gtk.Label (_("Edit Saved Profile"));
         this.title_label.set_xalign (0.0f);
         this.title_label.set_hexpand (true);
         this.title_label.add_css_class (MainWindowCssClasses.SECTION_TITLE);
@@ -322,9 +322,9 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         Gtk.Box profile_content;
-        var profile_section = build_section ("Profile", out profile_content);
+        var profile_section = build_section (_("Profile"), out profile_content);
 
-        var profile_name_label = new Gtk.Label ("Profile Name");
+        var profile_name_label = new Gtk.Label (_("Profile Name"));
         profile_name_label.set_xalign (0.0f);
         profile_name_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (profile_name_label);
@@ -336,7 +336,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         );
         profile_content.append (this.profile_name_entry);
 
-        var ssid_label = new Gtk.Label ("SSID");
+        var ssid_label = new Gtk.Label (_("SSID"));
         ssid_label.set_xalign (0.0f);
         ssid_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (ssid_label);
@@ -348,7 +348,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         );
         profile_content.append (this.ssid_entry);
 
-        var bssid_label = new Gtk.Label ("BSSID");
+        var bssid_label = new Gtk.Label (_("BSSID"));
         bssid_label.set_xalign (0.0f);
         bssid_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (bssid_label);
@@ -360,17 +360,17 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         );
         profile_content.append (this.bssid_entry);
 
-        var security_label = new Gtk.Label ("Security Mode");
+        var security_label = new Gtk.Label (_("Security Mode"));
         security_label.set_xalign (0.0f);
         security_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         profile_content.append (security_label);
 
         var security_modes = new Gtk.StringList (null);
-        security_modes.append ("Open");
-        security_modes.append ("WPA/WPA2 Personal (PSK)");
-        security_modes.append ("WPA3 Personal (SAE)");
-        security_modes.append ("Enhanced Open (OWE)");
-        security_modes.append ("WEP");
+        security_modes.append (_("Open"));
+        security_modes.append (_("WPA/WPA2 Personal (PSK)"));
+        security_modes.append (_("WPA3 Personal (SAE)"));
+        security_modes.append (_("Enhanced Open (OWE)"));
+        security_modes.append (_("WEP"));
         this.security_mode_dropdown = window_host.create_tracked_dropdown (security_modes);
         MainWindowCssClassResolver.add_best_class (
             this.security_mode_dropdown,
@@ -381,22 +381,22 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         form.append (profile_section);
 
         Gtk.Box access_content;
-        var access_section = build_section ("Access", out access_content);
+        var access_section = build_section (_("Access"), out access_content);
 
-        this.autoconnect_check = new Gtk.CheckButton.with_label ("Connect automatically");
+        this.autoconnect_check = new Gtk.CheckButton.with_label (_("Connect automatically"));
         this.autoconnect_check.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
         access_content.append (this.autoconnect_check);
 
-        this.all_users_check = new Gtk.CheckButton.with_label ("Available to all users");
+        this.all_users_check = new Gtk.CheckButton.with_label (_("Available to all users"));
         this.all_users_check.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
         access_content.append (this.all_users_check);
 
         form.append (access_section);
 
         Gtk.Box auth_content;
-        var auth_section = build_section ("Authentication", out auth_content);
+        var auth_section = build_section (_("Authentication"), out auth_content);
 
-        var password_label = new Gtk.Label ("Password");
+        var password_label = new Gtk.Label (_("Password"));
         password_label.set_xalign (0.0f);
         password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         auth_content.append (password_label);
@@ -473,7 +473,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         actions.add_css_class (MainWindowCssClasses.EDIT_ACTIONS);
 
-        var save_btn = new Gtk.Button.with_label ("Save");
+        var save_btn = new Gtk.Button.with_label (_("Save"));
         save_btn.add_css_class (MainWindowCssClasses.BUTTON);
         MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
             MainWindowCssClasses.BUTTON});

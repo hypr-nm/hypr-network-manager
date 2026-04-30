@@ -181,7 +181,7 @@ public class MainWindowWifiConnectionController : Object {
 
                 if (can_fallback_reconnect) {
                     string fallback_key = fallback_network.network_key;
-                    host.show_wifi_error (net_key, "Connect failed: " + connect_error_message);
+                    host.show_wifi_error (net_key, _("Connect failed: %s").printf (connect_error_message));
                     state_context.mark_wifi_connecting (fallback_key);
                     state_context.pending_wifi_seen_connecting.remove (fallback_key);
 
@@ -206,16 +206,17 @@ public class MainWindowWifiConnectionController : Object {
                             state_context.pending_wifi_seen_connecting.remove (fallback_key);
                             host.show_wifi_error (
                                 fallback_key,
-                                "Connect failed: %s. Reconnect to previous network failed: %s"
+                                _("Connect failed: %s. Reconnect to previous network failed: %s")
                                     .printf (connect_error_message, fallback_error.message)
                             );
+
                             host.refresh_all ();
                         }
                     });
                     return;
                 }
 
-                host.show_wifi_error (net_key, "Connect failed: " + connect_error_message);
+                host.show_wifi_error (net_key, _("Connect failed: %s").printf (connect_error_message));
                 host.refresh_all ();
             }
         });
@@ -242,7 +243,7 @@ public class MainWindowWifiConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_wifi_error (network_key, "Forget failed: " + e.message);
+                host.show_wifi_error (network_key, _("Forget failed: %s").printf (e.message));
             }
             });
             }
@@ -269,7 +270,7 @@ public class MainWindowWifiConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_wifi_error (wifi_key, "Disconnect failed: " + e.message);
+                host.show_wifi_error (wifi_key, _("Disconnect failed: %s").printf (e.message));
                 refresh_after_action (nm, false, epoch);
             }
             });
@@ -295,7 +296,7 @@ public class MainWindowWifiConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                     return;
                 }
-                host.show_wifi_error (wifi_key, "Could not update auto-connect: " + e.message);
+                host.show_wifi_error (wifi_key, _("Could not update auto-connect: %s").printf (e.message));
                 host.refresh_all ();
             }
         });
