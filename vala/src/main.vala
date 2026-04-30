@@ -1,4 +1,16 @@
 int main (string[] args) {
+    Intl.setlocale (LocaleCategory.ALL, "");
+    
+    string localedir = Constants.LOCALEDIR;
+    string? env_localedir = Environment.get_variable ("HYPR_NETWORK_MANAGER_LOCALEDIR");
+    if (env_localedir != null && env_localedir != "") {
+        localedir = env_localedir;
+    }
+    
+    Intl.bindtextdomain (Constants.GETTEXT_PACKAGE, localedir);
+    Intl.bind_textdomain_codeset (Constants.GETTEXT_PACKAGE, "UTF-8");
+    Intl.textdomain (Constants.GETTEXT_PACKAGE);
+
     string? config_path = null;
     bool debug_enabled = false;
     bool status = false;
