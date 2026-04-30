@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hypr-network-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-30 12:38+0300\n"
+"POT-Creation-Date: 2026-04-30 20:16+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,6 +26,7 @@ msgid "Networking is disabled"
 msgstr ""
 
 #: vala/src/backend/nm_status_formatter.vala:27
+#: vala/src/ui/main_window.vala:367
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:100
 #: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:45
 msgid "Ethernet"
@@ -56,6 +57,7 @@ msgid "WiFi is disabled"
 msgstr ""
 
 #: vala/src/backend/nm_status_formatter.vala:52
+#: vala/src/models/network_device.vala:41
 msgid "Disconnected"
 msgstr ""
 
@@ -68,36 +70,85 @@ msgstr ""
 msgid "Hidden network %u"
 msgstr ""
 
-#: vala/src/main.vala:18
+#: vala/src/main.vala:25
 msgid "Config JSON path"
 msgstr ""
 
-#: vala/src/main.vala:19
+#: vala/src/main.vala:26
 msgid "Print JSON status for waybar/eww"
 msgstr ""
 
-#: vala/src/main.vala:20
+#: vala/src/main.vala:27
 msgid "Toggle Wi-Fi and exit"
 msgstr ""
 
-#: vala/src/main.vala:21
+#: vala/src/main.vala:28
 msgid "Override log level to debug"
 msgstr ""
 
-#: vala/src/main.vala:22
+#: vala/src/main.vala:29
 msgid "Run as a background daemon"
 msgstr ""
 
-#: vala/src/main.vala:23
+#: vala/src/main.vala:30
 msgid "Quit the running daemon"
 msgstr ""
 
-#: vala/src/main.vala:24
+#: vala/src/main.vala:31
 msgid "Print version information"
 msgstr ""
 
-#: vala/src/main.vala:28
+#: vala/src/main.vala:35
 msgid "- hypr-network-manager: A network manager for Hyprland"
+msgstr ""
+
+#: vala/src/models/network_device.vala:37
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:23
+msgid "Unknown"
+msgstr ""
+
+#: vala/src/models/network_device.vala:39
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:53
+#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:85
+msgid "Unavailable"
+msgstr ""
+
+#: vala/src/models/network_device.vala:43
+msgid "Preparing"
+msgstr ""
+
+#: vala/src/models/network_device.vala:45
+msgid "Configuring"
+msgstr ""
+
+#: vala/src/models/network_device.vala:47
+msgid "Auth required"
+msgstr ""
+
+#: vala/src/models/network_device.vala:49
+msgid "IP configuring"
+msgstr ""
+
+#: vala/src/models/network_device.vala:51
+msgid "IP checking"
+msgstr ""
+
+#: vala/src/models/network_device.vala:53
+msgid "Secondaries"
+msgstr ""
+
+#: vala/src/models/network_device.vala:55
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:33
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:33
+msgid "Connected"
+msgstr ""
+
+#: vala/src/models/network_device.vala:57
+msgid "Disconnecting"
+msgstr ""
+
+#: vala/src/models/network_device.vala:59
+msgid "Failed"
 msgstr ""
 
 #: vala/src/models/network_device.vala:61
@@ -126,6 +177,26 @@ msgstr ""
 
 #: vala/src/models/wifi_security_mode.vala:33
 msgid "WEP (Legacy)"
+msgstr ""
+
+#: vala/src/models/wifi_signal_levels.vala:36
+msgid "Excellent"
+msgstr ""
+
+#: vala/src/models/wifi_signal_levels.vala:38
+msgid "Good"
+msgstr ""
+
+#: vala/src/models/wifi_signal_levels.vala:40
+msgid "Fair"
+msgstr ""
+
+#: vala/src/models/wifi_signal_levels.vala:42
+msgid "Weak"
+msgstr ""
+
+#: vala/src/models/wifi_signal_levels.vala:44
+msgid "Very Weak"
 msgstr ""
 
 #: vala/src/ui/controllers/profiles/main_window_profile_adapter.vala:53
@@ -256,6 +327,16 @@ msgstr ""
 msgid "Network Manager"
 msgstr ""
 
+#: vala/src/ui/main_window.vala:366
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:47
+msgid "Wi-Fi"
+msgstr ""
+
+#: vala/src/ui/main_window.vala:368
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:79
+msgid "VPN"
+msgstr ""
+
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:29
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:139
 msgid "Interface"
@@ -271,11 +352,6 @@ msgstr ""
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:31
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:147
 msgid "State"
-msgstr ""
-
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:33
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:33
-msgid "Connected"
 msgstr ""
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:33
@@ -316,11 +392,6 @@ msgstr ""
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:331
 #: vala/src/ui/views/wifi_section_view.vala:266
 msgid "Connect"
-msgstr ""
-
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:53
-#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:85
-msgid "Unavailable"
 msgstr ""
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:56
@@ -581,10 +652,6 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:79
-msgid "VPN"
-msgstr ""
-
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:118
 msgid "No VPN profiles found"
 msgstr ""
@@ -674,10 +741,6 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:47
-msgid "Wi-Fi"
-msgstr ""
-
 #: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:53
 msgid "Add Network"
 msgstr ""
@@ -735,10 +798,6 @@ msgstr ""
 
 #: vala/src/ui/utils/main_window_helpers_formatting.vala:21
 msgid "Access Point"
-msgstr ""
-
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:23
-msgid "Unknown"
 msgstr ""
 
 #: vala/src/ui/utils/main_window_helpers_formatting.vala:62
