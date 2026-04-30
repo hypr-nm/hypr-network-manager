@@ -5,6 +5,8 @@ project(
   default_options: ['warning_level=2']
 )
 
+i18n = import('i18n')
+
 buildtype = get_option('buildtype')
 is_release_like = buildtype == 'release' or buildtype == 'debugoptimized'
 
@@ -28,3 +30,4 @@ if host_machine.system() == 'linux'
 endif
 
 subdir('vala')
+subdir('po')
