@@ -33,15 +33,15 @@ public class WifiSignalLevels : Object {
     public static string get_label (uint8 signal) {
         switch (get_level (signal)) {
         case SignalLevel.EXCELLENT:
-            return "Excellent";
+            return _("Excellent");
         case SignalLevel.GOOD:
-            return "Good";
+            return _("Good");
         case SignalLevel.FAIR:
-            return "Fair";
+            return _("Fair");
         case SignalLevel.WEAK:
-            return "Weak";
+            return _("Weak");
         default:
-            return "Very Weak";
+            return _("Very Weak");
         }
     }
 

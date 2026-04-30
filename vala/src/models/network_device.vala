@@ -34,29 +34,29 @@ public class NetworkDevice : Object {
         owned get {
             switch (state) {
             case 10:
-                return "Unknown";
+                return _("Unknown");
             case 20:
-                return "Unavailable";
+                return _("Unavailable");
             case 30:
-                return "Disconnected";
+                return _("Disconnected");
             case 40:
-                return "Preparing";
+                return _("Preparing");
             case 50:
-                return "Configuring";
+                return _("Configuring");
             case 60:
-                return "Auth required";
+                return _("Auth required");
             case 70:
-                return "IP configuring";
+                return _("IP configuring");
             case 80:
-                return "IP checking";
+                return _("IP checking");
             case 90:
-                return "Secondaries";
+                return _("Secondaries");
             case 100:
-                return "Connected";
+                return _("Connected");
             case 110:
-                return "Disconnecting";
+                return _("Disconnecting");
             case 120:
-                return "Failed";
+                return _("Failed");
             default:
                 return _("State %u").printf (state);
             }
