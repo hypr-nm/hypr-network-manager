@@ -65,6 +65,13 @@ namespace HyprNetworkManager.UI.Views {
                 state_context
             );
 
+            wifi_controller.saved_refresh_started.connect (() => {
+                profiles_page.set_refreshing (true);
+            });
+            wifi_controller.saved_refresh_finished.connect (() => {
+                profiles_page.set_refreshing (false);
+            });
+
             wire_profiles_page_signals ();
             wire_profiles_details_page_signals ();
             wire_profiles_edit_page_signals ();

@@ -27,6 +27,7 @@ namespace MainWindowEthernetPageBuilder {
         out Gtk.ListBox ethernet_listbox,
         out Gtk.Stack ethernet_stack,
         out Gtk.Button refresh_button,
+        out HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController progress_controller,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
         MainWindowEthernetController controller
@@ -63,6 +64,10 @@ namespace MainWindowEthernetPageBuilder {
         refresh_button = refresh_btn;
 
         page.append (toolbar);
+
+        var prog = new Gtk.ProgressBar ();
+        page.append (prog);
+        progress_controller = new HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController (prog);
 
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);

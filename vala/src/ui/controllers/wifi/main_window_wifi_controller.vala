@@ -15,6 +15,10 @@ public class MainWindowWifiController : Object {
     private MainWindowWifiDetailsEditController details_edit_controller;
 
     public signal void saved_profile_update_succeeded ();
+    public signal void refresh_started ();
+    public signal void refresh_finished ();
+    public signal void saved_refresh_started ();
+    public signal void saved_refresh_finished ();
 
     public MainWindowWifiController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
@@ -22,9 +26,21 @@ public class MainWindowWifiController : Object {
         this.state_context = state_context;
 
         refresh_controller = new MainWindowWifiRefreshController (host, state_context);
+        refresh_controller.refresh_started.connect (() => {
+            refresh_started ();
+        });
+        refresh_controller.refresh_finished.connect (() => {
+            refresh_finished ();
+        });
         connection_controller = new MainWindowWifiConnectionController (host, state_context, refresh_controller);
         hidden_network_controller = new MainWindowWifiHiddenNetworkController (host, connection_controller);
         saved_profiles_controller = new MainWindowWifiSavedProfilesController (host);
+        saved_profiles_controller.refresh_started.connect (() => {
+            saved_refresh_started ();
+        });
+        saved_profiles_controller.refresh_finished.connect (() => {
+            saved_refresh_finished ();
+        });
         switch_controller = new MainWindowWifiSwitchController (host);
         password_ui_controller = new MainWindowWifiPasswordUIController (host);
         prompt_manager = new MainWindowPasswordPromptManager ();

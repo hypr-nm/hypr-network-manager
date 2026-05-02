@@ -12,6 +12,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
     private Gtk.ScrolledWindow scroll;
     private double saved_scroll_value = 0.0;
+    private HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController refresh_prog_controller;
 
     public MainWindowProfilesPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
@@ -59,6 +60,10 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         this.append (header);
 
+        var prog = new Gtk.ProgressBar ();
+        this.append (prog);
+        this.refresh_prog_controller = new HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController (prog);
+
         scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
         scroll.add_css_class (MainWindowCssClasses.SCROLL);
@@ -91,6 +96,14 @@ public class MainWindowProfilesPage : Gtk.Box {
         scroll.set_child (body);
 
         this.append (scroll);
+    }
+
+    public void set_refreshing (bool refreshing) {
+        if (refreshing) {
+            refresh_prog_controller.start ();
+        } else {
+            refresh_prog_controller.finish ();
+        }
     }
 
     private void clear_listbox (Gtk.ListBox listbox) {

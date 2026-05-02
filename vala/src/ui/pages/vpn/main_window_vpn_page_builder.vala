@@ -12,6 +12,9 @@ public class MainWindowVpnPageBuilder : Object {
     private Gtk.ListBox? vpn_listbox = null;
     private Gtk.Stack? vpn_stack = null;
 
+    public signal void refresh_started ();
+    public signal void refresh_finished ();
+
     public MainWindowVpnPageBuilder (
         NetworkManagerClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
@@ -87,6 +90,7 @@ public class MainWindowVpnPageBuilder : Object {
         refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
+        refresh_btn.set_tooltip_text (_("Refresh VPN profiles"));
         MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
         refresh_btn.clicked.connect (() => {
@@ -95,6 +99,17 @@ public class MainWindowVpnPageBuilder : Object {
         toolbar.append (refresh_btn);
 
         page.append (toolbar);
+
+        var prog = new Gtk.ProgressBar ();
+        page.append (prog);
+        var progress_controller = new HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController (prog);
+
+        refresh_started.connect (() => {
+            progress_controller.start ();
+        });
+        refresh_finished.connect (() => {
+            progress_controller.finish ();
+        });
 
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
@@ -235,10 +250,12 @@ public class MainWindowVpnPageBuilder : Object {
         }
 
         uint epoch = capture_ui_epoch ();
+        refresh_started ();
         nm.get_vpn_connections.begin (null, (obj, res) => {
             try {
                 var connections = nm.get_vpn_connections.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
+                    refresh_finished ();
                     return;
                 }
                 MainWindowHelpers.clear_listbox (vpn_listbox);
@@ -248,7 +265,9 @@ public class MainWindowVpnPageBuilder : Object {
                 }
 
                 vpn_stack.set_visible_child_name (connections.length () > 0 ? "list" : "empty");
+                refresh_finished ();
             } catch (Error e) {
+                refresh_finished ();
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }

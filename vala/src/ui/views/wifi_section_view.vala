@@ -70,6 +70,7 @@ namespace HyprNetworkManager.UI.Views {
             Gtk.Stack local_wifi_stack;
             Gtk.Button local_add_button;
             Gtk.Button local_refresh_button;
+            HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController local_progress_controller;
 
             var page = MainWindowWifiPageBuilder.build_page (
                 out local_wifi_switch,
@@ -77,6 +78,7 @@ namespace HyprNetworkManager.UI.Views {
                 out local_wifi_stack,
                 out local_add_button,
                 out local_refresh_button,
+                out local_progress_controller,
                 details_page,
                 edit_page,
                 add_page
@@ -88,6 +90,13 @@ namespace HyprNetworkManager.UI.Views {
             this.listbox = local_wifi_listbox;
             this.stack = local_wifi_stack;
             this.widget = page;
+
+            controller.refresh_started.connect (() => {
+                local_progress_controller.start ();
+            });
+            controller.refresh_finished.connect (() => {
+                local_progress_controller.finish ();
+            });
 
             local_refresh_button.clicked.connect (() => {
                 refresh_requested ();

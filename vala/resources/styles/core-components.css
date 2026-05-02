@@ -40,6 +40,37 @@ window.nm-window,
   background: transparent;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.nm-refresh-progress {
+  min-height: 2px;
+  margin-top: -4px;
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+}
+
+.nm-refresh-progress trough {
+  min-height: 2px;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.nm-refresh-progress progress {
+  min-height: 2px;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+}
+
 /* Keep subtle depth only on top-level list pages. */
 .nm-page.nm-page-wifi,
 .nm-page.nm-page-ethernet,

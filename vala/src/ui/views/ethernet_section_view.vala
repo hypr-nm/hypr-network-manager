@@ -42,10 +42,12 @@ namespace HyprNetworkManager.UI.Views {
             Gtk.ListBox ethernet_listbox;
             Gtk.Stack ethernet_stack_local;
             Gtk.Button ethernet_refresh_button;
+            HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController local_progress_controller;
             var page = MainWindowEthernetPageBuilder.build_page (
                 out ethernet_listbox,
                 out ethernet_stack_local,
                 out ethernet_refresh_button,
+                out local_progress_controller,
                 ethernet_details_page,
                 this.ethernet_edit_page,
                 controller
@@ -55,6 +57,13 @@ namespace HyprNetworkManager.UI.Views {
             this.stack = ethernet_stack_local;
             this.refresh_button = ethernet_refresh_button;
             this.widget = page;
+
+            controller.refresh_started.connect (() => {
+                local_progress_controller.start ();
+            });
+            controller.refresh_finished.connect (() => {
+                local_progress_controller.finish ();
+            });
 
             var ethernet_view_context = new MainWindowEthernetViewContext (
                 page,

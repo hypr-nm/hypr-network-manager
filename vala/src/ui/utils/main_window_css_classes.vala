@@ -112,6 +112,7 @@ namespace MainWindowCssClasses {
     public const string DELETE_BUTTON = "nm-delete-button";
     public const string FORGET_BUTTON = "nm-forget-button";
     public const string REFRESH_BUTTON = "nm-refresh-button";
+    public const string REFRESHING = "nm-refreshing";
     public const string ADD_NETWORK_BUTTON = "nm-add-network-button";
     public const string ADD_BUTTON = "nm-add-button";
     public const string SAVED_PROFILES_BUTTON = "nm-saved-profiles-button";

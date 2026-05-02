@@ -29,6 +29,7 @@ namespace MainWindowWifiPageBuilder {
         out Gtk.Stack wifi_stack,
         out Gtk.Button add_network_button,
         out Gtk.Button refresh_button,
+        out HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController progress_controller,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
         Gtk.Widget add_page
@@ -79,6 +80,10 @@ namespace MainWindowWifiPageBuilder {
         toolbar.append (wifi_switch);
 
         page.append (toolbar);
+
+        var prog = new Gtk.ProgressBar ();
+        page.append (prog);
+        progress_controller = new HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController (prog);
 
         var scroll = new Gtk.ScrolledWindow ();
         scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);

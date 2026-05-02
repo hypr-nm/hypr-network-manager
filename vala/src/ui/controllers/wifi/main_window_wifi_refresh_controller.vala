@@ -9,6 +9,9 @@ public class MainWindowWifiRefreshController : Object {
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
+    public signal void refresh_started ();
+    public signal void refresh_finished ();
+
     public MainWindowWifiRefreshController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
@@ -73,6 +76,7 @@ public class MainWindowWifiRefreshController : Object {
         }
 
         wifi_refresh_in_flight = true;
+        refresh_started ();
         uint epoch = capture_ui_epoch ();
         host.debug_log ("Refreshing Wi-Fi list");
 
@@ -254,6 +258,7 @@ public class MainWindowWifiRefreshController : Object {
                     wifi_refresh_cancellable = null;
                 }
                 wifi_refresh_in_flight = false;
+                refresh_finished ();
 
                 if (wifi_refresh_queued && is_ui_epoch_valid (epoch)) {
                     wifi_refresh_queued = false;

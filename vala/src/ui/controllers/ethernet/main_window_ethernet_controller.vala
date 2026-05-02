@@ -18,6 +18,8 @@ public class MainWindowEthernetController : Object, IMainWindowEthernetRowAction
     private bool profile_edit_mode = false;
 
     public signal void profile_edit_completed ();
+    public signal void refresh_started ();
+    public signal void refresh_finished ();
 
     public MainWindowEthernetController (
         NetworkManagerClient nm,
@@ -29,6 +31,12 @@ public class MainWindowEthernetController : Object, IMainWindowEthernetRowAction
         this.state_context = state_context;
 
         refresh_controller = new MainWindowEthernetRefreshController (nm, host, state_context);
+        refresh_controller.refresh_started.connect (() => {
+            refresh_started ();
+        });
+        refresh_controller.refresh_finished.connect (() => {
+            refresh_finished ();
+        });
         connection_controller = new MainWindowEthernetConnectionController (nm, host, state_context);
         details_edit_controller = new MainWindowEthernetDetailsEditController (nm, host, state_context);
 

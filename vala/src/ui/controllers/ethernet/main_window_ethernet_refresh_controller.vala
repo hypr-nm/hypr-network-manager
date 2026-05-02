@@ -6,6 +6,9 @@ public class MainWindowEthernetRefreshController : Object {
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
+    public signal void refresh_started ();
+    public signal void refresh_finished ();
+
     public MainWindowEthernetRefreshController (NetworkManagerClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
@@ -63,6 +66,7 @@ public class MainWindowEthernetRefreshController : Object {
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_refresh_request ();
+        refresh_started ();
         refresh_cancellable = new Cancellable ();
         var refresh_request = refresh_cancellable;
         string current_view = ethernet_stack.get_visible_child_name ();
@@ -70,6 +74,7 @@ public class MainWindowEthernetRefreshController : Object {
             try {
                 var devices = nm.get_devices.end (res);
                 if (!is_ui_epoch_valid (epoch)) {
+                    refresh_finished ();
                     return;
                 }
 
@@ -145,7 +150,9 @@ public class MainWindowEthernetRefreshController : Object {
                 }
 
                 ethernet_stack.set_visible_child_name (ethernet_devices.length () > 0 ? "list" : "empty");
+                refresh_finished ();
             } catch (Error e) {
+                refresh_finished ();
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }

@@ -6,6 +6,8 @@ public class MainWindowWifiSavedProfilesController : Object {
     private Cancellable? saved_profile_update_cancellable = null;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
+    public signal void refresh_started ();
+    public signal void refresh_finished ();
     public signal void saved_profile_update_succeeded ();
 
     public MainWindowWifiSavedProfilesController (HyprNetworkManager.UI.Interfaces.IWindowHost host) {
@@ -78,6 +80,7 @@ public class MainWindowWifiSavedProfilesController : Object {
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_saved_profiles_request ();
+        refresh_started ();
         saved_profiles_cancellable = new Cancellable ();
         var list_request = saved_profiles_cancellable;
 
@@ -85,10 +88,13 @@ public class MainWindowWifiSavedProfilesController : Object {
             try {
                 var saved_profiles = nm.get_saved_wifi_profiles.end (res);
                 if (!is_ui_epoch_valid (epoch) || saved_profiles_cancellable != list_request) {
+                    refresh_finished ();
                     return;
                 }
                 page.set_wifi_networks (saved_profiles);
+                refresh_finished ();
             } catch (Error e) {
+                refresh_finished ();
                 if (!is_ui_epoch_valid (epoch)
                     || saved_profiles_cancellable != list_request
                     || is_cancelled_error (e)) {
