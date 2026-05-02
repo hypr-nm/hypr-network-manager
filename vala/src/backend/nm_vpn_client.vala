@@ -313,11 +313,13 @@ public class NmVpnClient : GLib.Object {
                 continue;
             }
 
+            var s_conn = conn.get_setting_connection ();
             var vpn = new VpnConnection () {
                 uuid = conn.get_uuid (),
                 name = conn.get_id (),
                 vpn_type = describe_vpn_profile (conn),
-                state = "deactivated"
+                state = "deactivated",
+                autoconnect = s_conn != null ? s_conn.autoconnect : true
             };
 
             foreach (var ac in client.get_active_connections ()) {
@@ -340,10 +342,141 @@ public class NmVpnClient : GLib.Object {
                 uuid = ac.get_uuid (),
                 name = ac.get_id (),
                 vpn_type = describe_active_connection (ac),
-                state = map_active_connection_state (ac)
+                state = map_active_connection_state (ac),
+                autoconnect = false
             });
         }
 
         return vpns;
+    }
+
+    public async NetworkIpSettings get_details (string id, Cancellable? cancellable = null) throws Error {
+        var ip_settings = new NetworkIpSettings ();
+        var client = core.nm_client;
+
+        NM.Connection? vpn_conn = null;
+        foreach (var conn in client.get_connections ()) {
+            if (is_supported_vpn_profile (conn)
+                && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
+                vpn_conn = conn;
+                break;
+            }
+        }
+
+        if (vpn_conn != null) {
+            NmIpConfigHelper.populate_configured_ip_settings (ip_settings, vpn_conn);
+            var s_conn = vpn_conn.get_setting_connection ();
+            if (s_conn != null) {
+                ip_settings.autoconnect = s_conn.autoconnect;
+            }
+        }
+
+        foreach (var ac in client.get_active_connections ()) {
+            if (is_supported_vpn_active_connection (ac)
+                && matches_connection_identity (ac.get_uuid (), ac.get_id (), id)) {
+                
+                var ip4 = ac.get_ip4_config ();
+                if (ip4 != null) {
+                    if (ip4.get_addresses ().length > 0) {
+                        unowned NM.IPAddress addr = ip4.get_addresses ().get (0);
+                        ip_settings.current_address = addr.get_address () ?? "";
+                        ip_settings.current_prefix = addr.get_prefix ();
+                    }
+                    ip_settings.current_gateway = ip4.get_gateway () ?? "";
+                    foreach (unowned string nameserver in ip4.get_nameservers ()) {
+                        ip_settings.current_dns = nameserver;
+                        break;
+                    }
+                }
+
+                var ip6 = ac.get_ip6_config ();
+                if (ip6 != null) {
+                    if (ip6.get_addresses ().length > 0) {
+                        unowned NM.IPAddress addr = ip6.get_addresses ().get (0);
+                        ip_settings.current_ipv6_address = addr.get_address () ?? "";
+                        ip_settings.current_ipv6_prefix = addr.get_prefix ();
+                    }
+                    ip_settings.current_ipv6_gateway = ip6.get_gateway () ?? "";
+                    foreach (unowned string nameserver in ip6.get_nameservers ()) {
+                        ip_settings.current_ipv6_dns = nameserver;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+
+        return ip_settings;
+    }
+
+    public async bool update_vpn_settings (
+        string id,
+        NetworkIpUpdateRequest request,
+        Cancellable? cancellable = null
+    ) throws Error {
+        var client = core.nm_client;
+        NM.Connection? vpn_conn = null;
+
+        foreach (var conn in client.get_connections ()) {
+            if (is_supported_vpn_profile (conn)
+                && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
+                vpn_conn = conn;
+                break;
+            }
+        }
+
+        if (vpn_conn == null) {
+            throw new IOError.NOT_FOUND ("VPN connection not found");
+        }
+
+        var s_conn = vpn_conn.get_setting_connection ();
+        if (s_conn != null) {
+            s_conn.autoconnect = request.autoconnect;
+        }
+
+        var s_ip4 = NmIpConfigHelper.ensure_ip4_setting (vpn_conn);
+        NmIpConfigHelper.apply_ipv4_settings (s_ip4, request.get_ipv4_section ());
+
+        var s_ip6 = NmIpConfigHelper.ensure_ip6_setting (vpn_conn);
+        NmIpConfigHelper.apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
+
+        if (vpn_conn is NM.RemoteConnection) {
+            yield ((NM.RemoteConnection)vpn_conn).commit_changes_async (true, cancellable);
+        }
+        return true;
+    }
+
+    public async bool import_vpn (string file_path, Cancellable? cancellable = null) throws Error {
+        string type = "openvpn";
+        if (file_path.has_suffix (".conf")) {
+            type = "wireguard";
+        } else if (file_path.has_suffix (".ovpn")) {
+            type = "openvpn";
+        }
+
+        string[] spawn_args = {"nmcli", "connection", "import", "type", type, "file", file_path};
+        int exit_status;
+        Process.spawn_sync (null, spawn_args, null, SpawnFlags.SEARCH_PATH, null, null, null, out exit_status);
+
+        if (exit_status != 0) {
+            throw new IOError.FAILED ("Failed to import VPN connection via nmcli (exit code %d)".printf (exit_status));
+        }
+
+        return true;
+    }
+
+    public async bool delete_vpn (string id, Cancellable? cancellable = null) throws Error {
+        var client = core.nm_client;
+        foreach (var conn in client.get_connections ()) {
+            if (is_supported_vpn_profile (conn)
+                && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
+                if (conn is NM.RemoteConnection) {
+                    yield ((NM.RemoteConnection)conn).delete_async (cancellable);
+                    return true;
+                }
+            }
+        }
+
+        throw new IOError.NOT_FOUND ("VPN connection profile not found");
     }
 }
