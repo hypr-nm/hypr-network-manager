@@ -40,13 +40,15 @@ public class VpnProfileDetails : NetworkIpSettings {
     public string vpn_type_key { get; set; default = "vpn"; }
     public string vpn_type_display { get; set; default = "VPN"; }
     public string service_type { get; set; default = ""; }
+}
 
-    // Generic VPN
+public class GenericVpnProfileDetails : VpnProfileDetails {
     public string gateway { get; set; default = ""; }
     public string username { get; set; default = ""; }
     public string password { get; set; default = ""; }
+}
 
-    // WireGuard
+public class WireGuardVpnProfileDetails : VpnProfileDetails {
     public string wg_private_key { get; set; default = ""; }
     public string wg_peer_public_key { get; set; default = ""; }
     public string wg_peer_endpoint { get; set; default = ""; }
@@ -55,8 +57,9 @@ public class VpnProfileDetails : NetworkIpSettings {
     public uint32 wg_listen_port { get; set; default = 0; }
     public uint32 wg_fwmark { get; set; default = 0; }
     public bool wg_peer_routes { get; set; default = true; }
+}
 
-    // OpenVPN
+public class OpenVpnProfileDetails : VpnProfileDetails {
     public string ovpn_remote { get; set; default = ""; }
     public uint32 ovpn_port { get; set; default = 0; }
     public string ovpn_proto { get; set; default = ""; }

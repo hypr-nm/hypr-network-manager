@@ -127,14 +127,25 @@ public class WifiSavedProfileUpdateRequest : Object {
 
 public class VpnUpdateRequest : Object {
     public string name { get; set; default = ""; }
-    public string vpn_type { get; set; default = "wireguard"; }
-    
-    // Generic VPN
+    public string vpn_type { get; set; default = "vpn"; }
+    public NetworkIpUpdateRequest ip_request { get; set; }
+
+    public VpnUpdateRequest () {
+        ip_request = new NetworkIpUpdateRequest ();
+    }
+}
+
+public class GenericVpnUpdateRequest : VpnUpdateRequest {
     public string gateway { get; set; default = ""; }
     public string user { get; set; default = ""; }
     public string password { get; set; default = ""; }
 
-    // WireGuard
+    public GenericVpnUpdateRequest () {
+        vpn_type = "vpn";
+    }
+}
+
+public class WireGuardVpnUpdateRequest : VpnUpdateRequest {
     public string wg_private_key { get; set; default = ""; }
     public string wg_peer_public_key { get; set; default = ""; }
     public string wg_peer_endpoint { get; set; default = ""; }
@@ -144,7 +155,12 @@ public class VpnUpdateRequest : Object {
     public uint32 wg_fwmark { get; set; default = 0; }
     public bool wg_peer_routes { get; set; default = true; }
 
-    // OpenVPN
+    public WireGuardVpnUpdateRequest () {
+        vpn_type = "wireguard";
+    }
+}
+
+public class OpenVpnUpdateRequest : VpnUpdateRequest {
     public string ovpn_remote { get; set; default = ""; }
     public uint32 ovpn_port { get; set; default = 0; }
     public string ovpn_proto { get; set; default = ""; }
@@ -157,9 +173,7 @@ public class VpnUpdateRequest : Object {
     public string ovpn_cipher { get; set; default = ""; }
     public string ovpn_auth { get; set; default = ""; }
 
-    public NetworkIpUpdateRequest ip_request { get; set; }
-
-    public VpnUpdateRequest () {
-        ip_request = new NetworkIpUpdateRequest ();
+    public OpenVpnUpdateRequest () {
+        vpn_type = "openvpn";
     }
 }
