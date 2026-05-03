@@ -339,10 +339,17 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage {
     public MainWindowVpnSetupPage (IWindowHost window_host) {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
 
+        this.set_hexpand (true);
+        this.set_vexpand (true);
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
         MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
             MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_hook_and_best_class (
+            this,
+            MainWindowCssClasses.PAGE_VPN_SETUP,
+            {MainWindowCssClasses.PAGE_NETWORK_ADD, MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
+        );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button ();
@@ -374,6 +381,11 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage {
         scroll.set_vexpand (true);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
+        MainWindowCssClassResolver.add_best_class (
+            form,
+            {MainWindowCssClasses.ADD_NETWORK_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM,
+                MainWindowCssClasses.EDIT_FORM}
+        );
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         form.append (build_form_label (_("Connection Name")));

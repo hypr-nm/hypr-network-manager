@@ -19,8 +19,10 @@ namespace MainWindowCssClasses {
     public const string PAGE_ETHERNET_DETAILS = "nm-page-ethernet-details";
     public const string PAGE_ETHERNET_EDIT = "nm-page-ethernet-edit";
     public const string PAGE_VPN = "nm-page-vpn";
+    public const string PAGE_VPN_ADD = "nm-page-vpn-add";
     public const string PAGE_VPN_DETAILS = "nm-page-vpn-details";
     public const string PAGE_VPN_EDIT = "nm-page-vpn-edit";
+    public const string PAGE_VPN_SETUP = "nm-page-vpn-setup";
     public const string PAGE_SAVED_PROFILES = "nm-page-saved-profiles";
     public const string PAGE_NETWORK_DETAILS = "nm-page-network-details";
     public const string PAGE_NETWORK_EDIT = "nm-page-network-edit";
