@@ -64,7 +64,7 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             add_page.back.connect (() => {
-                stack.set_visible_child_name ("list");
+                show_vpn_list_or_empty ();
             });
 
             add_page.type_selected.connect ((type) => {
@@ -81,7 +81,7 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             details_page.back.connect (() => {
-                stack.set_visible_child_name ("list");
+                show_vpn_list_or_empty ();
             });
 
             details_page.primary_action.connect (() => {
@@ -123,7 +123,7 @@ namespace HyprNetworkManager.UI.Views {
                 if (selected_vpn != null) {
                     open_vpn_details (selected_vpn);
                 } else {
-                    stack.set_visible_child_name ("list");
+                    show_vpn_list_or_empty ();
                 }
             });
 
@@ -147,7 +147,7 @@ namespace HyprNetworkManager.UI.Views {
             nm.delete_vpn.begin (connection_id, null, (obj, res) => {
                 try {
                     nm.delete_vpn.end (res);
-                    stack.set_visible_child_name ("list");
+                    show_vpn_list_or_empty ();
                     controller.refresh ();
                 } catch (Error e) {
                     controller.refresh_finished ();
@@ -156,9 +156,14 @@ namespace HyprNetworkManager.UI.Views {
             });
         }
 
+        private void show_vpn_list_or_empty () {
+            bool has_profiles = listbox.get_first_child () != null;
+            stack.set_visible_child_name (has_profiles ? "list" : "empty");
+        }
+
         public void reset_view_state () {
             if (stack != null) {
-                stack.set_visible_child_name ("list");
+                show_vpn_list_or_empty ();
             }
         }
     }
