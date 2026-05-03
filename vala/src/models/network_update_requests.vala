@@ -133,6 +133,15 @@ public class VpnUpdateRequest : Object {
     public VpnUpdateRequest () {
         ip_request = new NetworkIpUpdateRequest ();
     }
+
+    public virtual bool validate (out string? error_message) {
+        error_message = null;
+        if (ip_request == null) {
+            error_message = _("IP settings are required.");
+            return false;
+        }
+        return true;
+    }
 }
 
 public class GenericVpnUpdateRequest : VpnUpdateRequest {
@@ -140,8 +149,8 @@ public class GenericVpnUpdateRequest : VpnUpdateRequest {
     public string user { get; set; default = ""; }
     public string password { get; set; default = ""; }
 
-    public GenericVpnUpdateRequest () {
-        vpn_type = "vpn";
+    public GenericVpnUpdateRequest (string vpn_type = "vpn") {
+        this.vpn_type = vpn_type.strip () != "" ? vpn_type.strip () : "vpn";
     }
 }
 
@@ -157,6 +166,18 @@ public class WireGuardVpnUpdateRequest : VpnUpdateRequest {
 
     public WireGuardVpnUpdateRequest () {
         vpn_type = "wireguard";
+    }
+
+    public override bool validate (out string? error_message) {
+        if (!base.validate (out error_message)) {
+            return false;
+        }
+        if (wg_private_key.strip () == "" || wg_peer_public_key.strip () == "" || wg_peer_endpoint.strip () == "") {
+            error_message = _("WireGuard requires private key, peer public key, and endpoint.");
+            return false;
+        }
+        error_message = null;
+        return true;
     }
 }
 
@@ -175,5 +196,17 @@ public class OpenVpnUpdateRequest : VpnUpdateRequest {
 
     public OpenVpnUpdateRequest () {
         vpn_type = "openvpn";
+    }
+
+    public override bool validate (out string? error_message) {
+        if (!base.validate (out error_message)) {
+            return false;
+        }
+        if (ovpn_remote.strip () == "") {
+            error_message = _("OpenVPN remote is required.");
+            return false;
+        }
+        error_message = null;
+        return true;
     }
 }
