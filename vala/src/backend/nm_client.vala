@@ -372,7 +372,7 @@ public class NetworkManagerClient : GLib.Object {
         return yield vpn_client.get_connections (cancellable);
     }
 
-    public async NetworkIpSettings get_vpn_details (
+    public async VpnProfileDetails get_vpn_details (
         string id,
         Cancellable? cancellable = null
     ) throws Error {
@@ -381,7 +381,7 @@ public class NetworkManagerClient : GLib.Object {
 
     public async bool update_vpn_settings (
         string id,
-        NetworkIpUpdateRequest request,
+        VpnUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
         return yield vpn_client.update_vpn_settings (id, request, cancellable);
