@@ -57,7 +57,13 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
     public void setup_edit_form (VpnConnection conn, VpnProfileDetails details) {
         this.error_revealer.set_reveal_child (false);
         this.edit_title.set_text (_("Edit: %s").printf (conn.name));
-        this.vpn_type = details.vpn_type_key.strip () != "" ? details.vpn_type_key : "vpn";
+        if (details is WireGuardVpnProfileDetails) {
+            this.vpn_type = "wireguard";
+        } else if (details is OpenVpnProfileDetails) {
+            this.vpn_type = "openvpn";
+        } else {
+            this.vpn_type = details.vpn_type_key.strip () != "" ? details.vpn_type_key : "vpn";
+        }
 
         MainWindowHelpers.clear_box (type_specific_box);
         if (this.vpn_type == "wireguard") {
@@ -86,31 +92,38 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
             this.autoconnect_switch.set_active (details.autoconnect);
         }
 
-        if (this.vpn_type == "wireguard") {
-            wg_private_key_entry.set_text (details.wg_private_key);
-            wg_peer_public_key_entry.set_text (details.wg_peer_public_key);
-            wg_peer_endpoint_entry.set_text (details.wg_peer_endpoint);
-            wg_peer_allowed_ips_entry.set_text (details.wg_peer_allowed_ips);
-            wg_preshared_key_entry.set_text (details.wg_preshared_key);
-            wg_listen_port_entry.set_text (details.wg_listen_port > 0 ? "%u".printf (details.wg_listen_port) : "");
-            wg_fwmark_entry.set_text (details.wg_fwmark > 0 ? "%u".printf (details.wg_fwmark) : "");
-            wg_peer_routes_switch.set_active (details.wg_peer_routes);
-        } else if (this.vpn_type == "openvpn") {
-            ovpn_remote_entry.set_text (details.ovpn_remote);
-            ovpn_port_entry.set_text (details.ovpn_port > 0 ? "%u".printf (details.ovpn_port) : "");
-            ovpn_proto_entry.set_text (details.ovpn_proto);
-            ovpn_user_entry.set_text (details.ovpn_username);
-            ovpn_password_entry.set_text (details.ovpn_password);
-            ovpn_ca_cert_entry.set_text (details.ovpn_ca_cert);
-            ovpn_client_cert_entry.set_text (details.ovpn_client_cert);
-            ovpn_private_key_entry.set_text (details.ovpn_private_key);
-            ovpn_tls_auth_key_entry.set_text (details.ovpn_tls_auth_key);
-            ovpn_cipher_entry.set_text (details.ovpn_cipher);
-            ovpn_auth_entry.set_text (details.ovpn_auth);
+        var wg_details = details as WireGuardVpnProfileDetails;
+        if (wg_details != null) {
+            wg_private_key_entry.set_text (wg_details.wg_private_key);
+            wg_peer_public_key_entry.set_text (wg_details.wg_peer_public_key);
+            wg_peer_endpoint_entry.set_text (wg_details.wg_peer_endpoint);
+            wg_peer_allowed_ips_entry.set_text (wg_details.wg_peer_allowed_ips);
+            wg_preshared_key_entry.set_text (wg_details.wg_preshared_key);
+            wg_listen_port_entry.set_text (wg_details.wg_listen_port > 0 ? "%u".printf (wg_details.wg_listen_port) : "");
+            wg_fwmark_entry.set_text (wg_details.wg_fwmark > 0 ? "%u".printf (wg_details.wg_fwmark) : "");
+            wg_peer_routes_switch.set_active (wg_details.wg_peer_routes);
         } else {
-            gateway_entry.set_text (details.gateway);
-            user_entry.set_text (details.username);
-            password_entry.set_text (details.password);
+            var ovpn_details = details as OpenVpnProfileDetails;
+            if (ovpn_details != null) {
+                ovpn_remote_entry.set_text (ovpn_details.ovpn_remote);
+                ovpn_port_entry.set_text (ovpn_details.ovpn_port > 0 ? "%u".printf (ovpn_details.ovpn_port) : "");
+                ovpn_proto_entry.set_text (ovpn_details.ovpn_proto);
+                ovpn_user_entry.set_text (ovpn_details.ovpn_username);
+                ovpn_password_entry.set_text (ovpn_details.ovpn_password);
+                ovpn_ca_cert_entry.set_text (ovpn_details.ovpn_ca_cert);
+                ovpn_client_cert_entry.set_text (ovpn_details.ovpn_client_cert);
+                ovpn_private_key_entry.set_text (ovpn_details.ovpn_private_key);
+                ovpn_tls_auth_key_entry.set_text (ovpn_details.ovpn_tls_auth_key);
+                ovpn_cipher_entry.set_text (ovpn_details.ovpn_cipher);
+                ovpn_auth_entry.set_text (ovpn_details.ovpn_auth);
+            } else {
+                var generic_details = details as GenericVpnProfileDetails;
+                if (generic_details != null) {
+                    gateway_entry.set_text (generic_details.gateway);
+                    user_entry.set_text (generic_details.username);
+                    password_entry.set_text (generic_details.password);
+                }
+            }
         }
 
         this.sync_edit_gateway_dns_sensitivity ();
@@ -126,71 +139,84 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
             return null;
         }
 
-        var request = new VpnUpdateRequest ();
-        request.vpn_type = vpn_type;
+        VpnUpdateRequest request;
+        if (this.vpn_type == "wireguard") {
+            request = new WireGuardVpnUpdateRequest ();
+        } else if (this.vpn_type == "openvpn") {
+            request = new OpenVpnUpdateRequest ();
+        } else {
+            var generic_request = new GenericVpnUpdateRequest ();
+            generic_request.vpn_type = this.vpn_type;
+            request = generic_request;
+        }
         request.ip_request = ip_request;
         if (this.autoconnect_switch != null) {
             request.ip_request.autoconnect = this.autoconnect_switch.get_active ();
         }
 
-        if (this.vpn_type == "wireguard") {
-            request.wg_private_key = wg_private_key_entry.get_text ().strip ();
-            request.wg_peer_public_key = wg_peer_public_key_entry.get_text ().strip ();
-            request.wg_peer_endpoint = wg_peer_endpoint_entry.get_text ().strip ();
-            request.wg_peer_allowed_ips = wg_peer_allowed_ips_entry.get_text ().strip ();
-            request.wg_preshared_key = wg_preshared_key_entry.get_text ().strip ();
-            request.wg_peer_routes = wg_peer_routes_switch.get_active ();
+        var wg_request = request as WireGuardVpnUpdateRequest;
+        if (wg_request != null) {
+            wg_request.wg_private_key = wg_private_key_entry.get_text ().strip ();
+            wg_request.wg_peer_public_key = wg_peer_public_key_entry.get_text ().strip ();
+            wg_request.wg_peer_endpoint = wg_peer_endpoint_entry.get_text ().strip ();
+            wg_request.wg_peer_allowed_ips = wg_peer_allowed_ips_entry.get_text ().strip ();
+            wg_request.wg_preshared_key = wg_preshared_key_entry.get_text ().strip ();
+            wg_request.wg_peer_routes = wg_peer_routes_switch.get_active ();
 
             uint32 wg_listen_port;
             if (!parse_optional_uint32 (wg_listen_port_entry.get_text (), 65535, out wg_listen_port)) {
                 error_message = _("WireGuard listen port must be a number between 0 and 65535.");
                 return null;
             }
-            request.wg_listen_port = wg_listen_port;
+            wg_request.wg_listen_port = wg_listen_port;
 
             uint32 wg_fwmark;
             if (!parse_optional_uint32 (wg_fwmark_entry.get_text (), uint32.MAX, out wg_fwmark)) {
                 error_message = _("WireGuard fwmark must be a valid unsigned integer.");
                 return null;
             }
-            request.wg_fwmark = wg_fwmark;
+            wg_request.wg_fwmark = wg_fwmark;
 
-            if (request.wg_private_key == "" || request.wg_peer_public_key == "" || request.wg_peer_endpoint == "") {
+            if (wg_request.wg_private_key == "" || wg_request.wg_peer_public_key == "" || wg_request.wg_peer_endpoint == "") {
                 error_message = _("WireGuard requires private key, peer public key, and endpoint.");
                 return null;
             }
             return request;
         }
 
-        if (this.vpn_type == "openvpn") {
-            request.ovpn_remote = ovpn_remote_entry.get_text ().strip ();
-            request.ovpn_proto = ovpn_proto_entry.get_text ().strip ();
-            request.ovpn_username = ovpn_user_entry.get_text ().strip ();
-            request.ovpn_password = ovpn_password_entry.get_text ();
-            request.ovpn_ca_cert = ovpn_ca_cert_entry.get_text ().strip ();
-            request.ovpn_client_cert = ovpn_client_cert_entry.get_text ().strip ();
-            request.ovpn_private_key = ovpn_private_key_entry.get_text ().strip ();
-            request.ovpn_tls_auth_key = ovpn_tls_auth_key_entry.get_text ().strip ();
-            request.ovpn_cipher = ovpn_cipher_entry.get_text ().strip ();
-            request.ovpn_auth = ovpn_auth_entry.get_text ().strip ();
+        var ovpn_request = request as OpenVpnUpdateRequest;
+        if (ovpn_request != null) {
+            ovpn_request.ovpn_remote = ovpn_remote_entry.get_text ().strip ();
+            ovpn_request.ovpn_proto = ovpn_proto_entry.get_text ().strip ();
+            ovpn_request.ovpn_username = ovpn_user_entry.get_text ().strip ();
+            ovpn_request.ovpn_password = ovpn_password_entry.get_text ();
+            ovpn_request.ovpn_ca_cert = ovpn_ca_cert_entry.get_text ().strip ();
+            ovpn_request.ovpn_client_cert = ovpn_client_cert_entry.get_text ().strip ();
+            ovpn_request.ovpn_private_key = ovpn_private_key_entry.get_text ().strip ();
+            ovpn_request.ovpn_tls_auth_key = ovpn_tls_auth_key_entry.get_text ().strip ();
+            ovpn_request.ovpn_cipher = ovpn_cipher_entry.get_text ().strip ();
+            ovpn_request.ovpn_auth = ovpn_auth_entry.get_text ().strip ();
 
             uint32 ovpn_port;
             if (!parse_optional_uint32 (ovpn_port_entry.get_text (), 65535, out ovpn_port)) {
                 error_message = _("OpenVPN port must be a number between 0 and 65535.");
                 return null;
             }
-            request.ovpn_port = ovpn_port;
+            ovpn_request.ovpn_port = ovpn_port;
 
-            if (request.ovpn_remote == "") {
+            if (ovpn_request.ovpn_remote == "") {
                 error_message = _("OpenVPN remote is required.");
                 return null;
             }
             return request;
         }
 
-        request.gateway = gateway_entry.get_text ().strip ();
-        request.user = user_entry.get_text ().strip ();
-        request.password = password_entry.get_text ();
+        var generic_request = request as GenericVpnUpdateRequest;
+        if (generic_request != null) {
+            generic_request.gateway = gateway_entry.get_text ().strip ();
+            generic_request.user = user_entry.get_text ().strip ();
+            generic_request.password = password_entry.get_text ();
+        }
         return request;
     }
 

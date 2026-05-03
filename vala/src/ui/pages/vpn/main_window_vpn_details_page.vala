@@ -80,68 +80,74 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
             this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Service"), details.service_type));
         }
 
-        if (details.vpn_type_key == "wireguard") {
+        var wg_details = details as WireGuardVpnProfileDetails;
+        if (wg_details != null) {
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Private key"), display_secret (details.wg_private_key))
+                MainWindowHelpers.build_details_row (_("Private key"), display_secret (wg_details.wg_private_key))
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Peer public key"), details.wg_peer_public_key)
+                MainWindowHelpers.build_details_row (_("Peer public key"), wg_details.wg_peer_public_key)
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Peer endpoint"), details.wg_peer_endpoint)
+                MainWindowHelpers.build_details_row (_("Peer endpoint"), wg_details.wg_peer_endpoint)
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Allowed IPs"), details.wg_peer_allowed_ips)
+                MainWindowHelpers.build_details_row (_("Allowed IPs"), wg_details.wg_peer_allowed_ips)
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Preshared key"), display_secret (details.wg_preshared_key))
+                MainWindowHelpers.build_details_row (_("Preshared key"), display_secret (wg_details.wg_preshared_key))
             );
             this.advanced_rows.append (
                 MainWindowHelpers.build_details_row (_("Listen port"),
-                    details.wg_listen_port > 0 ? "%u".printf (details.wg_listen_port) : _("Not set"))
+                    wg_details.wg_listen_port > 0 ? "%u".printf (wg_details.wg_listen_port) : _("Not set"))
             );
             this.advanced_rows.append (
                 MainWindowHelpers.build_details_row (_("FwMark"),
-                    details.wg_fwmark > 0 ? "%u".printf (details.wg_fwmark) : _("Not set"))
+                    wg_details.wg_fwmark > 0 ? "%u".printf (wg_details.wg_fwmark) : _("Not set"))
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Peer routes"), details.wg_peer_routes ? _("Yes") : _("No"))
+                MainWindowHelpers.build_details_row (_("Peer routes"), wg_details.wg_peer_routes ? _("Yes") : _("No"))
             );
             return;
         }
 
-        if (details.vpn_type_key == "openvpn") {
-            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Remote"), details.ovpn_remote));
+        var ovpn_details = details as OpenVpnProfileDetails;
+        if (ovpn_details != null) {
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Remote"), ovpn_details.ovpn_remote));
             this.advanced_rows.append (
                 MainWindowHelpers.build_details_row (_("Port"),
-                    details.ovpn_port > 0 ? "%u".printf (details.ovpn_port) : _("Not set"))
+                    ovpn_details.ovpn_port > 0 ? "%u".printf (ovpn_details.ovpn_port) : _("Not set"))
             );
-            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Protocol"), details.ovpn_proto));
-            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Username"), details.ovpn_username));
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Protocol"), ovpn_details.ovpn_proto));
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Username"), ovpn_details.ovpn_username));
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Password"), display_secret (details.ovpn_password))
-            );
-            this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("CA certificate"), details.ovpn_ca_cert)
+                MainWindowHelpers.build_details_row (_("Password"), display_secret (ovpn_details.ovpn_password))
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Client certificate"), details.ovpn_client_cert)
+                MainWindowHelpers.build_details_row (_("CA certificate"), ovpn_details.ovpn_ca_cert)
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Private key"), details.ovpn_private_key)
+                MainWindowHelpers.build_details_row (_("Client certificate"), ovpn_details.ovpn_client_cert)
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("TLS auth key"), details.ovpn_tls_auth_key)
+                MainWindowHelpers.build_details_row (_("Private key"), ovpn_details.ovpn_private_key)
             );
-            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Cipher"), details.ovpn_cipher));
-            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Auth"), details.ovpn_auth));
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("TLS auth key"), ovpn_details.ovpn_tls_auth_key)
+            );
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Cipher"), ovpn_details.ovpn_cipher));
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Auth"), ovpn_details.ovpn_auth));
             return;
         }
 
-        this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Gateway"), details.gateway));
-        this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Username"), details.username));
+        var generic_details = details as GenericVpnProfileDetails;
+        if (generic_details == null) {
+            return;
+        }
+        this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Gateway"), generic_details.gateway));
+        this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Username"), generic_details.username));
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row (_("Password"), display_secret (details.password))
+            MainWindowHelpers.build_details_row (_("Password"), display_secret (generic_details.password))
         );
     }
 
