@@ -387,18 +387,18 @@ public class NetworkManagerClient : GLib.Object {
         return yield vpn_client.update_vpn_settings (id, request, cancellable);
     }
 
-    public async bool import_vpn (
-        string file_path,
-        Cancellable? cancellable = null
-    ) throws Error {
-        return yield vpn_client.import_vpn (file_path, cancellable);
-    }
-
     public async bool delete_vpn (
         string id,
         Cancellable? cancellable = null
     ) throws Error {
         return yield vpn_client.delete_vpn (id, cancellable);
+    }
+
+    public async bool create_vpn (
+        VpnUpdateRequest request,
+        Cancellable? cancellable = null
+    ) throws Error {
+        return yield vpn_client.create_vpn (request, cancellable);
     }
 
     public async bool scan_wifi (Cancellable? cancellable = null) throws Error {

@@ -446,25 +446,6 @@ public class NmVpnClient : GLib.Object {
         return true;
     }
 
-    public async bool import_vpn (string file_path, Cancellable? cancellable = null) throws Error {
-        string type = "openvpn";
-        if (file_path.has_suffix (".conf")) {
-            type = "wireguard";
-        } else if (file_path.has_suffix (".ovpn")) {
-            type = "openvpn";
-        }
-
-        string[] spawn_args = {"nmcli", "connection", "import", "type", type, "file", file_path};
-        int exit_status;
-        Process.spawn_sync (null, spawn_args, null, SpawnFlags.SEARCH_PATH, null, null, null, out exit_status);
-
-        if (exit_status != 0) {
-            throw new IOError.FAILED ("Failed to import VPN connection via nmcli (exit code %d)".printf (exit_status));
-        }
-
-        return true;
-    }
-
     public async bool delete_vpn (string id, Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
         foreach (var conn in client.get_connections ()) {
@@ -478,5 +459,145 @@ public class NmVpnClient : GLib.Object {
         }
 
         throw new IOError.NOT_FOUND ("VPN connection profile not found");
+    }
+
+    public async bool create_vpn (VpnUpdateRequest request, Cancellable? cancellable = null) throws Error {
+        var client = core.nm_client;
+        var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
+
+        request.name = request.name.strip ();
+        if (request.name == "") {
+            throw new IOError.FAILED ("Connection name is required");
+        }
+
+        var s_conn = new NM.SettingConnection ();
+        s_conn.id = request.name;
+        s_conn.uuid = NM.Utils.uuid_generate ();
+        s_conn.autoconnect = request.ip_request.autoconnect;
+        conn.add_setting (s_conn);
+
+        if (request.vpn_type == "wireguard") {
+            s_conn.type = "wireguard";
+
+            request.wg_private_key = request.wg_private_key.strip ();
+            request.wg_peer_public_key = request.wg_peer_public_key.strip ();
+            request.wg_peer_endpoint = request.wg_peer_endpoint.strip ();
+            request.wg_peer_allowed_ips = request.wg_peer_allowed_ips.strip ();
+
+            if (request.wg_private_key == "") {
+                throw new IOError.FAILED ("WireGuard private key is required");
+            }
+            if (request.wg_peer_public_key == "") {
+                throw new IOError.FAILED ("WireGuard peer public key is required");
+            }
+            if (request.wg_peer_endpoint == "") {
+                throw new IOError.FAILED ("WireGuard peer endpoint is required");
+            }
+
+            var s_wg = new NM.SettingWireGuard ();
+            s_wg.private_key = request.wg_private_key;
+            if (request.wg_listen_port > 0) {
+                s_wg.listen_port = request.wg_listen_port;
+            }
+            if (request.wg_fwmark > 0) {
+                s_wg.fwmark = request.wg_fwmark;
+            }
+            s_wg.peer_routes = request.wg_peer_routes;
+            
+            var peer = new NM.WireGuardPeer ();
+            if (!peer.set_public_key (request.wg_peer_public_key, false)) {
+                throw new IOError.FAILED ("Invalid WireGuard peer public key");
+            }
+            if (!peer.set_endpoint (request.wg_peer_endpoint, false)) {
+                throw new IOError.FAILED ("Invalid WireGuard peer endpoint");
+            }
+            if (request.wg_preshared_key.strip () != ""
+                && !peer.set_preshared_key (request.wg_preshared_key.strip (), false)) {
+                throw new IOError.FAILED ("Invalid WireGuard preshared key");
+            }
+
+            string[] allowed_ips = {};
+            foreach (var ip in request.wg_peer_allowed_ips.split (",")) {
+                string item = ip.strip ();
+                if (item != "") {
+                    allowed_ips += item;
+                }
+            }
+            if (allowed_ips.length == 0) {
+                allowed_ips += "0.0.0.0/0";
+                allowed_ips += "::/0";
+            }
+            foreach (var allowed_ip in allowed_ips) {
+                if (!peer.append_allowed_ip (allowed_ip, false)) {
+                    throw new IOError.FAILED ("Invalid WireGuard allowed IP: " + allowed_ip);
+                }
+            }
+            s_wg.append_peer (peer);
+            
+            conn.add_setting (s_wg);
+        } else if (request.vpn_type == "openvpn") {
+            s_conn.type = "vpn";
+            var s_vpn = new NM.SettingVpn ();
+            s_vpn.service_type = "org.freedesktop.NetworkManager.openvpn";
+
+            request.ovpn_remote = request.ovpn_remote.strip ();
+            if (request.ovpn_remote == "") {
+                throw new IOError.FAILED ("OpenVPN remote is required");
+            }
+            s_vpn.add_data_item ("remote", request.ovpn_remote);
+
+            if (request.ovpn_port > 0) {
+                s_vpn.add_data_item ("port", "%u".printf (request.ovpn_port));
+            }
+            if (request.ovpn_proto.strip () != "") {
+                s_vpn.add_data_item ("proto", request.ovpn_proto.strip ());
+            }
+            if (request.ovpn_username.strip () != "") {
+                string username = request.ovpn_username.strip ();
+                s_vpn.user_name = username;
+                s_vpn.add_data_item ("username", username);
+            }
+            if (request.ovpn_password != "") {
+                s_vpn.add_secret ("password", request.ovpn_password);
+            }
+            if (request.ovpn_ca_cert.strip () != "") {
+                s_vpn.add_data_item ("ca", request.ovpn_ca_cert.strip ());
+            }
+            if (request.ovpn_client_cert.strip () != "") {
+                s_vpn.add_data_item ("cert", request.ovpn_client_cert.strip ());
+            }
+            if (request.ovpn_private_key.strip () != "") {
+                s_vpn.add_data_item ("key", request.ovpn_private_key.strip ());
+            }
+            if (request.ovpn_tls_auth_key.strip () != "") {
+                s_vpn.add_data_item ("ta", request.ovpn_tls_auth_key.strip ());
+            }
+            if (request.ovpn_cipher.strip () != "") {
+                s_vpn.add_data_item ("cipher", request.ovpn_cipher.strip ());
+            }
+            if (request.ovpn_auth.strip () != "") {
+                s_vpn.add_data_item ("auth", request.ovpn_auth.strip ());
+            }
+
+            conn.add_setting (s_vpn);
+        } else {
+            s_conn.type = "vpn";
+            var s_vpn = new NM.SettingVpn ();
+            s_vpn.service_type = "org.freedesktop.NetworkManager." + request.vpn_type;
+            
+            if (request.gateway != "") s_vpn.add_data_item ("gateway", request.gateway);
+            if (request.user != "") s_vpn.add_data_item ("username", request.user);
+            
+            conn.add_setting (s_vpn);
+        }
+
+        var s_ip4 = NmIpConfigHelper.ensure_ip4_setting (conn);
+        NmIpConfigHelper.apply_ipv4_settings (s_ip4, request.ip_request.get_ipv4_section ());
+
+        var s_ip6 = NmIpConfigHelper.ensure_ip6_setting (conn);
+        NmIpConfigHelper.apply_ipv6_settings (s_ip6, request.ip_request.get_ipv6_section ());
+
+        yield client.add_connection_async (conn, true, cancellable);
+        return true;
     }
 }
