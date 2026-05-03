@@ -14,6 +14,8 @@ public class MainWindowVpnPageBuilder : Object {
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
+    public signal void open_details (VpnConnection conn);
+    public signal void add_clicked ();
 
     public MainWindowVpnPageBuilder (
         NetworkManagerClient nm,
@@ -97,6 +99,18 @@ public class MainWindowVpnPageBuilder : Object {
             refresh ();
         });
         toolbar.append (refresh_btn);
+
+        var add_btn = new Gtk.Button.from_icon_name ("list-add-symbolic");
+        add_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        add_btn.set_valign (Gtk.Align.CENTER);
+        add_btn.set_tooltip_text (_("Add new VPN profile"));
+        MainWindowCssClassResolver.add_best_class (add_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
+            MainWindowCssClasses.BUTTON});
+        add_btn.clicked.connect (() => {
+            this.add_clicked ();
+        });
+        toolbar.append (add_btn);
 
         page.append (toolbar);
 
@@ -192,6 +206,18 @@ public class MainWindowVpnPageBuilder : Object {
         sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
         info.append (sub);
         content.append (info);
+
+        var details_btn = new Gtk.Button.from_icon_name ("emblem-system-symbolic");
+        MainWindowCssClassResolver.add_best_class (
+            details_btn,
+            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.DETAILS_BUTTON,
+                MainWindowCssClasses.ICON_BUTTON, MainWindowCssClasses.BUTTON}
+        );
+        details_btn.set_tooltip_text (_("VPN Details"));
+        details_btn.clicked.connect (() => {
+            this.open_details (conn);
+        });
+        content.append (details_btn);
 
         var action = new Gtk.Button.with_label (conn.is_connected ? _("Disconnect") : _("Connect"));
         MainWindowCssClassResolver.add_best_class (

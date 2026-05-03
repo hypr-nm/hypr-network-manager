@@ -84,6 +84,11 @@ namespace HyprNetworkManager.UI.Views {
                 return ethernet_page == "details" || ethernet_page == "edit";
             }
 
+            if (current_tab == 2 && vpn_stack != null) {
+                string vpn_page = vpn_stack.get_visible_child_name ();
+                return vpn_page == "details" || vpn_page == "edit" || vpn_page == "add";
+            }
+
             return false;
         }
 

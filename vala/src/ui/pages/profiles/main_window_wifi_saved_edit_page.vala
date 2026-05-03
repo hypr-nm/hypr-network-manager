@@ -32,6 +32,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Entry ipv6_gateway_entry { get; set; }
     public Gtk.Switch ipv6_dns_auto_switch { get; set; }
     public Gtk.Entry ipv6_dns_entry { get; set; }
+    public Gtk.Switch? autoconnect_switch { get; set; default = null; }
 
     private Gtk.Label error_label;
     private Gtk.Revealer error_revealer;

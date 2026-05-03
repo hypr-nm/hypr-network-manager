@@ -13,6 +13,7 @@ public interface IMainWindowIpEditPage : Object {
     public abstract Gtk.Entry ipv6_gateway_entry { get; set; }
     public abstract Gtk.Switch ipv6_dns_auto_switch { get; set; }
     public abstract Gtk.Entry ipv6_dns_entry { get; set; }
+    public abstract Gtk.Switch? autoconnect_switch { get; set; }
 
     public virtual void sync_edit_gateway_dns_sensitivity () {
         if (this.ipv4_method_dropdown != null) {
