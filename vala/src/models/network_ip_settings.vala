@@ -6,6 +6,7 @@ public class NetworkIpSettings : Object {
     public bool dns_auto { get; set; default = true; }
     public bool ipv6_gateway_auto { get; set; default = true; }
     public bool ipv6_dns_auto { get; set; default = true; }
+    public bool autoconnect { get; set; default = true; }
     public string configured_address { get; set; default = ""; }
     public uint32 configured_prefix { get; set; default = 0; }
     public string configured_gateway { get; set; default = ""; }
@@ -30,6 +31,5 @@ public class WifiSavedProfileSettings : NetworkIpSettings {
     public string ssid { get; set; default = ""; }
     public string bssid { get; set; default = ""; }
     public string security_mode { get; set; default = "open"; }
-    public bool autoconnect { get; set; default = true; }
     public bool available_to_all_users { get; set; default = true; }
 }
