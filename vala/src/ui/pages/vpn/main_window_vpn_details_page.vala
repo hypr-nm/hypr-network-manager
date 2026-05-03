@@ -15,6 +15,10 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
     public signal void edit ();
     public signal void delete ();
 
+    private static string display_secret (string value) {
+        return value.strip () != "" ? _("Set") : _("Not set");
+    }
+
     public void render_details (
         VpnConnection conn,
         bool pending
@@ -47,6 +51,98 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
         }
 
         this.edit_button.set_sensitive (!pending);
+    }
+
+    public void render_profile_fields (VpnConnection conn, VpnProfileDetails details) {
+        this.details_title.set_text (MainWindowHelpers.safe_text (conn.name));
+
+        MainWindowHelpers.clear_listbox (this.basic_rows);
+        MainWindowHelpers.clear_listbox (this.advanced_rows);
+
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("Name"), conn.name));
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row (_("Type"),
+                details.vpn_type_display != "" ? details.vpn_type_display : conn.vpn_type)
+        );
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), conn.state));
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row (_("Connected"), conn.is_connected ? _("Yes") : _("No"))
+        );
+        this.basic_rows.append (
+            MainWindowHelpers.build_details_row (_("Autoconnect"), details.autoconnect ? _("Yes") : _("No"))
+        );
+
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row (_("UUID"),
+                details.profile_uuid != "" ? details.profile_uuid : conn.uuid)
+        );
+        if (details.service_type != "") {
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Service"), details.service_type));
+        }
+
+        if (details.vpn_type_key == "wireguard") {
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Private key"), display_secret (details.wg_private_key))
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Peer public key"), details.wg_peer_public_key)
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Peer endpoint"), details.wg_peer_endpoint)
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Allowed IPs"), details.wg_peer_allowed_ips)
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Preshared key"), display_secret (details.wg_preshared_key))
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Listen port"),
+                    details.wg_listen_port > 0 ? "%u".printf (details.wg_listen_port) : _("Not set"))
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("FwMark"),
+                    details.wg_fwmark > 0 ? "%u".printf (details.wg_fwmark) : _("Not set"))
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Peer routes"), details.wg_peer_routes ? _("Yes") : _("No"))
+            );
+            return;
+        }
+
+        if (details.vpn_type_key == "openvpn") {
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Remote"), details.ovpn_remote));
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Port"),
+                    details.ovpn_port > 0 ? "%u".printf (details.ovpn_port) : _("Not set"))
+            );
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Protocol"), details.ovpn_proto));
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Username"), details.ovpn_username));
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Password"), display_secret (details.ovpn_password))
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("CA certificate"), details.ovpn_ca_cert)
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Client certificate"), details.ovpn_client_cert)
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("Private key"), details.ovpn_private_key)
+            );
+            this.advanced_rows.append (
+                MainWindowHelpers.build_details_row (_("TLS auth key"), details.ovpn_tls_auth_key)
+            );
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Cipher"), details.ovpn_cipher));
+            this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Auth"), details.ovpn_auth));
+            return;
+        }
+
+        this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Gateway"), details.gateway));
+        this.advanced_rows.append (MainWindowHelpers.build_details_row (_("Username"), details.username));
+        this.advanced_rows.append (
+            MainWindowHelpers.build_details_row (_("Password"), display_secret (details.password))
+        );
     }
 
     public MainWindowVpnDetailsPage () {

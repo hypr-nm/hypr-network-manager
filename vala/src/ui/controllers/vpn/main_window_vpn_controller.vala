@@ -63,6 +63,7 @@ public class MainWindowVpnController : Object {
         nm.get_vpn_details.begin (connection_id, null, (obj, res) => {
             try {
                 var settings = nm.get_vpn_details.end (res);
+                details_page.render_profile_fields (conn, settings);
                 details_page.render_ip_settings (settings, conn.is_connected);
             } catch (Error e) {
                 log_error ("vpn-controller", "Failed to fetch VPN details: " + e.message);
@@ -110,26 +111,13 @@ public class MainWindowVpnController : Object {
         if (selected_vpn == null) return false;
         var conn = selected_vpn;
 
-        var request = new NetworkIpUpdateRequest ();
-        if (edit_page.autoconnect_switch != null) {
-            request.autoconnect = edit_page.autoconnect_switch.get_active ();
+        string? request_error = null;
+        var request = edit_page.build_update_request (out request_error);
+        if (request == null) {
+            edit_page.show_error (MainWindowHelpers.safe_text (request_error));
+            return false;
         }
-
-        request.ipv4_method = MainWindowIpConfigHelper.index_to_method (
-            edit_page.ipv4_method_dropdown.get_selected (), true);
-        request.ipv4_address = edit_page.ipv4_address_entry.get_text ();
-        request.ipv4_prefix = (uint32) int.parse (edit_page.ipv4_prefix_entry.get_text ());
-        request.ipv4_gateway = edit_page.ipv4_gateway_entry.get_text ();
-        request.ipv4_dns_auto = edit_page.dns_auto_switch.get_active ();
-        request.ipv4_dns_servers = edit_page.ipv4_dns_entry.get_text ().split (",");
-
-        request.ipv6_method = MainWindowIpConfigHelper.index_to_method (
-            edit_page.ipv6_method_dropdown.get_selected (), false);
-        request.ipv6_address = edit_page.ipv6_address_entry.get_text ();
-        request.ipv6_prefix = (uint32) int.parse (edit_page.ipv6_prefix_entry.get_text ());
-        request.ipv6_gateway = edit_page.ipv6_gateway_entry.get_text ();
-        request.ipv6_dns_auto = edit_page.ipv6_dns_auto_switch.get_active ();
-        request.ipv6_dns_servers = edit_page.ipv6_dns_entry.get_text ().split (",");
+        request.name = conn.name;
 
         string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
         nm.update_vpn_settings.begin (connection_id, request, null, (obj, res) => {
