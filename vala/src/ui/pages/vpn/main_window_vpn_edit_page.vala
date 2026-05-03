@@ -1,0 +1,184 @@
+using Gtk;
+using HyprNetworkManager.UI.Interfaces;
+
+public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
+    public Gtk.Label edit_title { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown ipv4_method_dropdown { get; set; }
+    public Gtk.Entry ipv4_address_entry { get; set; }
+    public Gtk.Entry ipv4_prefix_entry { get; set; }
+    public Gtk.Entry ipv4_gateway_entry { get; set; }
+    public Gtk.Switch dns_auto_switch { get; set; }
+    public Gtk.Entry ipv4_dns_entry { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown ipv6_method_dropdown { get; set; }
+    public Gtk.Entry ipv6_address_entry { get; set; }
+    public Gtk.Entry ipv6_prefix_entry { get; set; }
+    public Gtk.Entry ipv6_gateway_entry { get; set; }
+    public Gtk.Switch ipv6_dns_auto_switch { get; set; }
+    public Gtk.Entry ipv6_dns_entry { get; set; }
+    public Gtk.Switch? autoconnect_switch { get; set; }
+
+    private Gtk.Label error_label;
+    private Gtk.Revealer error_revealer;
+
+    public signal void back ();
+    public signal void apply ();
+
+    public void setup_edit_form (VpnConnection conn, NetworkIpSettings settings) {
+        this.error_revealer.set_reveal_child (false);
+        this.edit_title.set_text (_("Edit: %s").printf (conn.name));
+
+        this.ipv4_method_dropdown.set_selected (MainWindowIpConfigHelper.method_to_index (settings.ipv4_method));
+        this.ipv4_address_entry.set_text (settings.configured_address);
+        this.ipv4_prefix_entry.set_text ("%u".printf (settings.configured_prefix));
+        this.ipv4_gateway_entry.set_text (settings.configured_gateway);
+        this.dns_auto_switch.set_active (settings.dns_auto);
+        this.ipv4_dns_entry.set_text (settings.configured_dns);
+
+        this.ipv6_method_dropdown.set_selected (MainWindowIpConfigHelper.method_to_index (settings.ipv6_method));
+        this.ipv6_address_entry.set_text (settings.configured_ipv6_address);
+        this.ipv6_prefix_entry.set_text ("%u".printf (settings.configured_ipv6_prefix));
+        this.ipv6_gateway_entry.set_text (settings.configured_ipv6_gateway);
+        this.ipv6_dns_auto_switch.set_active (settings.ipv6_dns_auto);
+        this.ipv6_dns_entry.set_text (settings.configured_ipv6_dns);
+
+        if (this.autoconnect_switch != null) {
+            this.autoconnect_switch.set_active (settings.autoconnect);
+        }
+        this.sync_edit_gateway_dns_sensitivity ();
+    }
+
+    public void show_error (string message) {
+        if (message == null || message == "") {
+            this.error_revealer.set_reveal_child (false);
+            return;
+        }
+        this.error_label.set_text (message);
+        this.error_revealer.set_reveal_child (true);
+    }
+
+    public MainWindowVpnEditPage (IWindowHost window_host) {
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+
+        this.add_css_class (MainWindowCssClasses.PAGE);
+        this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
+            MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_hook_and_best_class (
+            this,
+            MainWindowCssClasses.PAGE_VPN_EDIT,
+            {MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
+        );
+
+        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
+            this.back ();
+        });
+        header.append (back_btn);
+
+        this.edit_title = new Gtk.Label (_("Edit VPN"));
+        this.edit_title.set_xalign (0.0f);
+        this.edit_title.set_hexpand (true);
+        this.edit_title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
+        header.append (this.edit_title);
+        this.append (header);
+
+        this.error_label = new Gtk.Label ("");
+        this.error_label.set_xalign (0.0f);
+        this.error_label.set_wrap (true);
+        this.error_label.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+        this.error_label.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
+
+        this.error_revealer = new Gtk.Revealer ();
+        this.error_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+        this.error_revealer.set_child (this.error_label);
+        this.append (this.error_revealer);
+
+        var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+        MainWindowCssClassResolver.add_best_class (
+            form,
+            {MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM}
+        );
+        form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
+
+        // Autoconnect section
+        var auto_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
+        auto_row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
+        var auto_lbl = new Gtk.Label (_("Connect automatically"));
+        auto_lbl.set_xalign (0.0f);
+        auto_lbl.set_hexpand (true);
+        auto_lbl.add_css_class (MainWindowCssClasses.EDIT_MODE_LABEL);
+        auto_row.append (auto_lbl);
+        this.autoconnect_switch = new Gtk.Switch ();
+        this.autoconnect_switch.set_valign (Gtk.Align.CENTER);
+        this.autoconnect_switch.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
+        auto_row.append (this.autoconnect_switch);
+        form.append (auto_row);
+
+        HyprNetworkManager.UI.Widgets.TrackedDropDown v4_method;
+        Gtk.Entry v4_address, v4_prefix, v4_gw, v4_dns;
+        Gtk.Switch v4_dns_auto;
+
+        MainWindowIpEditFormBuilder.append_ipv4_section (
+            form,
+            out v4_method,
+            out v4_address,
+            out v4_prefix,
+            out v4_gw,
+            out v4_dns_auto,
+            out v4_dns,
+            window_host.create_tracked_dropdown,
+            true
+        );
+
+        this.ipv4_method_dropdown = v4_method;
+        this.ipv4_address_entry = v4_address;
+        this.ipv4_prefix_entry = v4_prefix;
+        this.ipv4_gateway_entry = v4_gw;
+        this.dns_auto_switch = v4_dns_auto;
+        this.ipv4_dns_entry = v4_dns;
+
+        HyprNetworkManager.UI.Widgets.TrackedDropDown v6_method;
+        Gtk.Entry v6_address, v6_prefix, v6_gw, v6_dns;
+        Gtk.Switch v6_dns_auto;
+
+        MainWindowIpEditFormBuilder.append_ipv6_section (
+            form,
+            out v6_method,
+            out v6_address,
+            out v6_prefix,
+            out v6_gw,
+            out v6_dns_auto,
+            out v6_dns,
+            window_host.create_tracked_dropdown,
+            true
+        );
+
+        this.ipv6_method_dropdown = v6_method;
+        this.ipv6_address_entry = v6_address;
+        this.ipv6_prefix_entry = v6_prefix;
+        this.ipv6_gateway_entry = v6_gw;
+        this.ipv6_dns_auto_switch = v6_dns_auto;
+        this.ipv6_dns_entry = v6_dns;
+
+        var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
+        var save_btn = new Gtk.Button.with_label (_("Apply"));
+        save_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
+            MainWindowCssClasses.BUTTON});
+        save_btn.clicked.connect (() => {
+            this.apply ();
+        });
+        actions.append (save_btn);
+
+        form.append (actions);
+
+        var scroll = new Gtk.ScrolledWindow ();
+        scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        scroll.add_css_class (MainWindowCssClasses.SCROLL);
+        scroll.set_vexpand (true);
+        scroll.set_child (form);
+
+        this.append (scroll);
+    }
+}
