@@ -159,9 +159,15 @@ public class MainWindowVpnPageBuilder : Object {
         vpn_stack.add_named (scroll, "list");
         vpn_stack.add_named (vpn_placeholder, "empty");
         vpn_stack.set_visible_child_name ("empty");
+        this.vpn_stack = vpn_stack;
+        this.vpn_stack.notify["visible-child-name"].connect (() => {
+            string current_page = this.vpn_stack.get_visible_child_name ();
+            bool show_top_bar = current_page == "list" || current_page == "empty";
+            toolbar.set_visible (show_top_bar);
+            prog.set_visible (show_top_bar);
+        });
 
         this.vpn_listbox = vpn_listbox;
-        this.vpn_stack = vpn_stack;
 
         page.append (vpn_stack);
         return page;
