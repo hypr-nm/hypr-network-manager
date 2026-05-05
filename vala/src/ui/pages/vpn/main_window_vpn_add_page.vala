@@ -19,18 +19,22 @@ public class MainWindowVpnAddPage : Gtk.Box {
             {MainWindowCssClasses.PAGE_NETWORK_ADD, MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
         );
         
-        var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
+        var header = new Gtk.CenterBox ();
+        header.set_margin_bottom (MainWindowUiMetrics.SPACING_HEADER);
+
         var back_btn = MainWindowHelpers.build_back_button ();
         back_btn.clicked.connect (() => {
             this.back ();
         });
-        header.append (back_btn);
+        
+        var start_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+        start_box.append (back_btn);
+        header.set_start_widget (start_box);
 
         var title = new Gtk.Label (_("Add VPN"));
-        title.set_xalign (0.0f);
-        title.set_hexpand (true);
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
-        header.append (title);
+        header.set_center_widget (title);
+        
         this.append (header);
 
         var scroll = new Gtk.ScrolledWindow ();
@@ -54,7 +58,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
         var listbox = new Gtk.ListBox ();
         listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         listbox.add_css_class ("boxed-list");
-        listbox.add_css_class (MainWindowCssClasses.LIST);
+        listbox.add_css_class (MainWindowCssClasses.DETAILS_ROWS);
 
         listbox.row_activated.connect ((row) => {
             string? id = row.get_data ("vpn-type-id");
@@ -75,15 +79,14 @@ public class MainWindowVpnAddPage : Gtk.Box {
     }
 
     private void add_type_row (Gtk.ListBox listbox, string label, string id, string icon_name) {
-        var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        row.add_css_class (MainWindowCssClasses.ROW_CONTENT);
-        row.set_margin_top (10);
-        row.set_margin_bottom (10);
-        row.set_margin_start (10);
-        row.set_margin_end (10);
+        var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 12);
+        row.set_margin_top (12);
+        row.set_margin_bottom (12);
+        row.set_margin_start (16);
+        row.set_margin_end (16);
 
         var icon = new Gtk.Image.from_icon_name (icon_name);
-        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_16);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_24);
         row.append (icon);
 
         var lbl = new Gtk.Label (label);
@@ -93,10 +96,10 @@ public class MainWindowVpnAddPage : Gtk.Box {
 
         var arrow = new Gtk.Image.from_icon_name ("go-next-symbolic");
         arrow.add_css_class (MainWindowCssClasses.ICON_SIZE_16);
+        arrow.add_css_class (MainWindowCssClasses.VPN_TYPE_ARROW);
         row.append (arrow);
 
         var list_row = new Gtk.ListBoxRow ();
-        list_row.add_css_class (MainWindowCssClasses.DEVICE_ROW);
         list_row.set_child (row);
         list_row.set_data ("vpn-type-id", id);
 

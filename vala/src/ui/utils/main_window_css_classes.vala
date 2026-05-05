@@ -238,6 +238,7 @@ namespace MainWindowCssClasses {
     // Custom controls
     public const string WIFI_SWITCH = "nm-wifi-switch";
     public const string SWITCH = "nm-switch";
+    public const string VPN_TYPE_ARROW = "nm-vpn-type-arrow";
 }
 
 namespace MainWindowDataKeys {

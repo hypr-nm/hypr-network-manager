@@ -947,6 +947,11 @@ popover.background list row:checked:hover {
   color: var(--action);
 }
 
+.nm-vpn-type-arrow {
+  color: var(--selected);
+  opacity: 0.85;
+}
+
 .nm-details-group-title,
 .nm-edit-field-label,
 .nm-edit-mode-label {
