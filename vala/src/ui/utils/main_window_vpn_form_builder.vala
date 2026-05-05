@@ -197,7 +197,14 @@ public class MainWindowVpnFormBuilder : Object {
         var sw = new Gtk.Switch ();
         sw.set_valign (Gtk.Align.CENTER);
         sw.set_active (default_active);
-        sw.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
+        MainWindowCssClassResolver.add_best_class (
+            sw,
+            {MainWindowCssClasses.SWITCH, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        MainWindowCssClassResolver.add_best_class (
+            sw,
+            {MainWindowCssClasses.EDIT_MODE_SWITCH, MainWindowCssClasses.SWITCH}
+        );
         row.append (sw);
 
         target_box.append (row);
