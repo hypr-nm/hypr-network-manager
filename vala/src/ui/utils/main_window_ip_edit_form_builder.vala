@@ -365,10 +365,13 @@ namespace MainWindowIpEditFormBuilder {
         dns_mode_row.set_halign (Gtk.Align.FILL);
         dns_mode_row.set_hexpand (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 dns_mode_row,
-                {MainWindowCssClasses.EDIT_DNS_MODE_ROW, MainWindowCssClasses.EDIT_MODE_ROW}
+                MainWindowCssClasses.EDIT_DNS_MODE_ROW,
+                {MainWindowCssClasses.EDIT_MODE_ROW}
             );
+        } else {
+            dns_mode_row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
         }
 
         var dns_mode_label = new Gtk.Label (_("Automatic DNS"));
@@ -619,10 +622,13 @@ namespace MainWindowIpEditFormBuilder {
         dns_mode_row.set_halign (Gtk.Align.FILL);
         dns_mode_row.set_hexpand (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
+            MainWindowCssClassResolver.add_hook_and_best_class (
                 dns_mode_row,
-                {MainWindowCssClasses.EDIT_IPV6_DNS_MODE_ROW, MainWindowCssClasses.EDIT_MODE_ROW}
+                MainWindowCssClasses.EDIT_IPV6_DNS_MODE_ROW,
+                {MainWindowCssClasses.EDIT_MODE_ROW}
             );
+        } else {
+            dns_mode_row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
         }
 
         var dns_mode_label = new Gtk.Label (_("Automatic IPv6 DNS"));
