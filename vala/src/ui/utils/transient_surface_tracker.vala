@@ -20,7 +20,6 @@ namespace HyprNetworkManager.UI.Utils {
         private int transient_surface_count = 0;
         private int64 last_surface_closed_time = 0;
         private uint window_reclaim_source_id = 0;
-        private weak Gtk.Widget? focus_restore_widget = null;
         private uint pending_dismiss_intercepts = 0;
         private bool recent_synthetic_dismiss_valid = false;
         private double recent_synthetic_dismiss_x = 0.0;
@@ -204,20 +203,11 @@ namespace HyprNetworkManager.UI.Utils {
 
                 Gtk.Widget window_widget = (Gtk.Widget) window;
                 if (!window_widget.get_mapped () || !window_widget.get_visible ()) {
-                    focus_restore_widget = null;
                     return false;
                 }
 
                 window.present ();
 
-                if (focus_restore_widget != null
-                    && focus_restore_widget.get_root () == window
-                    && focus_restore_widget.get_focusable ()
-                    && focus_restore_widget.get_sensitive ()) {
-                    focus_restore_widget.grab_focus ();
-                }
-
-                focus_restore_widget = null;
                 return false;
             });
         }
@@ -245,7 +235,6 @@ namespace HyprNetworkManager.UI.Utils {
             }
 
             if (active && transient_surface_count == 0) {
-                focus_restore_widget = window.get_focus ();
                 cancel_window_reclaim ();
                 pending_dismiss_intercepts = 0;
                 clear_recent_synthetic_dismiss ();
@@ -279,7 +268,6 @@ namespace HyprNetworkManager.UI.Utils {
             cancel_window_reclaim ();
             transient_surface_count = 0;
             last_surface_closed_time = 0;
-            focus_restore_widget = null;
             pending_dismiss_intercepts = 0;
             clear_recent_synthetic_dismiss ();
             recent_surface_bounds_valid = false;

@@ -96,6 +96,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
         row.append (arrow);
 
         var list_row = new Gtk.ListBoxRow ();
+        list_row.add_css_class (MainWindowCssClasses.DEVICE_ROW);
         list_row.set_child (row);
         list_row.set_data ("vpn-type-id", id);
 
