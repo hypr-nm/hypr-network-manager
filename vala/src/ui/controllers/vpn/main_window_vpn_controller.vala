@@ -206,7 +206,7 @@ public class MainWindowVpnController : Object {
             var ovpn_request = request as OpenVpnUpdateRequest;
             if (ovpn_request != null) {
                 ovpn_request.ovpn_remote = setup_page.ovpn_remote_entry.get_text ().strip ();
-                ovpn_request.ovpn_proto = setup_page.ovpn_proto_entry.get_text ().strip ();
+                ovpn_request.ovpn_proto = setup_page.ovpn_proto_dropdown != null && setup_page.ovpn_proto_dropdown.get_selected() == 1 ? "tcp" : "udp";
                 ovpn_request.ovpn_username = setup_page.ovpn_user_entry.get_text ().strip ();
                 ovpn_request.ovpn_password = setup_page.ovpn_password_entry.get_text ();
                 ovpn_request.ovpn_ca_cert = setup_page.ovpn_ca_cert_entry.get_text ().strip ();

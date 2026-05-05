@@ -37,7 +37,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
     // OpenVPN
     public Gtk.Entry? ovpn_remote_entry { get; set; }
     public Gtk.Entry? ovpn_port_entry { get; set; }
-    public Gtk.Entry? ovpn_proto_entry { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown? ovpn_proto_dropdown { get; set; }
     public Gtk.Entry? ovpn_user_entry { get; set; }
     public Gtk.Entry? ovpn_password_entry { get; set; }
     public Gtk.Entry? ovpn_ca_cert_entry { get; set; }
@@ -50,6 +50,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
     private Gtk.Box type_specific_box;
     private Gtk.Label error_label;
     private Gtk.Revealer error_revealer;
+    private TrackedDropDownFactory create_dropdown_func;
 
     public signal void back ();
     public signal void apply ();
@@ -69,7 +70,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
         if (this.vpn_type == "wireguard") {
             MainWindowVpnFormBuilder.append_wg_fields (type_specific_box, this);
         } else if (this.vpn_type == "openvpn") {
-            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this);
+            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this, this.create_dropdown_func);
         } else {
             MainWindowVpnFormBuilder.append_generic_vpn_fields (type_specific_box, this);
         }
@@ -107,7 +108,15 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
             if (ovpn_details != null && ovpn_remote_entry != null) {
                 ovpn_remote_entry.set_text (ovpn_details.ovpn_remote);
                 ovpn_port_entry.set_text (ovpn_details.ovpn_port > 0 ? "%u".printf (ovpn_details.ovpn_port) : "");
-                ovpn_proto_entry.set_text (ovpn_details.ovpn_proto);
+                
+                if (ovpn_proto_dropdown != null) {
+                    if (ovpn_details.ovpn_proto.down() == "tcp") {
+                        ovpn_proto_dropdown.set_selected (1);
+                    } else {
+                        ovpn_proto_dropdown.set_selected (0);
+                    }
+                }
+                
                 ovpn_user_entry.set_text (ovpn_details.ovpn_username);
                 ovpn_password_entry.set_text (ovpn_details.ovpn_password);
                 ovpn_ca_cert_entry.set_text (ovpn_details.ovpn_ca_cert);
@@ -181,7 +190,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
         var ovpn_request = request as OpenVpnUpdateRequest;
         if (ovpn_request != null && ovpn_remote_entry != null) {
             ovpn_request.ovpn_remote = ovpn_remote_entry.get_text ().strip ();
-            ovpn_request.ovpn_proto = ovpn_proto_entry.get_text ().strip ();
+            ovpn_request.ovpn_proto = ovpn_proto_dropdown != null && ovpn_proto_dropdown.get_selected() == 1 ? "tcp" : "udp";
             ovpn_request.ovpn_username = ovpn_user_entry.get_text ().strip ();
             ovpn_request.ovpn_password = ovpn_password_entry.get_text ();
             ovpn_request.ovpn_ca_cert = ovpn_ca_cert_entry.get_text ().strip ();
@@ -244,6 +253,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
 
     public MainWindowVpnEditPage (IWindowHost window_host) {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        this.create_dropdown_func = window_host.create_tracked_dropdown;
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);

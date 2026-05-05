@@ -20,7 +20,7 @@ public interface IVpnFormFields : GLib.Object {
     // OpenVPN
     public abstract Gtk.Entry? ovpn_remote_entry { get; set; }
     public abstract Gtk.Entry? ovpn_port_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_proto_entry { get; set; }
+    public abstract HyprNetworkManager.UI.Widgets.TrackedDropDown? ovpn_proto_dropdown { get; set; }
     public abstract Gtk.Entry? ovpn_user_entry { get; set; }
     public abstract Gtk.Entry? ovpn_password_entry { get; set; }
     public abstract Gtk.Entry? ovpn_ca_cert_entry { get; set; }

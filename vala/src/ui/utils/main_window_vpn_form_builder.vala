@@ -98,6 +98,7 @@ public class MainWindowVpnFormBuilder : Object {
     public static void append_openvpn_fields (
         Gtk.Box target_box,
         IVpnFormFields fields,
+        TrackedDropDownFactory create_dropdown,
         bool default_proto_udp = false
     ) {
         Gtk.Box server_content;
@@ -115,13 +116,17 @@ public class MainWindowVpnFormBuilder : Object {
         fields.ovpn_port_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
         server_content.append (fields.ovpn_port_entry);
 
-        server_content.append (build_form_label (_("Protocol (udp/tcp, optional)")));
-        fields.ovpn_proto_entry = new Gtk.Entry ();
-        if (default_proto_udp) {
-            fields.ovpn_proto_entry.set_text ("udp");
-        }
-        fields.ovpn_proto_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        server_content.append (fields.ovpn_proto_entry);
+        server_content.append (build_form_label (_("Protocol (optional)")));
+        var proto_list = new Gtk.StringList (null);
+        proto_list.append ("UDP");
+        proto_list.append ("TCP");
+        fields.ovpn_proto_dropdown = create_dropdown (proto_list);
+        fields.ovpn_proto_dropdown.set_selected (default_proto_udp ? 0 : 1); // Select udp by default if default_proto_udp is true
+        MainWindowCssClassResolver.add_best_class (
+            fields.ovpn_proto_dropdown,
+            {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        server_content.append (fields.ovpn_proto_dropdown);
 
         Gtk.Box auth_content;
         var auth_section = build_section (_("Authentication"), out auth_content);
