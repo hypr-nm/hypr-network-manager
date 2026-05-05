@@ -100,9 +100,10 @@ public class MainWindowVpnPageBuilder : Object {
         });
         toolbar.append (refresh_btn);
 
-        var add_btn = new Gtk.Button.from_icon_name ("list-add-symbolic");
+        var add_btn = new Gtk.Button.with_label (_("Add VPN"));
         add_btn.add_css_class (MainWindowCssClasses.BUTTON);
         add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        add_btn.add_css_class (MainWindowCssClasses.ADD_BUTTON);
         add_btn.set_valign (Gtk.Align.CENTER);
         add_btn.set_tooltip_text (_("Add new VPN profile"));
         MainWindowCssClassResolver.add_best_class (add_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
