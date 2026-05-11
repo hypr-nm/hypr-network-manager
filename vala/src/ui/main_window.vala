@@ -437,7 +437,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         flight_mode_controller.flight_mode_state_changed.connect ((is_flight_mode) => {
             flight_mode_active = is_flight_mode;
             if (tabs_menu != null) {
-                tabs_menu.set_flight_mode_label (is_flight_mode ? "Turn off flight mode" : "Turn on flight mode");
+                tabs_menu.set_flight_mode_label (is_flight_mode ? (_("Turn off flight mode")) : (_("Turn on flight mode")));
             }
             update_refresh_button_availability ();
         });
