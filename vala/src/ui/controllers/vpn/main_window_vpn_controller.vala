@@ -169,10 +169,9 @@ public class MainWindowVpnController : Object {
         if (wg_request != null) {
             wg_request.interface_name = setup_page.wg_interface_name_entry != null ? setup_page.wg_interface_name_entry.get_text ().strip () : "";
             wg_request.wg_private_key = setup_page.wg_private_key_entry.get_text ().strip ();
-            wg_request.wg_peer_public_key = setup_page.wg_peer_public_key_entry.get_text ().strip ();
-            wg_request.wg_peer_endpoint = setup_page.wg_peer_endpoint_entry.get_text ().strip ();
-            wg_request.wg_peer_allowed_ips = setup_page.wg_peer_allowed_ips_entry.get_text ().strip ();
-            wg_request.wg_preshared_key = setup_page.wg_preshared_key_entry.get_text ().strip ();
+            if (setup_page.wg_peers_list != null) {
+                wg_request.peers = setup_page.wg_peers_list.get_peers ();
+            }
             wg_request.wg_peer_routes = setup_page.wg_peer_routes_switch.get_active ();
 
             uint32 parsed_listen_port;
@@ -197,10 +196,9 @@ public class MainWindowVpnController : Object {
             }
             wg_request.wg_fwmark = parsed_fwmark;
 
-            if (wg_request.wg_private_key == ""
-                || wg_request.wg_peer_public_key == ""
-                || wg_request.wg_peer_endpoint == "") {
-                setup_page.show_error (_("WireGuard requires private key, peer public key, and endpoint."));
+            string? validation_err;
+            if (!wg_request.validate(out validation_err)) {
+                setup_page.show_error (MainWindowHelpers.safe_text (validation_err));
                 return;
             }
         } else {

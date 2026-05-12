@@ -27,10 +27,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
     // WireGuard
     public Gtk.Entry? wg_interface_name_entry { get; set; }
     public Gtk.Entry? wg_private_key_entry { get; set; }
-    public Gtk.Entry? wg_peer_public_key_entry { get; set; }
-    public Gtk.Entry? wg_peer_endpoint_entry { get; set; }
-    public Gtk.Entry? wg_peer_allowed_ips_entry { get; set; }
-    public Gtk.Entry? wg_preshared_key_entry { get; set; }
+    public HyprNetworkManager.UI.Widgets.DynamicPeerList? wg_peers_list { get; set; }
     public Gtk.Entry? wg_listen_port_entry { get; set; }
     public Gtk.Entry? wg_fwmark_entry { get; set; }
     public Gtk.Switch? wg_peer_routes_switch { get; set; }
@@ -100,10 +97,9 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
                 wg_interface_name_entry.set_text (wg_details.interface_name);
             }
             wg_private_key_entry.set_text (wg_details.wg_private_key);
-            wg_peer_public_key_entry.set_text (wg_details.wg_peer_public_key);
-            wg_peer_endpoint_entry.set_text (wg_details.wg_peer_endpoint);
-            wg_peer_allowed_ips_entry.set_text (wg_details.wg_peer_allowed_ips);
-            wg_preshared_key_entry.set_text (wg_details.wg_preshared_key);
+            if (wg_peers_list != null) {
+                wg_peers_list.set_peers (wg_details.peers);
+            }
             wg_listen_port_entry.set_text (wg_details.wg_listen_port > 0 ? "%u".printf (wg_details.wg_listen_port) : "");
             wg_fwmark_entry.set_text (wg_details.wg_fwmark > 0 ? "%u".printf (wg_details.wg_fwmark) : "");
             wg_peer_routes_switch.set_active (wg_details.wg_peer_routes);
@@ -171,10 +167,9 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
         if (wg_request != null && wg_private_key_entry != null) {
             wg_request.interface_name = wg_interface_name_entry != null ? wg_interface_name_entry.get_text ().strip () : "";
             wg_request.wg_private_key = wg_private_key_entry.get_text ().strip ();
-            wg_request.wg_peer_public_key = wg_peer_public_key_entry.get_text ().strip ();
-            wg_request.wg_peer_endpoint = wg_peer_endpoint_entry.get_text ().strip ();
-            wg_request.wg_peer_allowed_ips = wg_peer_allowed_ips_entry.get_text ().strip ();
-            wg_request.wg_preshared_key = wg_preshared_key_entry.get_text ().strip ();
+            if (wg_peers_list != null) {
+                wg_request.peers = wg_peers_list.get_peers ();
+            }
             wg_request.wg_peer_routes = wg_peer_routes_switch.get_active ();
 
             uint32 wg_listen_port;

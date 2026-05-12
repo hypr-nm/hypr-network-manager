@@ -36,57 +36,34 @@ public class MainWindowVpnFormBuilder : Object {
         IVpnFormFields fields,
         bool default_allowed_ips = false
     ) {
-        Gtk.Box interface_content;
-        var interface_section = build_section (_("Interface"), out interface_content);
-        target_box.append (interface_section);
-
-        interface_content.append (build_form_label (_("Interface Name")));
+        target_box.append (build_form_label (_("Name")));
         fields.wg_interface_name_entry = new Gtk.Entry ();
         fields.wg_interface_name_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        interface_content.append (fields.wg_interface_name_entry);
+        target_box.append (fields.wg_interface_name_entry);
 
-        interface_content.append (build_form_label (_("Interface Private Key")));
-        fields.wg_private_key_entry = new Gtk.Entry ();
-        fields.wg_private_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        interface_content.append (fields.wg_private_key_entry);
-
-        interface_content.append (build_form_label (_("Listen Port (optional)")));
+        target_box.append (build_form_label (_("Listen Port (optional)")));
         fields.wg_listen_port_entry = new Gtk.Entry ();
         fields.wg_listen_port_entry.set_input_purpose (Gtk.InputPurpose.DIGITS);
         fields.wg_listen_port_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        interface_content.append (fields.wg_listen_port_entry);
+        target_box.append (fields.wg_listen_port_entry);
 
-        Gtk.Box peer_content;
-        var peer_section = build_section (_("Peer"), out peer_content);
-        target_box.append (peer_section);
+        target_box.append (build_form_label (_("Private Key")));
+        fields.wg_private_key_entry = new Gtk.Entry ();
+        fields.wg_private_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        target_box.append (fields.wg_private_key_entry);
 
-        peer_content.append (build_form_label (_("Peer Public Key")));
-        fields.wg_peer_public_key_entry = new Gtk.Entry ();
-        fields.wg_peer_public_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        peer_content.append (fields.wg_peer_public_key_entry);
-
-        peer_content.append (build_form_label (_("Peer Endpoint (host:port)")));
-        fields.wg_peer_endpoint_entry = new Gtk.Entry ();
-        fields.wg_peer_endpoint_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        peer_content.append (fields.wg_peer_endpoint_entry);
-
-        peer_content.append (build_form_label (_("Allowed IPs (comma-separated)")));
-        fields.wg_peer_allowed_ips_entry = new Gtk.Entry ();
+        fields.wg_peers_list = new HyprNetworkManager.UI.Widgets.DynamicPeerList ();
         if (default_allowed_ips) {
-            fields.wg_peer_allowed_ips_entry.set_text ("0.0.0.0/0, ::/0");
+            var default_peer = new WireGuardPeerModel ();
+            default_peer.allowed_ips = {"0.0.0.0/0", "::/0"};
+            fields.wg_peers_list.add_peer (default_peer);
         }
-        fields.wg_peer_allowed_ips_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        peer_content.append (fields.wg_peer_allowed_ips_entry);
+        target_box.append (fields.wg_peers_list);
 
-        peer_content.append (build_form_label (_("Preshared Key (optional)")));
-        fields.wg_preshared_key_entry = new Gtk.Entry ();
-        fields.wg_preshared_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        peer_content.append (fields.wg_preshared_key_entry);
-
-        Gtk.Box advanced_content;
-        var advanced_section = build_section (_("Advanced"), out advanced_content);
-        target_box.append (advanced_section);
-
+        var advanced_expander = new Gtk.Expander (_("Advanced Configuration"));
+        var advanced_content = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+        advanced_content.set_margin_top (6);
+        
         advanced_content.append (build_form_label (_("FwMark (optional)")));
         fields.wg_fwmark_entry = new Gtk.Entry ();
         fields.wg_fwmark_entry.set_input_purpose (Gtk.InputPurpose.DIGITS);
@@ -98,6 +75,9 @@ public class MainWindowVpnFormBuilder : Object {
             true,
             advanced_content
         );
+
+        advanced_expander.set_child (advanced_content);
+        target_box.append (advanced_expander);
     }
 
     public static void append_openvpn_fields (

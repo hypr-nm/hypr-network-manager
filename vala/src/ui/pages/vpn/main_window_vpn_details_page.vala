@@ -89,18 +89,6 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
                 MainWindowHelpers.build_details_row (_("Private key"), display_secret (wg_details.wg_private_key))
             );
             this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Peer public key"), wg_details.wg_peer_public_key)
-            );
-            this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Peer endpoint"), wg_details.wg_peer_endpoint)
-            );
-            this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Allowed IPs"), wg_details.wg_peer_allowed_ips)
-            );
-            this.advanced_rows.append (
-                MainWindowHelpers.build_details_row (_("Preshared key"), display_secret (wg_details.wg_preshared_key))
-            );
-            this.advanced_rows.append (
                 MainWindowHelpers.build_details_row (_("Listen port"),
                     wg_details.wg_listen_port > 0 ? "%u".printf (wg_details.wg_listen_port) : _("Not set"))
             );
@@ -111,6 +99,31 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
             this.advanced_rows.append (
                 MainWindowHelpers.build_details_row (_("Peer routes"), wg_details.wg_peer_routes ? _("Yes") : _("No"))
             );
+
+            int peer_idx = 1;
+            foreach (var p in wg_details.peers) {
+                string peer_prefix = _("Peer %d").printf (peer_idx);
+                this.advanced_rows.append (
+                    MainWindowHelpers.build_details_row (peer_prefix + " " + _("Public Key"), p.public_key)
+                );
+                
+                string endpoint = p.endpoint_host;
+                if (p.endpoint_port > 0) {
+                    endpoint += ":%u".printf (p.endpoint_port);
+                }
+                this.advanced_rows.append (
+                    MainWindowHelpers.build_details_row (peer_prefix + " " + _("Endpoint"), endpoint)
+                );
+                
+                string allowed_ips = string.joinv (", ", p.allowed_ips);
+                this.advanced_rows.append (
+                    MainWindowHelpers.build_details_row (peer_prefix + " " + _("Allowed IPs"), allowed_ips)
+                );
+                this.advanced_rows.append (
+                    MainWindowHelpers.build_details_row (peer_prefix + " " + _("Preshared Key"), display_secret (p.preshared_key))
+                );
+                peer_idx++;
+            }
             return;
         }
 

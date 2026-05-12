@@ -10,10 +10,7 @@ public interface IVpnFormFields : GLib.Object {
     // WireGuard
     public abstract Gtk.Entry? wg_interface_name_entry { get; set; }
     public abstract Gtk.Entry? wg_private_key_entry { get; set; }
-    public abstract Gtk.Entry? wg_peer_public_key_entry { get; set; }
-    public abstract Gtk.Entry? wg_peer_endpoint_entry { get; set; }
-    public abstract Gtk.Entry? wg_peer_allowed_ips_entry { get; set; }
-    public abstract Gtk.Entry? wg_preshared_key_entry { get; set; }
+    public abstract HyprNetworkManager.UI.Widgets.DynamicPeerList? wg_peers_list { get; set; }
     public abstract Gtk.Entry? wg_listen_port_entry { get; set; }
     public abstract Gtk.Entry? wg_fwmark_entry { get; set; }
     public abstract Gtk.Switch? wg_peer_routes_switch { get; set; }
