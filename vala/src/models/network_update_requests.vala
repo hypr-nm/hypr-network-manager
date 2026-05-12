@@ -160,7 +160,7 @@ public class WireGuardVpnUpdateRequest : VpnUpdateRequest {
     public uint32 wg_listen_port { get; set; default = 0; }
     public uint32 wg_fwmark { get; set; default = 0; }
     public bool wg_peer_routes { get; set; default = true; }
-    public WireGuardPeerModel[] peers { get; set; default = {}; }
+    public WireGuardPeerModel[] peers = {};
 
     public WireGuardVpnUpdateRequest () {
         vpn_type = "wireguard";
