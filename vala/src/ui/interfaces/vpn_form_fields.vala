@@ -8,6 +8,7 @@ public interface IVpnFormFields : GLib.Object {
     public abstract Gtk.Entry? password_entry { get; set; }
     
     // WireGuard
+    public abstract Gtk.Entry? wg_interface_name_entry { get; set; }
     public abstract Gtk.Entry? wg_private_key_entry { get; set; }
     public abstract Gtk.Entry? wg_peer_public_key_entry { get; set; }
     public abstract Gtk.Entry? wg_peer_endpoint_entry { get; set; }

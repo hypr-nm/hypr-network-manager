@@ -68,6 +68,9 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
         this.basic_rows.append (
             MainWindowHelpers.build_details_row (_("Connected"), conn.is_connected ? _("Yes") : _("No"))
         );
+        if (details.interface_name != "") {
+            this.basic_rows.append (MainWindowHelpers.build_details_row (_("Interface"), details.interface_name));
+        }
         this.basic_rows.append (
             MainWindowHelpers.build_details_row (_("Autoconnect"), details.autoconnect ? _("Yes") : _("No"))
         );

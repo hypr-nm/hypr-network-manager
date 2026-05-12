@@ -40,6 +40,11 @@ public class MainWindowVpnFormBuilder : Object {
         var interface_section = build_section (_("Interface"), out interface_content);
         target_box.append (interface_section);
 
+        interface_content.append (build_form_label (_("Interface Name")));
+        fields.wg_interface_name_entry = new Gtk.Entry ();
+        fields.wg_interface_name_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        interface_content.append (fields.wg_interface_name_entry);
+
         interface_content.append (build_form_label (_("Interface Private Key")));
         fields.wg_private_key_entry = new Gtk.Entry ();
         fields.wg_private_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);

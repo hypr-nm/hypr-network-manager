@@ -127,6 +127,7 @@ public class WifiSavedProfileUpdateRequest : Object {
 
 public class VpnUpdateRequest : Object {
     public string name { get; set; default = ""; }
+    public string interface_name { get; set; default = ""; }
     public string vpn_type { get; set; default = "vpn"; }
     public NetworkIpUpdateRequest ip_request { get; set; }
 
@@ -170,6 +171,10 @@ public class WireGuardVpnUpdateRequest : VpnUpdateRequest {
 
     public override bool validate (out string? error_message) {
         if (!base.validate (out error_message)) {
+            return false;
+        }
+        if (interface_name.strip () == "") {
+            error_message = _("WireGuard interface name is required (e.g. wg0).");
             return false;
         }
         if (wg_private_key.strip () == "" || wg_peer_public_key.strip () == "" || wg_peer_endpoint.strip () == "") {

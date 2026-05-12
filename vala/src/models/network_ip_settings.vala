@@ -37,6 +37,7 @@ public class WifiSavedProfileSettings : NetworkIpSettings {
 public class VpnProfileDetails : NetworkIpSettings {
     public string profile_name { get; set; default = ""; }
     public string profile_uuid { get; set; default = ""; }
+    public string interface_name { get; set; default = ""; }
     public string vpn_type_key { get; set; default = "vpn"; }
     public string vpn_type_display { get; set; default = "VPN"; }
     public string service_type { get; set; default = ""; }

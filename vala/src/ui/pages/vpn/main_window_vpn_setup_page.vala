@@ -13,6 +13,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
     public Gtk.Entry? password_entry { get; set; }
     
     // WireGuard specific
+    public Gtk.Entry? wg_interface_name_entry { get; set; }
     public Gtk.Entry? wg_private_key_entry { get; set; }
     public Gtk.Entry? wg_peer_public_key_entry { get; set; }
     public Gtk.Entry? wg_peer_endpoint_entry { get; set; }
@@ -105,6 +106,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
 
         var wg_request = request as WireGuardVpnUpdateRequest;
         if (wg_request != null && wg_private_key_entry != null) {
+            wg_request.interface_name = wg_interface_name_entry != null ? wg_interface_name_entry.get_text ().strip () : "";
             wg_request.wg_private_key = wg_private_key_entry.get_text ().strip ();
             wg_request.wg_peer_public_key = wg_peer_public_key_entry.get_text ().strip ();
             wg_request.wg_peer_endpoint = wg_peer_endpoint_entry.get_text ().strip ();

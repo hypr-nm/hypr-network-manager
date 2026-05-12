@@ -13,6 +13,11 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
         var wg_details = details as WireGuardVpnProfileDetails;
         if (wg_details == null) return;
 
+        var s_conn = conn.get_setting_connection ();
+        if (s_conn != null) {
+            wg_details.interface_name = s_conn.interface_name ?? "";
+        }
+
         var setting_wg = (NM.SettingWireGuard) conn.get_setting_by_name (NM.SettingWireGuard.SETTING_NAME);
         if (setting_wg == null) return;
 
@@ -49,6 +54,9 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
         var s_conn = conn.get_setting_connection ();
         if (s_conn != null) {
             s_conn.type = "wireguard";
+            if (wg_request.interface_name.strip () != "") {
+                s_conn.interface_name = wg_request.interface_name.strip ();
+            }
         }
         conn.remove_setting (typeof (NM.SettingVpn));
 

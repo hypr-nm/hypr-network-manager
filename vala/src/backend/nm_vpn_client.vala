@@ -385,10 +385,11 @@ public class NmVpnClient : GLib.Object {
         details.profile_uuid = normalize_string (vpn_conn.get_uuid ());
         details.vpn_type_key = vpn_type_key;
         details.vpn_type_display = describe_vpn_profile (vpn_conn);
-
+        
         var s_conn = vpn_conn.get_setting_connection ();
         if (s_conn != null) {
             details.autoconnect = s_conn.autoconnect;
+            details.interface_name = normalize_string (s_conn.interface_name);
         }
 
         var setting_vpn = vpn_conn.get_setting_vpn ();
@@ -467,6 +468,9 @@ public class NmVpnClient : GLib.Object {
             if (new_name != "") {
                 s_conn.id = new_name;
             }
+            if (request.interface_name.strip () != "") {
+                s_conn.interface_name = request.interface_name.strip ();
+            }
             s_conn.autoconnect = request.ip_request.autoconnect;
         }
 
@@ -516,6 +520,9 @@ public class NmVpnClient : GLib.Object {
 
         var s_conn = new NM.SettingConnection ();
         s_conn.id = request.name;
+        if (request.interface_name.strip () != "") {
+            s_conn.interface_name = request.interface_name.strip ();
+        }
         s_conn.uuid = NM.Utils.uuid_generate ();
         s_conn.autoconnect = request.ip_request.autoconnect;
         conn.add_setting (s_conn);

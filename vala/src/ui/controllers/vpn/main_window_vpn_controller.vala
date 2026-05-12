@@ -167,6 +167,7 @@ public class MainWindowVpnController : Object {
 
         var wg_request = request as WireGuardVpnUpdateRequest;
         if (wg_request != null) {
+            wg_request.interface_name = setup_page.wg_interface_name_entry != null ? setup_page.wg_interface_name_entry.get_text ().strip () : "";
             wg_request.wg_private_key = setup_page.wg_private_key_entry.get_text ().strip ();
             wg_request.wg_peer_public_key = setup_page.wg_peer_public_key_entry.get_text ().strip ();
             wg_request.wg_peer_endpoint = setup_page.wg_peer_endpoint_entry.get_text ().strip ();
