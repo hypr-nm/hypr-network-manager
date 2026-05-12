@@ -51,13 +51,10 @@ public class GenericVpnProfileDetails : VpnProfileDetails {
 
 public class WireGuardVpnProfileDetails : VpnProfileDetails {
     public string wg_private_key { get; set; default = ""; }
-    public string wg_peer_public_key { get; set; default = ""; }
-    public string wg_peer_endpoint { get; set; default = ""; }
-    public string wg_peer_allowed_ips { get; set; default = ""; }
-    public string wg_preshared_key { get; set; default = ""; }
     public uint32 wg_listen_port { get; set; default = 0; }
     public uint32 wg_fwmark { get; set; default = 0; }
     public bool wg_peer_routes { get; set; default = true; }
+    public WireGuardPeerModel[] peers { get; set; default = {}; }
 }
 
 public class OpenVpnProfileDetails : VpnProfileDetails {

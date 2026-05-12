@@ -157,13 +157,10 @@ public class GenericVpnUpdateRequest : VpnUpdateRequest {
 
 public class WireGuardVpnUpdateRequest : VpnUpdateRequest {
     public string wg_private_key { get; set; default = ""; }
-    public string wg_peer_public_key { get; set; default = ""; }
-    public string wg_peer_endpoint { get; set; default = ""; }
-    public string wg_peer_allowed_ips { get; set; default = ""; }
-    public string wg_preshared_key { get; set; default = ""; }
     public uint32 wg_listen_port { get; set; default = 0; }
     public uint32 wg_fwmark { get; set; default = 0; }
     public bool wg_peer_routes { get; set; default = true; }
+    public WireGuardPeerModel[] peers { get; set; default = {}; }
 
     public WireGuardVpnUpdateRequest () {
         vpn_type = "wireguard";
@@ -177,9 +174,11 @@ public class WireGuardVpnUpdateRequest : VpnUpdateRequest {
             error_message = _("WireGuard interface name is required (e.g. wg0).");
             return false;
         }
-        if (wg_private_key.strip () == "" || wg_peer_public_key.strip () == "" || wg_peer_endpoint.strip () == "") {
-            error_message = _("WireGuard requires private key, peer public key, and endpoint.");
-            return false;
+        foreach (var p in peers) {
+            if (p.public_key.strip () == "" || p.endpoint_host.strip () == "") {
+                error_message = _("WireGuard requires public key and endpoint host for all peers.");
+                return false;
+            }
         }
         error_message = null;
         return true;
