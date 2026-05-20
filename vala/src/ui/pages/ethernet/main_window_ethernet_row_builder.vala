@@ -55,22 +55,6 @@ public class MainWindowEthernetRowBuilder {
         info.append (sub);
         content.append (info);
 
-        var details_btn = new Gtk.Button ();
-        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-        MainWindowCssClassResolver.add_best_class (
-            details_btn,
-            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
-        );
-        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
-            MainWindowCssClasses.ROW_ICON_ACTION});
-        details_btn.set_tooltip_text (_("Details"));
-        var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
-        details_btn.set_child (details_icon);
-        details_btn.clicked.connect (() => {
-            action_handler.open_details (dev);
-        });
-        content.append (details_btn);
-
         string action_label;
         bool can_toggle = true;
 
@@ -101,6 +85,26 @@ public class MainWindowEthernetRowBuilder {
             action_handler.trigger_toggle (dev);
         });
         content.append (action);
+
+        var details_btn = new Gtk.Button ();
+        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
+        MainWindowCssClassResolver.add_best_class (
+            details_btn,
+            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
+        );
+        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
+            MainWindowCssClasses.ROW_ICON_ACTION});
+        details_btn.set_tooltip_text (_("Details"));
+        var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
+        MainWindowCssClassResolver.add_best_class (
+            details_icon,
+            {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
+        );
+        details_btn.set_child (details_icon);
+        details_btn.clicked.connect (() => {
+            action_handler.open_details (dev);
+        });
+        content.append (details_btn);
 
         row.set_child (content);
         return row;

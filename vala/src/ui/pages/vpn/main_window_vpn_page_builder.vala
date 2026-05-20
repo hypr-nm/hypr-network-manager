@@ -214,18 +214,6 @@ public class MainWindowVpnPageBuilder : Object {
         info.append (sub);
         content.append (info);
 
-        var details_btn = new Gtk.Button.from_icon_name ("emblem-system-symbolic");
-        MainWindowCssClassResolver.add_best_class (
-            details_btn,
-            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.DETAILS_BUTTON,
-                MainWindowCssClasses.ICON_BUTTON, MainWindowCssClasses.BUTTON}
-        );
-        details_btn.set_tooltip_text (_("VPN Details"));
-        details_btn.clicked.connect (() => {
-            this.open_details (conn);
-        });
-        content.append (details_btn);
-
         var action = new Gtk.Button.with_label (conn.is_connected ? _("Disconnect") : _("Connect"));
         MainWindowCssClassResolver.add_best_class (
             action,
@@ -272,6 +260,27 @@ public class MainWindowVpnPageBuilder : Object {
             });
         });
         content.append (action);
+
+        var details_btn = new Gtk.Button ();
+        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
+        MainWindowCssClassResolver.add_best_class (
+            details_btn,
+            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
+        );
+        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
+            MainWindowCssClasses.ROW_ICON_ACTION});
+        details_btn.set_valign (Gtk.Align.CENTER);
+        details_btn.set_tooltip_text (_("Details"));
+        var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
+        MainWindowCssClassResolver.add_best_class (
+            details_icon,
+            {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
+        );
+        details_btn.set_child (details_icon);
+        details_btn.clicked.connect (() => {
+            this.open_details (conn);
+        });
+        content.append (details_btn);
 
         row.set_child (content);
         return row;
