@@ -16,6 +16,9 @@ namespace HyprNetworkManager.UI.Views {
         private MainWindowVpnEditPage edit_page;
         private MainWindowVpnAddPage add_page;
         private MainWindowVpnSetupPage setup_page;
+        private MainWindowVpnPeerEditPage peer_edit_page;
+        
+        private string peer_edit_return_page = "list";
 
         public VpnSectionView (
             NetworkManagerClient nm,
@@ -29,6 +32,7 @@ namespace HyprNetworkManager.UI.Views {
             this.edit_page = new MainWindowVpnEditPage (window_host);
             this.add_page = new MainWindowVpnAddPage ();
             this.setup_page = new MainWindowVpnSetupPage (window_host);
+            this.peer_edit_page = new MainWindowVpnPeerEditPage ();
 
             Gtk.ListBox vpn_listbox;
             Gtk.Stack vpn_stack_local;
@@ -46,6 +50,7 @@ namespace HyprNetworkManager.UI.Views {
             this.stack.add_named (edit_page, "edit");
             this.stack.add_named (add_page, "add");
             this.stack.add_named (setup_page, "setup");
+            this.stack.add_named (peer_edit_page, "peer_edit");
 
             wire_signals ();
         }
@@ -78,6 +83,12 @@ namespace HyprNetworkManager.UI.Views {
 
             setup_page.apply.connect (() => {
                 controller.apply_setup (nm, setup_page, stack);
+            });
+            
+            setup_page.edit_peer_requested.connect ((index, peer) => {
+                peer_edit_return_page = "setup";
+                peer_edit_page.set_peer (index, peer);
+                stack.set_visible_child_name ("peer_edit");
             });
 
             details_page.back.connect (() => {
@@ -129,6 +140,25 @@ namespace HyprNetworkManager.UI.Views {
 
             edit_page.apply.connect (() => {
                 controller.apply_edit (ref selected_vpn, nm, edit_page, stack, details_page, true);
+            });
+            
+            edit_page.edit_peer_requested.connect ((index, peer) => {
+                peer_edit_return_page = "edit";
+                peer_edit_page.set_peer (index, peer);
+                stack.set_visible_child_name ("peer_edit");
+            });
+            
+            peer_edit_page.back_clicked.connect (() => {
+                stack.set_visible_child_name (peer_edit_return_page);
+            });
+            
+            peer_edit_page.save_clicked.connect ((index, peer) => {
+                if (peer_edit_return_page == "setup" && setup_page.wg_peers_list != null) {
+                    setup_page.wg_peers_list.save_peer (index, peer);
+                } else if (peer_edit_return_page == "edit" && edit_page.wg_peers_list != null) {
+                    edit_page.wg_peers_list.save_peer (index, peer);
+                }
+                stack.set_visible_child_name (peer_edit_return_page);
             });
         }
 

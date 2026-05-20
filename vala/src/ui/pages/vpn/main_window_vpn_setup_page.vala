@@ -55,6 +55,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
 
     public signal void back ();
     public signal void apply ();
+    public signal void edit_peer_requested (int index, WireGuardPeerModel peer);
 
     public void setup_type (string type) {
         this.vpn_type = type;
@@ -66,6 +67,11 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
 
         if (this.vpn_type == "wireguard") {
             MainWindowVpnFormBuilder.append_wg_fields (type_specific_box, this, true);
+            if (this.wg_peers_list != null) {
+                this.wg_peers_list.edit_peer_requested.connect ((index, peer) => {
+                    this.edit_peer_requested (index, peer);
+                });
+            }
         } else if (this.vpn_type == "openvpn") {
             MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this, this.create_dropdown_func, true);
         } else {

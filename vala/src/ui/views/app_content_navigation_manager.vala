@@ -89,7 +89,8 @@ namespace HyprNetworkManager.UI.Views {
                 return vpn_page == "details"
                     || vpn_page == "edit"
                     || vpn_page == "add"
-                    || vpn_page == "setup";
+                    || vpn_page == "setup"
+                    || vpn_page == "peer_edit";
             }
 
             return false;
