@@ -54,24 +54,17 @@ public class MainWindowVpnFormBuilder : Object {
         fields.wg_peers_list = new HyprNetworkManager.UI.Widgets.DynamicPeerList ();
         target_box.append (fields.wg_peers_list);
 
-        var advanced_expander = new Gtk.Expander (_("Advanced Configuration"));
-        var advanced_content = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        advanced_content.set_margin_top (6);
-        
-        advanced_content.append (build_form_label (_("FwMark (optional)")));
+        target_box.append (build_form_label (_("FwMark (optional)")));
         fields.wg_fwmark_entry = new Gtk.Entry ();
         fields.wg_fwmark_entry.set_input_purpose (Gtk.InputPurpose.DIGITS);
         fields.wg_fwmark_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-        advanced_content.append (fields.wg_fwmark_entry);
+        target_box.append (fields.wg_fwmark_entry);
 
         fields.wg_peer_routes_switch = build_labeled_switch_row (
             _("Automatically add peer routes"),
             true,
-            advanced_content
+            target_box
         );
-
-        advanced_expander.set_child (advanced_content);
-        target_box.append (advanced_expander);
     }
 
     public static void append_openvpn_fields (

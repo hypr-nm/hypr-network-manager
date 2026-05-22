@@ -92,20 +92,13 @@ namespace HyprNetworkManager.UI.Views {
             allowed_ips_list = new HyprNetworkManager.UI.Widgets.DynamicStringList (_("Allowed IPs"), "0.0.0.0/0");
             form.append (allowed_ips_list);
 
-            var advanced_expander = new Gtk.Expander (_("Advanced Configuration"));
-            var advanced_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-            advanced_box.set_margin_top (6);
-            
             var psk_label = new Gtk.Label (_("Preshared Key"));
             psk_label.set_xalign (0.0f);
             psk_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
-            advanced_box.append (psk_label);
+            form.append (psk_label);
             preshared_key_entry = new Gtk.Entry ();
             preshared_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
-            advanced_box.append (preshared_key_entry);
-            
-            advanced_expander.set_child (advanced_box);
-            form.append (advanced_expander);
+            form.append (preshared_key_entry);
 
             var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
             actions.add_css_class (MainWindowCssClasses.EDIT_ACTIONS);
