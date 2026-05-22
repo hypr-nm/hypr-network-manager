@@ -66,7 +66,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
         MainWindowHelpers.clear_box (type_specific_box);
 
         if (this.vpn_type == "wireguard") {
-            MainWindowVpnFormBuilder.append_wg_fields (type_specific_box, this, true);
+            MainWindowVpnFormBuilder.append_wg_fields (type_specific_box, this);
             if (this.wg_peers_list != null) {
                 this.wg_peers_list.edit_peer_requested.connect ((index, peer) => {
                     this.edit_peer_requested (index, peer);

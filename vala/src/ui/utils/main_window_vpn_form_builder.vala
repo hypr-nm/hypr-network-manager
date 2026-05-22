@@ -33,8 +33,7 @@ public class MainWindowVpnFormBuilder : Object {
 
     public static void append_wg_fields (
         Gtk.Box target_box,
-        IVpnFormFields fields,
-        bool default_allowed_ips = false
+        IVpnFormFields fields
     ) {
         target_box.append (build_form_label (_("Name")));
         fields.wg_interface_name_entry = new Gtk.Entry ();
@@ -53,11 +52,6 @@ public class MainWindowVpnFormBuilder : Object {
         target_box.append (fields.wg_private_key_entry);
 
         fields.wg_peers_list = new HyprNetworkManager.UI.Widgets.DynamicPeerList ();
-        if (default_allowed_ips) {
-            var default_peer = new WireGuardPeerModel ();
-            default_peer.allowed_ips = {"0.0.0.0/0", "::/0"};
-            fields.wg_peers_list.add_peer (default_peer);
-        }
         target_box.append (fields.wg_peers_list);
 
         var advanced_expander = new Gtk.Expander (_("Advanced Configuration"));
