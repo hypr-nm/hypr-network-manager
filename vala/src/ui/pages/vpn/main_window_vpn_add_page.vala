@@ -69,9 +69,6 @@ public class MainWindowVpnAddPage : Gtk.Box {
 
         add_type_row (listbox, "WireGuard", "wireguard", "network-vpn-symbolic");
         add_type_row (listbox, "OpenVPN", "openvpn", "network-vpn-symbolic");
-        add_type_row (listbox, "Cisco AnyConnect (openconnect)", "openconnect", "network-vpn-symbolic");
-        add_type_row (listbox, "PPTP", "pptp", "network-vpn-symbolic");
-        add_type_row (listbox, "L2TP", "l2tp", "network-vpn-symbolic");
 
         body.append (listbox);
         scroll.set_child (body);
