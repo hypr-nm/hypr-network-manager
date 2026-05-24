@@ -8,10 +8,12 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
     public Gtk.Box action_row { get; set; }
     public Gtk.Button forget_button { get; set; }
     public Gtk.Button edit_button { get; set; }
+    public Gtk.Button share_button { get; set; }
 
     public signal void back ();
     public signal void forget ();
     public signal void edit ();
+    public signal void share ();
 
     public void render_details (
         WifiNetwork net,
@@ -23,6 +25,7 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
         this.action_row.set_visible (can_manage_saved_profile);
         this.forget_button.set_visible (can_manage_saved_profile);
         this.edit_button.set_visible (can_manage_saved_profile);
+        this.share_button.set_visible (can_manage_saved_profile);
 
         MainWindowHelpers.clear_listbox (this.basic_rows);
         MainWindowHelpers.clear_listbox (this.advanced_rows);
@@ -150,6 +153,17 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
             this.edit ();
         });
         this.action_row.append (this.edit_button);
+
+        this.share_button = new Gtk.Button.with_label (_("Share"));
+        this.share_button.add_css_class (MainWindowCssClasses.BUTTON);
+        MainWindowCssClassResolver.add_best_class (
+            this.share_button,
+            {MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
+        );
+        this.share_button.clicked.connect (() => {
+            this.share ();
+        });
+        this.action_row.append (this.share_button);
 
         network_header.append (this.action_row);
         this.append (network_header);

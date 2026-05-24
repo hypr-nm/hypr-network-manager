@@ -101,6 +101,9 @@ public class MainWindowVpnPageBuilder : Object {
         toolbar.append (refresh_btn);
 
         var add_btn = new Gtk.Button.with_label (_("Add VPN"));
+        // TODO: Handle VPN profile creation in a dedicated window or dialog
+        // to support file imports and copy-pasting, as transient popups close on focus loss.
+        add_btn.set_visible (false);
         add_btn.add_css_class (MainWindowCssClasses.BUTTON);
         add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         add_btn.add_css_class (MainWindowCssClasses.ADD_BUTTON);

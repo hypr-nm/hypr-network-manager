@@ -1148,3 +1148,26 @@ list.boxed-list.nm-details-rows > row:hover {
 .nm-wifi-row-enter {
   animation: nm-wifi-row-enter 180ms cubic-bezier(0.2, 0.0, 0, 1) both;
 }
+
+.nm-qr-share-content {
+  padding: 24px;
+}
+
+.nm-qr-share-title {
+  font-weight: bold;
+  font-size: 1.5em;
+  margin-bottom: 16px;
+}
+
+.nm-qr-share-code-box {
+  background-color: white;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 24px;
+}
+
+.nm-qr-share-description {
+  opacity: 0.8;
+  line-height: 1.4;
+  font-size: 0.9em;
+}

@@ -76,7 +76,7 @@ namespace HyprNetworkManager.UI.Views {
             int current_tab = notebook.get_current_page ();
             if (current_tab == 0 && wifi_stack != null) {
                 string wifi_page = wifi_stack.get_visible_child_name ();
-                return wifi_page == "details" || wifi_page == "edit" || wifi_page == "add";
+                return wifi_page == "details" || wifi_page == "edit" || wifi_page == "add" || wifi_page == "share";
             }
 
             if (current_tab == 1 && ethernet_stack != null) {

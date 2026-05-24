@@ -32,7 +32,8 @@ namespace MainWindowWifiPageBuilder {
         out HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController progress_controller,
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
-        Gtk.Widget add_page
+        Gtk.Widget add_page,
+        Gtk.Widget share_page
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class (MainWindowCssClasses.PAGE);
@@ -174,6 +175,7 @@ namespace MainWindowWifiPageBuilder {
         wifi_stack.add_named (details_page, "details");
         wifi_stack.add_named (edit_page, "edit");
         wifi_stack.add_named (add_page, "add");
+        wifi_stack.add_named (share_page, "share");
         wifi_stack.set_visible_child_name ("empty");
         var wifi_stack_ref = wifi_stack;
 

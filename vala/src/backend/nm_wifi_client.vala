@@ -312,6 +312,40 @@ public class NmWifiClient : GLib.Object {
         return settings;
     }
 
+    public async string? get_wifi_password (
+        string connection_uuid,
+        Cancellable? cancellable = null
+    ) {
+        var client = core.nm_client;
+        var conn = client.get_connection_by_uuid (connection_uuid);
+        if (conn == null) {
+            return null;
+        }
+
+        var s_sec = conn.get_setting_wireless_security ();
+        if (s_sec != null && s_sec.psk != null && s_sec.psk != "") {
+            return s_sec.psk;
+        }
+
+        if (conn is NM.RemoteConnection) {
+            try {
+                var secrets = yield ((NM.RemoteConnection) conn).get_secrets_async ("802-11-wireless-security", cancellable);
+                if (secrets != null) {
+                    Variant? sec_dict = secrets.lookup_value ("802-11-wireless-security", new VariantType ("a{sv}"));
+                    if (sec_dict != null) {
+                        Variant? psk_value = sec_dict.lookup_value ("psk", new VariantType ("s"));
+                        if (psk_value != null) {
+                            return psk_value.get_string ();
+                        }
+                    }
+                }
+            } catch (Error e) {
+                log_debug ("nm-wifi-client", "get_wifi_password: unable to read wireless secrets: " + e.message);
+            }
+        }
+        return null;
+    }
+
     public async bool update_saved_profile_settings (
         WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest request,

@@ -23,6 +23,7 @@ namespace HyprNetworkManager.UI.Views {
         private WifiNetwork? selected_wifi_network = null;
         private MainWindowWifiDetailsPage details_page;
         private MainWindowWifiEditPage edit_page;
+        private MainWindowWifiSharePage share_page;
 
         private Gtk.Entry add_ssid_entry;
         private HyprNetworkManager.UI.Widgets.TrackedDropDown add_security_dropdown;
@@ -59,9 +60,11 @@ namespace HyprNetworkManager.UI.Views {
 
             this.details_page = new MainWindowWifiDetailsPage ();
             this.edit_page = new MainWindowWifiEditPage (this.window_host);
+            this.share_page = new MainWindowWifiSharePage ();
 
             wire_details_page_signals ();
             wire_edit_page_signals ();
+            wire_share_page_signals ();
 
             var add_page = build_add_page ();
 
@@ -81,7 +84,8 @@ namespace HyprNetworkManager.UI.Views {
                 out local_progress_controller,
                 details_page,
                 edit_page,
-                add_page
+                add_page,
+                share_page
             );
 
             this.wifi_switch = local_wifi_switch;
@@ -127,7 +131,7 @@ namespace HyprNetworkManager.UI.Views {
 
         public void set_availability_placeholder (bool wifi_enabled, bool flight_mode_active) {
             string current_page = stack.get_visible_child_name ();
-            if (current_page == "details" || current_page == "edit" || current_page == "add") {
+            if (current_page == "details" || current_page == "edit" || current_page == "add" || current_page == "share") {
                 return;
             }
 
@@ -167,6 +171,60 @@ namespace HyprNetworkManager.UI.Views {
                     return;
                 }
                 open_wifi_edit (selected_wifi_network);
+            });
+
+            details_page.share.connect (() => {
+                if (selected_wifi_network == null) {
+                    window_host.debug_log ("Share clicked but selected_wifi_network is null");
+                    return;
+                }
+                
+                window_host.debug_log ("Share clicked for SSID: " + selected_wifi_network.ssid + ", uuid: " + selected_wifi_network.saved_connection_uuid);
+
+                nm.get_wifi_password.begin (selected_wifi_network.saved_connection_uuid, null, (obj, res) => {
+                    try {
+                        string? password = nm.get_wifi_password.end (res);
+                        
+                        window_host.debug_log ("Got password. Password empty? " + (password == null || password == "").to_string ());
+
+                        if (selected_wifi_network.is_secured && (password == null || password == "")) {
+                            window_host.show_wifi_error (selected_wifi_network.network_key, _("Cannot share: password is empty"));
+                            return;
+                        }
+                        
+                        string ssid = selected_wifi_network.ssid.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:");
+                        string escaped_password = (password != null) ? password.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:") : "";
+
+                        string security = "nopass";
+                        if (selected_wifi_network.is_secured) {
+                            // Assume WPA for now since we don't have security_mode from IP settings directly,
+                            // but usually it's WPA unless otherwise configured.
+                            // WEP is rarely used but we'll default to WPA.
+                            security = "WPA";
+                        }
+                        
+                        string hidden_flag = selected_wifi_network.is_hidden ? "true" : "false";
+                        string qr_text = "WIFI:T:" + security + ";S:" + ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
+                        
+                        window_host.debug_log ("Generated QR text: " + qr_text);
+
+                        share_page.set_share_data (selected_wifi_network.ssid, qr_text);
+                        stack.set_visible_child_name ("share");
+                    } catch (Error e) {
+                        window_host.debug_log ("Failed to get details for share: " + e.message);
+                        window_host.show_wifi_error (selected_wifi_network.network_key, _("Failed to get details for share: %s").printf(e.message));
+                    }
+                });
+            });
+        }
+
+        private void wire_share_page_signals () {
+            share_page.back.connect (() => {
+                if (selected_wifi_network != null) {
+                    open_wifi_details (selected_wifi_network);
+                } else {
+                    stack.set_visible_child_name ("list");
+                }
             });
         }
 

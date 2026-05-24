@@ -1,0 +1,76 @@
+using Gtk;
+
+public class MainWindowWifiSharePage : Gtk.Box {
+    private Gtk.Label ssid_label;
+    private Gtk.Box qr_container;
+    private Gtk.Label description_label;
+
+    public signal void back ();
+
+    public MainWindowWifiSharePage () {
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+
+        this.add_css_class (MainWindowCssClasses.PAGE);
+        this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_hook_and_best_class (
+            this,
+            "nm-page-wifi-share",
+            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
+        );
+
+        var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
+        nav_row.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
+
+        var back_btn = MainWindowHelpers.build_back_button ();
+        back_btn.clicked.connect (() => {
+            this.back ();
+        });
+        back_btn.set_halign (Gtk.Align.START);
+        nav_row.append (back_btn);
+        this.append (nav_row);
+
+        var content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
+        content_box.set_halign (Gtk.Align.CENTER);
+        content_box.set_valign (Gtk.Align.CENTER);
+        content_box.set_vexpand (true);
+        content_box.add_css_class ("nm-qr-share-content");
+
+        this.ssid_label = new Gtk.Label ("");
+        this.ssid_label.set_xalign (0.5f);
+        this.ssid_label.set_halign (Gtk.Align.CENTER);
+        this.ssid_label.add_css_class ("nm-qr-share-title");
+        content_box.append (this.ssid_label);
+
+        this.qr_container = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        this.qr_container.set_halign (Gtk.Align.CENTER);
+        this.qr_container.set_valign (Gtk.Align.CENTER);
+        this.qr_container.add_css_class ("nm-qr-share-code-box");
+        content_box.append (this.qr_container);
+
+        this.description_label = new Gtk.Label ("");
+        this.description_label.set_xalign (0.5f);
+        this.description_label.set_halign (Gtk.Align.CENTER);
+        this.description_label.set_wrap (true);
+        this.description_label.set_justify (Gtk.Justification.CENTER);
+        this.description_label.add_css_class ("nm-qr-share-description");
+        content_box.append (this.description_label);
+
+        this.append (content_box);
+    }
+
+    public void set_share_data (string ssid, string qr_text) {
+        this.ssid_label.set_text (ssid);
+        
+        // Clear previous qr widget
+        MainWindowHelpers.clear_box (this.qr_container);
+
+        var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (qr_text);
+        qr_widget.set_size_request (180, 180); 
+        this.qr_container.append (qr_widget);
+
+        string text1 = _("Scan this QR code on another device to connect to %s without entering the password.").printf(ssid);
+        string text2 = _("This QR code includes the network password and it isn't encrypted. Anyone with access to this QR code can find out this network's password.");
+        this.description_label.set_text (text1 + "\n" + text2);
+    }
+}
