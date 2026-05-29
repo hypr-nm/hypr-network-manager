@@ -64,6 +64,33 @@ dnf copr enable yeab212/hypr-network-manager
 dnf install hypr-network-manager
 ```
 
+### Nix
+
+Run directly without installing:
+
+```bash
+nix run github:hypr-nm/hypr-network-manager
+```
+
+Or install into your profile:
+
+```bash
+nix profile install github:hypr-nm/hypr-network-manager
+```
+
+To start a development shell with all build dependencies:
+
+```bash
+nix develop github:hypr-nm/hypr-network-manager
+```
+
+If you have a local clone:
+
+```bash
+nix run .                # run the application
+nix develop              # enter dev shell
+```
+
 ### Debian / Ubuntu / Other Distros
 
 Use the installer script:
