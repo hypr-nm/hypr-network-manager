@@ -312,7 +312,14 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
         auto_row.append (auto_lbl);
         this.autoconnect_switch = new Gtk.Switch ();
         this.autoconnect_switch.set_valign (Gtk.Align.CENTER);
-        this.autoconnect_switch.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
+        MainWindowCssClassResolver.add_best_class (
+            this.autoconnect_switch,
+            {MainWindowCssClasses.SWITCH, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        MainWindowCssClassResolver.add_best_class (
+            this.autoconnect_switch,
+            {MainWindowCssClasses.EDIT_MODE_SWITCH, MainWindowCssClasses.SWITCH}
+        );
         auto_row.append (this.autoconnect_switch);
         form.append (auto_row);
 
