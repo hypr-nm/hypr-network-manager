@@ -50,10 +50,16 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
             this.primary_button.set_sensitive (true);
         }
 
-        this.edit_button.set_sensitive (!pending);
+        bool is_wireguard = conn.vpn_type.down () == "wireguard";
+        this.edit_button.set_sensitive (!pending && is_wireguard);
+        this.edit_button.set_visible (is_wireguard);
     }
 
     public void render_profile_fields (VpnConnection conn, VpnProfileDetails details) {
+        bool is_wireguard = details is WireGuardVpnProfileDetails;
+        this.edit_button.set_sensitive (is_wireguard);
+        this.edit_button.set_visible (is_wireguard);
+
         this.details_title.set_text (MainWindowHelpers.safe_text (conn.name));
 
         MainWindowHelpers.clear_listbox (this.basic_rows);
