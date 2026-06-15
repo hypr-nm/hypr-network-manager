@@ -60,6 +60,9 @@ vala/src/ui/pages/wifi/main_window_wifi_details_page.vala
 vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala
 vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala
 vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala
+vala/src/ui/pages/wifi/main_window_wifi_share_page.vala
+vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala
+vala/src/ui/pages/vpn/main_window_vpn_details_page.vala
 vala/src/ui/utils/main_window_css_classes.vala
 vala/src/ui/utils/main_window_css_class_resolver.vala
 vala/src/ui/utils/main_window_dismiss_handler.vala
@@ -73,6 +76,7 @@ vala/src/ui/utils/main_window_layer_shell_configurator.vala
 vala/src/ui/utils/main_window_password_prompt_manager.vala
 vala/src/ui/utils/main_window_ui_metrics.vala
 vala/src/ui/utils/main_window_wifi_edit_utils.vala
+vala/src/ui/utils/main_window_vpn_form_builder.vala
 vala/src/ui/utils/transient_surface_tracker.vala
 vala/src/ui/views/app_content_navigation_manager.vala
 vala/src/ui/views/ethernet_section_view.vala
@@ -80,6 +84,8 @@ vala/src/ui/views/saved_profiles_view.vala
 vala/src/ui/views/status_bar_view.vala
 vala/src/ui/views/vpn_section_view.vala
 vala/src/ui/views/wifi_section_view.vala
+vala/src/ui/widgets/dynamic_string_list.vala
 vala/src/ui/widgets/main_window_tabs_menu.vala
 vala/src/ui/widgets/tracked_drop_down.vala
 vala/src/ui/widgets/tracked_popover.vala
+vala/src/ui/widgets/dynamic_peer_list.vala
