@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hypr-network-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-30 20:16+0300\n"
+"POT-Creation-Date: 2026-06-15 23:39+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,1008 +17,1177 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: vala/src/backend/nm_status_formatter.vala:19
+#: vala/src/backend/nm_status_formatter.vala:36
 msgid "Offline"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:21
+#: vala/src/backend/nm_status_formatter.vala:38
 msgid "Networking is disabled"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:27
-#: vala/src/ui/main_window.vala:367
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:100
-#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:45
+#: vala/src/backend/nm_status_formatter.vala:44
+#: vala/src/ui/main_window.vala:384
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:117
+#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:63
 msgid "Ethernet"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:29
+#: vala/src/backend/nm_status_formatter.vala:46
 #, c-format
 msgid "Ethernet: %s"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:36
+#: vala/src/backend/nm_status_formatter.vala:53
 msgid "WiFi"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:38
+#: vala/src/backend/nm_status_formatter.vala:55
 #, c-format
 msgid ""
 "WiFi: %s (%d%%)\n"
 "Device: %s"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:45
+#: vala/src/backend/nm_status_formatter.vala:62
 msgid "WiFi Off"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:47
+#: vala/src/backend/nm_status_formatter.vala:64
 msgid "WiFi is disabled"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:52
-#: vala/src/models/network_device.vala:41
+#: vala/src/backend/nm_status_formatter.vala:69
+#: vala/src/models/network_device.vala:58
 msgid "Disconnected"
 msgstr ""
 
-#: vala/src/backend/nm_status_formatter.vala:54
+#: vala/src/backend/nm_status_formatter.vala:71
 msgid "Not connected to any network"
 msgstr ""
 
-#: vala/src/backend/nm_wifi_client.vala:63
+#: vala/src/backend/nm_wifi_client.vala:80
 #, c-format
 msgid "Hidden network %u"
 msgstr ""
 
-#: vala/src/main.vala:25
+#: vala/src/main.vala:42
 msgid "Config JSON path"
 msgstr ""
 
-#: vala/src/main.vala:26
+#: vala/src/main.vala:43
 msgid "Print JSON status for waybar/eww"
 msgstr ""
 
-#: vala/src/main.vala:27
+#: vala/src/main.vala:44
 msgid "Toggle Wi-Fi and exit"
 msgstr ""
 
-#: vala/src/main.vala:28
+#: vala/src/main.vala:45
 msgid "Override log level to debug"
 msgstr ""
 
-#: vala/src/main.vala:29
+#: vala/src/main.vala:46
 msgid "Run as a background daemon"
 msgstr ""
 
-#: vala/src/main.vala:30
+#: vala/src/main.vala:47
 msgid "Quit the running daemon"
 msgstr ""
 
-#: vala/src/main.vala:31
+#: vala/src/main.vala:48
 msgid "Print version information"
 msgstr ""
 
-#: vala/src/main.vala:35
+#: vala/src/main.vala:52
 msgid "- hypr-network-manager: A network manager for Hyprland"
 msgstr ""
 
-#: vala/src/models/network_device.vala:37
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:23
+#: vala/src/models/network_device.vala:54
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:40
 msgid "Unknown"
 msgstr ""
 
-#: vala/src/models/network_device.vala:39
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:53
-#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:85
+#: vala/src/models/network_device.vala:56
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:70
+#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:86
 msgid "Unavailable"
 msgstr ""
 
-#: vala/src/models/network_device.vala:43
+#: vala/src/models/network_device.vala:60
 msgid "Preparing"
 msgstr ""
 
-#: vala/src/models/network_device.vala:45
+#: vala/src/models/network_device.vala:62
 msgid "Configuring"
 msgstr ""
 
-#: vala/src/models/network_device.vala:47
+#: vala/src/models/network_device.vala:64
 msgid "Auth required"
 msgstr ""
 
-#: vala/src/models/network_device.vala:49
+#: vala/src/models/network_device.vala:66
 msgid "IP configuring"
 msgstr ""
 
-#: vala/src/models/network_device.vala:51
+#: vala/src/models/network_device.vala:68
 msgid "IP checking"
 msgstr ""
 
-#: vala/src/models/network_device.vala:53
+#: vala/src/models/network_device.vala:70
 msgid "Secondaries"
 msgstr ""
 
-#: vala/src/models/network_device.vala:55
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:33
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:33
+#: vala/src/models/network_device.vala:72
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:50
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:53
 msgid "Connected"
 msgstr ""
 
-#: vala/src/models/network_device.vala:57
+#: vala/src/models/network_device.vala:74
 msgid "Disconnecting"
 msgstr ""
 
-#: vala/src/models/network_device.vala:59
+#: vala/src/models/network_device.vala:76
 msgid "Failed"
 msgstr ""
 
-#: vala/src/models/network_device.vala:61
+#: vala/src/models/network_device.vala:78
 #, c-format
 msgid "State %u"
 msgstr ""
 
-#: vala/src/models/wifi_security_mode.vala:25
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:369
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:43
+#: vala/src/models/network_update_requests.vala:180
+msgid "IP settings are required."
+msgstr ""
+
+#: vala/src/models/network_update_requests.vala:213
+msgid "WireGuard interface name is required (e.g. wg0)."
+msgstr ""
+
+#: vala/src/models/network_update_requests.vala:218
+msgid "WireGuard requires public key and endpoint host for all peers."
+msgstr ""
+
+#: vala/src/models/network_update_requests.vala:249
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:247
+msgid "OpenVPN remote is required."
+msgstr ""
+
+#: vala/src/models/wifi_security_mode.vala:42
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:658
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:63
 msgid "Open"
 msgstr ""
 
-#: vala/src/models/wifi_security_mode.vala:27
-#: vala/src/models/wifi_security_mode.vala:35
+#: vala/src/models/wifi_security_mode.vala:44
+#: vala/src/models/wifi_security_mode.vala:52
 msgid "WPA/WPA2 Personal"
 msgstr ""
 
-#: vala/src/models/wifi_security_mode.vala:29
+#: vala/src/models/wifi_security_mode.vala:46
 msgid "WPA3 Personal"
 msgstr ""
 
-#: vala/src/models/wifi_security_mode.vala:31
+#: vala/src/models/wifi_security_mode.vala:48
 msgid "WPA2/WPA3 Personal"
 msgstr ""
 
-#: vala/src/models/wifi_security_mode.vala:33
+#: vala/src/models/wifi_security_mode.vala:50
 msgid "WEP (Legacy)"
 msgstr ""
 
-#: vala/src/models/wifi_signal_levels.vala:36
+#: vala/src/models/wifi_signal_levels.vala:53
 msgid "Excellent"
 msgstr ""
 
-#: vala/src/models/wifi_signal_levels.vala:38
+#: vala/src/models/wifi_signal_levels.vala:55
 msgid "Good"
 msgstr ""
 
-#: vala/src/models/wifi_signal_levels.vala:40
+#: vala/src/models/wifi_signal_levels.vala:57
 msgid "Fair"
 msgstr ""
 
-#: vala/src/models/wifi_signal_levels.vala:42
+#: vala/src/models/wifi_signal_levels.vala:59
 msgid "Weak"
 msgstr ""
 
-#: vala/src/models/wifi_signal_levels.vala:44
+#: vala/src/models/wifi_signal_levels.vala:61
 msgid "Very Weak"
 msgstr ""
 
-#: vala/src/ui/controllers/profiles/main_window_profile_adapter.vala:53
+#: vala/src/ui/controllers/profiles/main_window_profile_adapter.vala:70
 #, c-format
 msgid "Saved Profile: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:184
-#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:219
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:173
+msgid "Connection name is required."
+msgstr ""
+
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:200
+msgid "WireGuard listen port must be a number between 0 and 65535."
+msgstr ""
+
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:211
+msgid "WireGuard fwmark must be a valid unsigned integer."
+msgstr ""
+
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:241
+msgid "OpenVPN port must be a number between 0 and 65535."
+msgstr ""
+
+#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:201
+#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:236
 #, c-format
 msgid "Connect failed: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:209
+#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:226
 #, c-format
 msgid "Connect failed: %s. Reconnect to previous network failed: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:246
+#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:263
 #, c-format
 msgid "Forget failed: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:273
+#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:290
 #, c-format
 msgid "Disconnect failed: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:299
+#: vala/src/ui/controllers/wifi/main_window_wifi_connection_controller.vala:316
 #, c-format
 msgid "Could not update auto-connect: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_details_edit_controller.vala:224
-#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:27
-#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:29
+#: vala/src/ui/controllers/wifi/main_window_wifi_details_edit_controller.vala:241
+#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:45
+#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:47
 #, c-format
 msgid "Edit: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_hidden_network_controller.vala:119
+#: vala/src/ui/controllers/wifi/main_window_wifi_hidden_network_controller.vala:136
 msgid "SSID is required."
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_hidden_network_controller.vala:125
+#: vala/src/ui/controllers/wifi/main_window_wifi_hidden_network_controller.vala:142
 #, c-format
 msgid "Password must be at least %d characters for the selected security mode."
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_hidden_network_controller.vala:150
+#: vala/src/ui/controllers/wifi/main_window_wifi_hidden_network_controller.vala:167
 #, c-format
 msgid "Add hidden network failed: %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:191
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:212
 msgid "Connection failed or interrupted."
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:199
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:220
 msgid "Connection failed."
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:232
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:253
 #, c-format
 msgid "Wi-Fi · %s (%u%%)"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:235
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:256
 #, c-format
 msgid "Wi-Fi · %s"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:238
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:259
 #, c-format
 msgid "Wi-Fi available (%u networks)"
 msgstr ""
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:242
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:151
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:263
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:174
 msgid "No Wi-Fi networks found"
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:119
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:154
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:137
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:222
 msgid "Manual IPv4 requires an address."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:123
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:160
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:141
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:228
 msgid "Manual IPv4 requires a prefix between 1 and 32."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:127
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:166
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:145
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:234
 msgid "Manual IPv4 requires a gateway address."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:134
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:175
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:152
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:243
 msgid "Manual DNS is enabled; provide at least one DNS server."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:140
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:183
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:158
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:251
 msgid "Manual IPv6 requires an address."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:144
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:189
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:162
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:257
 msgid "Manual IPv6 requires a prefix between 1 and 128."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:148
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:195
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:166
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:263
 msgid "Manual IPv6 requires a gateway address."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:155
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:204
+#: vala/src/ui/interfaces/main_window_ip_edit_page.vala:173
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:272
 msgid "Manual IPv6 DNS is enabled; provide at least one DNS server."
 msgstr ""
 
-#: vala/src/ui/interfaces/main_window_network_details_page.vala:17
+#: vala/src/ui/interfaces/main_window_network_details_page.vala:34
 msgid "Loading"
 msgstr ""
 
-#: vala/src/ui/main_window.vala:50
+#: vala/src/ui/main_window.vala:67
 msgid "Network Manager"
 msgstr ""
 
-#: vala/src/ui/main_window.vala:366
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:47
+#: vala/src/ui/main_window.vala:383
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:66
 msgid "Wi-Fi"
 msgstr ""
 
-#: vala/src/ui/main_window.vala:368
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:79
+#: vala/src/ui/main_window.vala:385
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:101
 msgid "VPN"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:29
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:139
+#: vala/src/ui/main_window.vala:457
+msgid "Turn off flight mode"
+msgstr ""
+
+#: vala/src/ui/main_window.vala:457
+#: vala/src/ui/widgets/main_window_tabs_menu.vala:71
+msgid "Turn on flight mode"
+msgstr ""
+
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:46
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:156
 msgid "Interface"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:30
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:47
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:143
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:325
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:47
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:64
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:160
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:614
 msgid "Profile"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:31
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:147
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:48
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:164
 msgid "State"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:33
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:46
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:50
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:66
 msgid "Yes"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:33
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:46
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:50
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:66
 msgid "No"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:37
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:54
 msgid "Device Path"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:40
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:57
 msgid "State Code"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:44
-#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:78
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:61
+#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:79
 msgid "Updating…"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:47
-#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:81
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:181
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:243
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:64
+#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:82
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:237
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:263
 msgid "Disconnect"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:50
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:110
-#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:83
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:181
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:243
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:331
-#: vala/src/ui/views/wifi_section_view.vala:266
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:67
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:127
+#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:84
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:237
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:263
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:374
+#: vala/src/ui/views/wifi_section_view.vala:350
 msgid "Connect"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:56
-#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:88
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:73
+#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:89
 msgid "No Profile"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:122
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:63
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:142
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:139
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:80
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:162
 msgid "Edit"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:146
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:166
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:163
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:197
 msgid "Basic"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:147
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:167
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:164
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:198
 msgid "Advanced"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:148
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:168
+#: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:165
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:199
 msgid "IP"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:30
+#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:48
 #, c-format
 msgid "Profile %s"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:77
+#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:95
 msgid "Edit Ethernet"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:150
-#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:199
+#: vala/src/ui/pages/ethernet/main_window_ethernet_edit_page.vala:168
+#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:217
 msgid "Apply"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:51
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:47
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:85
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:64
+#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:69
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:65
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:107
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:83
 msgid "Refresh"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:56
+#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:74
 msgid "Refresh Ethernet devices"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:85
+#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:107
 msgid "No Ethernet devices found"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:92
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:165
+#: vala/src/ui/pages/ethernet/main_window_ethernet_page_builder.vala:114
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:188
 msgid "Flight mode is on"
 msgstr ""
 
-#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:66
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:210
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:176
+#: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:114
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:240
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:293
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:196
 msgid "Details"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:75
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:149
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:92
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:179
 msgid "Delete"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:113
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:130
 msgid "Wi-Fi profile"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:116
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:327
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:133
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:616
 msgid "Profile Name"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:120
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:339
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:274
-#: vala/src/ui/views/wifi_section_view.vala:233
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:137
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:628
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:297
+#: vala/src/ui/views/wifi_section_view.vala:317
 msgid "SSID"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:124
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:151
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:141
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:168
 msgid "UUID"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:136
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:153
 msgid "Ethernet profile"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:161
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:43
-#: vala/src/ui/views/wifi_section_view.vala:247
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:178
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:63
+#: vala/src/ui/views/wifi_section_view.vala:331
 msgid "Security"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:165
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:182
 msgid "Auto-connect"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:169
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:186
 msgid "All users"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:173
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:208
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:190
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:225
 msgid "Configured IPv4"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:177
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:212
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:13
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:194
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:229
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:30
 msgid "Configured IPv4 Address"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:181
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:216
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:198
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:233
 msgid "Configured IPv4 Gateway"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:185
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:220
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:202
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:237
 msgid "Configured IPv4 DNS"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:189
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:224
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:206
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:241
 msgid "Configured IPv6"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:193
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:228
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:40
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:210
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:245
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:57
 msgid "Configured IPv6 Address"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:197
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:232
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:49
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:214
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:249
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:66
 msgid "Configured IPv6 Gateway"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:201
-#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:236
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:218
+#: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:253
 msgid "Configured IPv6 DNS"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:41
-#: vala/src/ui/widgets/main_window_tabs_menu.vala:22
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:59
+#: vala/src/ui/widgets/main_window_tabs_menu.vala:39
 msgid "Profiles"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:54
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:72
 msgid "Refresh Profiles"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:71
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:93
 msgid "Wi-Fi Profiles"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:81
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:103
 msgid "Ethernet Profiles"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:111
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:141
 msgid "No saved Wi-Fi profiles"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:131
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:138
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:161
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:168
 msgid "Saved profile"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:140
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:170
 #, c-format
 msgid "SSID: %s"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:176
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:206
 msgid "No saved Ethernet profiles"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:197
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:227
 msgid "Ethernet device"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:203
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:233
 #, c-format
 msgid "Profile: %s"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:203
+#: vala/src/ui/pages/profiles/main_window_profiles_page.vala:233
 msgid "Saved Ethernet profile"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:296
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:438
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:317
+msgid "Identity"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:438
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:671
+msgid "Username"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:504
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:63
+msgid "Collapse section"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:508
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:67
+msgid "Expand section"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:585
 msgid "Edit Saved Profile"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:351
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:64
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:640
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:84
 msgid "BSSID"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:363
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:652
 msgid "Security Mode"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:370
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:659
 msgid "WPA/WPA2 Personal (PSK)"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:371
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:660
 msgid "WPA3 Personal (SAE)"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:372
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:661
 msgid "Enhanced Open (OWE)"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:373
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:662
 msgid "WEP"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:384
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:663
+msgid "WPA/WPA2 Enterprise (802.1X)"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:683
+msgid "Anonymous identity"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:695
+msgid "Domain"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:707
+msgid "CA cert"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:719
+msgid "CA cert password"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:734
+msgid "User cert"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:746
+msgid "User cert password"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:761
+msgid "User private key"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:773
+msgid "User privkey password"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:788
+msgid "Method"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:794
+msgid "PEAP"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:795
+msgid "TLS"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:796
+msgid "TTLS"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:797
+msgid "PWD"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:805
+msgid "Inner authentication"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:811
+msgid "MSCHAPv2"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:812
+msgid "MD5"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:813
+msgid "GTC"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:814
+msgid "PAP"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:815
+msgid "CHAP"
+msgstr ""
+
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:834
 msgid "Access"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:386
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:572
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:836
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:657
 msgid "Connect automatically"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:390
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:840
 msgid "Available to all users"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:397
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:847
 msgid "Authentication"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:399
-#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:114
-#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:126
-#: vala/src/ui/views/wifi_section_view.vala:280
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:872
+#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:132
+#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:144
+#: vala/src/ui/views/wifi_section_view.vala:364
 msgid "Password"
 msgstr ""
 
-#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:476
+#: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:949
 msgid "Save"
 msgstr ""
 
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:118
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:112
+msgid "Refresh VPN profiles"
+msgstr ""
+
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:120
+msgid "Add VPN"
+msgstr ""
+
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:128
+msgid "Add new VPN profile"
+msgstr ""
+
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:168
 msgid "No VPN profiles found"
 msgstr ""
 
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:201
+#. Refresh details
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:257
+#: vala/src/ui/views/vpn_section_view.vala:125
 #, c-format
 msgid "VPN disconnect failed: %s"
 msgstr ""
 
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:218
+#. Refresh details
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:274
+#: vala/src/ui/views/vpn_section_view.vala:134
 #, c-format
 msgid "VPN connect failed: %s"
 msgstr ""
 
-#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:255
+#: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:336
 #, c-format
 msgid "VPN refresh failed: %s"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:32
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:52
 msgid "Connection Status"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:33
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:53
 msgid "Not connected"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:37
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:57
 msgid "Signal Strength"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:40
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:60
 msgid "Bars"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:43
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:63
 msgid "Secured"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:46
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:66
 msgid "Saved Profile"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:53
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:73
 msgid "Frequency"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:54
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:58
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:61
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:71
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:11
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:120
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:74
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:78
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:81
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:91
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:28
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:137
 msgid "n/a"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:58
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:78
 msgid "Channel"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:61
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:81
 msgid "Band"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:68
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:88
 msgid "Max bitrate"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:75
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:95
 msgid "Mode"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:120
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:140
 msgid "Network"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:130
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:187
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:150
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:207
 msgid "Forget"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:88
+#: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:174
+msgid "Share"
+msgstr ""
+
+#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:106
 msgid "Edit Network"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:208
+#: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:226
 msgid "OK"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:53
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:72
 msgid "Add Network"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:60
-#: vala/src/ui/views/wifi_section_view.vala:203
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:79
+#: vala/src/ui/views/wifi_section_view.vala:287
 msgid "Add Hidden Network"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:69
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:88
 msgid "Refresh Wi-Fi networks"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:124
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:147
 msgid "Other Networks"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:158
+#: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:181
 msgid "Wi-Fi is disabled"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:87
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:107
 msgid "• Connected"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:243
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:263
 msgid "Connecting…"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:264
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:287
 #, c-format
 msgid "Password for %s"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:285
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:308
 msgid "Hidden network name"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:299
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:329
+msgid "Username / Email"
+msgstr ""
+
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:342
 #, c-format
 msgid "Wi-Fi password (min %d chars)"
 msgstr ""
 
-#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:323
+#: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:366
 msgid "Cancel"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:17
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:34
 msgid "Ad-hoc"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:19
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:36
 msgid "Infrastructure"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:21
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:38
 msgid "Access Point"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:62
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:74
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:239
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:491
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:79
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:91
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:256
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:511
 msgid "Manual"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:64
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:76
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:240
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:492
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:81
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:93
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:257
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:512
 msgid "Disabled"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:67
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:238
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:84
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:255
 msgid "Automatic (DHCP)"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:78
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:493
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:95
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:513
 msgid "Ignore"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:80
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:97
 msgid "DHCPv6"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:82
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:99
 msgid "Link-local"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:84
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:101
 msgid "Shared"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers_formatting.vala:87
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:490
+#: vala/src/ui/utils/main_window_helpers_formatting.vala:104
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:510
 msgid "Automatic"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers.vala:17
+#: vala/src/ui/utils/main_window_helpers.vala:34
 msgid "Back"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers.vala:32
+#: vala/src/ui/utils/main_window_helpers.vala:49
 msgid "Hide password"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_helpers.vala:32
-#: vala/src/ui/utils/main_window_password_prompt_manager.vala:25
+#: vala/src/ui/utils/main_window_helpers.vala:49
+#: vala/src/ui/utils/main_window_password_prompt_manager.vala:42
 msgid "Show password"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:7
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:24
 msgid "Configured IPv4 Method"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:22
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:39
 msgid "Configured Gateway"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:28
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:45
 msgid "Configured DNS"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:34
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:51
 msgid "Configured IPv6 Method"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:57
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:74
 msgid "Current IPv4 Address"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:66
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:83
 msgid "Current Gateway"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:72
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:89
 msgid "Current DNS"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:78
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:95
 msgid "Current IPv6 Address"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:87
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:104
 msgid "Current IPv6 Gateway"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:93
+#: vala/src/ui/utils/main_window_ip_details_row_builder.vala:110
 msgid "Current IPv6 DNS"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:46
-msgid "Collapse section"
-msgstr ""
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:50
-msgid "Expand section"
-msgstr ""
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:216
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:233
 msgid "IPv4 Settings"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:232
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:249
 msgid "IPv4 Method"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:276
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:293
 msgid "IPv4 Address"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:282
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:299
 msgid "192.168.1.100"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:297
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:314
 msgid "Prefix (CIDR)"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:303
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:320
 msgid "24"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:318
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:335
 msgid "Gateway"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:324
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:341
 msgid "192.168.1.1"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:359
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:376
 msgid "DNS Servers (comma-separated)"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:374
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:394
 msgid "Automatic DNS"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:408
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:428
 msgid "1.1.1.1, 8.8.8.8"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:468
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:488
 msgid "IPv6 Settings"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:484
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:504
 msgid "IPv6 Method"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:530
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:550
 msgid "IPv6 Address"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:536
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:556
 msgid "2001:db8::100"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:551
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:571
 msgid "IPv6 Prefix (CIDR)"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:557
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:577
 msgid "64"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:572
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:592
 msgid "IPv6 Gateway"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:578
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:598
 msgid "fe80::1"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:613
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:633
 msgid "IPv6 DNS"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:628
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:651
 msgid "Automatic IPv6 DNS"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:665
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:688
 msgid "2606:4700:4700::1111, 2001:4860:4860::8888"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_wifi_edit_utils.vala:42
+#: vala/src/ui/utils/main_window_wifi_edit_utils.vala:59
 msgid "IPv4 prefix must be a number between 0 and 32."
 msgstr ""
 
-#: vala/src/ui/utils/main_window_wifi_edit_utils.vala:61
+#: vala/src/ui/utils/main_window_wifi_edit_utils.vala:78
 msgid "IPv6 prefix must be a number between 0 and 128."
 msgstr ""
 
-#: vala/src/ui/views/status_bar_view.vala:26
+#: vala/src/ui/views/status_bar_view.vala:43
 msgid "Loading networks…"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:226
+#: vala/src/ui/views/vpn_section_view.vala:201
+#, c-format
+msgid "VPN delete failed: %s"
+msgstr ""
+
+#: vala/src/ui/views/wifi_section_view.vala:208
+msgid "Cannot share: password is empty"
+msgstr ""
+
+#: vala/src/ui/views/wifi_section_view.vala:232
+#, c-format
+msgid "Failed to get details for share: %s"
+msgstr ""
+
+#: vala/src/ui/views/wifi_section_view.vala:310
 msgid "Manually add a hidden Wi-Fi network."
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:240
+#: vala/src/ui/views/wifi_section_view.vala:324
 msgid "Network name"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:292
+#: vala/src/ui/views/wifi_section_view.vala:376
 #, c-format
 msgid "Network password (min %d chars)"
 msgstr ""
 
-#: vala/src/ui/widgets/main_window_tabs_menu.vala:43
+#: vala/src/ui/widgets/main_window_tabs_menu.vala:60
 msgid "Saved Profiles"
-msgstr ""
-
-#: vala/src/ui/widgets/main_window_tabs_menu.vala:54
-msgid "Turn on flight mode"
 msgstr ""
