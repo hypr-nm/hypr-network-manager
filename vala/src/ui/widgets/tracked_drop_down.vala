@@ -93,6 +93,33 @@ namespace HyprNetworkManager.UI.Widgets {
                 if (width > 0) {
                     scroll.set_size_request (width, -1);
                 }
+
+                var root_widget = this.get_root () as Gtk.Widget;
+                if (root_widget != null) {
+                    double dest_x = 0.0;
+                    double dest_y = 0.0;
+                    if (menu_button.translate_coordinates (root_widget, 0.0, 0.0, out dest_x, out dest_y)) {
+                        int min_height = 0;
+                        int nat_height = 0;
+                        int min_baseline = 0;
+                        int nat_baseline = 0;
+                        popover.measure (Gtk.Orientation.VERTICAL, -1, out min_height, out nat_height, out min_baseline, out nat_baseline);
+
+                        int button_height = menu_button.get_height ();
+                        int window_height = root_widget.get_height ();
+
+                        double space_below = window_height - (dest_y + button_height);
+                        double required_space = nat_height > 0 ? nat_height : 250.0;
+
+                        if (space_below < required_space + 10) {
+                            popover.set_position (Gtk.PositionType.TOP);
+                            popover.set_offset (0, -8);
+                        } else {
+                            popover.set_position (Gtk.PositionType.BOTTOM);
+                            popover.set_offset (0, 4);
+                        }
+                    }
+                }
             });
 
             this.append (menu_button);
