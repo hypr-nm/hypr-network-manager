@@ -114,6 +114,17 @@ public class NetworkIpUpdateRequest : Object {
 
 public class WifiNetworkUpdateRequest : NetworkIpUpdateRequest {
     public string password { get; set; default = ""; }
+    public string identity { get; set; default = ""; }
+    public string anonymous_identity { get; set; default = ""; }
+    public string domain_suffix_match { get; set; default = ""; }
+    public string ca_cert { get; set; default = ""; }
+    public string ca_cert_password { get; set; default = ""; }
+    public string eap_method { get; set; default = "peap"; }
+    public string phase2_auth { get; set; default = "mschapv2"; }
+    public string user_cert { get; set; default = ""; }
+    public string user_cert_password { get; set; default = ""; }
+    public string user_private_key { get; set; default = ""; }
+    public string user_private_key_password { get; set; default = ""; }
 }
 
 public class WifiSavedProfileUpdateRequest : Object {
@@ -123,6 +134,17 @@ public class WifiSavedProfileUpdateRequest : Object {
     public string security_mode { get; set; default = "open"; }
     public bool autoconnect { get; set; default = true; }
     public bool available_to_all_users { get; set; default = true; }
+    public string identity { get; set; default = ""; }
+    public string anonymous_identity { get; set; default = ""; }
+    public string domain_suffix_match { get; set; default = ""; }
+    public string ca_cert { get; set; default = ""; }
+    public string ca_cert_password { get; set; default = ""; }
+    public string eap_method { get; set; default = "peap"; }
+    public string phase2_auth { get; set; default = "mschapv2"; }
+    public string user_cert { get; set; default = ""; }
+    public string user_cert_password { get; set; default = ""; }
+    public string user_private_key { get; set; default = ""; }
+    public string user_private_key_password { get; set; default = ""; }
 }
 
 public class VpnUpdateRequest : Object {

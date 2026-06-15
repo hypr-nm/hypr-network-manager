@@ -7,7 +7,23 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         "wpa-psk",
         "sae",
         "owe",
-        "wep"
+        "wep",
+        "wpa-eap"
+    };
+
+    private static string[] eap_method_keys = {
+        "peap",
+        "tls",
+        "ttls",
+        "pwd"
+    };
+
+    private static string[] phase2_auth_keys = {
+        "mschapv2",
+        "md5",
+        "gtc",
+        "pap",
+        "chap"
     };
 
     public Gtk.Label title_label { get; set; }
@@ -17,6 +33,29 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public HyprNetworkManager.UI.Widgets.TrackedDropDown security_mode_dropdown { get; set; }
     public Gtk.CheckButton autoconnect_check { get; set; }
     public Gtk.CheckButton all_users_check { get; set; }
+    public Gtk.Label identity_label { get; set; }
+    public Gtk.Entry identity_entry { get; set; }
+    public Gtk.Label anonymous_identity_label { get; set; }
+    public Gtk.Entry anonymous_identity_entry { get; set; }
+    public Gtk.Label domain_label { get; set; }
+    public Gtk.Entry domain_entry { get; set; }
+    public Gtk.Label ca_cert_label { get; set; }
+    public Gtk.Entry ca_cert_entry { get; set; }
+    public Gtk.Label ca_cert_password_label { get; set; }
+    public Gtk.Entry ca_cert_password_entry { get; set; }
+    public Gtk.Label user_cert_label { get; set; }
+    public Gtk.Entry user_cert_entry { get; set; }
+    public Gtk.Label user_cert_password_label { get; set; }
+    public Gtk.Entry user_cert_password_entry { get; set; }
+    public Gtk.Label user_private_key_label { get; set; }
+    public Gtk.Entry user_private_key_entry { get; set; }
+    public Gtk.Label user_private_key_password_label { get; set; }
+    public Gtk.Entry user_private_key_password_entry { get; set; }
+    public Gtk.Label eap_method_label { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown eap_method_dropdown { get; set; }
+    public Gtk.Label phase2_auth_label { get; set; }
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown phase2_auth_dropdown { get; set; }
+    public Gtk.Label password_label { get; set; }
     public Gtk.Entry password_entry { get; set; }
 
     public HyprNetworkManager.UI.Widgets.TrackedDropDown ipv4_method_dropdown { get; set; }
@@ -64,6 +103,17 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.set_selected_security_mode_key (settings.security_mode);
         this.autoconnect_check.set_active (settings.autoconnect);
         this.all_users_check.set_active (settings.available_to_all_users);
+        this.identity_entry.set_text (settings.identity);
+        this.anonymous_identity_entry.set_text (settings.anonymous_identity);
+        this.domain_entry.set_text (settings.domain_suffix_match);
+        this.ca_cert_entry.set_text (settings.ca_cert);
+        this.ca_cert_password_entry.set_text (settings.ca_cert_password);
+        this.user_cert_entry.set_text (settings.user_cert);
+        this.user_cert_password_entry.set_text (settings.user_cert_password);
+        this.user_private_key_entry.set_text (settings.user_private_key);
+        this.user_private_key_password_entry.set_text (settings.user_private_key_password);
+        this.set_selected_eap_method_key (settings.eap_method);
+        this.set_selected_phase2_auth_key (settings.phase2_auth);
         this.password_entry.set_text (settings.configured_password);
 
         this.ipv4_method_dropdown.set_selected (
@@ -214,11 +264,33 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
             bssid = this.bssid_entry.get_text ().strip (),
             security_mode = this.get_selected_security_mode_key (),
             autoconnect = this.autoconnect_check.get_active (),
-            available_to_all_users = this.all_users_check.get_active ()
+            available_to_all_users = this.all_users_check.get_active (),
+            identity = this.identity_entry.get_text ().strip (),
+            anonymous_identity = this.anonymous_identity_entry.get_text ().strip (),
+            domain_suffix_match = this.domain_entry.get_text ().strip (),
+            ca_cert = this.ca_cert_entry.get_text ().strip (),
+            ca_cert_password = this.ca_cert_password_entry.get_text (),
+            eap_method = this.get_selected_eap_method_key (),
+            phase2_auth = this.get_selected_phase2_auth_key (),
+            user_cert = this.user_cert_entry.get_text ().strip (),
+            user_cert_password = this.user_cert_password_entry.get_text (),
+            user_private_key = this.user_private_key_entry.get_text ().strip (),
+            user_private_key_password = this.user_private_key_password_entry.get_text ()
         };
 
         network_request = new WifiNetworkUpdateRequest () {
             password = password,
+            identity = this.identity_entry.get_text ().strip (),
+            anonymous_identity = this.anonymous_identity_entry.get_text ().strip (),
+            domain_suffix_match = this.domain_entry.get_text ().strip (),
+            ca_cert = this.ca_cert_entry.get_text ().strip (),
+            ca_cert_password = this.ca_cert_password_entry.get_text (),
+            eap_method = this.get_selected_eap_method_key (),
+            phase2_auth = this.get_selected_phase2_auth_key (),
+            user_cert = this.user_cert_entry.get_text ().strip (),
+            user_cert_password = this.user_cert_password_entry.get_text (),
+            user_private_key = this.user_private_key_entry.get_text ().strip (),
+            user_private_key_password = this.user_private_key_password_entry.get_text (),
             ipv4_method = method,
             ipv4_address = ipv4_address,
             ipv4_prefix = ipv4_prefix,
@@ -251,10 +323,136 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         for (uint i = 0; i < security_mode_keys.length; i++) {
             if (security_mode_keys[i] == key) {
                 this.security_mode_dropdown.set_selected (i);
+                this.sync_eap_field_visibilities ();
                 return;
             }
         }
         this.security_mode_dropdown.set_selected (0);
+        this.sync_eap_field_visibilities ();
+    }
+
+    public string get_selected_eap_method_key () {
+        uint idx = this.eap_method_dropdown.get_selected ();
+        if (idx >= eap_method_keys.length) {
+            return "peap";
+        }
+        return eap_method_keys[idx];
+    }
+
+    public void set_selected_eap_method_key (string eap_key) {
+        string key = eap_key.strip ().down ();
+        for (uint i = 0; i < eap_method_keys.length; i++) {
+            if (eap_method_keys[i] == key) {
+                this.eap_method_dropdown.set_selected (i);
+                this.sync_eap_field_visibilities ();
+                return;
+            }
+        }
+        this.eap_method_dropdown.set_selected (0);
+        this.sync_eap_field_visibilities ();
+    }
+
+    public string get_selected_phase2_auth_key () {
+        uint idx = this.phase2_auth_dropdown.get_selected ();
+        if (idx >= phase2_auth_keys.length) {
+            return "mschapv2";
+        }
+        return phase2_auth_keys[idx];
+    }
+
+    public void set_selected_phase2_auth_key (string phase2_key) {
+        string key = phase2_key.strip ().down ();
+        for (uint i = 0; i < phase2_auth_keys.length; i++) {
+            if (phase2_auth_keys[i] == key) {
+                this.phase2_auth_dropdown.set_selected (i);
+                this.sync_eap_field_visibilities ();
+                return;
+            }
+        }
+        this.phase2_auth_dropdown.set_selected (0);
+        this.sync_eap_field_visibilities ();
+    }
+
+    public void sync_eap_field_visibilities () {
+        string selected_mode = this.get_selected_security_mode_key ();
+        bool is_eap = selected_mode == "wpa-eap";
+
+        if (!is_eap) {
+            if (this.identity_label != null) this.identity_label.set_visible (false);
+            if (this.identity_entry != null) this.identity_entry.set_visible (false);
+            if (this.anonymous_identity_label != null) this.anonymous_identity_label.set_visible (false);
+            if (this.anonymous_identity_entry != null) this.anonymous_identity_entry.set_visible (false);
+            if (this.domain_label != null) this.domain_label.set_visible (false);
+            if (this.domain_entry != null) this.domain_entry.set_visible (false);
+            if (this.ca_cert_label != null) this.ca_cert_label.set_visible (false);
+            if (this.ca_cert_entry != null) this.ca_cert_entry.set_visible (false);
+            if (this.ca_cert_password_label != null) this.ca_cert_password_label.set_visible (false);
+            if (this.ca_cert_password_entry != null) this.ca_cert_password_entry.set_visible (false);
+            if (this.user_cert_label != null) this.user_cert_label.set_visible (false);
+            if (this.user_cert_entry != null) this.user_cert_entry.set_visible (false);
+            if (this.user_cert_password_label != null) this.user_cert_password_label.set_visible (false);
+            if (this.user_cert_password_entry != null) this.user_cert_password_entry.set_visible (false);
+            if (this.user_private_key_label != null) this.user_private_key_label.set_visible (false);
+            if (this.user_private_key_entry != null) this.user_private_key_entry.set_visible (false);
+            if (this.user_private_key_password_label != null) this.user_private_key_password_label.set_visible (false);
+            if (this.user_private_key_password_entry != null) this.user_private_key_password_entry.set_visible (false);
+            if (this.eap_method_label != null) this.eap_method_label.set_visible (false);
+            if (this.eap_method_dropdown != null) this.eap_method_dropdown.set_visible (false);
+            if (this.phase2_auth_label != null) this.phase2_auth_label.set_visible (false);
+            if (this.phase2_auth_dropdown != null) this.phase2_auth_dropdown.set_visible (false);
+            if (this.password_label != null) this.password_label.set_visible (true);
+            if (this.password_entry != null) this.password_entry.set_visible (true);
+            return;
+        }
+
+        string eap_method = this.get_selected_eap_method_key ();
+        
+        bool show_identity = eap_method == "peap" || eap_method == "tls" || eap_method == "ttls" || eap_method == "pwd";
+        bool show_anonymous_identity = eap_method == "peap" || eap_method == "ttls";
+        bool show_domain = eap_method == "peap" || eap_method == "tls";
+        bool show_ca_cert = eap_method == "peap" || eap_method == "tls" || eap_method == "ttls";
+        bool show_user_cert = eap_method == "tls";
+        bool show_user_private_key = eap_method == "tls";
+        bool show_user_private_key_password = eap_method == "tls";
+        bool show_phase2_auth = eap_method == "peap" || eap_method == "ttls";
+        bool show_password = eap_method == "peap" || eap_method == "ttls" || eap_method == "pwd";
+
+        if (this.identity_label != null) {
+            this.identity_label.set_text (eap_method == "tls" ? _("Identity") : _("Username"));
+            this.identity_label.set_visible (show_identity);
+        }
+        if (this.identity_entry != null) this.identity_entry.set_visible (show_identity);
+        
+        if (this.anonymous_identity_label != null) this.anonymous_identity_label.set_visible (show_anonymous_identity);
+        if (this.anonymous_identity_entry != null) this.anonymous_identity_entry.set_visible (show_anonymous_identity);
+        
+        if (this.domain_label != null) this.domain_label.set_visible (show_domain);
+        if (this.domain_entry != null) this.domain_entry.set_visible (show_domain);
+        
+        if (this.ca_cert_label != null) this.ca_cert_label.set_visible (show_ca_cert);
+        if (this.ca_cert_entry != null) this.ca_cert_entry.set_visible (show_ca_cert);
+        if (this.ca_cert_password_label != null) this.ca_cert_password_label.set_visible (show_ca_cert);
+        if (this.ca_cert_password_entry != null) this.ca_cert_password_entry.set_visible (show_ca_cert);
+        
+        if (this.user_cert_label != null) this.user_cert_label.set_visible (show_user_cert);
+        if (this.user_cert_entry != null) this.user_cert_entry.set_visible (show_user_cert);
+        if (this.user_cert_password_label != null) this.user_cert_password_label.set_visible (show_user_cert);
+        if (this.user_cert_password_entry != null) this.user_cert_password_entry.set_visible (show_user_cert);
+        
+        if (this.user_private_key_label != null) this.user_private_key_label.set_visible (show_user_private_key);
+        if (this.user_private_key_entry != null) this.user_private_key_entry.set_visible (show_user_private_key);
+        
+        if (this.user_private_key_password_label != null) this.user_private_key_password_label.set_visible (show_user_private_key_password);
+        if (this.user_private_key_password_entry != null) this.user_private_key_password_entry.set_visible (show_user_private_key_password);
+        
+        if (this.eap_method_label != null) this.eap_method_label.set_visible (true);
+        if (this.eap_method_dropdown != null) this.eap_method_dropdown.set_visible (true);
+        
+        if (this.phase2_auth_label != null) this.phase2_auth_label.set_visible (show_phase2_auth);
+        if (this.phase2_auth_dropdown != null) this.phase2_auth_dropdown.set_visible (show_phase2_auth);
+        
+        if (this.password_label != null) this.password_label.set_visible (show_password);
+        if (this.password_entry != null) this.password_entry.set_visible (show_password);
     }
 
     private Gtk.Box build_section (string title, out Gtk.Box section_content) {
@@ -272,6 +470,79 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         section.append (section_content);
 
         return section;
+    }
+
+    private void set_collapsible_state (
+        Gtk.Box container,
+        Gtk.Button toggle_button,
+        Gtk.Revealer content_revealer,
+        Gtk.Image toggle_icon,
+        bool expanded
+    ) {
+        content_revealer.set_reveal_child (expanded);
+        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, expanded);
+        if (expanded) {
+            container.add_css_class ("is-expanded");
+            container.remove_css_class ("is-collapsed");
+            toggle_button.set_tooltip_text (_("Collapse section"));
+        } else {
+            container.add_css_class ("is-collapsed");
+            container.remove_css_class ("is-expanded");
+            toggle_button.set_tooltip_text (_("Expand section"));
+        }
+    }
+
+    private Gtk.Box build_collapsible_section (
+        string title,
+        out Gtk.Box content_box,
+        bool expanded = true
+    ) {
+        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+        container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
+
+        var toggle_button = new Gtk.Button ();
+        toggle_button.set_has_frame (false);
+        toggle_button.set_halign (Gtk.Align.FILL);
+        toggle_button.set_hexpand (true);
+        toggle_button.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE);
+
+        var toggle_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
+        toggle_row.set_halign (Gtk.Align.FILL);
+        toggle_row.set_hexpand (true);
+        toggle_row.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ROW);
+
+        var toggle_icon = new Gtk.Image ();
+        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, false);
+        toggle_icon.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON);
+        toggle_row.append (toggle_icon);
+
+        var toggle_label = new Gtk.Label (title);
+        toggle_label.set_xalign (0.0f);
+        toggle_label.set_hexpand (true);
+        toggle_label.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL);
+        toggle_row.append (toggle_label);
+
+        toggle_button.set_child (toggle_row);
+        container.append (toggle_button);
+
+        content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+        content_box.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
+
+        var content_revealer = new Gtk.Revealer ();
+        content_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+        content_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
+        content_revealer.set_child (content_box);
+        content_revealer.add_css_class (MainWindowCssClasses.EDIT_SECTION_REVEALER);
+        container.append (content_revealer);
+
+        set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, expanded);
+
+        toggle_button.clicked.connect (() => {
+            bool current_expanded = !content_revealer.get_reveal_child ();
+            set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, current_expanded);
+        });
+
+        return container;
     }
 
     public MainWindowWifiSavedEditPage (IWindowHost window_host) {
@@ -372,12 +643,173 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         security_modes.append (_("WPA3 Personal (SAE)"));
         security_modes.append (_("Enhanced Open (OWE)"));
         security_modes.append (_("WEP"));
+        security_modes.append (_("WPA/WPA2 Enterprise (802.1X)"));
         this.security_mode_dropdown = window_host.create_tracked_dropdown (security_modes);
         MainWindowCssClassResolver.add_best_class (
             this.security_mode_dropdown,
             {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
         );
         profile_content.append (this.security_mode_dropdown);
+
+        this.identity_label = new Gtk.Label (_("Username"));
+        this.identity_label.set_xalign (0.0f);
+        this.identity_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.identity_label.set_visible (false);
+
+        this.identity_entry = new Gtk.Entry ();
+        MainWindowCssClassResolver.add_best_class (
+            this.identity_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.identity_entry.set_visible (false);
+
+        this.anonymous_identity_label = new Gtk.Label (_("Anonymous identity"));
+        this.anonymous_identity_label.set_xalign (0.0f);
+        this.anonymous_identity_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.anonymous_identity_label.set_visible (false);
+
+        this.anonymous_identity_entry = new Gtk.Entry ();
+        MainWindowCssClassResolver.add_best_class (
+            this.anonymous_identity_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.anonymous_identity_entry.set_visible (false);
+
+        this.domain_label = new Gtk.Label (_("Domain"));
+        this.domain_label.set_xalign (0.0f);
+        this.domain_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.domain_label.set_visible (false);
+
+        this.domain_entry = new Gtk.Entry ();
+        MainWindowCssClassResolver.add_best_class (
+            this.domain_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.domain_entry.set_visible (false);
+
+        this.ca_cert_label = new Gtk.Label (_("CA cert"));
+        this.ca_cert_label.set_xalign (0.0f);
+        this.ca_cert_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.ca_cert_label.set_visible (false);
+
+        this.ca_cert_entry = new Gtk.Entry ();
+        MainWindowCssClassResolver.add_best_class (
+            this.ca_cert_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.ca_cert_entry.set_visible (false);
+
+        this.ca_cert_password_label = new Gtk.Label (_("CA cert password"));
+        this.ca_cert_password_label.set_xalign (0.0f);
+        this.ca_cert_password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.ca_cert_password_label.set_visible (false);
+
+        this.ca_cert_password_entry = new Gtk.Entry ();
+        this.ca_cert_password_entry.set_visibility (false);
+        this.ca_cert_password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
+        MainWindowCssClassResolver.add_best_class (
+            this.ca_cert_password_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
+                MainWindowCssClasses.PASSWORD_ENTRY}
+        );
+        this.ca_cert_password_entry.set_visible (false);
+
+        this.user_cert_label = new Gtk.Label (_("User cert"));
+        this.user_cert_label.set_xalign (0.0f);
+        this.user_cert_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.user_cert_label.set_visible (false);
+
+        this.user_cert_entry = new Gtk.Entry ();
+        MainWindowCssClassResolver.add_best_class (
+            this.user_cert_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.user_cert_entry.set_visible (false);
+
+        this.user_cert_password_label = new Gtk.Label (_("User cert password"));
+        this.user_cert_password_label.set_xalign (0.0f);
+        this.user_cert_password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.user_cert_password_label.set_visible (false);
+
+        this.user_cert_password_entry = new Gtk.Entry ();
+        this.user_cert_password_entry.set_visibility (false);
+        this.user_cert_password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
+        MainWindowCssClassResolver.add_best_class (
+            this.user_cert_password_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
+                MainWindowCssClasses.PASSWORD_ENTRY}
+        );
+        this.user_cert_password_entry.set_visible (false);
+
+        this.user_private_key_label = new Gtk.Label (_("User private key"));
+        this.user_private_key_label.set_xalign (0.0f);
+        this.user_private_key_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.user_private_key_label.set_visible (false);
+
+        this.user_private_key_entry = new Gtk.Entry ();
+        MainWindowCssClassResolver.add_best_class (
+            this.user_private_key_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.user_private_key_entry.set_visible (false);
+
+        this.user_private_key_password_label = new Gtk.Label (_("User privkey password"));
+        this.user_private_key_password_label.set_xalign (0.0f);
+        this.user_private_key_password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.user_private_key_password_label.set_visible (false);
+
+        this.user_private_key_password_entry = new Gtk.Entry ();
+        this.user_private_key_password_entry.set_visibility (false);
+        this.user_private_key_password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
+        MainWindowCssClassResolver.add_best_class (
+            this.user_private_key_password_entry,
+            {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
+                MainWindowCssClasses.PASSWORD_ENTRY}
+        );
+        this.user_private_key_password_entry.set_visible (false);
+
+        this.eap_method_label = new Gtk.Label (_("Method"));
+        this.eap_method_label.set_xalign (0.0f);
+        this.eap_method_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.eap_method_label.set_visible (false);
+
+        var eap_methods = new Gtk.StringList (null);
+        eap_methods.append (_("PEAP"));
+        eap_methods.append (_("TLS"));
+        eap_methods.append (_("TTLS"));
+        eap_methods.append (_("PWD"));
+        this.eap_method_dropdown = window_host.create_tracked_dropdown (eap_methods);
+        MainWindowCssClassResolver.add_best_class (
+            this.eap_method_dropdown,
+            {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.eap_method_dropdown.set_visible (false);
+
+        this.phase2_auth_label = new Gtk.Label (_("Inner authentication"));
+        this.phase2_auth_label.set_xalign (0.0f);
+        this.phase2_auth_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        this.phase2_auth_label.set_visible (false);
+
+        var phase2_auths = new Gtk.StringList (null);
+        phase2_auths.append (_("MSCHAPv2"));
+        phase2_auths.append (_("MD5"));
+        phase2_auths.append (_("GTC"));
+        phase2_auths.append (_("PAP"));
+        phase2_auths.append (_("CHAP"));
+        this.phase2_auth_dropdown = window_host.create_tracked_dropdown (phase2_auths);
+        MainWindowCssClassResolver.add_best_class (
+            this.phase2_auth_dropdown,
+            {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        this.phase2_auth_dropdown.set_visible (false);
+
+        this.security_mode_dropdown.notify_selected.connect (() => {
+            this.sync_eap_field_visibilities ();
+        });
+
+        this.eap_method_dropdown.notify_selected.connect (() => {
+            this.sync_eap_field_visibilities ();
+        });
 
         form.append (profile_section);
 
@@ -395,12 +827,35 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         form.append (access_section);
 
         Gtk.Box auth_content;
-        var auth_section = build_section (_("Authentication"), out auth_content);
+        var auth_section = build_collapsible_section (_("Authentication"), out auth_content, false);
 
-        var password_label = new Gtk.Label (_("Password"));
-        password_label.set_xalign (0.0f);
-        password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
-        auth_content.append (password_label);
+        auth_content.append (this.eap_method_label);
+        auth_content.append (this.eap_method_dropdown);
+        auth_content.append (this.phase2_auth_label);
+        auth_content.append (this.phase2_auth_dropdown);
+        auth_content.append (this.anonymous_identity_label);
+        auth_content.append (this.anonymous_identity_entry);
+        auth_content.append (this.domain_label);
+        auth_content.append (this.domain_entry);
+        auth_content.append (this.ca_cert_label);
+        auth_content.append (this.ca_cert_entry);
+        auth_content.append (this.ca_cert_password_label);
+        auth_content.append (this.ca_cert_password_entry);
+        auth_content.append (this.user_cert_label);
+        auth_content.append (this.user_cert_entry);
+        auth_content.append (this.user_cert_password_label);
+        auth_content.append (this.user_cert_password_entry);
+        auth_content.append (this.user_private_key_label);
+        auth_content.append (this.user_private_key_entry);
+        auth_content.append (this.user_private_key_password_label);
+        auth_content.append (this.user_private_key_password_entry);
+        auth_content.append (this.identity_label);
+        auth_content.append (this.identity_entry);
+
+        this.password_label = new Gtk.Label (_("Password"));
+        this.password_label.set_xalign (0.0f);
+        this.password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+        auth_content.append (this.password_label);
 
         this.password_entry = new Gtk.Entry ();
         this.password_entry.set_visibility (false);

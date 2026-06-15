@@ -43,12 +43,15 @@ namespace MainWindowWifiRowBuilder {
         Gtk.Entry hidden_ssid_entry,
         Gtk.Entry prompt_entry,
         bool requires_hidden_ssid,
-        bool is_secured
+        bool is_secured,
+        Gtk.Entry? identity_entry = null
     ) {
         bool has_hidden_ssid = !requires_hidden_ssid || hidden_ssid_entry.get_text ().strip () != "";
         bool has_valid_password = !is_secured
-            || HiddenWifiSecurityModeUtils.is_password_valid (prompt_entry.get_text ());
-        prompt_connect.set_sensitive (has_hidden_ssid && has_valid_password);
+            || HiddenWifiSecurityModeUtils.is_password_valid (prompt_entry.get_text ())
+            || (identity_entry != null && prompt_entry.get_text ().strip () != "");
+        bool has_valid_identity = identity_entry == null || identity_entry.get_text ().strip () != "";
+        prompt_connect.set_sensitive (has_hidden_ssid && has_valid_password && has_valid_identity);
     }
 
     private Gtk.Box build_info_box (
@@ -261,6 +264,9 @@ namespace MainWindowWifiRowBuilder {
         out Gtk.Entry prompt_entry,
         out Gtk.Entry hidden_ssid_entry
     ) {
+        bool is_enterprise = (net.rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0
+            || (net.wpa_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0;
+
         var prompt_label = new Gtk.Label (_("Password for %s").printf (net.ssid));
         prompt_label.set_xalign (0.0f);
         prompt_label.set_hexpand (true);
@@ -290,6 +296,26 @@ namespace MainWindowWifiRowBuilder {
         );
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
+
+        var identity_label = new Gtk.Label (_("Identity"));
+        identity_label.set_xalign (0.0f);
+        identity_label.set_hexpand (true);
+        MainWindowCssClassResolver.add_hook_and_best_class (
+            identity_label,
+            MainWindowCssClasses.INLINE_PASSWORD_LABEL,
+            {MainWindowCssClasses.FORM_LABEL}
+        );
+        identity_label.set_visible (is_enterprise);
+
+        var identity_entry = new Gtk.Entry ();
+        identity_entry.set_hexpand (true);
+        identity_entry.set_placeholder_text (_("Username / Email"));
+        MainWindowCssClassResolver.add_hook_and_best_class (
+            identity_entry,
+            MainWindowCssClasses.EDIT_FIELD_ENTRY,
+            {MainWindowCssClasses.EDIT_FIELD_CONTROL}
+        );
+        identity_entry.set_visible (is_enterprise);
 
         prompt_entry = new Gtk.Entry ();
         prompt_entry.set_hexpand (true);
@@ -340,6 +366,7 @@ namespace MainWindowWifiRowBuilder {
         var local_prompt_connect = prompt_connect;
         var local_hidden_ssid_entry = hidden_ssid_entry;
         var local_prompt_entry = prompt_entry;
+        var local_identity_entry = identity_entry;
 
         prompt_entry.changed.connect (() => {
             sync_prompt_connect_button_sensitivity (
@@ -347,7 +374,8 @@ namespace MainWindowWifiRowBuilder {
                 local_hidden_ssid_entry,
                 local_prompt_entry,
                 requires_hidden_ssid,
-                net.is_secured
+                net.is_secured,
+                local_identity_entry
             );
         });
         hidden_ssid_entry.changed.connect (() => {
@@ -356,15 +384,32 @@ namespace MainWindowWifiRowBuilder {
                 local_hidden_ssid_entry,
                 local_prompt_entry,
                 requires_hidden_ssid,
-                net.is_secured
+                net.is_secured,
+                local_identity_entry
             );
         });
+        if (is_enterprise) {
+            identity_entry.changed.connect (() => {
+                sync_prompt_connect_button_sensitivity (
+                    local_prompt_connect,
+                    local_hidden_ssid_entry,
+                    local_prompt_entry,
+                    requires_hidden_ssid,
+                    net.is_secured,
+                    local_identity_entry
+                );
+            });
+            identity_entry.activate.connect (() => {
+                local_prompt_entry.grab_focus ();
+            });
+        }
         sync_prompt_connect_button_sensitivity (
             prompt_connect,
             hidden_ssid_entry,
             prompt_entry,
             requires_hidden_ssid,
-            net.is_secured
+            net.is_secured,
+            identity_entry
         );
 
         var prompt_actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
@@ -377,6 +422,8 @@ namespace MainWindowWifiRowBuilder {
         prompt_inner.add_css_class (MainWindowCssClasses.INLINE_PASSWORD);
         prompt_inner.append (hidden_ssid_label);
         prompt_inner.append (hidden_ssid_entry);
+        prompt_inner.append (identity_label);
+        prompt_inner.append (identity_entry);
         prompt_inner.append (prompt_label);
         prompt_inner.append (prompt_entry);
         prompt_inner.append (prompt_actions);
@@ -391,6 +438,9 @@ namespace MainWindowWifiRowBuilder {
         var local_prompt_revealer = prompt_revealer;
         prompt_cancel.clicked.connect (() => {
             local_hidden_ssid_entry.set_text ("");
+            if (local_identity_entry != null) {
+                local_identity_entry.set_text ("");
+            }
             action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, null);
         });
 
@@ -398,30 +448,48 @@ namespace MainWindowWifiRowBuilder {
             if (!local_prompt_connect.get_sensitive ()) {
                 return;
             }
-            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry,
-                local_prompt_entry.get_text ());
+            string payload;
+            if (is_enterprise) {
+                payload = local_identity_entry.get_text ().strip () + "\n" + local_prompt_entry.get_text ();
+            } else {
+                payload = local_prompt_entry.get_text ();
+            }
+
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, payload);
             action_handler.connect_network (
                 net,
-                net.is_secured ? local_prompt_entry.get_text () : null,
+                net.is_secured ? payload : null,
                 requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null,
                 auto_connect.get_active ()
             );
             local_hidden_ssid_entry.set_text ("");
+            if (local_identity_entry != null) {
+                local_identity_entry.set_text ("");
+            }
         });
 
         prompt_entry.activate.connect (() => {
             if (!local_prompt_connect.get_sensitive ()) {
                 return;
             }
-            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry,
-                local_prompt_entry.get_text ());
+            string payload;
+            if (is_enterprise) {
+                payload = local_identity_entry.get_text ().strip () + "\n" + local_prompt_entry.get_text ();
+            } else {
+                payload = local_prompt_entry.get_text ();
+            }
+
+            action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, payload);
             action_handler.connect_network (
                 net,
-                net.is_secured ? local_prompt_entry.get_text () : null,
+                net.is_secured ? payload : null,
                 requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null,
                 auto_connect.get_active ()
             );
             local_hidden_ssid_entry.set_text ("");
+            if (local_identity_entry != null) {
+                local_identity_entry.set_text ("");
+            }
         });
 
         hidden_ssid_entry.activate.connect (() => {

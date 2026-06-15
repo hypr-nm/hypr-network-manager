@@ -128,6 +128,9 @@ namespace NmWifiUtils {
         if (key_mgmt == "wpa-psk") {
             return "wpa-psk";
         }
+        if (key_mgmt == "wpa-eap") {
+            return "wpa-eap";
+        }
         if (key_mgmt == "none") {
             string wep = s_sec.wep_key0 != null ? s_sec.wep_key0.strip () : "";
             return wep != "" ? "wep" : "open";
@@ -144,6 +147,7 @@ namespace NmWifiUtils {
 
         if (mode == "open") {
             conn.remove_setting (typeof (NM.SettingWirelessSecurity));
+            conn.remove_setting (typeof (NM.Setting8021x));
             return;
         }
 
@@ -156,16 +160,30 @@ namespace NmWifiUtils {
         switch (mode) {
         case "wep":
             s_sec.key_mgmt = "none";
+            conn.remove_setting (typeof (NM.Setting8021x));
             break;
         case "sae":
             s_sec.key_mgmt = "sae";
+            conn.remove_setting (typeof (NM.Setting8021x));
             break;
         case "owe":
             s_sec.key_mgmt = "owe";
+            conn.remove_setting (typeof (NM.Setting8021x));
+            break;
+        case "wpa-eap":
+            s_sec.key_mgmt = "wpa-eap";
+            var s_8021x = conn.get_setting_802_1x ();
+            if (s_8021x == null) {
+                s_8021x = new NM.Setting8021x ();
+                conn.add_setting (s_8021x);
+            }
+            s_8021x.add_eap_method ("peap");
+            s_8021x.phase2_auth = "mschapv2";
             break;
         case "wpa-psk":
         default:
             s_sec.key_mgmt = "wpa-psk";
+            conn.remove_setting (typeof (NM.Setting8021x));
             break;
         }
     }

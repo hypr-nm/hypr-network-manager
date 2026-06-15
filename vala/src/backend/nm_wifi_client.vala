@@ -288,6 +288,23 @@ public class NmWifiClient : GLib.Object {
 
         settings.security_mode = NmWifiUtils.infer_security_mode (conn.get_setting_wireless_security ());
 
+        var s_8021x = conn.get_setting_802_1x ();
+        if (s_8021x != null) {
+            settings.identity = s_8021x.identity != null ? s_8021x.identity : "";
+            settings.anonymous_identity = s_8021x.anonymous_identity != null ? s_8021x.anonymous_identity : "";
+            settings.domain_suffix_match = s_8021x.domain_suffix_match != null ? s_8021x.domain_suffix_match : "";
+            settings.ca_cert = s_8021x.get_ca_cert_path () != null ? s_8021x.get_ca_cert_path () : "";
+            settings.ca_cert_password = s_8021x.get_ca_cert_password () != null ? s_8021x.get_ca_cert_password () : "";
+            if (s_8021x.get_num_eap_methods () > 0) {
+                settings.eap_method = s_8021x.get_eap_method (0);
+            }
+            settings.phase2_auth = s_8021x.phase2_auth != null ? s_8021x.phase2_auth : "";
+            settings.user_cert = s_8021x.get_client_cert_path () != null ? s_8021x.get_client_cert_path () : "";
+            settings.user_cert_password = s_8021x.get_client_cert_password () != null ? s_8021x.get_client_cert_password () : "";
+            settings.user_private_key = s_8021x.get_private_key_path () != null ? s_8021x.get_private_key_path () : "";
+            settings.user_private_key_password = s_8021x.get_private_key_password () != null ? s_8021x.get_private_key_password () : "";
+        }
+
         var ip_settings = yield get_ip_settings_by_connection_uuid_and_device_path (
             profile.saved_connection_uuid,
             profile.device_path,
@@ -327,7 +344,27 @@ public class NmWifiClient : GLib.Object {
             return s_sec.psk;
         }
 
+        var s_8021x = conn.get_setting_802_1x ();
+        if (s_8021x != null && s_8021x.password != null && s_8021x.password != "") {
+            return s_8021x.password;
+        }
+
         if (conn is NM.RemoteConnection) {
+            try {
+                var secrets = yield ((NM.RemoteConnection) conn).get_secrets_async ("802-1x", cancellable);
+                if (secrets != null) {
+                    Variant? sec_dict = secrets.lookup_value ("802-1x", new VariantType ("a{sv}"));
+                    if (sec_dict != null) {
+                        Variant? pass_value = sec_dict.lookup_value ("password", new VariantType ("s"));
+                        if (pass_value != null) {
+                            return pass_value.get_string ();
+                        }
+                    }
+                }
+            } catch (Error e) {
+                log_debug ("nm-wifi-client", "get_wifi_password: unable to read 802-1x secrets: " + e.message);
+            }
+
             try {
                 var secrets = yield ((NM.RemoteConnection) conn).get_secrets_async ("802-11-wireless-security", cancellable);
                 if (secrets != null) {
@@ -396,6 +433,40 @@ public class NmWifiClient : GLib.Object {
         s_wireless.bssid = request.bssid.strip ();
 
         NmWifiUtils.apply_security_mode (conn, request.security_mode);
+        if (request.security_mode == "wpa-eap") {
+            var s_8021x = conn.get_setting_802_1x ();
+            if (s_8021x != null) {
+                s_8021x.clear_eap_methods ();
+                s_8021x.add_eap_method (request.eap_method);
+                s_8021x.phase2_auth = request.phase2_auth;
+                s_8021x.identity = request.identity;
+                s_8021x.anonymous_identity = request.anonymous_identity;
+                s_8021x.domain_suffix_match = request.domain_suffix_match;
+                s_8021x.ca_cert_password = request.ca_cert_password;
+                s_8021x.client_cert_password = request.user_cert_password;
+                if (request.ca_cert != null && request.ca_cert.strip () != "") {
+                    try {
+                        s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                    } catch (Error e) {
+                        log_debug ("nm-wifi-client", "Failed to set ca-cert: " + e.message);
+                    }
+                }
+                if (request.user_cert != null && request.user_cert.strip () != "") {
+                    try {
+                        s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                    } catch (Error e) {
+                        log_debug ("nm-wifi-client", "Failed to set client-cert: " + e.message);
+                    }
+                }
+                if (request.user_private_key != null && request.user_private_key.strip () != "") {
+                    try {
+                        s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                    } catch (Error e) {
+                        log_debug ("nm-wifi-client", "Failed to set private-key: " + e.message);
+                    }
+                }
+            }
+        }
 
         if (conn is NM.RemoteConnection) {
             yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
@@ -414,10 +485,64 @@ public class NmWifiClient : GLib.Object {
         var s_ip6 = NmIpConfigHelper.ensure_ip6_setting (conn);
         NmIpConfigHelper.apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
 
-        if (request.password != null && request.password != "") {
-            var s_sec = conn.get_setting_wireless_security ();
-            if (s_sec != null) {
-                s_sec.psk = request.password;
+        var s_sec = conn.get_setting_wireless_security ();
+        if (s_sec != null && s_sec.key_mgmt == "wpa-eap") {
+            var s_8021x = conn.get_setting_802_1x ();
+            if (s_8021x == null) {
+                s_8021x = new NM.Setting8021x ();
+                conn.add_setting (s_8021x);
+            }
+            s_8021x.clear_eap_methods ();
+            s_8021x.add_eap_method (request.eap_method);
+            s_8021x.phase2_auth = request.phase2_auth;
+            if (request.identity != null && request.identity != "") {
+                s_8021x.identity = request.identity;
+            }
+            if (request.anonymous_identity != null && request.anonymous_identity != "") {
+                s_8021x.anonymous_identity = request.anonymous_identity;
+            }
+            if (request.domain_suffix_match != null && request.domain_suffix_match != "") {
+                s_8021x.domain_suffix_match = request.domain_suffix_match;
+            }
+            s_8021x.ca_cert_password = request.ca_cert_password;
+            s_8021x.client_cert_password = request.user_cert_password;
+            if (request.ca_cert != null && request.ca_cert.strip () != "") {
+                try {
+                    s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                } catch (Error e) {
+                    log_debug ("nm-wifi-client", "Failed to set ca-cert: " + e.message);
+                }
+            }
+            if (request.user_cert != null && request.user_cert.strip () != "") {
+                try {
+                    s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                } catch (Error e) {
+                    log_debug ("nm-wifi-client", "Failed to set client-cert: " + e.message);
+                }
+            }
+            if (request.user_private_key != null && request.user_private_key.strip () != "") {
+                try {
+                    s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                } catch (Error e) {
+                    log_debug ("nm-wifi-client", "Failed to set private-key: " + e.message);
+                }
+            }
+            if (request.password != null && request.password != "") {
+                if (request.password.contains ("\n")) {
+                    string[] parts = request.password.split ("\n", 2);
+                    s_8021x.identity = parts[0];
+                    if (parts.length > 1) {
+                        s_8021x.password = parts[1];
+                    }
+                } else {
+                    s_8021x.password = request.password;
+                }
+            }
+        } else {
+            if (request.password != null && request.password != "") {
+                if (s_sec != null) {
+                    s_sec.psk = request.password;
+                }
             }
         }
 
@@ -459,6 +584,37 @@ public class NmWifiClient : GLib.Object {
             var s_sec = conn.get_setting_wireless_security ();
             if (s_sec != null && s_sec.psk != null) {
                 ip_settings.configured_password = s_sec.psk ?? "";
+            }
+
+            var s_8021x = conn.get_setting_802_1x ();
+            if (s_8021x != null && s_8021x.password != null) {
+                ip_settings.configured_password = s_8021x.password ?? "";
+            }
+
+            if (ip_settings.configured_password == "" && conn is NM.RemoteConnection) {
+                try {
+                    var secrets = yield ((NM.RemoteConnection) conn).get_secrets_async (
+                        "802-1x",
+                        cancellable
+                    );
+                    if (secrets != null) {
+                        Variant? sec_dict = secrets.lookup_value (
+                            "802-1x",
+                            new VariantType ("a{sv}")
+                        );
+                        if (sec_dict != null) {
+                            Variant? pass_value = sec_dict.lookup_value ("password", new VariantType ("s"));
+                            if (pass_value != null) {
+                                ip_settings.configured_password = pass_value.get_string ();
+                            }
+                        }
+                    }
+                } catch (Error e) {
+                    log_debug (
+                        "nm-wifi-client",
+                        "get_network_ip_settings: unable to read 802-1x secrets: " + e.message
+                    );
+                }
             }
 
             if (ip_settings.configured_password == "" && conn is NM.RemoteConnection) {
@@ -621,11 +777,30 @@ public class NmWifiClient : GLib.Object {
                 apply_connection_autoconnect (existing_conn, network.ssid, autoconnect);
                 if (password != null && password != "") {
                     var s_sec = existing_conn.get_setting_wireless_security ();
-                    if (s_sec == null) {
-                        s_sec = new NM.SettingWirelessSecurity ();
-                        existing_conn.add_setting (s_sec);
+                    if (s_sec != null && s_sec.key_mgmt == "wpa-eap") {
+                        var s_8021x = existing_conn.get_setting_802_1x ();
+                        if (s_8021x == null) {
+                            s_8021x = new NM.Setting8021x ();
+                            existing_conn.add_setting (s_8021x);
+                        }
+                        s_8021x.add_eap_method ("peap");
+                        s_8021x.phase2_auth = "mschapv2";
+                        if (password.contains ("\n")) {
+                            string[] parts = password.split ("\n", 2);
+                            s_8021x.identity = parts[0];
+                            if (parts.length > 1) {
+                                s_8021x.password = parts[1];
+                            }
+                        } else {
+                            s_8021x.password = password;
+                        }
+                    } else {
+                        if (s_sec == null) {
+                            s_sec = new NM.SettingWirelessSecurity ();
+                            existing_conn.add_setting (s_sec);
+                        }
+                        s_sec.psk = password;
                     }
-                    s_sec.psk = password;
                 }
                 if (existing_conn is NM.RemoteConnection) {
                     yield ((NM.RemoteConnection)existing_conn).commit_changes_async (true, cancellable);
@@ -646,9 +821,12 @@ public class NmWifiClient : GLib.Object {
             throw new IOError.FAILED ("Hidden network requires an SSID.");
         }
 
+        bool is_enterprise = (network.rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0
+            || (network.wpa_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0;
+
         NM.Connection? partial = null;
 
-        if (network.is_hidden || (password != null && password != "")) {
+        if (network.is_hidden || (password != null && password != "") || is_enterprise) {
             partial = (NM.SimpleConnection) NM.SimpleConnection.@new ();
 
             if (network.is_hidden) {
@@ -659,7 +837,27 @@ public class NmWifiClient : GLib.Object {
                 partial.add_setting (s_wifi);
             }
 
-            if (password != null && password != "") {
+            if (is_enterprise) {
+                var s_sec = new NM.SettingWirelessSecurity ();
+                s_sec.key_mgmt = "wpa-eap";
+                partial.add_setting (s_sec);
+
+                var s_8021x = new NM.Setting8021x ();
+                s_8021x.add_eap_method ("peap");
+                s_8021x.phase2_auth = "mschapv2";
+                if (password != null) {
+                    if (password.contains ("\n")) {
+                        string[] parts = password.split ("\n", 2);
+                        s_8021x.identity = parts[0];
+                        if (parts.length > 1) {
+                            s_8021x.password = parts[1];
+                        }
+                    } else {
+                        s_8021x.password = password;
+                    }
+                }
+                partial.add_setting (s_8021x);
+            } else if (password != null && password != "") {
                 var s_sec = new NM.SettingWirelessSecurity ();
                 s_sec.psk = password;
                 partial.add_setting (s_sec);
