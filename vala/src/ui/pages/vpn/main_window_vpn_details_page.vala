@@ -36,6 +36,24 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
         return value.strip () != "" ? _("Set") : _("Not set");
     }
 
+    private static string format_vpn_state (string state) {
+        switch (state.down ()) {
+        case "unknown":
+            return _("Unknown");
+        case "activating":
+            return _("Connecting…");
+        case "activated":
+        case "connected":
+            return _("Connected");
+        case "deactivating":
+            return _("Disconnecting");
+        case "deactivated":
+            return _("Disconnected");
+        default:
+            return state;
+        }
+    }
+
     public void render_details (
         VpnConnection conn,
         bool pending
@@ -47,7 +65,7 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.basic_rows.append (MainWindowHelpers.build_details_row (_("Name"), conn.name));
         this.basic_rows.append (MainWindowHelpers.build_details_row (_("Type"), conn.vpn_type));
-        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), conn.state));
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), format_vpn_state (conn.state)));
         this.basic_rows.append (
             MainWindowHelpers.build_details_row (_("Connected"), conn.is_connected ? _("Yes") : _("No"))
         );
@@ -87,7 +105,7 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
             MainWindowHelpers.build_details_row (_("Type"),
                 details.vpn_type_display != "" ? details.vpn_type_display : conn.vpn_type)
         );
-        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), conn.state));
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), format_vpn_state (conn.state)));
         this.basic_rows.append (
             MainWindowHelpers.build_details_row (_("Connected"), conn.is_connected ? _("Yes") : _("No"))
         );
