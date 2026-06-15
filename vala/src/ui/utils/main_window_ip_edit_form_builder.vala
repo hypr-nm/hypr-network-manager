@@ -296,7 +296,7 @@ namespace MainWindowIpEditFormBuilder {
         ));
 
         ipv4_address_entry = new Gtk.Entry ();
-        ipv4_address_entry.set_placeholder_text (_("192.168.1.100"));
+        ipv4_address_entry.set_placeholder_text ("192.168.1.100");
         apply_control_classes (
             ipv4_address_entry,
             with_extra_classes,
@@ -317,7 +317,7 @@ namespace MainWindowIpEditFormBuilder {
         ));
 
         ipv4_prefix_entry = new Gtk.Entry ();
-        ipv4_prefix_entry.set_placeholder_text (_("24"));
+        ipv4_prefix_entry.set_placeholder_text ("24");
         apply_control_classes (
             ipv4_prefix_entry,
             with_extra_classes,
@@ -338,7 +338,7 @@ namespace MainWindowIpEditFormBuilder {
         ));
 
         ipv4_gateway_entry = new Gtk.Entry ();
-        ipv4_gateway_entry.set_placeholder_text (_("192.168.1.1"));
+        ipv4_gateway_entry.set_placeholder_text ("192.168.1.1");
         apply_control_classes (
             ipv4_gateway_entry,
             with_extra_classes,
@@ -425,7 +425,7 @@ namespace MainWindowIpEditFormBuilder {
         override_fields.append (dns_mode_row);
 
         ipv4_dns_entry = new Gtk.Entry ();
-        ipv4_dns_entry.set_placeholder_text (_("1.1.1.1, 8.8.8.8"));
+        ipv4_dns_entry.set_placeholder_text ("1.1.1.1, 8.8.8.8");
         apply_control_classes (
             ipv4_dns_entry,
             with_extra_classes,
@@ -553,7 +553,7 @@ namespace MainWindowIpEditFormBuilder {
         ));
 
         ipv6_address_entry = new Gtk.Entry ();
-        ipv6_address_entry.set_placeholder_text (_("2001:db8::100"));
+        ipv6_address_entry.set_placeholder_text ("2001:db8::100");
         apply_control_classes (
             ipv6_address_entry,
             with_extra_classes,
@@ -574,7 +574,7 @@ namespace MainWindowIpEditFormBuilder {
         ));
 
         ipv6_prefix_entry = new Gtk.Entry ();
-        ipv6_prefix_entry.set_placeholder_text (_("64"));
+        ipv6_prefix_entry.set_placeholder_text ("64");
         apply_control_classes (
             ipv6_prefix_entry,
             with_extra_classes,
@@ -595,7 +595,7 @@ namespace MainWindowIpEditFormBuilder {
         ));
 
         ipv6_gateway_entry = new Gtk.Entry ();
-        ipv6_gateway_entry.set_placeholder_text (_("fe80::1"));
+        ipv6_gateway_entry.set_placeholder_text ("fe80::1");
         apply_control_classes (
             ipv6_gateway_entry,
             with_extra_classes,
@@ -685,7 +685,7 @@ namespace MainWindowIpEditFormBuilder {
         override_fields.append (dns_mode_row);
 
         ipv6_dns_entry = new Gtk.Entry ();
-        ipv6_dns_entry.set_placeholder_text (_("2606:4700:4700::1111, 2001:4860:4860::8888"));
+        ipv6_dns_entry.set_placeholder_text ("2606:4700:4700::1111, 2001:4860:4860::8888");
         apply_control_classes (
             ipv6_dns_entry,
             with_extra_classes,

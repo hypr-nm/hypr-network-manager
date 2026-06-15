@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hypr-network-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-15 23:39+0300\n"
+"POT-Creation-Date: 2026-06-16 00:09+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1073,24 +1073,12 @@ msgstr ""
 msgid "IPv4 Address"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:299
-msgid "192.168.1.100"
-msgstr ""
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:314
 msgid "Prefix (CIDR)"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:320
-msgid "24"
-msgstr ""
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:335
 msgid "Gateway"
-msgstr ""
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:341
-msgid "192.168.1.1"
 msgstr ""
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:376
@@ -1099,10 +1087,6 @@ msgstr ""
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:394
 msgid "Automatic DNS"
-msgstr ""
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:428
-msgid "1.1.1.1, 8.8.8.8"
 msgstr ""
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:488
@@ -1117,24 +1101,12 @@ msgstr ""
 msgid "IPv6 Address"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:556
-msgid "2001:db8::100"
-msgstr ""
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:571
 msgid "IPv6 Prefix (CIDR)"
 msgstr ""
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:577
-msgid "64"
-msgstr ""
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:592
 msgid "IPv6 Gateway"
-msgstr ""
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:598
-msgid "fe80::1"
 msgstr ""
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:633
@@ -1143,10 +1115,6 @@ msgstr ""
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:651
 msgid "Automatic IPv6 DNS"
-msgstr ""
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:688
-msgid "2606:4700:4700::1111, 2001:4860:4860::8888"
 msgstr ""
 
 #: vala/src/ui/utils/main_window_wifi_edit_utils.vala:59
