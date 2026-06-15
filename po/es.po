@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hypr-network-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 00:09+0300\n"
+"POT-Creation-Date: 2026-06-16 00:48+0300\n"
 "PO-Revision-Date: 2026-04-30 12:38+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -145,6 +145,8 @@ msgstr "Secundarias"
 #: vala/src/models/network_device.vala:72
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:50
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:53
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:52
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:92
 msgid "Connected"
 msgstr "Conectado"
 
@@ -173,7 +175,9 @@ msgstr "Se requiere el nombre de la interfaz WireGuard (p. ej. wg0)."
 
 #: vala/src/models/network_update_requests.vala:218
 msgid "WireGuard requires public key and endpoint host for all peers."
-msgstr "WireGuard requiere una clave pública y un host de endpoint para todos los pares."
+msgstr ""
+"WireGuard requiere una clave pública y un host de endpoint para todos los "
+"pares."
 
 #: vala/src/models/network_update_requests.vala:249
 #: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:247
@@ -379,6 +383,7 @@ msgstr "Wi-Fi"
 
 #: vala/src/ui/main_window.vala:385
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:101
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:230
 msgid "VPN"
 msgstr "VPN"
 
@@ -394,6 +399,7 @@ msgstr "Activar el modo avión"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:46
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:156
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:95
 msgid "Interface"
 msgstr "Interfaz"
 
@@ -406,16 +412,26 @@ msgstr "Perfil"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:48
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:164
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:50
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:90
 msgid "State"
 msgstr "Estado"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:50
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:66
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:52
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:92
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:98
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:123
 msgid "Yes"
 msgstr "Sí"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:50
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:66
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:52
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:92
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:98
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:123
 msgid "No"
 msgstr "No"
 
@@ -429,6 +445,7 @@ msgstr "Código de estado"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:61
 #: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:79
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:60
 msgid "Updating…"
 msgstr "Actualizando…"
 
@@ -436,6 +453,7 @@ msgstr "Actualizando…"
 #: vala/src/ui/pages/ethernet/main_window_ethernet_row_builder.vala:82
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:237
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:263
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:63
 msgid "Disconnect"
 msgstr "Desconectar"
 
@@ -445,6 +463,8 @@ msgstr "Desconectar"
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:237
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:263
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:374
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:66
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:240
 #: vala/src/ui/views/wifi_section_view.vala:350
 msgid "Connect"
 msgstr "Conectar"
@@ -457,21 +477,26 @@ msgstr "Sin perfil"
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:139
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:80
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:162
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:252
 msgid "Edit"
 msgstr "Editar"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:163
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:197
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:288
 msgid "Basic"
 msgstr "Básico"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:164
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:198
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:289
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:160
 msgid "Advanced"
 msgstr "Avanzado"
 
 #: vala/src/ui/pages/ethernet/main_window_ethernet_details_page.vala:165
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:199
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:290
 msgid "IP"
 msgstr "IP"
 
@@ -518,6 +543,7 @@ msgstr "Detalles"
 
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:92
 #: vala/src/ui/pages/profiles/main_window_profiles_page.vala:179
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:264
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -539,6 +565,8 @@ msgstr "SSID"
 
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:141
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:168
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:56
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:102
 msgid "UUID"
 msgstr "UUID"
 
@@ -659,17 +687,21 @@ msgstr "Identidad"
 
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:438
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:671
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:161
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:187
 #, fuzzy
 msgid "Username"
 msgstr "Nombre de la red"
 
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:504
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:63
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:220
 msgid "Collapse section"
 msgstr "Contraer sección"
 
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:508
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:67
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:224
 msgid "Expand section"
 msgstr "Expandir sección"
 
@@ -801,12 +833,16 @@ msgid "Available to all users"
 msgstr "Disponible para todos los usuarios"
 
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:847
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:36
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:121
 msgid "Authentication"
 msgstr "Autenticación"
 
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:872
 #: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:132
 #: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:144
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:163
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:189
 #: vala/src/ui/views/wifi_section_view.vala:364
 msgid "Password"
 msgstr "Contraseña"
@@ -915,7 +951,6 @@ msgid "Forget"
 msgstr "Olvidar"
 
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:174
-#, fuzzy
 msgid "Share"
 msgstr "Compartir"
 
@@ -977,6 +1012,152 @@ msgstr "Contraseña Wi-Fi (mín. %d caracteres)"
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:366
 msgid "Cancel"
 msgstr "Cancelar"
+
+#: vala/src/ui/pages/wifi/main_window_wifi_share_page.vala:89
+#, c-format
+msgid ""
+"Scan this QR code on another device to connect to %s without entering the "
+"password."
+msgstr ""
+"Escanea este código QR en otro dispositivo para conectarte a %s sin ingresar "
+"la contraseña."
+
+#: vala/src/ui/pages/wifi/main_window_wifi_share_page.vala:90
+msgid ""
+"This QR code includes the network password and it isn't encrypted. Anyone "
+"with access to this QR code can find out this network's password."
+msgstr ""
+"Este código QR incluye la contraseña de la red y no está cifrado. Cualquiera "
+"que tenga acceso a este código QR puede descubrir la contraseña de esta red."
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:52
+msgid "Edit WireGuard Peer"
+msgstr "Editar par de WireGuard"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:72
+msgid "Peer Name (optional)"
+msgstr "Nombre de usuario (opcional)"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:80
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:130
+msgid "Public Key"
+msgstr "Clave pública"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:88
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:138
+msgid "Endpoint"
+msgstr "Punto de conexión"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:97
+msgid "Host / IP"
+msgstr "Host / IP"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:101
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:157
+msgid "Port"
+msgstr "Puerto"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:109
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:143
+msgid "Allowed IPs"
+msgstr "IPs permitidas"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:112
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:146
+msgid "Preshared Key"
+msgstr "Clave privada"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala:124
+msgid "Save Peer"
+msgstr "Par sin nombre"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:36
+msgid "Set"
+msgstr "Establecer"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:36
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:116
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:120
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:158
+msgid "Not set"
+msgstr "No configurado"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:48
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:85
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:55
+msgid "Name"
+msgstr "Nombre"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:49
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:87
+msgid "Type"
+msgstr "Tipo"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:98
+msgid "Autoconnect"
+msgstr "Conexión automática"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:106
+msgid "Service"
+msgstr "Servidor"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:112
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:172
+msgid "Private key"
+msgstr "Clave privada"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:115
+msgid "Listen port"
+msgstr "Puerto de escucha"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:119
+msgid "FwMark"
+msgstr "FwMark"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:123
+msgid "Peer routes"
+msgstr "Rutas de pares"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:128
+#, c-format
+msgid "Peer %d"
+msgstr "Pares %d"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:155
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:97
+msgid "Remote"
+msgstr "Remoto"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:160
+msgid "Protocol"
+msgstr "Protocolo"
+
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:166
+msgid "CA certificate"
+msgstr "Certificado CA"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:169
+msgid "Client certificate"
+msgstr "Certificado de cliente"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:175
+msgid "TLS auth key"
+msgstr "Clave de autenticación TLS"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:177
+msgid "Cipher"
+msgstr "Cifrado"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:178
+msgid "Auth"
+msgstr "Autenticación"
+
+#: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:186
+#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:335
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:30
+msgid "Gateway"
+msgstr "Puerta de enlace"
 
 #: vala/src/ui/utils/main_window_helpers_formatting.vala:34
 msgid "Ad-hoc"
@@ -1100,10 +1281,6 @@ msgstr "Dirección IPv4"
 msgid "Prefix (CIDR)"
 msgstr "Prefijo (CIDR)"
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:335
-msgid "Gateway"
-msgstr "Puerta de enlace"
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:376
 msgid "DNS Servers (comma-separated)"
 msgstr "Servidores DNS (separados por comas)"
@@ -1148,6 +1325,73 @@ msgstr "El prefijo IPv4 debe ser un número entre 0 y 32."
 msgid "IPv6 prefix must be a number between 0 and 128."
 msgstr "El prefijo IPv6 debe ser un número entre 0 y 128."
 
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:27
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:94
+msgid "Server"
+msgstr "Servidor"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:39
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:124
+msgid "Username (optional)"
+msgstr "Nombre de usuario (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:44
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:129
+msgid "Password (optional)"
+msgstr "Contraseña (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:60
+msgid "Listen Port (optional)"
+msgstr "Puerto de escucha (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:66
+msgid "Private Key"
+msgstr "Clave privada"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:74
+msgid "FwMark (optional)"
+msgstr "FwMark (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:81
+msgid "Automatically add peer routes"
+msgstr "Añadir rutas de pares automáticamente"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:102
+msgid "Port (optional)"
+msgstr "Puerto (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:108
+msgid "Protocol (optional)"
+msgstr "Protocolo (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:136
+msgid "Certificates and Keys"
+msgstr "Certificados y claves"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:139
+msgid "CA Certificate Path (optional)"
+msgstr "Ruta del certificado CA (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:144
+msgid "Client Certificate Path (optional)"
+msgstr "Ruta del certificado de cliente (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:149
+msgid "Private Key Path (optional)"
+msgstr "Ruta de la clave privada (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:154
+msgid "TLS Auth Key Path (optional)"
+msgstr "Ruta de la clave de autenticación TLS (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:163
+msgid "Cipher (optional)"
+msgstr "Cifrado (opcional)"
+
+#: vala/src/ui/utils/main_window_vpn_form_builder.vala:168
+msgid "Auth (optional)"
+msgstr "Autenticación (opcional)"
+
 #: vala/src/ui/views/status_bar_view.vala:43
 msgid "Loading networks…"
 msgstr "Cargando redes…"
@@ -1179,9 +1423,25 @@ msgstr "Nombre de la red"
 msgid "Network password (min %d chars)"
 msgstr "Contraseña de la red (mín. %d caracteres)"
 
+#: vala/src/ui/widgets/dynamic_string_list.vala:37
+msgid "Add IP"
+msgstr "Añadir IP"
+
 #: vala/src/ui/widgets/main_window_tabs_menu.vala:60
 msgid "Saved Profiles"
 msgstr "Perfiles guardados"
+
+#: vala/src/ui/widgets/dynamic_peer_list.vala:32
+msgid "Peers"
+msgstr "Pares"
+
+#: vala/src/ui/widgets/dynamic_peer_list.vala:38
+msgid "Add Peer"
+msgstr "Añadir par"
+
+#: vala/src/ui/widgets/dynamic_peer_list.vala:105
+msgid "Unnamed Peer"
+msgstr "Par sin nombre"
 
 #~ msgid "192.168.1.100"
 #~ msgstr "192.168.1.100"
