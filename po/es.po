@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hypr-network-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-15 23:39+0300\n"
+"POT-Creation-Date: 2026-06-16 00:09+0300\n"
 "PO-Revision-Date: 2026-04-30 12:38+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -1096,25 +1096,13 @@ msgstr "Método IPv4"
 msgid "IPv4 Address"
 msgstr "Dirección IPv4"
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:299
-msgid "192.168.1.100"
-msgstr "192.168.1.100"
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:314
 msgid "Prefix (CIDR)"
 msgstr "Prefijo (CIDR)"
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:320
-msgid "24"
-msgstr "24"
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:335
 msgid "Gateway"
 msgstr "Puerta de enlace"
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:341
-msgid "192.168.1.1"
-msgstr "192.168.1.1"
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:376
 msgid "DNS Servers (comma-separated)"
@@ -1123,10 +1111,6 @@ msgstr "Servidores DNS (separados por comas)"
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:394
 msgid "Automatic DNS"
 msgstr "DNS automático"
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:428
-msgid "1.1.1.1, 8.8.8.8"
-msgstr "1.1.1.1, 8.8.8.8"
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:488
 msgid "IPv6 Settings"
@@ -1140,25 +1124,13 @@ msgstr "Método IPv6"
 msgid "IPv6 Address"
 msgstr "Dirección IPv6"
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:556
-msgid "2001:db8::100"
-msgstr "2001:db8::100"
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:571
 msgid "IPv6 Prefix (CIDR)"
 msgstr "Prefijo IPv6 (CIDR)"
 
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:577
-msgid "64"
-msgstr "64"
-
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:592
 msgid "IPv6 Gateway"
 msgstr "Puerta de enlace IPv6"
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:598
-msgid "fe80::1"
-msgstr "fe80::1"
 
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:633
 msgid "IPv6 DNS"
@@ -1167,10 +1139,6 @@ msgstr "DNS IPv6"
 #: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:651
 msgid "Automatic IPv6 DNS"
 msgstr "DNS IPv6 automático"
-
-#: vala/src/ui/utils/main_window_ip_edit_form_builder.vala:688
-msgid "2606:4700:4700::1111, 2001:4860:4860::8888"
-msgstr "2606:4700:4700::1111, 2001:4860:4860::8888"
 
 #: vala/src/ui/utils/main_window_wifi_edit_utils.vala:59
 msgid "IPv4 prefix must be a number between 0 and 32."
@@ -1214,3 +1182,27 @@ msgstr "Contraseña de la red (mín. %d caracteres)"
 #: vala/src/ui/widgets/main_window_tabs_menu.vala:60
 msgid "Saved Profiles"
 msgstr "Perfiles guardados"
+
+#~ msgid "192.168.1.100"
+#~ msgstr "192.168.1.100"
+
+#~ msgid "24"
+#~ msgstr "24"
+
+#~ msgid "192.168.1.1"
+#~ msgstr "192.168.1.1"
+
+#~ msgid "1.1.1.1, 8.8.8.8"
+#~ msgstr "1.1.1.1, 8.8.8.8"
+
+#~ msgid "2001:db8::100"
+#~ msgstr "2001:db8::100"
+
+#~ msgid "64"
+#~ msgstr "64"
+
+#~ msgid "fe80::1"
+#~ msgstr "fe80::1"
+
+#~ msgid "2606:4700:4700::1111, 2001:4860:4860::8888"
+#~ msgstr "2606:4700:4700::1111, 2001:4860:4860::8888"
