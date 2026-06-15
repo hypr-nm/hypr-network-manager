@@ -57,7 +57,7 @@ namespace MainWindowIpEditFormBuilder {
         string css_class,
         out Gtk.Box content_box
     ) {
-        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
         if (with_extra_classes) {
             MainWindowCssClassResolver.add_hook_and_best_class (container, css_class,
                 {MainWindowCssClasses.EDIT_COLLAPSIBLE});

@@ -497,7 +497,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         out Gtk.Box content_box,
         bool expanded = true
     ) {
-        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
         container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
 
         var toggle_button = new Gtk.Button ();

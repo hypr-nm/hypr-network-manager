@@ -328,6 +328,11 @@ button.nm-nav-back label,
   padding: 4px 0;
 }
 
+.nm-edit-collapsible.is-collapsed {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .nm-edit-section-toggle {
   padding: 4px 2px;
   min-height: 26px;
