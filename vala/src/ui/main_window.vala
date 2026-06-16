@@ -37,6 +37,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private HyprNetworkManager.UI.Views.StatusBarView status_bar_view;
     private Gtk.Widget status_separator;
     private HyprNetworkManager.UI.Views.WifiSectionView wifi_section;
+    private HyprNetworkManager.UI.Views.HotspotSectionView hotspot_section;
     private HyprNetworkManager.UI.Views.SavedProfilesView profiles_section;
     private HyprNetworkManager.UI.Views.EthernetSectionView ethernet_section;
     private MainWindowWifiController wifi_controller;
@@ -153,6 +154,12 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         }
     }
 
+    private void refresh_hotspot_section () {
+        if (hotspot_section != null) {
+            hotspot_section.perform_refresh ();
+        }
+    }
+
     private void refresh_ethernet_section () {
         ethernet_controller.refresh ();
     }
@@ -166,6 +173,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         if (profiles_section != null) {
             profiles_section.refresh_saved_profiles ();
         }
+        refresh_hotspot_section ();
         refresh_ethernet_section ();
         refresh_vpn_section ();
         refresh_switch_states ();
@@ -378,9 +386,13 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             ethernet_controller,
             this
         );
+
+        hotspot_section = new HyprNetworkManager.UI.Views.HotspotSectionView (nm, this);
+
         vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (nm, vpn_controller, this);
 
         notebook.append_page (wifi_section.widget, build_tab_label (_("Wi-Fi")));
+        notebook.append_page (hotspot_section.widget, build_tab_label (_("Hotspot")));
         notebook.append_page (ethernet_section.widget, build_tab_label (_("Ethernet")));
         notebook.append_page (vpn_section.widget, build_tab_label (_("VPN")));
 
