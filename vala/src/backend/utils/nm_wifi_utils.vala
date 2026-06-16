@@ -256,4 +256,56 @@ namespace NmWifiUtils {
 
         return conn;
     }
+
+    public NM.Connection create_hotspot_connection (string ssid, string? password, string security, string band, bool is_hidden, int timeout) {
+        var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
+
+        var s_con = new NM.SettingConnection ();
+        s_con.id = "Hotspot";
+        s_con.type = "802-11-wireless";
+        s_con.uuid = NM.Utils.uuid_generate ();
+        s_con.autoconnect = false;
+        conn.add_setting (s_con);
+
+        var s_wifi = new NM.SettingWireless ();
+        uint8[] ssid_arr = ssid.data;
+        s_wifi.ssid = new Bytes (ssid_arr);
+        s_wifi.mode = "ap";
+        s_wifi.hidden = is_hidden;
+        if (band != "") {
+            s_wifi.band = band;
+        }
+        s_wifi.mac_address_randomization = NM.SettingMacRandomization.NEVER;
+        conn.add_setting (s_wifi);
+
+        if (security != "none") {
+            var s_sec = new NM.SettingWirelessSecurity ();
+            s_sec.key_mgmt = security;
+            if (password != null && password != "") {
+                s_sec.psk = password;
+            }
+            
+            s_sec.proto = new string[] { "rsn" };
+            s_sec.pairwise = new string[] { "ccmp" };
+            s_sec.group = new string[] { "ccmp" };
+            
+            conn.add_setting (s_sec);
+        }
+
+        var s_ip4 = new NM.SettingIP4Config ();
+        s_ip4.method = "shared";
+        conn.add_setting (s_ip4);
+
+        var s_ip6 = new NM.SettingIP6Config ();
+        s_ip6.method = "shared";
+        conn.add_setting (s_ip6);
+        
+        var s_user = new NM.SettingUser ();
+        try {
+            s_user.set_data ("hypr-network-manager.hotspot.timeout", timeout.to_string ());
+            conn.add_setting (s_user);
+        } catch (Error e) {}
+
+        return conn;
+    }
 }

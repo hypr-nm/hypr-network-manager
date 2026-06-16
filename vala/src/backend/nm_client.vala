@@ -429,6 +429,22 @@ public class NetworkManagerClient : GLib.Object {
         return yield wifi_client.scan (cancellable);
     }
 
+    public async HyprNetworkManager.Models.HotspotConfig get_hotspot_status (Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.get_hotspot_status (cancellable);
+    }
+
+    public async NM.RemoteConnection create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, cancellable);
+    }
+
+    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.enable_hotspot_async (ssid, password, security, band, is_hidden, timeout, cancellable);
+    }
+
+    public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.disable_hotspot_async (cancellable);
+    }
+
     public async string get_status_json_dbus (Cancellable? cancellable = null) {
         bool networking_on = nm_client.networking_enabled;
         bool wifi_on = nm_client.wireless_enabled;

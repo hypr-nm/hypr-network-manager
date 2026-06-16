@@ -16,6 +16,7 @@
  */
 
 using GLib;
+using HyprNetworkManager.Models;
 
 public class NmWifiClient : GLib.Object {
     private NetworkManagerClient core;
@@ -989,14 +990,194 @@ public class NmWifiClient : GLib.Object {
         var devices = client.get_devices ();
         foreach (var dev in devices) {
             if (dev is NM.DeviceWifi) {
-                try {
-                    yield ((NM.DeviceWifi)dev).request_scan_async (cancellable);
-                } catch (Error e) {
-                    log_warn (
-                        "nm-wifi-client",
-                        "wifi_scan request failed iface=%s error=%s".printf (dev.get_iface (), e.message)
-                    );
+                yield ((NM.DeviceWifi) dev).request_scan_async (cancellable);
+                return true;
+            }
+        }
+        return true;
+    }
+
+    private NM.DeviceWifi? get_wifi_device () {
+        var devices = core.nm_client.get_devices ();
+        foreach (var dev in devices) {
+            if (dev is NM.DeviceWifi) {
+                return (NM.DeviceWifi) dev;
+            }
+        }
+        return null;
+    }
+
+    public async HotspotConfig get_hotspot_status (Cancellable? cancellable = null) throws Error {
+        var client = core.nm_client;
+        var connections = client.get_connections ();
+        NM.Connection? hotspot_conn = null;
+        
+        foreach (var conn in connections) {
+            var s_wifi = conn.get_setting_wireless ();
+            if (s_wifi != null && s_wifi.mode == "ap") {
+                hotspot_conn = conn;
+                break;
+            }
+        }
+
+        var config = new HotspotConfig ();
+        
+        var dev = get_wifi_device ();
+        if (dev != null) {
+            var cap = dev.get_capabilities ();
+            config.supports_2ghz = (cap & NM.DeviceWifiCapabilities.FREQ_2GHZ) != 0;
+            config.supports_5ghz = (cap & NM.DeviceWifiCapabilities.FREQ_5GHZ) != 0;
+        } else {
+            config.supports_2ghz = true;
+            config.supports_5ghz = true;
+        }
+        
+        if (hotspot_conn != null) {
+            var s_wifi = hotspot_conn.get_setting_wireless ();
+            config.ssid = NmWifiUtils.bytes_to_ssid (s_wifi.ssid);
+            config.connection_uuid = hotspot_conn.get_uuid ();
+            config.band = s_wifi.band != null ? s_wifi.band : "";
+            config.is_hidden = s_wifi.hidden;
+            
+            var s_user = (NM.SettingUser) hotspot_conn.get_setting (typeof (NM.SettingUser));
+            if (s_user != null) {
+                string? to_val = s_user.get_data ("hypr-network-manager.hotspot.timeout");
+                if (to_val != null) {
+                    config.timeout = int.parse (to_val);
                 }
+            }
+
+            var s_sec = hotspot_conn.get_setting_wireless_security ();
+            if (s_sec == null) {
+                config.security = "none";
+            } else {
+                config.security = s_sec.key_mgmt != null ? s_sec.key_mgmt : "wpa-psk";
+                
+                if (hotspot_conn is NM.RemoteConnection) {
+                    try {
+                        var secrets = yield ((NM.RemoteConnection) hotspot_conn).get_secrets_async ("802-11-wireless-security", cancellable);
+                        if (secrets != null) {
+                            Variant? sec_dict = secrets.lookup_value ("802-11-wireless-security", new VariantType ("a{sv}"));
+                            if (sec_dict != null) {
+                                Variant? psk_var = sec_dict.lookup_value ("psk", new VariantType ("s"));
+                                if (psk_var != null) {
+                                    config.password = psk_var.get_string ();
+                                }
+                            }
+                        }
+                    } catch (Error e) {
+                        log_warn ("nm-wifi-client", "Failed to get hotspot secrets: " + e.message);
+                    }
+                } else if (s_sec.psk != null) {
+                    config.password = s_sec.psk;
+                }
+            }
+
+            var active_conns = client.get_active_connections ();
+            foreach (var ac in active_conns) {
+                if (ac.get_uuid () == config.connection_uuid && 
+                    (ac.get_state () == NM.ActiveConnectionState.ACTIVATED ||
+                     ac.get_state () == NM.ActiveConnectionState.ACTIVATING)) {
+                    config.is_active = true;
+                    break;
+                }
+            }
+        }
+        
+        return config;
+    }
+
+    public async NM.RemoteConnection create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
+        var client = core.nm_client;
+        var config = yield get_hotspot_status (cancellable);
+        
+        if (config.connection_uuid != "") {
+            var conn = client.get_connection_by_uuid (config.connection_uuid);
+            if (conn != null) {
+                var s_con = conn.get_setting_connection ();
+                if (s_con != null) {
+                    s_con.id = ssid;
+                    conn.add_setting (s_con);
+                }
+                
+                var s_wifi = conn.get_setting_wireless ();
+                uint8[] ssid_arr = ssid.data;
+                s_wifi.ssid = new Bytes (ssid_arr);
+                s_wifi.hidden = is_hidden;
+                
+                if (band == "") {
+                    s_wifi.band = null;
+                } else {
+                    s_wifi.band = band;
+                }
+                
+                conn.add_setting (s_wifi);
+                
+                if (security != "none") {
+                    var s_sec = conn.get_setting_wireless_security ();
+                    if (s_sec == null) {
+                        s_sec = new NM.SettingWirelessSecurity ();
+                        conn.add_setting (s_sec);
+                    }
+                    s_sec.key_mgmt = security;
+                    if (password != "") {
+                        s_sec.psk = password;
+                    }
+                    
+                    // Always ensure modern secure crypto
+                    s_sec.proto = new string[] { "rsn" };
+                    s_sec.pairwise = new string[] { "ccmp" };
+                    s_sec.group = new string[] { "ccmp" };
+                } else {
+                    conn.remove_setting (typeof (NM.SettingWirelessSecurity));
+                }
+                
+                var s_user = (NM.SettingUser) conn.get_setting (typeof (NM.SettingUser));
+                if (s_user == null) {
+                    s_user = new NM.SettingUser ();
+                    conn.add_setting (s_user);
+                }
+                try {
+                    s_user.set_data ("hypr-network-manager.hotspot.timeout", timeout.to_string ());
+                } catch (Error e) {}
+
+                if (conn is NM.RemoteConnection) {
+                    yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
+                    return (NM.RemoteConnection)conn;
+                }
+            }
+        }
+        
+        // Need to create new
+        var new_conn = NmWifiUtils.create_hotspot_connection (ssid, password, security, band, is_hidden, timeout);
+        return yield client.add_connection_async (new_conn, true, cancellable);
+    }
+
+    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
+        var client = core.nm_client;
+        var dev = get_wifi_device ();
+        if (dev == null) {
+            throw new IOError.NOT_FOUND ("Wi-Fi device not found");
+        }
+
+        var conn = yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, cancellable);
+        yield client.activate_connection_async (conn, dev, null, cancellable);
+        return true;
+    }
+
+    public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {
+        var client = core.nm_client;
+        var config = yield get_hotspot_status (cancellable);
+        
+        if (config.connection_uuid == "") {
+            return true;
+        }
+        
+        var active_conns = client.get_active_connections ();
+        foreach (var ac in active_conns) {
+            if (ac.get_uuid () == config.connection_uuid) {
+                yield client.deactivate_connection_async (ac, cancellable);
+                return true;
             }
         }
         return true;
