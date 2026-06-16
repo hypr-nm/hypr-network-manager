@@ -447,6 +447,16 @@ button.nm-button:hover,
   border-color: alpha(var(--selected), .6);
 }
 
+button.nm-button:disabled,
+.nm-button:disabled,
+button.suggested-action:disabled,
+.suggested-action:disabled {
+  opacity: 0.58;
+  color: alpha(var(--on_surface), .56);
+  background: alpha(var(--on_surface), .05);
+  border-color: alpha(var(--line_strong), .5);
+}
+
 .nm-connect-button {
   color: var(--success);
   border-color: alpha(var(--success), .55);
@@ -1020,6 +1030,8 @@ popover.background list row:checked:hover {
 
 .nm-edit-field-entry:disabled,
 .nm-edit-dropdown:disabled,
+menubutton.nm-edit-dropdown-trigger:disabled > button,
+button.nm-edit-dropdown-trigger:disabled,
 entry.nm-edit-field-entry:disabled {
   opacity: 0.58;
   color: alpha(var(--on_surface), .56);
@@ -1054,6 +1066,13 @@ checkbutton.nm-row-autoconnect-check:checked > label,
 .nm-row-autoconnect-check:checked > label,
 checkbutton:checked > label {
   color: var(--text);
+}
+
+checkbutton:disabled,
+checkbutton:disabled > label,
+checkbutton:disabled > check {
+  opacity: 0.58;
+  color: alpha(var(--on_surface), .56);
 }
 
 .nm-placeholder-label {
