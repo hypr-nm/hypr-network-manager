@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Packaging:** Nix flake with `nix run` support and development shell
+
 ## [0.2.0] - 2026-04-29
 
 ### Added
