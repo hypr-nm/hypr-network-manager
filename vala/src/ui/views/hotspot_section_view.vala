@@ -37,6 +37,8 @@ namespace HyprNetworkManager.UI.Views {
         private HyprNetworkManager.UI.Widgets.TrackedDropDown timeout_dropdown;
         private Gtk.CheckButton hidden_check;
         private Gtk.Button save_button;
+        private Gtk.Box qr_container;
+        private Gtk.Revealer qr_revealer;
         
         private bool is_updating = false;
 
@@ -227,10 +229,68 @@ namespace HyprNetworkManager.UI.Views {
             
             box.append (form_box);
             
+            // QR Code section
+            qr_revealer = new Gtk.Revealer ();
+            qr_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+            qr_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
+            
+            qr_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+            qr_container.halign = Gtk.Align.CENTER;
+            qr_container.margin_top = 20;
+            qr_revealer.set_child (qr_container);
+            
+            box.append (qr_revealer);
+            
             this.widget = box;
             
             setup_signals ();
             perform_refresh ();
+        }
+
+        private void update_qr_code (HotspotConfig config) {
+            // Clear existing
+            var child = qr_container.get_first_child ();
+            while (child != null) {
+                var next = child.get_next_sibling ();
+                qr_container.remove (child);
+                child = next;
+            }
+            
+            if (!config.is_active || config.ssid == "") {
+                qr_revealer.set_reveal_child (false);
+                return;
+            }
+            
+            string security = "WPA";
+            if (config.security == "none") {
+                security = "nopass";
+            }
+            
+            string escaped_password = config.password.replace ("\\", "\\\\").replace (";", "\\;").replace (",", "\\,").replace (":", "\\:");
+            string hidden_flag = config.is_hidden ? "true" : "false";
+            string qr_text = "WIFI:T:" + security + ";S:" + config.ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
+            
+            var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (qr_text);
+            qr_widget.set_size_request (180, 180);
+            qr_widget.halign = Gtk.Align.CENTER;
+            qr_widget.valign = Gtk.Align.CENTER;
+            
+            var pass_text = config.password != "" ? config.password : _("None");
+            
+            var info_label = new Gtk.Label ("");
+            info_label.set_markup ("<b>" + GLib.Markup.escape_text(config.ssid) + "</b> • " + _("Password: ") + GLib.Markup.escape_text(pass_text));
+            info_label.selectable = true;
+            info_label.wrap = true;
+            info_label.wrap_mode = Pango.WrapMode.CHAR;
+            info_label.max_width_chars = 35;
+            info_label.justify = Gtk.Justification.CENTER;
+            info_label.margin_top = 8;
+            MainWindowCssClassResolver.add_best_class (info_label, {MainWindowCssClasses.FORM_LABEL});
+            
+            qr_container.append (qr_widget);
+            qr_container.append (info_label);
+            
+            qr_revealer.set_reveal_child (true);
         }
 
         private void setup_signals () {
@@ -350,6 +410,7 @@ namespace HyprNetworkManager.UI.Views {
                 toggle_switch.active = config.is_active;
                 is_updating = false;
                 update_sensitivity (config.is_active);
+                update_qr_code (config);
             } catch (Error e) {
                 warning ("Failed to save hotspot configuration: " + e.message);
                 perform_refresh (); // Only refresh if it failed to revert to actual state
@@ -473,6 +534,7 @@ namespace HyprNetworkManager.UI.Views {
                 is_updating = false;
 
                 update_sensitivity (config.is_active);
+                update_qr_code (config);
             } catch (Error e) {
                 warning ("Failed to fetch hotspot status: " + e.message);
             }
