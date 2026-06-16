@@ -20,9 +20,78 @@ using HyprNetworkManager.Models;
 
 public class NmWifiClient : GLib.Object {
     private NetworkManagerClient core;
+    private int hotspot_idle_minutes = 0;
 
     public NmWifiClient (NetworkManagerClient core) {
         this.core = core;
+        GLib.Timeout.add_seconds (60, check_hotspot_timeout);
+    }
+
+    private bool check_hotspot_timeout () {
+        var dev = get_wifi_device ();
+        if (dev == null) return true;
+
+        var active_conn = dev.get_active_connection ();
+        if (active_conn == null) {
+            hotspot_idle_minutes = 0;
+            return true;
+        }
+
+        var conn = active_conn.get_connection ();
+        if (conn == null) {
+            hotspot_idle_minutes = 0;
+            return true;
+        }
+
+        var s_wifi = conn.get_setting_wireless ();
+        if (s_wifi == null || s_wifi.mode != "ap") {
+            hotspot_idle_minutes = 0;
+            return true;
+        }
+        
+        int timeout_mins = 0;
+        var s_user = (NM.SettingUser) conn.get_setting (typeof (NM.SettingUser));
+        if (s_user != null) {
+            string? to_val = s_user.get_data ("hypr-network-manager.hotspot.timeout");
+            if (to_val != null) {
+                timeout_mins = int.parse (to_val);
+            }
+        }
+
+        if (timeout_mins <= 0) {
+            hotspot_idle_minutes = 0;
+            return true;
+        }
+
+        bool has_clients = false;
+        try {
+            string stdout_content, stderr_content;
+            int exit_status;
+            
+            string[] argv = { "iw", "dev", dev.get_iface (), "station", "dump" };
+            if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, out stderr_content, out exit_status)) {
+                if (exit_status == 0) {
+                    if (stdout_content.contains ("Station ")) {
+                        has_clients = true;
+                    }
+                }
+            }
+        } catch (Error e) {
+            // Ignore gracefully
+        }
+
+        if (has_clients) {
+            hotspot_idle_minutes = 0;
+        } else {
+            hotspot_idle_minutes++;
+            if (hotspot_idle_minutes >= timeout_mins) {
+                core.debug_log ("Hotspot idle timeout reached, disconnecting.");
+                disable_hotspot_async.begin (null);
+                hotspot_idle_minutes = 0;
+            }
+        }
+
+        return true;
     }
 
     public async WifiRefreshData get_refresh_data (Cancellable? cancellable = null) throws Error {
@@ -1083,7 +1152,7 @@ public class NmWifiClient : GLib.Object {
                 }
             }
         }
-        
+
         return config;
     }
 
