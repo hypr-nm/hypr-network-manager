@@ -21,6 +21,21 @@ using HyprNetworkManager.Models;
 public class NmWifiClient : GLib.Object {
     private NetworkManagerClient core;
     private int hotspot_idle_minutes = 0;
+    private bool is_hotspot_stopping = false;
+
+    private bool is_hotspot_starting = false;
+
+    private bool has_create_ap () {
+        return GLib.Environment.find_program_in_path ("create_ap") != null;
+    }
+
+    private async void nm_async_sleep (uint ms) {
+        Timeout.add (ms, () => {
+            nm_async_sleep.callback ();
+            return false;
+        });
+        yield;
+    }
 
     public NmWifiClient (NetworkManagerClient core) {
         this.core = core;
@@ -30,6 +45,66 @@ public class NmWifiClient : GLib.Object {
     private bool check_hotspot_timeout () {
         var dev = get_wifi_device ();
         if (dev == null) return true;
+
+        if (has_create_ap ()) {
+            bool is_running = false;
+            try {
+                string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
+                int exit_status;
+                string stdout_content;
+                if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
+                    if (exit_status == 0 && stdout_content.strip () != "") {
+                        is_running = true;
+                    }
+                }
+            } catch (Error e) {}
+            
+            if (!is_running) {
+                // Not running via create_ap, fallback to checking NM below
+            } else {
+                int timeout_mins = 0;
+                var connections = core.nm_client.get_connections ();
+                foreach (var conn_it in connections) {
+                    var s_w = conn_it.get_setting_wireless ();
+                    if (s_w != null && s_w.mode == "ap") {
+                        var s_usr = (NM.SettingUser) conn_it.get_setting (typeof (NM.SettingUser));
+                        if (s_usr != null) {
+                            string? to_val = s_usr.get_data ("hypr-network-manager.hotspot.timeout");
+                            if (to_val != null) timeout_mins = int.parse (to_val);
+                        }
+                        break;
+                    }
+                }
+                
+                if (timeout_mins <= 0) {
+                    hotspot_idle_minutes = 0;
+                    return true;
+                }
+                
+                bool has_clients_ap = false;
+                try {
+                    string[] argv = { "bash", "-c", "for iface in $(iw dev | grep Interface | awk '{print $2}'); do iw dev $iface station dump 2>/dev/null | grep -q 'Station' && echo 'yes'; done" };
+                    string stdout_content;
+                    if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, null)) {
+                        if (stdout_content.contains ("yes")) {
+                            has_clients_ap = true;
+                        }
+                    }
+                } catch (Error e) {}
+                
+                if (has_clients_ap) {
+                    hotspot_idle_minutes = 0;
+                } else {
+                    hotspot_idle_minutes++;
+                    if (hotspot_idle_minutes >= timeout_mins) {
+                        core.debug_log ("Hotspot idle timeout reached, disconnecting via create_ap.");
+                        disable_hotspot_async.begin (null);
+                        hotspot_idle_minutes = 0;
+                    }
+                }
+                return true;
+            }
+        }
 
         var active_conn = dev.get_active_connection ();
         if (active_conn == null) {
@@ -1142,13 +1217,42 @@ public class NmWifiClient : GLib.Object {
                 }
             }
 
-            var active_conns = client.get_active_connections ();
-            foreach (var ac in active_conns) {
-                if (ac.get_uuid () == config.connection_uuid && 
-                    (ac.get_state () == NM.ActiveConnectionState.ACTIVATED ||
-                     ac.get_state () == NM.ActiveConnectionState.ACTIVATING)) {
+            if (has_create_ap ()) {
+                config.is_active = false;
+                
+                if (is_hotspot_stopping) {
+                    return config;
+                }
+                
+                if (is_hotspot_starting) {
                     config.is_active = true;
-                    break;
+                    return config;
+                }
+                
+                try {
+                    string stdout_content, stderr_content;
+                    int exit_status;
+                    if (dev != null) {
+                        string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
+                        if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, out stderr_content, out exit_status)) {
+                            if (exit_status == 0 && stdout_content.strip () != "") {
+                                config.is_active = true;
+                            }
+                        }
+                    }
+                } catch (Error e) {
+                }
+            }
+            
+            if (!config.is_active) {
+                var active_conns = client.get_active_connections ();
+                foreach (var ac in active_conns) {
+                    if (ac.get_uuid () == config.connection_uuid && 
+                        (ac.get_state () == NM.ActiveConnectionState.ACTIVATED ||
+                         ac.get_state () == NM.ActiveConnectionState.ACTIVATING)) {
+                        config.is_active = true;
+                        break;
+                    }
                 }
             }
         }
@@ -1230,12 +1334,128 @@ public class NmWifiClient : GLib.Object {
         }
 
         var conn = yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, cancellable);
-        yield client.activate_connection_async (conn, dev, null, cancellable);
-        return true;
+        
+        if (has_create_ap () && dev.get_active_connection () != null) {
+            // Stop any existing instance just in case
+            try {
+                string stdout_content;
+                int exit_status;
+                string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
+                if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
+                    if (exit_status == 0 && stdout_content.strip () != "") {
+                        string pid = stdout_content.strip().split("\n")[0];
+                        string[] stop_argv = { "pkexec", "create_ap", "--stop", pid };
+                        Process.spawn_sync (null, stop_argv, null, SpawnFlags.SEARCH_PATH, null, null, null, null);
+                    }
+                }
+            } catch (Error e) {
+            }
+            
+            int channel = 0;
+            var active_ap = dev.get_active_access_point ();
+            if (active_ap != null) {
+                uint32 freq = active_ap.get_frequency ();
+                if (freq >= 2412 && freq <= 2484) {
+                    channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
+                } else if (freq >= 5000) {
+                    channel = ((int)freq - 5000) / 5;
+                }
+            }
+            
+            try {
+                var argv = new GLib.GenericArray<string> ();
+                argv.add ("pkexec");
+                argv.add ("create_ap");
+                argv.add ("--daemon");
+                
+                if (band == "a") {
+                    argv.add ("--freq-band"); argv.add ("5");
+                } else if (band == "bg") {
+                    argv.add ("--freq-band"); argv.add ("2.4");
+                }
+                
+                if (is_hidden) {
+                    argv.add ("--hidden");
+                }
+                
+                if (channel > 0) {
+                    argv.add ("-c"); argv.add (channel.to_string ());
+                }
+                
+                argv.add (dev.get_iface ()); // wifi
+                argv.add (dev.get_iface ()); // internet
+                argv.add (ssid);
+                
+                if (security != "none" && password != "") {
+                    argv.add (password);
+                }
+                
+                string[] spawn_args = new string[argv.length + 1];
+                for (int i = 0; i < argv.length; i++) {
+                    spawn_args[i] = argv[i];
+                }
+                spawn_args[argv.length] = null;
+                
+                is_hotspot_starting = true;
+                var launcher = new GLib.SubprocessLauncher (GLib.SubprocessFlags.NONE);
+                var proc = launcher.spawnv (spawn_args);
+                yield proc.wait_async (cancellable);
+                
+                hotspot_idle_minutes = 0;
+                is_hotspot_starting = false;
+                return true;
+            } catch (Error e) {
+                is_hotspot_starting = false;
+                throw new IOError.FAILED ("Failed to spawn create_ap: " + e.message);
+            }
+        } else {
+            yield client.activate_connection_async (conn, dev, null, cancellable);
+            return true;
+        }
     }
 
     public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
+        
+        if (has_create_ap ()) {
+            var dev = get_wifi_device ();
+            if (dev != null) {
+                try {
+                    string stdout_content;
+                    int exit_status;
+                    string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
+                    if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
+                        if (exit_status == 0 && stdout_content.strip () != "") {
+                            is_hotspot_stopping = true;
+                            
+                            string[] pids = stdout_content.strip().split("\n");
+                            foreach (string pid in pids) {
+                                if (pid.strip() == "") continue;
+                                string[] argv = { "pkexec", "create_ap", "--stop", pid.strip() };
+                                var launcher = new GLib.SubprocessLauncher (GLib.SubprocessFlags.NONE);
+                                var proc = launcher.spawnv (argv);
+                                yield proc.wait_async (cancellable);
+                            }
+                            
+                            // Poll until all create_ap processes fully exit to prevent UI flashing
+                            for (int i = 0; i < 20; i++) {
+                                if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
+                                    if (exit_status != 0 || stdout_content.strip () == "") {
+                                        break;
+                                    }
+                                }
+                                yield nm_async_sleep (500);
+                            }
+                            is_hotspot_stopping = false;
+                        }
+                    }
+                } catch (Error e) {
+                    is_hotspot_stopping = false;
+                    throw new IOError.FAILED ("Failed to stop create_ap: " + e.message);
+                }
+            }
+        }
+
         var config = yield get_hotspot_status (cancellable);
         
         if (config.connection_uuid == "") {
