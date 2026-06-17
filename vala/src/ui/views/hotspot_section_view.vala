@@ -334,7 +334,8 @@ namespace HyprNetworkManager.UI.Views {
         private void on_toggle_switch_changed () {
             if (is_updating) return;
 
-            update_sensitivity (toggle_switch.active);
+            // Lock all inputs while the state is transitioning
+            update_sensitivity (true);
 
             if (toggle_switch.active) {
                 enable_hotspot.begin ((obj, res) => {
