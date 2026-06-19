@@ -21,7 +21,7 @@ namespace HyprNetworkManager.Backend.Mappers {
 
 public interface VpnMapper : GLib.Object {
     public abstract void map_to_details (NM.Connection conn, VpnProfileDetails details);
-    public abstract void map_from_request (VpnUpdateRequest request, NM.Connection conn);
+    public abstract void map_from_request (VpnUpdateRequest request, NM.Connection conn) throws Error;
     public abstract string get_vpn_type_key ();
 }
 
@@ -109,7 +109,7 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
         wg_details.peers = peers_array;
     }
 
-    public void map_from_request (VpnUpdateRequest request, NM.Connection conn) {
+    public void map_from_request (VpnUpdateRequest request, NM.Connection conn) throws Error {
         var wg_request = request as WireGuardVpnUpdateRequest;
         if (wg_request == null) return;
 
@@ -134,19 +134,27 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
 
         foreach (var p in wg_request.peers) {
             var peer = new NM.WireGuardPeer ();
-            peer.set_public_key (p.public_key.strip (), false);
+            if (!peer.set_public_key (p.public_key.strip (), false)) {
+                throw new IOError.FAILED ("Invalid WireGuard public key: '%s'".printf (p.public_key.strip ()));
+            }
             
             string endpoint = p.endpoint_host.strip ();
-            if (endpoint.contains (":") && !endpoint.has_prefix ("[")) {
-                endpoint = "[" + endpoint + "]";
+            if (endpoint != "") {
+                if (endpoint.contains (":") && !endpoint.has_prefix ("[")) {
+                    endpoint = "[" + endpoint + "]";
+                }
+                if (p.endpoint_port > 0) {
+                    endpoint += ":%u".printf (p.endpoint_port);
+                }
+                if (!peer.set_endpoint (endpoint, false)) {
+                    throw new IOError.FAILED ("Invalid WireGuard endpoint: '%s'".printf (endpoint));
+                }
             }
-            if (p.endpoint_port > 0) {
-                endpoint += ":%u".printf (p.endpoint_port);
-            }
-            peer.set_endpoint (endpoint, false);
             
             if (p.preshared_key.strip () != "") {
-                peer.set_preshared_key (p.preshared_key.strip (), false);
+                if (!peer.set_preshared_key (p.preshared_key.strip (), false)) {
+                    throw new IOError.FAILED ("Invalid WireGuard preshared key");
+                }
             }
 
             string[] allowed_ips = p.allowed_ips;
@@ -155,7 +163,9 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
                 allowed_ips += "::/0";
             }
             foreach (var allowed_ip in allowed_ips) {
-                peer.append_allowed_ip (allowed_ip, false);
+                if (!peer.append_allowed_ip (allowed_ip, false)) {
+                    throw new IOError.FAILED ("Invalid WireGuard allowed IP: '%s'".printf (allowed_ip));
+                }
             }
             s_wg.append_peer (peer);
         }
@@ -190,7 +200,7 @@ public class OpenVpnMapper : GLib.Object, VpnMapper {
         ovpn_details.ovpn_auth = (setting_vpn.get_data_item ("auth") ?? "").strip ();
     }
 
-    public void map_from_request (VpnUpdateRequest request, NM.Connection conn) {
+    public void map_from_request (VpnUpdateRequest request, NM.Connection conn) throws Error {
         var ovpn_request = request as OpenVpnUpdateRequest;
         if (ovpn_request == null) return;
 
@@ -261,7 +271,7 @@ public class GenericVpnMapper : GLib.Object, VpnMapper {
         generic_details.password = setting_vpn.get_secret ("password") ?? "";
     }
 
-    public void map_from_request (VpnUpdateRequest request, NM.Connection conn) {
+    public void map_from_request (VpnUpdateRequest request, NM.Connection conn) throws Error {
         var s_conn = conn.get_setting_connection ();
         if (s_conn != null) {
             s_conn.type = "vpn";
