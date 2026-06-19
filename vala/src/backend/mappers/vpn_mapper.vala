@@ -50,16 +50,45 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
             p.public_key = (nm_peer.get_public_key () ?? "").strip ();
             
             string endpoint = (nm_peer.get_endpoint () ?? "").strip ();
-            string[] parts = endpoint.split (":");
-            if (parts.length > 1) {
-                p.endpoint_host = string.joinv (":", parts[0:parts.length-1]);
-                uint parsed_port;
-                if (uint.try_parse (parts[parts.length-1], out parsed_port)) {
-                    p.endpoint_port = (uint32) parsed_port;
+            string host = endpoint;
+            uint32 port = 0;
+
+            if (endpoint != "") {
+                if (endpoint.has_prefix ("[")) {
+                    int close_bracket_idx = endpoint.index_of ("]");
+                    if (close_bracket_idx != -1) {
+                        host = endpoint.substring (1, close_bracket_idx - 1);
+                        string remaining = endpoint.substring (close_bracket_idx + 1);
+                        if (remaining.has_prefix (":")) {
+                            uint parsed_port;
+                            if (uint.try_parse (remaining.substring (1), out parsed_port)) {
+                                port = (uint32) parsed_port;
+                            }
+                        }
+                    }
+                } else {
+                    int first_colon_idx = endpoint.index_of (":");
+                    int last_colon_idx = endpoint.last_index_of (":");
+                    if (first_colon_idx != -1) {
+                        if (first_colon_idx == last_colon_idx) {
+                            host = endpoint.substring (0, first_colon_idx);
+                            uint parsed_port;
+                            if (uint.try_parse (endpoint.substring (first_colon_idx + 1), out parsed_port)) {
+                                port = (uint32) parsed_port;
+                            }
+                        } else {
+                            host = endpoint;
+                            port = 0;
+                        }
+                    } else {
+                        host = endpoint;
+                        port = 0;
+                    }
                 }
-            } else {
-                p.endpoint_host = endpoint;
             }
+
+            p.endpoint_host = host;
+            p.endpoint_port = port;
             
             p.preshared_key = (nm_peer.get_preshared_key () ?? "").strip ();
 
@@ -108,6 +137,9 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
             peer.set_public_key (p.public_key.strip (), false);
             
             string endpoint = p.endpoint_host.strip ();
+            if (endpoint.contains (":") && !endpoint.has_prefix ("[")) {
+                endpoint = "[" + endpoint + "]";
+            }
             if (p.endpoint_port > 0) {
                 endpoint += ":%u".printf (p.endpoint_port);
             }
@@ -149,7 +181,7 @@ public class OpenVpnMapper : GLib.Object, VpnMapper {
         ovpn_details.ovpn_port = parse_uint32_or_zero (setting_vpn.get_data_item ("port"));
         ovpn_details.ovpn_proto = (setting_vpn.get_data_item ("proto") ?? "").strip ();
         ovpn_details.ovpn_username = (setting_vpn.get_data_item ("username") ?? "").strip ();
-        ovpn_details.ovpn_password = (setting_vpn.get_secret ("password") ?? "").strip ();
+        ovpn_details.ovpn_password = setting_vpn.get_secret ("password") ?? "";
         ovpn_details.ovpn_ca_cert = (setting_vpn.get_data_item ("ca") ?? "").strip ();
         ovpn_details.ovpn_client_cert = (setting_vpn.get_data_item ("cert") ?? "").strip ();
         ovpn_details.ovpn_private_key = (setting_vpn.get_data_item ("key") ?? "").strip ();
@@ -226,7 +258,7 @@ public class GenericVpnMapper : GLib.Object, VpnMapper {
 
         generic_details.gateway = (setting_vpn.get_data_item ("gateway") ?? "").strip ();
         generic_details.username = (setting_vpn.get_data_item ("username") ?? "").strip ();
-        generic_details.password = (setting_vpn.get_secret ("password") ?? "").strip ();
+        generic_details.password = setting_vpn.get_secret ("password") ?? "";
     }
 
     public void map_from_request (VpnUpdateRequest request, NM.Connection conn) {
