@@ -1440,33 +1440,35 @@ public class NmWifiClient : GLib.Object {
             var dev = get_wifi_device ();
             if (dev != null) {
                 try {
-                    string stdout_content;
-                    int exit_status;
                     string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
-                    if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
-                        if (exit_status == 0 && stdout_content.strip () != "") {
-                            is_hotspot_stopping = true;
-                            
-                            string[] pids = stdout_content.strip().split("\n");
-                            foreach (string pid in pids) {
-                                if (pid.strip() == "") continue;
-                                string[] argv = { "pkexec", "create_ap", "--stop", pid.strip() };
-                                var launcher = new GLib.SubprocessLauncher (GLib.SubprocessFlags.NONE);
-                                var proc = launcher.spawnv (argv);
-                                yield proc.wait_async (cancellable);
-                            }
-                            
-                            // Poll until all create_ap processes fully exit to prevent UI flashing
-                            for (int i = 0; i < 20; i++) {
-                                if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
-                                    if (exit_status != 0 || stdout_content.strip () == "") {
-                                        break;
-                                    }
-                                }
-                                yield nm_async_sleep (500);
-                            }
-                            is_hotspot_stopping = false;
+                    var proc = new GLib.Subprocess.newv (pgrep_argv, GLib.SubprocessFlags.STDOUT_PIPE);
+                    string? stdout_content;
+                    yield proc.communicate_utf8_async (null, cancellable, out stdout_content, null);
+
+                    if (stdout_content != null && stdout_content.strip () != "") {
+                        is_hotspot_stopping = true;
+                        
+                        string[] pids = stdout_content.strip().split("\n");
+                        foreach (string pid in pids) {
+                            if (pid.strip() == "") continue;
+                            string[] argv = { "pkexec", "create_ap", "--stop", pid.strip() };
+                            var launcher = new GLib.SubprocessLauncher (GLib.SubprocessFlags.NONE);
+                            var stop_proc = launcher.spawnv (argv);
+                            yield stop_proc.wait_async (cancellable);
                         }
+                        
+                        // Poll until all create_ap processes fully exit to prevent UI flashing
+                        for (int i = 0; i < 20; i++) {
+                            var poll_proc = new GLib.Subprocess.newv (pgrep_argv, GLib.SubprocessFlags.STDOUT_PIPE);
+                            string? poll_stdout;
+                            yield poll_proc.communicate_utf8_async (null, cancellable, out poll_stdout, null);
+
+                            if (poll_stdout == null || poll_stdout.strip () == "") {
+                                break;
+                            }
+                            yield nm_async_sleep (500);
+                        }
+                        is_hotspot_stopping = false;
                     }
                 } catch (Error e) {
                     is_hotspot_stopping = false;
