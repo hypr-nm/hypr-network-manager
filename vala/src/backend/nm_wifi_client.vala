@@ -607,25 +607,19 @@ public class NmWifiClient : GLib.Object {
                 s_8021x.ca_cert_password = request.ca_cert_password;
                 s_8021x.client_cert_password = request.user_cert_password;
                 if (request.ca_cert != null && request.ca_cert.strip () != "") {
-                    try {
-                        s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                    } catch (Error e) {
-                        log_debug ("nm-wifi-client", "Failed to set ca-cert: " + e.message);
-                    }
+                    s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                } else {
+                    s_8021x.set_ca_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
                 }
                 if (request.user_cert != null && request.user_cert.strip () != "") {
-                    try {
-                        s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                    } catch (Error e) {
-                        log_debug ("nm-wifi-client", "Failed to set client-cert: " + e.message);
-                    }
+                    s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                } else {
+                    s_8021x.set_client_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
                 }
                 if (request.user_private_key != null && request.user_private_key.strip () != "") {
-                    try {
-                        s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                    } catch (Error e) {
-                        log_debug ("nm-wifi-client", "Failed to set private-key: " + e.message);
-                    }
+                    s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+                } else {
+                    s_8021x.set_private_key ((string?) null, request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
                 }
             }
         }
@@ -669,25 +663,19 @@ public class NmWifiClient : GLib.Object {
             s_8021x.ca_cert_password = request.ca_cert_password;
             s_8021x.client_cert_password = request.user_cert_password;
             if (request.ca_cert != null && request.ca_cert.strip () != "") {
-                try {
-                    s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                } catch (Error e) {
-                    log_debug ("nm-wifi-client", "Failed to set ca-cert: " + e.message);
-                }
+                s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+            } else {
+                s_8021x.set_ca_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
             }
             if (request.user_cert != null && request.user_cert.strip () != "") {
-                try {
-                    s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                } catch (Error e) {
-                    log_debug ("nm-wifi-client", "Failed to set client-cert: " + e.message);
-                }
+                s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+            } else {
+                s_8021x.set_client_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
             }
             if (request.user_private_key != null && request.user_private_key.strip () != "") {
-                try {
-                    s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                } catch (Error e) {
-                    log_debug ("nm-wifi-client", "Failed to set private-key: " + e.message);
-                }
+                s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+            } else {
+                s_8021x.set_private_key ((string?) null, request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
             }
             if (request.password != null && request.password != "") {
                 if (request.password.contains ("\n")) {
