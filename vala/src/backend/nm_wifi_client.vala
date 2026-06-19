@@ -1385,11 +1385,20 @@ public class NmWifiClient : GLib.Object {
                 string final_ap_iface = (ap_interface != "" && ap_interface != "Auto") ? ap_interface : dev.get_iface ();
                 string final_uplink_iface = (uplink_interface != "" && uplink_interface != "Auto") ? uplink_interface : dev.get_iface ();
                 
+                if (final_ap_iface.has_prefix ("-") || !is_valid_interface_name (final_ap_iface)) {
+                    throw new IOError.INVALID_ARGUMENT ("Invalid AP interface name");
+                }
+                if (final_uplink_iface != "None" && (final_uplink_iface.has_prefix ("-") || !is_valid_interface_name (final_uplink_iface))) {
+                    throw new IOError.INVALID_ARGUMENT ("Invalid uplink interface name");
+                }
+
                 if (final_uplink_iface == "None") {
                     argv.add ("-m");
                     argv.add ("none");
+                    argv.add ("--");
                     argv.add (final_ap_iface);
                 } else {
+                    argv.add ("--");
                     argv.add (final_ap_iface); // wifi
                     argv.add (final_uplink_iface); // internet
                 }
@@ -1477,6 +1486,19 @@ public class NmWifiClient : GLib.Object {
             if (ac.get_uuid () == config.connection_uuid) {
                 yield client.deactivate_connection_async (ac, cancellable);
                 return true;
+            }
+        }
+        return true;
+    }
+
+    private static bool is_valid_interface_name (string name) {
+        if (name == "" || name.length > 15) {
+            return false;
+        }
+        for (int i = 0; i < name.length; i++) {
+            char c = name[i];
+            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '.' || c == '-')) {
+                return false;
             }
         }
         return true;
