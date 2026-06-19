@@ -35,6 +35,10 @@ namespace HyprNetworkManager.UI.Views {
         private HyprNetworkManager.UI.Widgets.TrackedDropDown security_dropdown;
         private HyprNetworkManager.UI.Widgets.TrackedDropDown band_dropdown;
         private HyprNetworkManager.UI.Widgets.TrackedDropDown timeout_dropdown;
+        private HyprNetworkManager.UI.Widgets.TrackedDropDown ap_interface_dropdown;
+        private HyprNetworkManager.UI.Widgets.TrackedDropDown uplink_interface_dropdown;
+        private Gtk.StringList ap_model;
+        private Gtk.StringList uplink_model;
         private Gtk.CheckButton hidden_check;
         private Gtk.Button save_button;
         private Gtk.Box qr_container;
@@ -71,6 +75,48 @@ namespace HyprNetworkManager.UI.Views {
             var form_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
             MainWindowCssClassResolver.add_best_class (form_box, {MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM});
             form_box.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
+            
+            // --- ROW 0 (Interfaces) ---
+            var row0_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_SECTION);
+            row0_box.homogeneous = true;
+            row0_box.hexpand = true;
+            row0_box.visible = nm.has_create_ap ();
+            
+            // AP Interface col
+            var ap_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
+            var ap_label = new Gtk.Label (_("Wi-Fi Interface"));
+            MainWindowCssClassResolver.add_best_class (ap_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            ap_label.xalign = 0;
+            
+            this.ap_model = new Gtk.StringList (new string[] { _("Auto") });
+            foreach (var iface in nm.get_wifi_interfaces ()) {
+                this.ap_model.append (iface);
+            }
+            ap_interface_dropdown = window_host.create_tracked_dropdown (this.ap_model);
+            ap_interface_dropdown.hexpand = true;
+            MainWindowCssClassResolver.add_best_class (ap_interface_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            ap_col.append (ap_label);
+            ap_col.append (ap_interface_dropdown);
+            
+            // Uplink Interface col
+            var uplink_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
+            var uplink_label = new Gtk.Label (_("Share Internet From"));
+            MainWindowCssClassResolver.add_best_class (uplink_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            uplink_label.xalign = 0;
+            
+            this.uplink_model = new Gtk.StringList (new string[] { _("Auto"), _("None") });
+            foreach (var iface in nm.get_all_interfaces ()) {
+                this.uplink_model.append (iface);
+            }
+            uplink_interface_dropdown = window_host.create_tracked_dropdown (this.uplink_model);
+            uplink_interface_dropdown.hexpand = true;
+            MainWindowCssClassResolver.add_best_class (uplink_interface_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            uplink_col.append (uplink_label);
+            uplink_col.append (uplink_interface_dropdown);
+            
+            row0_box.append (ap_col);
+            row0_box.append (uplink_col);
+            form_box.append (row0_box);
             
             // --- ROW 1 ---
             var row1_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_SECTION);
@@ -312,6 +358,8 @@ namespace HyprNetworkManager.UI.Views {
             band_dropdown.notify_selected.connect (validate_inputs);
             hidden_check.toggled.connect (validate_inputs);
             timeout_dropdown.notify_selected.connect (validate_inputs);
+            if (ap_interface_dropdown != null) ap_interface_dropdown.notify_selected.connect (validate_inputs);
+            if (uplink_interface_dropdown != null) uplink_interface_dropdown.notify_selected.connect (validate_inputs);
         }
 
         private void validate_inputs () {
@@ -358,6 +406,8 @@ namespace HyprNetworkManager.UI.Views {
             band_dropdown.sensitive = !is_active;
             hidden_check.sensitive = !is_active;
             timeout_dropdown.sensitive = !is_active;
+            if (ap_interface_dropdown != null) ap_interface_dropdown.sensitive = !is_active;
+            if (uplink_interface_dropdown != null) uplink_interface_dropdown.sensitive = !is_active;
             
             if (is_active) {
                 save_button.sensitive = false;
@@ -390,6 +440,15 @@ namespace HyprNetworkManager.UI.Views {
             else if (timeout_index == 3) timeout = 30;
             else if (timeout_index == 4) timeout = 60;
             
+            string ap_iface = "";
+            if (ap_interface_dropdown != null && this.ap_model != null) {
+                ap_iface = this.ap_model.get_string (ap_interface_dropdown.get_selected ());
+            }
+            string up_iface = "";
+            if (uplink_interface_dropdown != null && this.uplink_model != null) {
+                up_iface = this.uplink_model.get_string (uplink_interface_dropdown.get_selected ());
+            }
+            
             if (ssid == "") {
                 validate_inputs ();
                 return;
@@ -401,7 +460,7 @@ namespace HyprNetworkManager.UI.Views {
             }
             
             try {
-                yield nm.create_or_update_hotspot (ssid, pass, security, band, is_hidden, timeout);
+                yield nm.create_or_update_hotspot (ssid, pass, security, band, is_hidden, timeout, ap_iface, up_iface);
                 
                 // After successful save, we don't need to refresh the entries
                 // since they already contain the typed configuration.
@@ -445,6 +504,15 @@ namespace HyprNetworkManager.UI.Views {
                 else if (timeout_index == 3) timeout = 30;
                 else if (timeout_index == 4) timeout = 60;
                 
+                string ap_iface = "";
+                if (ap_interface_dropdown != null && this.ap_model != null) {
+                    ap_iface = this.ap_model.get_string (ap_interface_dropdown.get_selected ());
+                }
+                string up_iface = "";
+                if (uplink_interface_dropdown != null && this.uplink_model != null) {
+                    up_iface = this.uplink_model.get_string (uplink_interface_dropdown.get_selected ());
+                }
+                
                 if (ssid == "") {
                     throw new IOError.INVALID_ARGUMENT("SSID cannot be empty");
                 }
@@ -452,7 +520,7 @@ namespace HyprNetworkManager.UI.Views {
                     throw new IOError.INVALID_ARGUMENT("Password must be at least 8 characters");
                 }
 
-                yield nm.enable_hotspot_async (ssid, pass, security, band, is_hidden, timeout);
+                yield nm.enable_hotspot_async (ssid, pass, security, band, is_hidden, timeout, ap_iface, up_iface);
             } catch (Error e) {
                 warning ("Failed to enable hotspot: " + e.message);
                 
@@ -524,6 +592,24 @@ namespace HyprNetworkManager.UI.Views {
                     timeout_dropdown.set_selected (4);
                 } else {
                     timeout_dropdown.set_selected (0);
+                }
+                
+                if (ap_interface_dropdown != null && config.ap_interface != "" && this.ap_model != null) {
+                    for (uint i = 0; i < this.ap_model.get_n_items (); i++) {
+                        if (this.ap_model.get_string (i) == config.ap_interface) {
+                            ap_interface_dropdown.set_selected (i);
+                            break;
+                        }
+                    }
+                }
+                
+                if (uplink_interface_dropdown != null && config.uplink_interface != "" && this.uplink_model != null) {
+                    for (uint i = 0; i < this.uplink_model.get_n_items (); i++) {
+                        if (this.uplink_model.get_string (i) == config.uplink_interface) {
+                            uplink_interface_dropdown.set_selected (i);
+                            break;
+                        }
+                    }
                 }
                 
                 // Make sure to disable unsupported bands (though TrackedDropDown might not support disabling individual rows,
