@@ -1177,6 +1177,14 @@ public class NmWifiClient : GLib.Object {
                 if (to_val != null) {
                     config.timeout = int.parse (to_val);
                 }
+                string? ap_iface = s_user.get_data ("hypr-network-manager.hotspot.ap_interface");
+                if (ap_iface != null) {
+                    config.ap_interface = ap_iface;
+                }
+                string? up_iface = s_user.get_data ("hypr-network-manager.hotspot.uplink_interface");
+                if (up_iface != null) {
+                    config.uplink_interface = up_iface;
+                }
             }
 
             var s_sec = hotspot_conn.get_setting_wireless_security ();
@@ -1248,7 +1256,7 @@ public class NmWifiClient : GLib.Object {
         return config;
     }
 
-    public async NM.RemoteConnection create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
+    public async NM.RemoteConnection create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
         var config = yield get_hotspot_status (cancellable);
         
@@ -1300,6 +1308,8 @@ public class NmWifiClient : GLib.Object {
                 }
                 try {
                     s_user.set_data ("hypr-network-manager.hotspot.timeout", timeout.to_string ());
+                    s_user.set_data ("hypr-network-manager.hotspot.ap_interface", ap_interface);
+                    s_user.set_data ("hypr-network-manager.hotspot.uplink_interface", uplink_interface);
                 } catch (Error e) {}
 
                 if (conn is NM.RemoteConnection) {
@@ -1311,17 +1321,27 @@ public class NmWifiClient : GLib.Object {
         
         // Need to create new
         var new_conn = NmWifiUtils.create_hotspot_connection (ssid, password, security, band, is_hidden, timeout);
+        var s_user = (NM.SettingUser) new_conn.get_setting (typeof (NM.SettingUser));
+        if (s_user == null) {
+            s_user = new NM.SettingUser ();
+            new_conn.add_setting (s_user);
+        }
+        try {
+            s_user.set_data ("hypr-network-manager.hotspot.ap_interface", ap_interface);
+            s_user.set_data ("hypr-network-manager.hotspot.uplink_interface", uplink_interface);
+        } catch (Error e) {}
+
         return yield client.add_connection_async (new_conn, true, cancellable);
     }
 
-    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
+    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
         var dev = get_wifi_device ();
         if (dev == null) {
             throw new IOError.NOT_FOUND ("Wi-Fi device not found");
         }
 
-        var conn = yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, cancellable);
+        var conn = yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
         
         if (has_create_ap () && dev.get_active_connection () != null) {
             // Stop any existing instance just in case
@@ -1370,8 +1390,18 @@ public class NmWifiClient : GLib.Object {
                     argv.add ("-c"); argv.add (channel.to_string ());
                 }
                 
-                argv.add (dev.get_iface ()); // wifi
-                argv.add (dev.get_iface ()); // internet
+                string final_ap_iface = (ap_interface != "" && ap_interface != "Auto") ? ap_interface : dev.get_iface ();
+                string final_uplink_iface = (uplink_interface != "" && uplink_interface != "Auto") ? uplink_interface : dev.get_iface ();
+                
+                if (final_uplink_iface == "None") {
+                    argv.add ("-m");
+                    argv.add ("none");
+                    argv.add (final_ap_iface);
+                } else {
+                    argv.add (final_ap_iface); // wifi
+                    argv.add (final_uplink_iface); // internet
+                }
+                
                 argv.add (ssid);
                 
                 if (security != "none" && password != "") {

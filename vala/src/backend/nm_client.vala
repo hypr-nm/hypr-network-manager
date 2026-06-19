@@ -433,12 +433,35 @@ public class NetworkManagerClient : GLib.Object {
         return yield wifi_client.get_hotspot_status (cancellable);
     }
 
-    public async NM.RemoteConnection create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, cancellable);
+    public async NM.RemoteConnection create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
     }
 
-    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.enable_hotspot_async (ssid, password, security, band, is_hidden, timeout, cancellable);
+    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
+        return yield wifi_client.enable_hotspot_async (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
+    }
+
+    public string[] get_all_interfaces () {
+        string[] list = {};
+        foreach (var dev in nm_client.get_devices ()) {
+            if (dev.get_iface () == "lo" || dev.get_iface () == null || dev.get_iface () == "") continue;
+            list += dev.get_iface ();
+        }
+        return list;
+    }
+
+    public string[] get_wifi_interfaces () {
+        string[] list = {};
+        foreach (var dev in nm_client.get_devices ()) {
+            if (dev is NM.DeviceWifi && dev.get_iface () != null && dev.get_iface () != "") {
+                list += dev.get_iface ();
+            }
+        }
+        return list;
+    }
+    
+    public bool has_create_ap () {
+        return GLib.Environment.find_program_in_path ("create_ap") != null;
     }
 
     public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {

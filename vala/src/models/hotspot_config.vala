@@ -29,6 +29,8 @@ namespace HyprNetworkManager.Models {
         public bool supports_5ghz { get; set; }
         public bool is_hidden { get; set; }
         public int timeout { get; set; } // in minutes, 0 = never
+        public string ap_interface { get; set; }
+        public string uplink_interface { get; set; }
 
         public HotspotConfig () {
             ssid = "";
@@ -41,6 +43,8 @@ namespace HyprNetworkManager.Models {
             supports_5ghz = false;
             is_hidden = false;
             timeout = 0;
+            ap_interface = "";
+            uplink_interface = "";
         }
     }
 }
