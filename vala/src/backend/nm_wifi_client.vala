@@ -678,15 +678,7 @@ public class NmWifiClient : GLib.Object {
                 s_8021x.set_private_key ((string?) null, request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
             }
             if (request.password != null && request.password != "") {
-                if (request.password.contains ("\n")) {
-                    string[] parts = request.password.split ("\n", 2);
-                    s_8021x.identity = parts[0];
-                    if (parts.length > 1) {
-                        s_8021x.password = parts[1];
-                    }
-                } else {
-                    s_8021x.password = request.password;
-                }
+                s_8021x.password = request.password;
             }
         } else {
             if (request.password != null && request.password != "") {
@@ -935,8 +927,8 @@ public class NmWifiClient : GLib.Object {
                         }
                         s_8021x.add_eap_method ("peap");
                         s_8021x.phase2_auth = "mschapv2";
-                        if (password.contains ("\n")) {
-                            string[] parts = password.split ("\n", 2);
+                        if (password.contains ("\x1f")) {
+                            string[] parts = password.split ("\x1f", 2);
                             s_8021x.identity = parts[0];
                             if (parts.length > 1) {
                                 s_8021x.password = parts[1];
@@ -996,8 +988,8 @@ public class NmWifiClient : GLib.Object {
                 s_8021x.add_eap_method ("peap");
                 s_8021x.phase2_auth = "mschapv2";
                 if (password != null) {
-                    if (password.contains ("\n")) {
-                        string[] parts = password.split ("\n", 2);
+                    if (password.contains ("\x1f")) {
+                        string[] parts = password.split ("\x1f", 2);
                         s_8021x.identity = parts[0];
                         if (parts.length > 1) {
                             s_8021x.password = parts[1];

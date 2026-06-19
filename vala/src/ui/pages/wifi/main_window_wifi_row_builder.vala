@@ -467,7 +467,7 @@ namespace MainWindowWifiRowBuilder {
             }
             string payload;
             if (is_enterprise) {
-                payload = local_identity_entry.get_text ().strip () + "\n" + local_prompt_entry.get_text ();
+                payload = local_identity_entry.get_text ().strip () + "\x1f" + local_prompt_entry.get_text ();
             } else {
                 payload = local_prompt_entry.get_text ();
             }
@@ -491,7 +491,7 @@ namespace MainWindowWifiRowBuilder {
             }
             string payload;
             if (is_enterprise) {
-                payload = local_identity_entry.get_text ().strip () + "\n" + local_prompt_entry.get_text ();
+                payload = local_identity_entry.get_text ().strip () + "\x1f" + local_prompt_entry.get_text ();
             } else {
                 payload = local_prompt_entry.get_text ();
             }
