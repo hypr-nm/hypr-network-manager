@@ -62,6 +62,7 @@ namespace MainWindowEthernetPageBuilder {
 
         var title = new Gtk.Label (_("Ethernet"));
         title.set_xalign (0.0f);
+        title.set_valign (Gtk.Align.CENTER);
         title.set_hexpand (true);
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         toolbar.append (title);

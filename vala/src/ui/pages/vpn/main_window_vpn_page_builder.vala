@@ -100,6 +100,7 @@ public class MainWindowVpnPageBuilder : Object {
 
         var title = new Gtk.Label (_("VPN"));
         title.set_xalign (0.0f);
+        title.set_valign (Gtk.Align.CENTER);
         title.set_hexpand (true);
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         toolbar.append (title);

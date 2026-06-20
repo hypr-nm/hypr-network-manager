@@ -33,8 +33,10 @@ namespace HyprNetworkManager.UI.Widgets {
         public MainWindowTabsMenu (TransientSurfaceTracker tracker) {
             Object (orientation: Gtk.Orientation.HORIZONTAL, spacing: 0);
             this.tracker = tracker;
-
+            this.set_valign (Gtk.Align.CENTER);
+ 
             menu_button = new Gtk.MenuButton ();
+            menu_button.set_valign (Gtk.Align.CENTER);
             menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON);
             menu_button.set_focus_on_click (false);
             menu_button.set_tooltip_text (_("Profiles"));
