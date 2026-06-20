@@ -9,6 +9,9 @@
   margin-bottom: 12px;
   margin-left: 0;
   margin-right: 0;
+  padding: 6px 2px 8px;
+  border: none;
+  border-radius: 0;
 }
 
 .nm-toolbar-inset {
@@ -259,31 +262,14 @@ menubutton.nm-tabs-menu-button > button:checked {
   padding: 0 10px 10px 12px;
 }
 
-.nm-page-network-details,
-.nm-page-network-edit {
-  padding: 6px 2px 8px;
-  border: none;
-  border-radius: 0;
-}
-
-.nm-page-saved-profiles {
-  padding: 6px 2px 8px;
-  border: none;
-  border-radius: 0;
-}
-
-/* Keep edit/saved-page headers inset while allowing scrollbars to stay edge-aligned. */
-.nm-page-network-details > box:first-child,
-.nm-page-network-edit > box:first-child,
-.nm-page-saved-profiles > box:first-child {
+/* Keep standalone page headers inset while allowing scrollbars to stay edge-aligned. */
+.nm-page-shell-inset > box:first-child {
   margin-top: 6px;
   margin-left: 12px;
   margin-right: 8px;
 }
 
-.nm-page-network-details > scrolledwindow:last-child,
-.nm-page-network-edit > scrolledwindow:last-child,
-.nm-page-saved-profiles > scrolledwindow:last-child {
+.nm-page-shell-inset > scrolledwindow:last-child {
   margin-bottom: 6px;
 }
 
@@ -410,7 +396,7 @@ button.nm-nav-back label,
 }
 
 .nm-profiles-page-body {
-  padding-top: 6px;
+  padding-top: 0;
   padding-bottom: 10px;
 }
 

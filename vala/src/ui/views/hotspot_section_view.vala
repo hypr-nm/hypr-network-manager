@@ -55,14 +55,12 @@ namespace HyprNetworkManager.UI.Views {
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
             box.add_css_class (MainWindowCssClasses.PAGE);
             box.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-            MainWindowCssClassResolver.add_best_class (box, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+            MainWindowCssClassResolver.add_best_class (box, {MainWindowCssClasses.PAGE_NETWORK_DETAILS,
+                MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
             
             // Header
             var header_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_best_class (header_box, {MainWindowCssClasses.TOOLBAR_INSET,
-                MainWindowCssClasses.PAGE_SHELL_INSET});
-            MainWindowCssClassResolver.add_best_class (header_box, {MainWindowCssClasses.TOOLBAR,
-                MainWindowCssClasses.STATUS_BAR});
+            header_box.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
             
             var back_btn = MainWindowHelpers.build_back_button ();
             back_btn.clicked.connect (() => {
