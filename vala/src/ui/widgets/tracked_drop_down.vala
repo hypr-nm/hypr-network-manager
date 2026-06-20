@@ -46,20 +46,17 @@ namespace HyprNetworkManager.UI.Widgets {
 
             popover = new TrackedPopover (tracker);
             popover.set_has_arrow (false);
-            popover.add_css_class ("menu");
-            popover.add_css_class ("background");
+            popover.add_css_class ("nm-dropdown-panel");
             popover.set_position (Gtk.PositionType.BOTTOM);
             popover.set_offset (0, 4);
 
             listbox = new Gtk.ListBox ();
             listbox.set_selection_mode (Gtk.SelectionMode.NONE);
-            listbox.add_css_class ("menu");
-            listbox.add_css_class ("nm-popover-list");
+            listbox.add_css_class ("nm-dropdown-list");
 
             for (uint i = 0; i < model.get_n_items (); i++) {
                 var item = (Gtk.StringObject) model.get_item (i);
                 var row = new Gtk.ListBoxRow ();
-                row.add_css_class ("menuitem");
 
                 var row_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
                 row_box.set_margin_start (2);
