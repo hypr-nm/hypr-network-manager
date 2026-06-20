@@ -34,21 +34,21 @@ switch.nm-switch slider,
 .nm-list row.nm-device-row,
 .nm-wifi-row,
 .nm-device-row {
-  border: 1px solid var(--surface_raised);
+  border: 1px solid alpha(var(--on_surface), 0.05);
   border-radius: 10px;
-  background: var(--surface_soft);
+  background: alpha(var(--on_surface), 0.07);
 }
 
 .nm-list row.nm-wifi-row:hover,
 .nm-list row.nm-device-row:hover {
-  border-color: alpha(var(--on_surface), .20);
-  background: var(--surface_raised);
+  border-color: alpha(var(--primary), 0.16);
+  background: var(--hover_row);
 }
 
 .nm-wifi-row.connected,
 .nm-device-row.connected {
-  border-color: alpha(var(--secondary), .34);
-  background: var(--selected_soft);
+  border: 1px solid alpha(var(--primary), 0.24);
+  background: alpha(var(--primary), 0.14);
 }
 
 .nm-list row.nm-wifi-row:last-child,

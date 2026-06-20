@@ -75,7 +75,7 @@ window.nm-window,
 .nm-page.nm-page-wifi,
 .nm-page.nm-page-ethernet,
 .nm-page.nm-page-vpn {
-  background: alpha(var(--on_surface), .03);
+  background: transparent;
 }
 
 /* Saved profiles should not render as a second slab over the main surface. */
@@ -195,6 +195,21 @@ switch.nm-switch slider,
   border: none;
   box-shadow: none;
   background-image: none;
+}
+
+/* Unify notebook tabs header and page content area backgrounds */
+notebook.nm-notebook,
+notebook.nm-notebook > header,
+notebook.nm-notebook > stack,
+notebook.nm-notebook > stack > viewport,
+notebook.nm-notebook frame,
+notebook.nm-notebook border {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
 }
 
 .nm-notebook > header,
@@ -364,8 +379,8 @@ menubutton.nm-tabs-menu-button:active {
 .nm-wifi-row,
 .nm-device-row {
   border-radius: 12px;
-  background: alpha(var(--on_surface), .015);
-  border: 1px solid alpha(var(--on_surface), .08);
+  background: alpha(var(--on_surface), .035);
+  border: 1px solid alpha(var(--on_surface), .16);
 }
 
 .nm-list row.nm-wifi-row:hover,
@@ -731,22 +746,22 @@ popover.menu,
 popover.background,
 popover.background.menu,
 popover.menu.background {
-  background: var(--surface_soft);
-  border: 1px solid alpha(var(--on_surface), .1);
-  border-radius: 10px;
-  color: var(--text);
-  box-shadow: none;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
+.nm-dropdown-panel > contents,
 popover > contents,
 popover.menu > contents,
 popover.background > contents,
 popover.background.menu > contents,
 popover.menu.background > contents {
-  background: transparent;
+  background: var(--surface_soft);
+  border: 1px solid alpha(var(--on_surface), .1);
   border-radius: 10px;
   padding: 4px;
-  border: none;
   box-shadow: none;
 }
 
@@ -1189,22 +1204,6 @@ list.boxed-list.nm-details-rows > row:hover {
   opacity: 0.8;
   line-height: 1.4;
   font-size: 0.9em;
-}
-
-.nm-qr-reveal-box {
-  background-color: alpha(currentColor, 0.05);
-  border-radius: 8px;
-  padding: 16px;
-  min-width: 180px;
-  min-height: 180px;
-}
-
-.nm-qr-reveal-button {
-  margin-top: 8px;
-}
-
-.nm-qr-hide-button {
-  margin-top: 12px;
 }
 
 /* Custom segmented switcher and search design for Profiles Page */
