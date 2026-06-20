@@ -46,15 +46,39 @@ public class NmWifiClient : GLib.Object {
         var dev = get_wifi_device ();
         if (dev == null) return true;
 
+        int timeout_mins = 0;
+        string? ap_interface = null;
+        var connections = core.nm_client.get_connections ();
+        foreach (var conn_it in connections) {
+            var s_w = conn_it.get_setting_wireless ();
+            if (s_w != null && s_w.mode == "ap") {
+                var s_usr = (NM.SettingUser) conn_it.get_setting (typeof (NM.SettingUser));
+                if (s_usr != null) {
+                    string? to_val = s_usr.get_data ("hypr-network-manager.hotspot.timeout");
+                    if (to_val != null) timeout_mins = int.parse (to_val);
+                    ap_interface = s_usr.get_data ("hypr-network-manager.hotspot.ap_interface");
+                }
+                break;
+            }
+        }
+
+        NM.DeviceWifi? target_dev = dev;
+        if (ap_interface != null && ap_interface != "" && ap_interface != "Auto") {
+            var nm_dev = core.nm_client.get_device_by_iface (ap_interface);
+            if (nm_dev is NM.DeviceWifi) target_dev = (NM.DeviceWifi) nm_dev;
+        }
+
         if (has_create_ap ()) {
             bool is_running = false;
             try {
-                string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
-                int exit_status;
-                string stdout_content;
-                if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
-                    if (exit_status == 0 && stdout_content.strip () != "") {
-                        is_running = true;
+                if (target_dev != null) {
+                    string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + target_dev.get_iface () };
+                    int exit_status;
+                    string stdout_content;
+                    if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
+                        if (exit_status == 0 && stdout_content.strip () != "") {
+                            is_running = true;
+                        }
                     }
                 }
             } catch (Error e) {}
@@ -62,20 +86,6 @@ public class NmWifiClient : GLib.Object {
             if (!is_running) {
                 // Not running via create_ap, fallback to checking NM below
             } else {
-                int timeout_mins = 0;
-                var connections = core.nm_client.get_connections ();
-                foreach (var conn_it in connections) {
-                    var s_w = conn_it.get_setting_wireless ();
-                    if (s_w != null && s_w.mode == "ap") {
-                        var s_usr = (NM.SettingUser) conn_it.get_setting (typeof (NM.SettingUser));
-                        if (s_usr != null) {
-                            string? to_val = s_usr.get_data ("hypr-network-manager.hotspot.timeout");
-                            if (to_val != null) timeout_mins = int.parse (to_val);
-                        }
-                        break;
-                    }
-                }
-                
                 if (timeout_mins <= 0) {
                     hotspot_idle_minutes = 0;
                     return true;
@@ -106,7 +116,8 @@ public class NmWifiClient : GLib.Object {
             }
         }
 
-        var active_conn = dev.get_active_connection ();
+        if (target_dev == null) return true;
+        var active_conn = target_dev.get_active_connection ();
         if (active_conn == null) {
             hotspot_idle_minutes = 0;
             return true;
@@ -124,15 +135,6 @@ public class NmWifiClient : GLib.Object {
             return true;
         }
         
-        int timeout_mins = 0;
-        var s_user = (NM.SettingUser) conn.get_setting (typeof (NM.SettingUser));
-        if (s_user != null) {
-            string? to_val = s_user.get_data ("hypr-network-manager.hotspot.timeout");
-            if (to_val != null) {
-                timeout_mins = int.parse (to_val);
-            }
-        }
-
         if (timeout_mins <= 0) {
             hotspot_idle_minutes = 0;
             return true;
@@ -143,7 +145,7 @@ public class NmWifiClient : GLib.Object {
             string stdout_content, stderr_content;
             int exit_status;
             
-            string[] argv = { "iw", "dev", dev.get_iface (), "station", "dump" };
+            string[] argv = { "iw", "dev", target_dev.get_iface (), "station", "dump" };
             if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, out stderr_content, out exit_status)) {
                 if (exit_status == 0) {
                     if (stdout_content.contains ("Station ")) {
@@ -1220,8 +1222,15 @@ public class NmWifiClient : GLib.Object {
                 try {
                     string stdout_content, stderr_content;
                     int exit_status;
-                    if (dev != null) {
-                        string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
+                    
+                    NM.DeviceWifi? target_dev = dev;
+                    if (config.ap_interface != "" && config.ap_interface != "Auto") {
+                        var nm_dev = client.get_device_by_iface (config.ap_interface);
+                        if (nm_dev is NM.DeviceWifi) target_dev = (NM.DeviceWifi) nm_dev;
+                    }
+                    
+                    if (target_dev != null) {
+                        string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + target_dev.get_iface () };
                         if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, out stderr_content, out exit_status)) {
                             if (exit_status == 0 && stdout_content.strip () != "") {
                                 config.is_active = true;
@@ -1258,7 +1267,12 @@ public class NmWifiClient : GLib.Object {
                 var s_con = conn.get_setting_connection ();
                 if (s_con != null) {
                     s_con.id = ssid;
-                    conn.add_setting (s_con);
+                    
+                    if (ap_interface != "Auto" && ap_interface != "") {
+                        s_con.interface_name = ap_interface;
+                    } else {
+                        s_con.interface_name = null;
+                    }
                 }
                 
                 var s_wifi = conn.get_setting_wireless ();
@@ -1271,8 +1285,6 @@ public class NmWifiClient : GLib.Object {
                 } else {
                     s_wifi.band = band;
                 }
-                
-                conn.add_setting (s_wifi);
                 
                 if (security != "none") {
                     var s_sec = conn.get_setting_wireless_security ();
@@ -1313,6 +1325,16 @@ public class NmWifiClient : GLib.Object {
         
         // Need to create new
         var new_conn = NmWifiUtils.create_hotspot_connection (ssid, password, security, band, is_hidden, timeout);
+        
+        var s_con = new_conn.get_setting_connection ();
+        if (s_con != null) {
+            if (ap_interface != "Auto" && ap_interface != "") {
+                s_con.interface_name = ap_interface;
+            } else {
+                s_con.interface_name = null;
+            }
+        }
+        
         var s_user = (NM.SettingUser) new_conn.get_setting (typeof (NM.SettingUser));
         if (s_user == null) {
             s_user = new NM.SettingUser ();
@@ -1328,7 +1350,19 @@ public class NmWifiClient : GLib.Object {
 
     public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
-        var dev = get_wifi_device ();
+        
+        NM.DeviceWifi? dev = null;
+        if (ap_interface != "" && ap_interface != "Auto") {
+            var nm_dev = client.get_device_by_iface (ap_interface);
+            if (nm_dev is NM.DeviceWifi) {
+                dev = (NM.DeviceWifi) nm_dev;
+            }
+        }
+        
+        if (dev == null) {
+            dev = get_wifi_device ();
+        }
+        
         if (dev == null) {
             throw new IOError.NOT_FOUND ("Wi-Fi device not found");
         }
@@ -1435,9 +1469,16 @@ public class NmWifiClient : GLib.Object {
 
     public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
+        var config = yield get_hotspot_status (cancellable);
         
         if (has_create_ap ()) {
-            var dev = get_wifi_device ();
+            NM.DeviceWifi? dev = null;
+            if (config.ap_interface != "" && config.ap_interface != "Auto") {
+                var nm_dev = client.get_device_by_iface (config.ap_interface);
+                if (nm_dev is NM.DeviceWifi) dev = (NM.DeviceWifi) nm_dev;
+            }
+            if (dev == null) dev = get_wifi_device ();
+
             if (dev != null) {
                 try {
                     string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
@@ -1476,8 +1517,6 @@ public class NmWifiClient : GLib.Object {
                 }
             }
         }
-
-        var config = yield get_hotspot_status (cancellable);
         
         if (config.connection_uuid == "") {
             return true;
