@@ -1190,3 +1190,19 @@ list.boxed-list.nm-details-rows > row:hover {
   line-height: 1.4;
   font-size: 0.9em;
 }
+
+.nm-qr-reveal-box {
+  background-color: alpha(currentColor, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 180px;
+  min-height: 180px;
+}
+
+.nm-qr-reveal-button {
+  margin-top: 8px;
+}
+
+.nm-qr-hide-button {
+  margin-top: 12px;
+}

@@ -21,6 +21,7 @@ public class MainWindowWifiSharePage : Gtk.Box {
     private Gtk.Label ssid_label;
     private Gtk.Box qr_container;
     private Gtk.Label description_label;
+    private string current_qr_text;
 
     public signal void back ();
 
@@ -78,16 +79,58 @@ public class MainWindowWifiSharePage : Gtk.Box {
 
     public void set_share_data (string ssid, string qr_text) {
         this.ssid_label.set_text (ssid);
+        this.current_qr_text = qr_text;
         
-        // Clear previous qr widget
-        MainWindowHelpers.clear_box (this.qr_container);
-
-        var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (qr_text);
-        qr_widget.set_size_request (180, 180); 
-        this.qr_container.append (qr_widget);
+        this.show_obfuscator ();
 
         string text1 = _("Scan this QR code on another device to connect to %s without entering the password.").printf(ssid);
         string text2 = _("This QR code includes the network password and it isn't encrypted. Anyone with access to this QR code can find out this network's password.");
         this.description_label.set_text (text1 + "\n" + text2);
+    }
+
+    private void show_obfuscator () {
+        MainWindowHelpers.clear_box (this.qr_container);
+
+        var reveal_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        reveal_box.set_halign (Gtk.Align.CENTER);
+        reveal_box.set_valign (Gtk.Align.CENTER);
+        reveal_box.set_size_request (180, 180);
+        reveal_box.add_css_class ("nm-qr-reveal-box");
+
+        var reveal_icon = new Gtk.Image.from_icon_name ("view-reveal-symbolic");
+        reveal_icon.set_pixel_size (48);
+        reveal_box.append (reveal_icon);
+
+        var reveal_btn = new Gtk.Button.with_label (_("Click to Reveal"));
+        reveal_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        reveal_btn.add_css_class ("nm-qr-reveal-button");
+        reveal_btn.clicked.connect (() => {
+            this.reveal_qr_code ();
+        });
+        reveal_box.append (reveal_btn);
+
+        this.qr_container.append (reveal_box);
+    }
+
+    private void reveal_qr_code () {
+        MainWindowHelpers.clear_box (this.qr_container);
+
+        var revealed_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 8);
+        revealed_box.set_halign (Gtk.Align.CENTER);
+        revealed_box.set_valign (Gtk.Align.CENTER);
+
+        var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (this.current_qr_text);
+        qr_widget.set_size_request (180, 180);
+        revealed_box.append (qr_widget);
+
+        var hide_btn = new Gtk.Button.with_label (_("Hide QR Code"));
+        hide_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        hide_btn.add_css_class ("nm-qr-hide-button");
+        hide_btn.clicked.connect (() => {
+            this.show_obfuscator ();
+        });
+        revealed_box.append (hide_btn);
+
+        this.qr_container.append (revealed_box);
     }
 }
