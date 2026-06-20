@@ -30,7 +30,7 @@ namespace HyprNetworkManager.UI.Widgets {
         public MainWindowRefreshProgressController (Gtk.ProgressBar progress_bar) {
             this.progress_bar = progress_bar;
             this.progress_bar.set_opacity (0.0);
-            this.progress_bar.set_visible (true);
+            this.progress_bar.set_visible (false);
             this.progress_bar.add_css_class ("nm-refresh-progress");
         }
 
@@ -45,6 +45,7 @@ namespace HyprNetworkManager.UI.Widgets {
             }
 
             is_refreshing = true;
+            this.progress_bar.set_visible (true);
             this.progress_bar.set_opacity (1.0);
             start_time = GLib.get_monotonic_time ();
 
@@ -78,6 +79,7 @@ namespace HyprNetworkManager.UI.Widgets {
         private void stop_animating () {
             is_refreshing = false;
             this.progress_bar.set_opacity (0.0);
+            this.progress_bar.set_visible (false);
             
             if (pulse_timeout_id != 0) {
                 Source.remove (pulse_timeout_id);
