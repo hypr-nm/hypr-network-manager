@@ -80,7 +80,6 @@ namespace HyprNetworkManager.UI.Views {
             var row0_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_SECTION);
             row0_box.homogeneous = true;
             row0_box.hexpand = true;
-            row0_box.visible = nm.has_create_ap ();
             
             // AP Interface col
             var ap_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
@@ -98,24 +97,48 @@ namespace HyprNetworkManager.UI.Views {
             ap_col.append (ap_label);
             ap_col.append (ap_interface_dropdown);
             
-            // Uplink Interface col
-            var uplink_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-            var uplink_label = new Gtk.Label (_("Share Internet From"));
-            MainWindowCssClassResolver.add_best_class (uplink_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
-            uplink_label.xalign = 0;
-            
-            this.uplink_model = new Gtk.StringList (new string[] { _("Auto"), _("None") });
-            foreach (var iface in nm.get_all_interfaces ()) {
-                this.uplink_model.append (iface);
-            }
-            uplink_interface_dropdown = window_host.create_tracked_dropdown (this.uplink_model);
-            uplink_interface_dropdown.hexpand = true;
-            MainWindowCssClassResolver.add_best_class (uplink_interface_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
-            uplink_col.append (uplink_label);
-            uplink_col.append (uplink_interface_dropdown);
-            
             row0_box.append (ap_col);
-            row0_box.append (uplink_col);
+
+            // Timeout col
+            var timeout_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
+            var timeout_label = new Gtk.Label (_("Turn off if inactive for"));
+            MainWindowCssClassResolver.add_best_class (timeout_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            timeout_label.xalign = 0;
+            
+            var timeout_model = new Gtk.StringList (new string[] {
+                _("Never"),
+                _("5 minutes"),
+                _("10 minutes"),
+                _("30 minutes"),
+                _("1 hour")
+            });
+            timeout_dropdown = window_host.create_tracked_dropdown (timeout_model);
+            timeout_dropdown.hexpand = true;
+            MainWindowCssClassResolver.add_best_class (timeout_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            timeout_col.append (timeout_label);
+            timeout_col.append (timeout_dropdown);
+
+            if (nm.has_create_ap ()) {
+                // Uplink Interface col
+                var uplink_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
+                var uplink_label = new Gtk.Label (_("Share Internet From"));
+                MainWindowCssClassResolver.add_best_class (uplink_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+                uplink_label.xalign = 0;
+                
+                this.uplink_model = new Gtk.StringList (new string[] { _("Auto"), _("None") });
+                foreach (var iface in nm.get_all_interfaces ()) {
+                    this.uplink_model.append (iface);
+                }
+                uplink_interface_dropdown = window_host.create_tracked_dropdown (this.uplink_model);
+                uplink_interface_dropdown.hexpand = true;
+                MainWindowCssClassResolver.add_best_class (uplink_interface_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+                uplink_col.append (uplink_label);
+                uplink_col.append (uplink_interface_dropdown);
+                row0_box.append (uplink_col);
+            } else {
+                row0_box.append (timeout_col);
+            }
+            
             form_box.append (row0_box);
             
             // --- ROW 1 ---
@@ -228,37 +251,20 @@ namespace HyprNetworkManager.UI.Views {
             row2_box.append (band_col);
             form_box.append (row2_box);
             
-            // --- ROW 3 ---
-            var row3_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_SECTION);
-            row3_box.homogeneous = true;
-            row3_box.hexpand = true;
-            
-            // Timeout col
-            var timeout_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-            var timeout_label = new Gtk.Label (_("Turn off if inactive for"));
-            MainWindowCssClassResolver.add_best_class (timeout_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
-            timeout_label.xalign = 0;
-            
-            var timeout_model = new Gtk.StringList (new string[] {
-                _("Never"),
-                _("5 minutes"),
-                _("10 minutes"),
-                _("30 minutes"),
-                _("1 hour")
-            });
-            timeout_dropdown = window_host.create_tracked_dropdown (timeout_model);
-            timeout_dropdown.hexpand = true;
-            MainWindowCssClassResolver.add_best_class (timeout_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
-            timeout_col.append (timeout_label);
-            timeout_col.append (timeout_dropdown);
-            
-            row3_box.append (timeout_col);
-            
-            // Spacer to keep layout homogeneous
-            var spacer_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-            row3_box.append (spacer_col);
-            
-            form_box.append (row3_box);
+            if (nm.has_create_ap ()) {
+                // --- ROW 3 ---
+                var row3_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_SECTION);
+                row3_box.homogeneous = true;
+                row3_box.hexpand = true;
+                
+                row3_box.append (timeout_col);
+                
+                // Spacer to keep layout homogeneous
+                var spacer_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
+                row3_box.append (spacer_col);
+                
+                form_box.append (row3_box);
+            }
             
             // Save Button
             var action_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -376,6 +382,19 @@ namespace HyprNetworkManager.UI.Views {
                 is_valid = false;
             }
 
+            if (!nm.has_create_ap () && ap_interface_dropdown != null && uplink_interface_dropdown != null && ap_model != null && uplink_model != null) {
+                uint ap_idx = ap_interface_dropdown.get_selected ();
+                uint up_idx = uplink_interface_dropdown.get_selected ();
+                
+                if (ap_idx > 0 && up_idx > 1) {
+                    string ap_iface = ap_model.get_string (ap_idx);
+                    string up_iface = uplink_model.get_string (up_idx);
+                    if (ap_iface == up_iface) {
+                        is_valid = false;
+                    }
+                }
+            }
+
             save_button.sensitive = is_valid;
         }
 
@@ -458,6 +477,15 @@ namespace HyprNetworkManager.UI.Views {
                 validate_inputs ();
                 return;
             }
+            if (!nm.has_create_ap () && ap_interface_dropdown != null && uplink_interface_dropdown != null) {
+                if (ap_interface_dropdown.get_selected () > 0 && uplink_interface_dropdown.get_selected () > 1) {
+                    if (ap_iface == up_iface) {
+                        warning ("AP and Uplink interfaces cannot be the same");
+                        validate_inputs ();
+                        return;
+                    }
+                }
+            }
             
             try {
                 yield nm.create_or_update_hotspot (ssid, pass, security, band, is_hidden, timeout, ap_iface, up_iface);
@@ -518,6 +546,13 @@ namespace HyprNetworkManager.UI.Views {
                 }
                 if (security != "none" && pass.length < 8) {
                     throw new IOError.INVALID_ARGUMENT("Password must be at least 8 characters");
+                }
+                if (!nm.has_create_ap () && ap_interface_dropdown != null && uplink_interface_dropdown != null) {
+                    if (ap_interface_dropdown.get_selected () > 0 && uplink_interface_dropdown.get_selected () > 1) {
+                        if (ap_iface == up_iface) {
+                            throw new IOError.INVALID_ARGUMENT("AP and Uplink interfaces cannot be the same");
+                        }
+                    }
                 }
 
                 yield nm.enable_hotspot_async (ssid, pass, security, band, is_hidden, timeout, ap_iface, up_iface);
