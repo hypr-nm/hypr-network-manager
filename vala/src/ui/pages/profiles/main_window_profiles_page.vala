@@ -27,28 +27,29 @@ public class MainWindowProfilesPage : Gtk.Box {
     public signal void delete_profile (WifiSavedProfile profile);
     public signal void open_ethernet_profile (NetworkDevice device);
 
-    private Gtk.ScrolledWindow scroll;
-    private double saved_scroll_value = 0.0;
-    private HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController refresh_prog_controller;
+    private Gtk.Notebook notebook;
+    private Gtk.Label wifi_tab_label;
+    private Gtk.Label eth_tab_label;
+    private int wifi_count = 0;
+    private int eth_count = 0;
+    private Gtk.SearchEntry wifi_search_entry;
+    private Gtk.SearchEntry eth_search_entry;
 
     public MainWindowProfilesPage () {
-        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_NONE);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
-            MainWindowCssClasses.PAGE});
+        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_NETWORK_DETAILS,
+            MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
         MainWindowCssClassResolver.add_hook_and_best_class (
             this,
             MainWindowCssClasses.PAGE_SAVED_PROFILES,
-            {MainWindowCssClasses.PAGE}
+            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
         );
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR_INSET,
-            MainWindowCssClasses.PAGE_SHELL_INSET});
-        MainWindowCssClassResolver.add_best_class (header, {MainWindowCssClasses.TOOLBAR,
-            MainWindowCssClasses.STATUS_BAR});
+        header.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
 
         var back_btn = MainWindowHelpers.build_back_button ();
         back_btn.clicked.connect (() => {
@@ -62,65 +63,111 @@ public class MainWindowProfilesPage : Gtk.Box {
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.append (title);
 
-        var refresh_btn = new Gtk.Button.with_label (_("Refresh"));
-        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
-        refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
-        refresh_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
-            MainWindowCssClasses.BUTTON});
-        refresh_btn.set_tooltip_text (_("Refresh Profiles"));
-        refresh_btn.clicked.connect (() => {
-            this.refresh ();
-        });
-        header.append (refresh_btn);
-
         this.append (header);
 
-        var prog = new Gtk.ProgressBar ();
-        this.append (prog);
-        this.refresh_prog_controller = new HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController (prog);
+        notebook = new Gtk.Notebook ();
+        notebook.add_css_class (MainWindowCssClasses.NOTEBOOK);
+        notebook.set_scrollable (true);
+        notebook.set_show_border (false);
+        notebook.set_show_tabs (true);
+        notebook.set_vexpand (true);
+        notebook.margin_top = 4; // Give perfect compact breathing room below back button header
 
-        scroll = new Gtk.ScrolledWindow ();
-        scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-        scroll.add_css_class (MainWindowCssClasses.SCROLL);
-        scroll.set_vexpand (true);
+        // Wi-Fi Page Box
+        var wifi_page_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
+        wifi_page_box.set_vexpand (true);
 
-        var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        body.add_css_class (MainWindowCssClasses.PROFILES_PAGE_BODY);
-        body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
-
-        var wifi_heading = new Gtk.Label (_("Wi-Fi Profiles"));
-        wifi_heading.set_xalign (0.0f);
-        wifi_heading.add_css_class (MainWindowCssClasses.FORM_LABEL);
-        body.append (wifi_heading);
+        wifi_search_entry = new Gtk.SearchEntry ();
+        wifi_search_entry.placeholder_text = _("Search Wi-Fi profiles...");
+        wifi_search_entry.margin_start = 12;
+        wifi_search_entry.margin_end = 12;
+        wifi_search_entry.margin_top = 4;
+        wifi_search_entry.margin_bottom = 6;
+        wifi_search_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        wifi_page_box.append (wifi_search_entry);
 
         this.wifi_saved_listbox = new Gtk.ListBox ();
         this.wifi_saved_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         this.wifi_saved_listbox.add_css_class (MainWindowCssClasses.LIST);
-        body.append (this.wifi_saved_listbox);
 
-        var ethernet_heading = new Gtk.Label (_("Ethernet Profiles"));
-        ethernet_heading.set_xalign (0.0f);
-        ethernet_heading.add_css_class (MainWindowCssClasses.FORM_LABEL);
-        body.append (ethernet_heading);
+        // Filter Wi-Fi saved profiles
+        this.wifi_saved_listbox.set_filter_func ((row) => {
+            string query = wifi_search_entry.get_text ().down ().strip ();
+            if (query == "") {
+                return true;
+            }
+            unowned string? search_key = row.get_data<string> ("search-key");
+            if (search_key == null) {
+                return true;
+            }
+            return search_key.contains (query);
+        });
+
+        wifi_search_entry.search_changed.connect (() => {
+            this.wifi_saved_listbox.invalidate_filter ();
+        });
+
+        var wifi_scroll = new Gtk.ScrolledWindow ();
+        wifi_scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        wifi_scroll.add_css_class (MainWindowCssClasses.SCROLL);
+        wifi_scroll.set_vexpand (true);
+        wifi_scroll.set_child (this.wifi_saved_listbox);
+        wifi_page_box.append (wifi_scroll);
+
+        // Ethernet Page Box
+        var eth_page_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
+        eth_page_box.set_vexpand (true);
+
+        eth_search_entry = new Gtk.SearchEntry ();
+        eth_search_entry.placeholder_text = _("Search Ethernet profiles...");
+        eth_search_entry.margin_start = 12;
+        eth_search_entry.margin_end = 12;
+        eth_search_entry.margin_top = 4;
+        eth_search_entry.margin_bottom = 6;
+        eth_search_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        eth_page_box.append (eth_search_entry);
 
         this.ethernet_saved_listbox = new Gtk.ListBox ();
         this.ethernet_saved_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         this.ethernet_saved_listbox.add_css_class (MainWindowCssClasses.LIST);
-        body.append (this.ethernet_saved_listbox);
 
-        scroll.set_child (body);
+        // Filter Ethernet saved profiles
+        this.ethernet_saved_listbox.set_filter_func ((row) => {
+            string query = eth_search_entry.get_text ().down ().strip ();
+            if (query == "") {
+                return true;
+            }
+            unowned string? search_key = row.get_data<string> ("search-key");
+            if (search_key == null) {
+                return true;
+            }
+            return search_key.contains (query);
+        });
 
-        this.append (scroll);
+        eth_search_entry.search_changed.connect (() => {
+            this.ethernet_saved_listbox.invalidate_filter ();
+        });
+
+        var eth_scroll = new Gtk.ScrolledWindow ();
+        eth_scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        eth_scroll.add_css_class (MainWindowCssClasses.SCROLL);
+        eth_scroll.set_vexpand (true);
+        eth_scroll.set_child (this.ethernet_saved_listbox);
+        eth_page_box.append (eth_scroll);
+
+        wifi_tab_label = new Gtk.Label (_("Wi-Fi (0)"));
+        wifi_tab_label.add_css_class (MainWindowCssClasses.TAB_LABEL);
+
+        eth_tab_label = new Gtk.Label (_("Ethernet (0)"));
+        eth_tab_label.add_css_class (MainWindowCssClasses.TAB_LABEL);
+
+        notebook.append_page (wifi_page_box, wifi_tab_label);
+        notebook.append_page (eth_page_box, eth_tab_label);
+
+        this.append (notebook);
     }
 
     public void set_refreshing (bool refreshing) {
-        if (refreshing) {
-            refresh_prog_controller.start ();
-        } else {
-            refresh_prog_controller.finish ();
-        }
     }
 
     private void clear_listbox (Gtk.ListBox listbox) {
@@ -133,6 +180,8 @@ public class MainWindowProfilesPage : Gtk.Box {
 
     public void set_wifi_networks (WifiSavedProfile[] profiles) {
         clear_listbox (this.wifi_saved_listbox);
+        this.wifi_count = profiles.length;
+        update_tab_labels ();
 
         if (profiles.length == 0) {
             var row = new Gtk.ListBoxRow ();
@@ -176,14 +225,44 @@ public class MainWindowProfilesPage : Gtk.Box {
             info.append (sub);
             root.append (info);
 
+            row.set_data<string> ("search-key", primary.down () + " " + subtitle.down ());
+
+            var details_btn = new Gtk.Button ();
+            MainWindowCssClassResolver.add_best_class (
+                details_btn,
+                {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
+            );
+            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
+                MainWindowCssClasses.ROW_ICON_ACTION});
+            details_btn.set_valign (Gtk.Align.CENTER);
+            details_btn.set_tooltip_text (_("Details"));
+            var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
+            MainWindowCssClassResolver.add_best_class (
+                details_icon,
+                {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
+            );
+            details_btn.set_child (details_icon);
+            details_btn.clicked.connect (() => {
+                this.open_profile (row_profile);
+            });
+
             var delete_btn = new Gtk.Button.with_label (_("Delete"));
-            delete_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            MainWindowCssClassResolver.add_best_class (delete_btn, {MainWindowCssClasses.DELETE_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
+            MainWindowCssClassResolver.add_best_class (
+                delete_btn,
+                {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
+            );
+            delete_btn.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+            delete_btn.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
+            delete_btn.set_valign (Gtk.Align.CENTER);
             delete_btn.clicked.connect (() => {
                 this.delete_profile (row_profile);
             });
-            root.append (delete_btn);
+
+            var actions_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
+            actions_box.set_valign (Gtk.Align.CENTER);
+            actions_box.append (details_btn);
+            actions_box.append (delete_btn);
+            root.append (actions_box);
 
             var click = new Gtk.GestureClick ();
             click.released.connect ((n_press, x, y) => {
@@ -198,6 +277,8 @@ public class MainWindowProfilesPage : Gtk.Box {
 
     public void set_ethernet_profiles (NetworkDevice[] devices) {
         clear_listbox (this.ethernet_saved_listbox);
+        this.eth_count = devices.length;
+        update_tab_labels ();
 
         if (devices.length == 0) {
             var row = new Gtk.ListBoxRow ();
@@ -237,10 +318,23 @@ public class MainWindowProfilesPage : Gtk.Box {
             info.append (sub);
             root.append (info);
 
-            var details_btn = new Gtk.Button.with_label (_("Details"));
-            details_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON});
+            row.set_data<string> ("search-key", primary.down () + " " + subtitle.down ());
+
+            var details_btn = new Gtk.Button ();
+            MainWindowCssClassResolver.add_best_class (
+                details_btn,
+                {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
+            );
+            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
+                MainWindowCssClasses.ROW_ICON_ACTION});
+            details_btn.set_valign (Gtk.Align.CENTER);
+            details_btn.set_tooltip_text (_("Details"));
+            var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
+            MainWindowCssClassResolver.add_best_class (
+                details_icon,
+                {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
+            );
+            details_btn.set_child (details_icon);
             details_btn.clicked.connect (() => {
                 this.open_ethernet_profile (row_device);
             });
@@ -257,29 +351,24 @@ public class MainWindowProfilesPage : Gtk.Box {
         }
     }
 
+    private void update_tab_labels () {
+        wifi_tab_label.set_label (_("Wi-Fi (%d)").printf (wifi_count));
+        eth_tab_label.set_label (_("Ethernet (%d)").printf (eth_count));
+    }
+
     public void focus_wifi_section () {
+        notebook.set_current_page (0);
         this.wifi_saved_listbox.grab_focus ();
     }
 
     public void focus_ethernet_section () {
+        notebook.set_current_page (1);
         this.ethernet_saved_listbox.grab_focus ();
     }
 
     public void remember_scroll_position () {
-        var adj = scroll.get_vadjustment ();
-        if (adj != null) {
-            saved_scroll_value = adj.get_value ();
-        }
     }
 
     public void restore_scroll_position () {
-        var adj = scroll.get_vadjustment ();
-        if (adj != null) {
-            double target = saved_scroll_value;
-            Idle.add (() => {
-                adj.set_value (target);
-                return false;
-            });
-        }
     }
 }
