@@ -205,6 +205,7 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
             info.set_hexpand (true);
+            info.set_valign (Gtk.Align.CENTER);
             string profile_name = MainWindowHelpers.safe_text (row_profile.profile_name).strip ();
             string ssid = MainWindowHelpers.safe_text (row_profile.ssid).strip ();
             string primary = profile_name != "" ? profile_name : (ssid != "" ? ssid : _("Saved profile"));
@@ -214,18 +215,20 @@ public class MainWindowProfilesPage : Gtk.Box {
             primary_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
             info.append (primary_lbl);
 
-            string subtitle = _("Saved profile");
+            string subtitle = "";
             if (ssid != "" && ssid != primary) {
                 subtitle = _("SSID: %s").printf (ssid);
             }
 
-            var sub = new Gtk.Label (subtitle);
-            sub.set_xalign (0.0f);
-            sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
-            info.append (sub);
+            if (subtitle != "") {
+                var sub = new Gtk.Label (subtitle);
+                sub.set_xalign (0.0f);
+                sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
+                info.append (sub);
+            }
             root.append (info);
 
-            row.set_data<string> ("search-key", primary.down () + " " + subtitle.down ());
+            row.set_data<string> ("search-key", primary.down () + " " + (subtitle != "" ? subtitle.down () : ""));
 
             var details_btn = new Gtk.Button ();
             MainWindowCssClassResolver.add_best_class (
@@ -302,7 +305,8 @@ public class MainWindowProfilesPage : Gtk.Box {
 
             var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
             info.set_hexpand (true);
-
+            info.set_valign (Gtk.Align.CENTER);
+ 
             string iface = MainWindowHelpers.safe_text (row_device.name).strip ();
             string profile_name = MainWindowHelpers.safe_text (row_device.connection).strip ();
             string primary = iface != "" ? iface : _("Ethernet device");
@@ -311,14 +315,20 @@ public class MainWindowProfilesPage : Gtk.Box {
             primary_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
             info.append (primary_lbl);
 
-            string subtitle = profile_name != "" ? _("Profile: %s").printf (profile_name) : _("Saved Ethernet profile");
-            var sub = new Gtk.Label (subtitle);
-            sub.set_xalign (0.0f);
-            sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
-            info.append (sub);
+            string subtitle = "";
+            if (profile_name != "") {
+                subtitle = _("Profile: %s").printf (profile_name);
+            }
+
+            if (subtitle != "") {
+                var sub = new Gtk.Label (subtitle);
+                sub.set_xalign (0.0f);
+                sub.add_css_class (MainWindowCssClasses.SUB_LABEL);
+                info.append (sub);
+            }
             root.append (info);
 
-            row.set_data<string> ("search-key", primary.down () + " " + subtitle.down ());
+            row.set_data<string> ("search-key", primary.down () + " " + (subtitle != "" ? subtitle.down () : ""));
 
             var details_btn = new Gtk.Button ();
             MainWindowCssClassResolver.add_best_class (
