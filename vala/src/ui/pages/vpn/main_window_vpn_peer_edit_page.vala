@@ -29,7 +29,18 @@ namespace HyprNetworkManager.UI.Views {
         public signal void save_clicked (int index, WireGuardPeerModel peer);
         public signal void back_clicked ();
 
+        private Gtk.Revealer error_revealer;
+        private Gtk.Label error_label;
         private int editing_index = -1;
+
+        public void show_error (string message) {
+            if (message == null || message == "") {
+                this.error_revealer.set_reveal_child (false);
+                return;
+            }
+            this.error_label.set_text (message);
+            this.error_revealer.set_reveal_child (true);
+        }
 
         public MainWindowVpnPeerEditPage () {
             Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
@@ -56,6 +67,16 @@ namespace HyprNetworkManager.UI.Views {
             header.append (title);
             
             this.append (header);
+
+            this.error_label = new Gtk.Label ("");
+            this.error_label.add_css_class (MainWindowCssClasses.ERROR_LABEL);
+            this.error_label.set_wrap (true);
+            this.error_label.set_xalign (0.0f);
+
+            this.error_revealer = new Gtk.Revealer ();
+            this.error_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+            this.error_revealer.set_child (this.error_label);
+            this.append (this.error_revealer);
 
             var scroll = new Gtk.ScrolledWindow ();
             scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
@@ -124,7 +145,24 @@ namespace HyprNetworkManager.UI.Views {
             var save_btn = new Gtk.Button.with_label (_("Save Peer"));
             save_btn.add_css_class (MainWindowCssClasses.BUTTON);
             MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.PRIMARY_ACTION_BUTTON});
-            save_btn.clicked.connect (() => { save_clicked (editing_index, get_peer ()); });
+            save_btn.clicked.connect (() => {
+                string pub_key = public_key_entry.get_text ().strip ();
+                if (pub_key == "") {
+                    show_error (_("Public key is required."));
+                    return;
+                }
+
+                string port_str = endpoint_port_entry.get_text ().strip ();
+                if (port_str != "") {
+                    uint parsed_port;
+                    if (!uint.try_parse (port_str, out parsed_port) || parsed_port == 0 || parsed_port > 65535) {
+                        show_error (_("Endpoint port must be a number between 1 and 65535."));
+                        return;
+                    }
+                }
+
+                save_clicked (editing_index, get_peer ());
+            });
             
             actions.append (save_btn);
             form.append (actions);
@@ -134,6 +172,7 @@ namespace HyprNetworkManager.UI.Views {
         }
         
         public void set_peer (int index, WireGuardPeerModel peer) {
+            show_error ("");
             editing_index = index;
             name_entry.set_text (peer.name);
             public_key_entry.set_text (peer.public_key);
