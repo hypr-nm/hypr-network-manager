@@ -1,3 +1,20 @@
 /* hypr-network-manager: Default theme personality overrides
  *
  */
+
+.nm-list row.nm-wifi-row,
+.nm-list row.nm-device-row,
+.nm-wifi-row,
+.nm-device-row {
+  border: 1px solid alpha(var(--on_surface), 0.06);
+}
+
+.nm-list row.nm-wifi-row:hover,
+.nm-list row.nm-device-row:hover {
+  border-color: alpha(var(--primary), 0.16);
+}
+
+.nm-wifi-row.connected,
+.nm-device-row.connected {
+  border-color: alpha(var(--primary), 0.24);
+}
