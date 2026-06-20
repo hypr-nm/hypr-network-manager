@@ -24,6 +24,8 @@ using HyprNetworkManager.UI.Widgets;
 
 namespace HyprNetworkManager.UI.Views {
     public class HotspotSectionView : Object {
+        public signal void back ();
+
         public Gtk.Widget widget { get; private set; }
         
         private NetworkManagerClient nm;
@@ -52,11 +54,21 @@ namespace HyprNetworkManager.UI.Views {
 
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
             box.add_css_class (MainWindowCssClasses.PAGE);
+            box.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+            MainWindowCssClassResolver.add_best_class (box, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
             
             // Header
             var header_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            header_box.add_css_class (MainWindowCssClasses.TOOLBAR_INSET);
-            header_box.add_css_class (MainWindowCssClasses.TOOLBAR);
+            MainWindowCssClassResolver.add_best_class (header_box, {MainWindowCssClasses.TOOLBAR_INSET,
+                MainWindowCssClasses.PAGE_SHELL_INSET});
+            MainWindowCssClassResolver.add_best_class (header_box, {MainWindowCssClasses.TOOLBAR,
+                MainWindowCssClasses.STATUS_BAR});
+            
+            var back_btn = MainWindowHelpers.build_back_button ();
+            back_btn.clicked.connect (() => {
+                this.back ();
+            });
+            header_box.append (back_btn);
             
             var title_label = new Gtk.Label ("Wi-Fi Hotspot");
             title_label.halign = Gtk.Align.START;
