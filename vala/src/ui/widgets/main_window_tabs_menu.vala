@@ -26,6 +26,7 @@ namespace HyprNetworkManager.UI.Widgets {
         private Gtk.MenuButton menu_button;
 
         public signal void saved_profiles_clicked ();
+        public signal void hotspot_clicked ();
         public signal void flight_mode_clicked ();
         public signal void popover_mapped ();
 
@@ -67,6 +68,17 @@ namespace HyprNetworkManager.UI.Widgets {
                 saved_profiles_clicked ();
             });
             menu_box.append (saved_profiles_item);
+
+            var hotspot_item = new Gtk.Button.with_label (_("Hotspot"));
+            hotspot_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
+            var hs_label = hotspot_item.get_child () as Gtk.Label;
+            if (hs_label != null) hs_label.set_halign (Gtk.Align.START);
+
+            hotspot_item.clicked.connect (() => {
+                tracked_popover.popdown ();
+                hotspot_clicked ();
+            });
+            menu_box.append (hotspot_item);
 
             flight_mode_button = new Gtk.Button.with_label (_("Turn on flight mode"));
             flight_mode_button.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);

@@ -86,7 +86,7 @@ namespace HyprNetworkManager.UI.Views {
 
         public bool is_focus_mode_active () {
             string root_page = content_stack.get_visible_child_name ();
-            if (root_page == "profiles") {
+            if (root_page == "profiles" || root_page == "hotspot") {
                 return true;
             }
 

@@ -388,16 +388,20 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         );
 
         hotspot_section = new HyprNetworkManager.UI.Views.HotspotSectionView (nm, this);
+        hotspot_section.back.connect (() => {
+            content_stack.set_visible_child_name ("main");
+            this.set_popup_text_input_mode (false);
+        });
 
         vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (nm, vpn_controller, this);
 
         notebook.append_page (wifi_section.widget, build_tab_label (_("Wi-Fi")));
-        notebook.append_page (hotspot_section.widget, build_tab_label (_("Hotspot")));
         notebook.append_page (ethernet_section.widget, build_tab_label (_("Ethernet")));
         notebook.append_page (vpn_section.widget, build_tab_label (_("VPN")));
 
         content_stack.add_named (notebook, "main");
         content_stack.add_named (profiles_section.stack, "profiles");
+        content_stack.add_named (hotspot_section.widget, "hotspot");
     }
 
     private void build_navigation_manager () {
@@ -455,6 +459,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         tabs_menu = new MainWindowTabsMenu (transient_surface_tracker);
         tabs_menu.saved_profiles_clicked.connect (() => {
             profiles_section.open_profiles_page (false);
+        });
+        tabs_menu.hotspot_clicked.connect (() => {
+            hotspot_section.perform_refresh ();
+            content_stack.set_visible_child_name ("hotspot");
+            this.set_popup_text_input_mode (true);
         });
         tabs_menu.flight_mode_clicked.connect (on_flight_mode_clicked);
         tabs_menu.popover_mapped.connect (refresh_switch_states);
