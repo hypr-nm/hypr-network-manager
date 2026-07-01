@@ -45,8 +45,10 @@ namespace HyprNetworkManager.UI.Views {
         private Gtk.Button save_button;
         private Gtk.Box qr_container;
         private Gtk.Revealer qr_revealer;
+        private Gtk.ScrolledWindow scroll;
         
         private bool is_updating = false;
+        private uint scroll_tick_id = 0;
 
         public HotspotSectionView (NetworkManagerClient client, IWindowHost host) {
             this.nm = client;
@@ -269,9 +271,8 @@ namespace HyprNetworkManager.UI.Views {
                 
                 row3_box.append (timeout_col);
                 
-                // Spacer to keep layout homogeneous
-                var spacer_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
-                row3_box.append (spacer_col);
+                var placeholder = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+                row3_box.append (placeholder);
                 
                 form_box.append (row3_box);
             }
@@ -289,19 +290,28 @@ namespace HyprNetworkManager.UI.Views {
             action_box.append (save_button);
             form_box.append (action_box);
             
-            box.append (form_box);
+            this.scroll = new Gtk.ScrolledWindow ();
+            this.scroll.set_policy (Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+            this.scroll.add_css_class (MainWindowCssClasses.SCROLL);
+            this.scroll.set_vexpand (true);
+
+            var scroll_content = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+            scroll_content.append (form_box);
             
             // QR Code section
             qr_revealer = new Gtk.Revealer ();
             qr_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
             qr_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
             
-            qr_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+            qr_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             qr_container.halign = Gtk.Align.CENTER;
             qr_container.margin_top = 20;
             qr_revealer.set_child (qr_container);
             
-            box.append (qr_revealer);
+            scroll_content.append (qr_revealer);
+            this.scroll.set_child (scroll_content);
+            
+            box.append (this.scroll);
             
             this.widget = box;
             
@@ -333,9 +343,10 @@ namespace HyprNetworkManager.UI.Views {
             string qr_text = "WIFI:T:" + security + ";S:" + config.ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
             
             var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (qr_text);
-            qr_widget.set_size_request (180, 180);
+            qr_widget.set_size_request (150, 150);
             qr_widget.halign = Gtk.Align.CENTER;
             qr_widget.valign = Gtk.Align.CENTER;
+            qr_widget.is_loading = config.is_starting;
             
             var pass_text = config.password != "" ? config.password : _("None");
             
@@ -346,13 +357,64 @@ namespace HyprNetworkManager.UI.Views {
             info_label.wrap_mode = Pango.WrapMode.CHAR;
             info_label.max_width_chars = 35;
             info_label.justify = Gtk.Justification.CENTER;
-            info_label.margin_top = 8;
             MainWindowCssClassResolver.add_best_class (info_label, {MainWindowCssClasses.FORM_LABEL});
             
-            qr_container.append (qr_widget);
-            qr_container.append (info_label);
+            var qr_code_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+            qr_code_box.halign = Gtk.Align.CENTER;
+            qr_code_box.valign = Gtk.Align.CENTER;
+            qr_code_box.add_css_class ("nm-qr-share-code-box");
+            qr_code_box.margin_bottom = 4;
+            qr_code_box.append (qr_widget);
             
+            qr_container.append (qr_code_box);
+            
+            if (!config.is_starting) {
+                qr_container.append (info_label);
+                
+                string connected_text = _("Connected Users: %d").printf (config.connected_clients);
+                var connected_label = new Gtk.Label (connected_text);
+                MainWindowCssClassResolver.add_best_class (connected_label, {MainWindowCssClasses.SUB_LABEL});
+                qr_container.append (connected_label);
+            }
+            
+            bool was_revealed = qr_revealer.get_reveal_child ();
             qr_revealer.set_reveal_child (true);
+            
+            if (!was_revealed) {
+                smooth_scroll_to_bottom ();
+            }
+        }
+
+        private void smooth_scroll_to_bottom () {
+            if (scroll_tick_id != 0) {
+                this.scroll.remove_tick_callback (scroll_tick_id);
+                scroll_tick_id = 0;
+            }
+            
+            var adj = this.scroll.get_vadjustment ();
+            
+            scroll_tick_id = this.scroll.add_tick_callback ((w, clock) => {
+                double target = adj.upper - adj.page_size;
+                if (target < 0) target = 0;
+                
+                double current = adj.value;
+                
+                bool is_revealing = qr_revealer.child_revealed != qr_revealer.reveal_child;
+                
+                if (!is_revealing && GLib.Math.fabs (target - current) < 1.0) {
+                    adj.set_value (target);
+                    scroll_tick_id = 0;
+                    return false;
+                }
+                
+                double new_val = current + (target - current) * 0.15;
+                if (!is_revealing && GLib.Math.fabs (target - new_val) < 0.5) {
+                    new_val = target;
+                }
+                
+                adj.set_value (new_val);
+                return true;
+            });
         }
 
         private void setup_signals () {
@@ -666,6 +728,8 @@ namespace HyprNetworkManager.UI.Views {
                 is_updating = false;
 
                 update_sensitivity (config.is_active);
+                toggle_switch.sensitive = !config.is_starting;
+                
                 update_qr_code (config);
             } catch (Error e) {
                 warning ("Failed to fetch hotspot status: " + e.message);
