@@ -49,6 +49,7 @@ namespace HyprNetworkManager.UI.Views {
         
         private bool is_updating = false;
         private uint scroll_tick_id = 0;
+        private uint poll_source_id = 0;
 
         public HotspotSectionView (NetworkManagerClient client, IWindowHost host) {
             this.nm = client;
@@ -418,6 +419,22 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void setup_signals () {
+            this.widget.map.connect (() => {
+                if (poll_source_id == 0) {
+                    poll_source_id = GLib.Timeout.add_seconds (3, () => {
+                        perform_refresh ();
+                        return true;
+                    });
+                }
+            });
+
+            this.widget.unmap.connect (() => {
+                if (poll_source_id != 0) {
+                    GLib.Source.remove (poll_source_id);
+                    poll_source_id = 0;
+                }
+            });
+
             save_button.clicked.connect (() => {
                 save_configuration.begin ((obj, res) => {
                     save_configuration.end (res);
