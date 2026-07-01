@@ -383,7 +383,7 @@ namespace MainWindowWifiRowBuilder {
         var local_prompt_connect = prompt_connect;
         var local_hidden_ssid_entry = hidden_ssid_entry;
         var local_prompt_entry = prompt_entry;
-        var local_identity_entry = identity_entry;
+        var local_identity_entry = is_enterprise ? identity_entry : null;
 
         prompt_entry.changed.connect (() => {
             sync_prompt_connect_button_sensitivity (
@@ -426,7 +426,7 @@ namespace MainWindowWifiRowBuilder {
             prompt_entry,
             requires_hidden_ssid,
             net.is_secured,
-            identity_entry
+            is_enterprise ? identity_entry : null
         );
 
         var prompt_actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
