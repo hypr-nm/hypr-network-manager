@@ -50,7 +50,8 @@ namespace MainWindowWifiPageBuilder {
         Gtk.Widget details_page,
         Gtk.Widget edit_page,
         Gtk.Widget add_page,
-        Gtk.Widget share_page
+        Gtk.Widget share_page,
+        IMainWindowWifiPageActionHandler action_handler
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class (MainWindowCssClasses.PAGE);
@@ -189,6 +190,36 @@ namespace MainWindowWifiPageBuilder {
                 _("Flight mode is on")
             ),
             "flight-mode"
+        );
+        var hotspot_placeholder = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+        hotspot_placeholder.set_halign (Gtk.Align.CENTER);
+        hotspot_placeholder.set_valign (Gtk.Align.CENTER);
+        hotspot_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
+        
+        var hs_icon = MainWindowIconResources.create_network_placeholder_icon (MainWindowIconResources.NetworkPlaceholderIcon.HOTSPOT_ACTIVE);
+        MainWindowCssClassResolver.add_best_class (hs_icon, {MainWindowCssClasses.ICON_SIZE_24, MainWindowCssClasses.ICON_SIZE});
+        MainWindowCssClassResolver.add_best_class (hs_icon, {MainWindowCssClasses.WIFI_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON});
+        
+        var hs_label = new Gtk.Label (_("Hotspot is currently active.
+Wi-Fi scanning is paused on this interface."));
+        hs_label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
+        hs_label.justify = Gtk.Justification.CENTER;
+        
+        var hs_button = new Gtk.Button.with_label (_("Manage Hotspot"));
+        hs_button.margin_top = 12;
+        hs_button.halign = Gtk.Align.CENTER;
+        hs_button.add_css_class ("row-link-action");
+        hs_button.clicked.connect (() => {
+            action_handler.go_to_hotspot ();
+        });
+        
+        hotspot_placeholder.append (hs_icon);
+        hotspot_placeholder.append (hs_label);
+        hotspot_placeholder.append (hs_button);
+
+        wifi_stack.add_named (
+            hotspot_placeholder,
+            "hotspot-active"
         );
         wifi_stack.add_named (details_page, "details");
         wifi_stack.add_named (edit_page, "edit");

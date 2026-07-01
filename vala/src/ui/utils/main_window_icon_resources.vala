@@ -39,6 +39,7 @@ namespace MainWindowIconResources {
     private const string RESOURCE_PASSWORD_VISIBLE = (
         "/yeab212/hypr-network-manager/icons/hicolor/symbolic/actions/view-visible-off-symbolic.svg");
 
+    private const string ICON_HOTSPOT_ACTIVE = "network-wireless-hotspot-symbolic";
     private const string FALLBACK_PASSWORD_HIDDEN = "view-reveal-symbolic";
     private const string FALLBACK_PASSWORD_VISIBLE = "view-conceal-symbolic";
     private const string FALLBACK_COLLAPSED = "pan-up-symbolic";
@@ -56,7 +57,8 @@ namespace MainWindowIconResources {
         WIFI_EMPTY,
         WIFI_DISABLED,
         ETHERNET_EMPTY,
-        FLIGHT_MODE
+        FLIGHT_MODE,
+        HOTSPOT_ACTIVE
     }
 
     private bool looked_up = false;
@@ -151,6 +153,7 @@ namespace MainWindowIconResources {
         string[] wifi_disabled = {ICON_WIFI_DISABLED, FALLBACK_WIFI_DISABLED};
         string[] ethernet_empty = {ICON_ETHERNET_EMPTY, FALLBACK_ETHERNET_EMPTY};
         string[] flight_mode = { ICON_AIRPLANE, FALLBACK_AIRPLANE };
+        string[] hotspot_active = { ICON_HOTSPOT_ACTIVE, "network-wireless-hotspot-symbolic", "network-wireless-symbolic" };
 
         switch (icon_type) {
         case NetworkPlaceholderIcon.WIFI_EMPTY:
@@ -161,6 +164,9 @@ namespace MainWindowIconResources {
 
         case NetworkPlaceholderIcon.ETHERNET_EMPTY:
             return new Gtk.Image.from_gicon (new ThemedIcon.from_names (ethernet_empty));
+
+        case NetworkPlaceholderIcon.HOTSPOT_ACTIVE:
+            return new Gtk.Image.from_gicon (new ThemedIcon.from_names (hotspot_active));
 
         case NetworkPlaceholderIcon.FLIGHT_MODE:
         default:

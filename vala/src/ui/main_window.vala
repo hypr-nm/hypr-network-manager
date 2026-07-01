@@ -365,6 +365,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         wifi_section.refresh_requested.connect (() => {
             refresh_wifi ();
         });
+        wifi_section.go_to_hotspot_requested.connect (() => {
+            hotspot_section.perform_refresh ();
+            content_stack.set_visible_child_name ("hotspot");
+            this.set_popup_text_input_mode (true);
+        });
         wifi_section.refresh_switch_states_requested.connect (() => {
             refresh_switch_states ();
         });

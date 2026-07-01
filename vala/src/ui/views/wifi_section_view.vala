@@ -53,6 +53,7 @@ namespace HyprNetworkManager.UI.Views {
         public string? active_wifi_password_row_id { get; private set; }
 
         public signal void refresh_requested ();
+        public signal void go_to_hotspot_requested ();
         public signal void refresh_switch_states_requested ();
 
         private Gtk.Label status_label;
@@ -102,7 +103,8 @@ namespace HyprNetworkManager.UI.Views {
                 details_page,
                 edit_page,
                 add_page,
-                share_page
+                share_page,
+                this
             );
 
             this.wifi_switch = local_wifi_switch;
@@ -139,6 +141,10 @@ namespace HyprNetworkManager.UI.Views {
 
         public void request_refresh (bool request_wifi_scan) {
             refresh_requested ();
+        }
+
+        public void go_to_hotspot () {
+            go_to_hotspot_requested ();
         }
 
         public void set_refresh_button_enabled (bool enabled, string tooltip_text) {

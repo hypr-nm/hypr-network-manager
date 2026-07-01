@@ -235,6 +235,8 @@ public class MainWindowWifiRefreshController : Object {
                     current_actual_view == "saved" || current_actual_view == "saved-edit" ||
                     current_actual_view == "wifi-disabled" || current_actual_view == "flight-mode") {
                     // Leave the stack on the current user-facing page
+                } else if (refresh_data.is_hotspot_active && refresh_data.num_wifi_devices <= 1) {
+                    wifi_stack.set_visible_child_name ("hotspot-active");
                 } else {
                     wifi_stack.set_visible_child_name (networks.length > 0 ? "list" : "empty");
                 }
