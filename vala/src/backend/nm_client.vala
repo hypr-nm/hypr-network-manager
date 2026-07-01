@@ -21,10 +21,14 @@ using NM;
 public class WifiRefreshData : GLib.Object {
     public WifiNetwork[] networks;
     public NetworkDevice[] devices;
+    public bool is_hotspot_active;
+    public int num_wifi_devices;
 
-    public WifiRefreshData (WifiNetwork[] networks_in, NetworkDevice[] devices_in) {
+    public WifiRefreshData (WifiNetwork[] networks_in, NetworkDevice[] devices_in, bool is_hotspot_active = false, int num_wifi_devices = 0) {
         networks = networks_in;
         devices = devices_in;
+        this.is_hotspot_active = is_hotspot_active;
+        this.num_wifi_devices = num_wifi_devices;
     }
 }
 

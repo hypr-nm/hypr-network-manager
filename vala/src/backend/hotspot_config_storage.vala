@@ -1,8 +1,7 @@
 using GLib;
 using Json;
 
-namespace HyprNetworkManager.Backend {
-    public class HotspotConfigStorage : GLib.Object {
+public class HotspotConfigStorage : GLib.Object {
         private static string get_config_path () {
             string config_dir = GLib.Path.build_filename (Environment.get_user_state_dir (), "hypr-network-manager");
             if (!FileUtils.test (config_dir, FileTest.EXISTS)) {
@@ -82,4 +81,3 @@ namespace HyprNetworkManager.Backend {
             }
         }
     }
-}

@@ -69,6 +69,7 @@ executable(
     'src/ui/views/vpn_section_view.vala',
     'src/backend/utils/nm_ip_config_helper.vala',
     'src/backend/utils/nm_wifi_utils.vala',
+    'src/backend/hotspot_config_storage.vala',
     'src/backend/utils/qrcodegen.c',
     'src/backend/utils/qrcodegen.vapi',
     'src/backend/mappers/vpn_mapper.vala',

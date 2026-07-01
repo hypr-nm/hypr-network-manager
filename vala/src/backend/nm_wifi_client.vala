@@ -47,7 +47,7 @@ public class NmWifiClient : GLib.Object {
         if (dev == null) return true;
 
         var config = new HotspotConfig ();
-        HyprNetworkManager.Backend.HotspotConfigStorage.load (config);
+        HotspotConfigStorage.load (config);
         
         int timeout_mins = config.timeout;
         string ap_interface = config.ap_interface;
@@ -165,6 +165,8 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var devices = client.get_devices ();
         var connections = client.get_connections ();
+
+        var hotspot_config = yield get_hotspot_status (cancellable);
 
         var networks_map = new HashTable<string, WifiNetwork> (str_hash, str_equal);
         var devices_out = new List<NetworkDevice> ();
@@ -375,7 +377,14 @@ public class NmWifiClient : GLib.Object {
             devices_arr[i++] = d;
         }
 
-        return new WifiRefreshData (networks_arr, devices_arr);
+        int num_wifi_devices = 0;
+        foreach (var dev in devices) {
+            if (dev is NM.DeviceWifi) {
+                num_wifi_devices++;
+            }
+        }
+        
+        return new WifiRefreshData (networks_arr, devices_arr, hotspot_config.is_active, num_wifi_devices);
     }
 
     public async WifiSavedProfile[] get_saved_profiles (Cancellable? cancellable = null) throws Error {
@@ -1127,7 +1136,7 @@ public class NmWifiClient : GLib.Object {
         var client = core.nm_client;
         var config = new HotspotConfig ();
         
-        HyprNetworkManager.Backend.HotspotConfigStorage.load (config);
+        HotspotConfigStorage.load (config);
         
         var dev = get_wifi_device ();
         if (dev != null) {
@@ -1214,7 +1223,7 @@ public class NmWifiClient : GLib.Object {
         config.ap_interface = ap_interface;
         config.uplink_interface = uplink_interface;
         
-        HyprNetworkManager.Backend.HotspotConfigStorage.save (config);
+        HotspotConfigStorage.save (config);
     }
 
     public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
