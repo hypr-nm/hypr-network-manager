@@ -257,7 +257,7 @@ namespace NmWifiUtils {
         return conn;
     }
 
-    public NM.Connection create_hotspot_connection (string ssid, string? password, string security, string band, bool is_hidden, int timeout) {
+    public NM.Connection create_hotspot_connection (string ssid, string? password, string security, string band, bool is_hidden, int timeout, uint32 channel = 0) {
         var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
 
         var s_con = new NM.SettingConnection ();
@@ -274,6 +274,16 @@ namespace NmWifiUtils {
         s_wifi.hidden = is_hidden;
         if (band != "") {
             s_wifi.band = band;
+        }
+        
+        if (channel > 0) {
+            s_wifi.channel = channel;
+        } else {
+            if (band == "a") {
+                s_wifi.channel = 36;
+            } else if (band == "bg") {
+                s_wifi.channel = 6;
+            }
         }
         
         s_wifi.mac_address_randomization = NM.SettingMacRandomization.NEVER;

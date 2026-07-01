@@ -46,21 +46,11 @@ public class NmWifiClient : GLib.Object {
         var dev = get_wifi_device ();
         if (dev == null) return true;
 
-        int timeout_mins = 0;
-        string? ap_interface = null;
-        var connections = core.nm_client.get_connections ();
-        foreach (var conn_it in connections) {
-            var s_w = conn_it.get_setting_wireless ();
-            if (s_w != null && s_w.mode == "ap") {
-                var s_usr = (NM.SettingUser) conn_it.get_setting (typeof (NM.SettingUser));
-                if (s_usr != null) {
-                    string? to_val = s_usr.get_data ("hypr-network-manager.hotspot.timeout");
-                    if (to_val != null) timeout_mins = int.parse (to_val);
-                    ap_interface = s_usr.get_data ("hypr-network-manager.hotspot.ap_interface");
-                }
-                break;
-            }
-        }
+        var config = new HotspotConfig ();
+        HyprNetworkManager.Backend.HotspotConfigStorage.load (config);
+        
+        int timeout_mins = config.timeout;
+        string ap_interface = config.ap_interface;
 
         NM.DeviceWifi? target_dev = dev;
         if (ap_interface != null && ap_interface != "" && ap_interface != "Auto") {
@@ -1203,7 +1193,7 @@ public class NmWifiClient : GLib.Object {
         if (config.is_active) {
             try {
                 string iw_stdout;
-                string[] iw_argv = {"bash", "-c", "count=0; for iface in $(iw dev | awk '$1=="Interface"{iface=$2} $1=="type" && $2=="AP"{print iface}'); do c=$(iw dev $iface station dump 2>/dev/null | grep -c "Station"); count=$((count + c)); done; echo $count"};
+                string[] iw_argv = {"bash", "-c", "count=0; for iface in $(iw dev | awk '$1==\"Interface\"{iface=$2} $1==\"type\" && $2==\"AP\"{print iface}'); do c=$(iw dev $iface station dump 2>/dev/null | grep -c \"Station\"); count=$((count + c)); done; echo $count"};
                 if (Process.spawn_sync (null, iw_argv, null, SpawnFlags.SEARCH_PATH, null, out iw_stdout, null, null)) {
                     config.connected_clients = int.parse (iw_stdout.strip ());
                 }
@@ -1269,10 +1259,18 @@ public class NmWifiClient : GLib.Object {
             var active_ap = dev.get_active_access_point ();
             if (active_ap != null) {
                 uint32 freq = active_ap.get_frequency ();
-                if (freq >= 2412 && freq <= 2484) {
+                if (band == "bg" && freq >= 2412 && freq <= 2484) {
                     channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
-                } else if (freq >= 5000) {
+                } else if (band == "a" && freq >= 5000) {
                     channel = ((int)freq - 5000) / 5;
+                }
+            }
+            
+            if (channel == 0) {
+                if (band == "a") {
+                    channel = 36;
+                } else if (band == "bg") {
+                    channel = 6;
                 }
             }
             
@@ -1345,28 +1343,63 @@ public class NmWifiClient : GLib.Object {
             }
         } else {
             // Native NM Hotspot (Volatile)
+            core.debug_log ("Starting native NM hotspot creation...");
             var connections = client.get_connections ();
             foreach (var conn_check in connections) {
                 var s_wifi = conn_check.get_setting_wireless ();
                 if (s_wifi != null && s_wifi.mode == "ap") {
                     if (conn_check is NM.RemoteConnection) {
                         try {
+                            core.debug_log ("Deleting old AP connection: " + conn_check.get_id ());
                             yield ((NM.RemoteConnection)conn_check).delete_async (cancellable);
-                        } catch (Error e) {}
+                        } catch (Error e) {
+                            core.debug_log ("Failed to delete old AP: " + e.message);
+                        }
                     }
                 }
             }
             
-            var new_conn = NmWifiUtils.create_hotspot_connection (ssid, password, security, band, is_hidden, timeout);
-            var s_con = new_conn.get_setting_connection ();
-            if (s_con != null) {
-                if (ap_interface != "Auto" && ap_interface != "") {
-                    s_con.interface_name = ap_interface;
+            // Wait a moment for NM to process the deletion
+            yield nm_async_sleep (500);
+            
+            int channel = 0;
+            var active_ap = dev.get_active_access_point ();
+            if (active_ap != null) {
+                uint32 freq = active_ap.get_frequency ();
+                if (band == "bg" && freq >= 2412 && freq <= 2484) {
+                    channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
+                } else if (band == "a" && freq >= 5000) {
+                    channel = ((int)freq - 5000) / 5;
                 }
             }
             
-            yield client.add_and_activate_connection_async (new_conn, dev, null, cancellable);
-            return true;
+            core.debug_log ("Creating new volatile connection for " + ssid);
+            var new_conn = NmWifiUtils.create_hotspot_connection (ssid, password, security, band, is_hidden, timeout, channel);
+            var s_con = new_conn.get_setting_connection ();
+            if (s_con != null) {
+                s_con.id = ssid;
+                s_con.interface_name = null;
+                s_con.autoconnect = false;
+            }
+            
+            var s_wifi = new_conn.get_setting_wireless();
+            if (s_wifi != null) {
+                 s_wifi.mac_address_randomization = NM.SettingMacRandomization.DEFAULT;
+                 s_wifi.cloned_mac_address = null;
+                 s_wifi.mac_address = null;
+            }
+            
+            try {
+                core.debug_log ("Adding connection...");
+                var remote_conn = yield client.add_connection_async (new_conn, false, cancellable);
+                core.debug_log ("Connection added successfully. Activating...");
+                yield client.activate_connection_async (remote_conn, dev, null, cancellable);
+                core.debug_log ("Connection activated successfully.");
+                return true;
+            } catch (Error e) {
+                core.debug_log ("Failed to add/activate AP connection: " + e.message);
+                throw e;
+            }
         }
     }
 
