@@ -22,6 +22,7 @@ namespace HyprNetworkManager.Models {
         public string ssid { get; set; }
         public string password { get; set; }
         public bool is_active { get; set; }
+        public bool is_starting { get; set; }
         public string connection_uuid { get; set; }
         public string security { get; set; } // "none", "wpa-psk", "sae"
         public string band { get; set; } // "", "bg", "a"
@@ -31,11 +32,13 @@ namespace HyprNetworkManager.Models {
         public int timeout { get; set; } // in minutes, 0 = never
         public string ap_interface { get; set; }
         public string uplink_interface { get; set; }
+        public int connected_clients { get; set; }
 
         public HotspotConfig () {
             ssid = "";
             password = "";
             is_active = false;
+            is_starting = false;
             connection_uuid = "";
             security = "wpa-psk";
             band = "";
@@ -45,6 +48,7 @@ namespace HyprNetworkManager.Models {
             timeout = 0;
             ap_interface = "";
             uplink_interface = "";
+            connected_clients = 0;
         }
     }
 }

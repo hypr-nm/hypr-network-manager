@@ -1209,6 +1209,7 @@ public class NmWifiClient : GLib.Object {
 
             if (has_create_ap ()) {
                 config.is_active = false;
+                config.is_starting = false;
                 
                 if (is_hotspot_stopping) {
                     return config;
@@ -1216,6 +1217,7 @@ public class NmWifiClient : GLib.Object {
                 
                 if (is_hotspot_starting) {
                     config.is_active = true;
+                    config.is_starting = true;
                     return config;
                 }
                 
@@ -1251,6 +1253,16 @@ public class NmWifiClient : GLib.Object {
                         break;
                     }
                 }
+            }
+            
+            if (config.is_active) {
+                try {
+                    string iw_stdout;
+                    string[] iw_argv = {"bash", "-c", "count=0; for iface in $(iw dev | awk '$1==\"Interface\"{iface=$2} $1==\"type\" && $2==\"AP\"{print iface}'); do c=$(iw dev $iface station dump 2>/dev/null | grep -c \"Station\"); count=$((count + c)); done; echo $count"};
+                    if (Process.spawn_sync (null, iw_argv, null, SpawnFlags.SEARCH_PATH, null, out iw_stdout, null, null)) {
+                        config.connected_clients = int.parse (iw_stdout.strip ());
+                    }
+                } catch (Error e) {}
             }
         }
 
@@ -1453,6 +1465,9 @@ public class NmWifiClient : GLib.Object {
                 var launcher = new GLib.SubprocessLauncher (GLib.SubprocessFlags.NONE);
                 var proc = launcher.spawnv (spawn_args);
                 yield proc.wait_async (cancellable);
+                
+                // wait for daemon to actually spin up hostapd
+                yield nm_async_sleep (3000);
                 
                 hotspot_idle_minutes = 0;
                 is_hotspot_starting = false;
