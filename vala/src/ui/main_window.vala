@@ -260,6 +260,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             wifi_section.set_refresh_button_enabled (wifi_refresh_enabled, wifi_tooltip);
             wifi_section.add_button.set_sensitive (wifi_refresh_enabled);
             wifi_section.set_availability_placeholder (wifi_enabled, flight_mode_active);
+            
+            if (tabs_menu != null) {
+                tabs_menu.set_hotspot_sensitive (wifi_refresh_enabled);
+            }
         }
 
         if (ethernet_section != null) {

@@ -22,6 +22,7 @@ namespace HyprNetworkManager.UI.Widgets {
     public class MainWindowTabsMenu : Gtk.Box {
         private TransientSurfaceTracker tracker;
         private Gtk.Button flight_mode_button;
+        private Gtk.Button hotspot_button;
         private TrackedPopover tracked_popover;
         private Gtk.MenuButton menu_button;
 
@@ -71,16 +72,16 @@ namespace HyprNetworkManager.UI.Widgets {
             });
             menu_box.append (saved_profiles_item);
 
-            var hotspot_item = new Gtk.Button.with_label (_("Hotspot"));
-            hotspot_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
-            var hs_label = hotspot_item.get_child () as Gtk.Label;
+            hotspot_button = new Gtk.Button.with_label (_("Hotspot"));
+            hotspot_button.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
+            var hs_label = hotspot_button.get_child () as Gtk.Label;
             if (hs_label != null) hs_label.set_halign (Gtk.Align.START);
 
-            hotspot_item.clicked.connect (() => {
+            hotspot_button.clicked.connect (() => {
                 tracked_popover.popdown ();
                 hotspot_clicked ();
             });
-            menu_box.append (hotspot_item);
+            menu_box.append (hotspot_button);
 
             flight_mode_button = new Gtk.Button.with_label (_("Turn on flight mode"));
             flight_mode_button.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
@@ -122,6 +123,10 @@ namespace HyprNetworkManager.UI.Widgets {
 
         public void set_flight_mode_label (string label) {
             flight_mode_button.set_label (label);
+        }
+
+        public void set_hotspot_sensitive (bool sensitive) {
+            hotspot_button.set_sensitive (sensitive);
         }
 
         private void clear_transient_menu_button_state (Gtk.Widget widget) {
