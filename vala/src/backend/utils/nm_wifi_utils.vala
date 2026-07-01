@@ -261,7 +261,7 @@ namespace NmWifiUtils {
         var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
 
         var s_con = new NM.SettingConnection ();
-        s_con.id = "Hotspot";
+        s_con.id = ssid;
         s_con.type = "802-11-wireless";
         s_con.uuid = NM.Utils.uuid_generate ();
         s_con.autoconnect = false;
@@ -275,6 +275,7 @@ namespace NmWifiUtils {
         if (band != "") {
             s_wifi.band = band;
         }
+        
         s_wifi.mac_address_randomization = NM.SettingMacRandomization.NEVER;
         conn.add_setting (s_wifi);
 
@@ -300,12 +301,6 @@ namespace NmWifiUtils {
         s_ip6.method = "shared";
         conn.add_setting (s_ip6);
         
-        var s_user = new NM.SettingUser ();
-        try {
-            s_user.set_data ("hypr-network-manager.hotspot.timeout", timeout.to_string ());
-            conn.add_setting (s_user);
-        } catch (Error e) {}
-
         return conn;
     }
 }

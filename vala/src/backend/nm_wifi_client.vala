@@ -1135,18 +1135,9 @@ public class NmWifiClient : GLib.Object {
 
     public async HotspotConfig get_hotspot_status (Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
-        var connections = client.get_connections ();
-        NM.Connection? hotspot_conn = null;
-        
-        foreach (var conn in connections) {
-            var s_wifi = conn.get_setting_wireless ();
-            if (s_wifi != null && s_wifi.mode == "ap") {
-                hotspot_conn = conn;
-                break;
-            }
-        }
-
         var config = new HotspotConfig ();
+        
+        HyprNetworkManager.Backend.HotspotConfigStorage.load (config);
         
         var dev = get_wifi_device ();
         if (dev != null) {
@@ -1158,206 +1149,82 @@ public class NmWifiClient : GLib.Object {
             config.supports_5ghz = true;
         }
         
-        if (hotspot_conn != null) {
-            var s_wifi = hotspot_conn.get_setting_wireless ();
-            config.ssid = NmWifiUtils.bytes_to_ssid (s_wifi.ssid);
-            config.connection_uuid = hotspot_conn.get_uuid ();
-            config.band = s_wifi.band != null ? s_wifi.band : "";
-            config.is_hidden = s_wifi.hidden;
-            
-            var s_user = (NM.SettingUser) hotspot_conn.get_setting (typeof (NM.SettingUser));
-            if (s_user != null) {
-                string? to_val = s_user.get_data ("hypr-network-manager.hotspot.timeout");
-                if (to_val != null) {
-                    config.timeout = int.parse (to_val);
-                }
-                string? ap_iface = s_user.get_data ("hypr-network-manager.hotspot.ap_interface");
-                if (ap_iface != null) {
-                    config.ap_interface = ap_iface;
-                }
-                string? up_iface = s_user.get_data ("hypr-network-manager.hotspot.uplink_interface");
-                if (up_iface != null) {
-                    config.uplink_interface = up_iface;
-                }
-            }
-
-            var s_sec = hotspot_conn.get_setting_wireless_security ();
-            if (s_sec == null) {
-                config.security = "none";
-            } else {
-                config.security = s_sec.key_mgmt != null ? s_sec.key_mgmt : "wpa-psk";
-                
-                if (hotspot_conn is NM.RemoteConnection) {
-                    try {
-                        var secrets = yield ((NM.RemoteConnection) hotspot_conn).get_secrets_async ("802-11-wireless-security", cancellable);
-                        if (secrets != null) {
-                            Variant? sec_dict = secrets.lookup_value ("802-11-wireless-security", new VariantType ("a{sv}"));
-                            if (sec_dict != null) {
-                                Variant? psk_var = sec_dict.lookup_value ("psk", new VariantType ("s"));
-                                if (psk_var != null) {
-                                    config.password = psk_var.get_string ();
-                                }
-                            }
-                        }
-                    } catch (Error e) {
-                        log_warn ("nm-wifi-client", "Failed to get hotspot secrets: " + e.message);
-                    }
-                } else if (s_sec.psk != null) {
-                    config.password = s_sec.psk;
-                }
-            }
-
-            if (has_create_ap ()) {
-                config.is_active = false;
-                config.is_starting = false;
-                
-                if (is_hotspot_stopping) {
-                    return config;
-                }
-                
-                if (is_hotspot_starting) {
-                    config.is_active = true;
-                    config.is_starting = true;
-                    return config;
-                }
-                
-                try {
-                    string stdout_content, stderr_content;
-                    int exit_status;
-                    
-                    NM.DeviceWifi? target_dev = dev;
-                    if (config.ap_interface != "" && config.ap_interface != "Auto") {
-                        var nm_dev = client.get_device_by_iface (config.ap_interface);
-                        if (nm_dev is NM.DeviceWifi) target_dev = (NM.DeviceWifi) nm_dev;
-                    }
-                    
-                    if (target_dev != null) {
-                        string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + target_dev.get_iface () };
-                        if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, out stderr_content, out exit_status)) {
-                            if (exit_status == 0 && stdout_content.strip () != "") {
-                                config.is_active = true;
-                            }
-                        }
-                    }
-                } catch (Error e) {
-                }
+        config.is_active = false;
+        config.is_starting = false;
+        
+        if (has_create_ap ()) {
+            if (is_hotspot_stopping) {
+                return config;
             }
             
-            if (!config.is_active) {
-                var active_conns = client.get_active_connections ();
-                foreach (var ac in active_conns) {
-                    if (ac.get_uuid () == config.connection_uuid && 
+            if (is_hotspot_starting) {
+                config.is_active = true;
+                config.is_starting = true;
+                return config;
+            }
+            
+            try {
+                string stdout_content, stderr_content;
+                int exit_status;
+                
+                NM.DeviceWifi? target_dev = dev;
+                if (config.ap_interface != "" && config.ap_interface != "Auto") {
+                    var nm_dev = client.get_device_by_iface (config.ap_interface);
+                    if (nm_dev is NM.DeviceWifi) target_dev = (NM.DeviceWifi) nm_dev;
+                }
+                
+                if (target_dev != null) {
+                    string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + target_dev.get_iface () };
+                    if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, out stderr_content, out exit_status)) {
+                        if (exit_status == 0 && stdout_content.strip () != "") {
+                            config.is_active = true;
+                        }
+                    }
+                }
+            } catch (Error e) {
+            }
+        } else {
+            var active_conns = client.get_active_connections ();
+            foreach (var ac in active_conns) {
+                var conn = ac.get_connection ();
+                if (conn != null) {
+                    var s_wifi = conn.get_setting_wireless ();
+                    if (s_wifi != null && s_wifi.mode == "ap" && 
                         (ac.get_state () == NM.ActiveConnectionState.ACTIVATED ||
                          ac.get_state () == NM.ActiveConnectionState.ACTIVATING)) {
                         config.is_active = true;
+                        config.connection_uuid = ac.get_uuid ();
                         break;
                     }
                 }
             }
-            
-            if (config.is_active) {
-                try {
-                    string iw_stdout;
-                    string[] iw_argv = {"bash", "-c", "count=0; for iface in $(iw dev | awk '$1==\"Interface\"{iface=$2} $1==\"type\" && $2==\"AP\"{print iface}'); do c=$(iw dev $iface station dump 2>/dev/null | grep -c \"Station\"); count=$((count + c)); done; echo $count"};
-                    if (Process.spawn_sync (null, iw_argv, null, SpawnFlags.SEARCH_PATH, null, out iw_stdout, null, null)) {
-                        config.connected_clients = int.parse (iw_stdout.strip ());
-                    }
-                } catch (Error e) {}
-            }
+        }
+        
+        if (config.is_active) {
+            try {
+                string iw_stdout;
+                string[] iw_argv = {"bash", "-c", "count=0; for iface in $(iw dev | awk '$1=="Interface"{iface=$2} $1=="type" && $2=="AP"{print iface}'); do c=$(iw dev $iface station dump 2>/dev/null | grep -c "Station"); count=$((count + c)); done; echo $count"};
+                if (Process.spawn_sync (null, iw_argv, null, SpawnFlags.SEARCH_PATH, null, out iw_stdout, null, null)) {
+                    config.connected_clients = int.parse (iw_stdout.strip ());
+                }
+            } catch (Error e) {}
         }
 
         return config;
     }
 
-    public async NM.RemoteConnection create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
-        var config = yield get_hotspot_status (cancellable);
+    public async void create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
+        var config = new HotspotConfig ();
+        config.ssid = ssid;
+        config.password = password;
+        config.security = security;
+        config.band = band;
+        config.is_hidden = is_hidden;
+        config.timeout = timeout;
+        config.ap_interface = ap_interface;
+        config.uplink_interface = uplink_interface;
         
-        if (config.connection_uuid != "") {
-            var conn = client.get_connection_by_uuid (config.connection_uuid);
-            if (conn != null) {
-                var s_con = conn.get_setting_connection ();
-                if (s_con != null) {
-                    s_con.id = ssid;
-                    
-                    if (ap_interface != "Auto" && ap_interface != "") {
-                        s_con.interface_name = ap_interface;
-                    } else {
-                        s_con.interface_name = null;
-                    }
-                }
-                
-                var s_wifi = conn.get_setting_wireless ();
-                uint8[] ssid_arr = ssid.data;
-                s_wifi.ssid = new Bytes (ssid_arr);
-                s_wifi.hidden = is_hidden;
-                
-                if (band == "") {
-                    s_wifi.band = null;
-                } else {
-                    s_wifi.band = band;
-                }
-                
-                if (security != "none") {
-                    var s_sec = conn.get_setting_wireless_security ();
-                    if (s_sec == null) {
-                        s_sec = new NM.SettingWirelessSecurity ();
-                        conn.add_setting (s_sec);
-                    }
-                    s_sec.key_mgmt = security;
-                    if (password != "") {
-                        s_sec.psk = password;
-                    }
-                    
-                    // Always ensure modern secure crypto
-                    s_sec.proto = new string[] { "rsn" };
-                    s_sec.pairwise = new string[] { "ccmp" };
-                    s_sec.group = new string[] { "ccmp" };
-                } else {
-                    conn.remove_setting (typeof (NM.SettingWirelessSecurity));
-                }
-                
-                var s_user = (NM.SettingUser) conn.get_setting (typeof (NM.SettingUser));
-                if (s_user == null) {
-                    s_user = new NM.SettingUser ();
-                    conn.add_setting (s_user);
-                }
-                try {
-                    s_user.set_data ("hypr-network-manager.hotspot.timeout", timeout.to_string ());
-                    s_user.set_data ("hypr-network-manager.hotspot.ap_interface", ap_interface);
-                    s_user.set_data ("hypr-network-manager.hotspot.uplink_interface", uplink_interface);
-                } catch (Error e) {}
-
-                if (conn is NM.RemoteConnection) {
-                    yield ((NM.RemoteConnection)conn).commit_changes_async (true, cancellable);
-                    return (NM.RemoteConnection)conn;
-                }
-            }
-        }
-        
-        // Need to create new
-        var new_conn = NmWifiUtils.create_hotspot_connection (ssid, password, security, band, is_hidden, timeout);
-        
-        var s_con = new_conn.get_setting_connection ();
-        if (s_con != null) {
-            if (ap_interface != "Auto" && ap_interface != "") {
-                s_con.interface_name = ap_interface;
-            } else {
-                s_con.interface_name = null;
-            }
-        }
-        
-        var s_user = (NM.SettingUser) new_conn.get_setting (typeof (NM.SettingUser));
-        if (s_user == null) {
-            s_user = new NM.SettingUser ();
-            new_conn.add_setting (s_user);
-        }
-        try {
-            s_user.set_data ("hypr-network-manager.hotspot.ap_interface", ap_interface);
-            s_user.set_data ("hypr-network-manager.hotspot.uplink_interface", uplink_interface);
-        } catch (Error e) {}
-
-        return yield client.add_connection_async (new_conn, true, cancellable);
+        HyprNetworkManager.Backend.HotspotConfigStorage.save (config);
     }
 
     public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
@@ -1379,7 +1246,7 @@ public class NmWifiClient : GLib.Object {
             throw new IOError.NOT_FOUND ("Wi-Fi device not found");
         }
 
-        var conn = yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
+        yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
         
         if (has_create_ap () && dev.get_active_connection () != null) {
             // Stop any existing instance just in case
@@ -1389,7 +1256,8 @@ public class NmWifiClient : GLib.Object {
                 string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
                 if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
                     if (exit_status == 0 && stdout_content.strip () != "") {
-                        string pid = stdout_content.strip().split("\n")[0];
+                        string pid = stdout_content.strip().split("
+")[0];
                         string[] stop_argv = { "pkexec", "create_ap", "--stop", pid };
                         Process.spawn_sync (null, stop_argv, null, SpawnFlags.SEARCH_PATH, null, null, null, null);
                     }
@@ -1466,7 +1334,6 @@ public class NmWifiClient : GLib.Object {
                 var proc = launcher.spawnv (spawn_args);
                 yield proc.wait_async (cancellable);
                 
-                // wait for daemon to actually spin up hostapd
                 yield nm_async_sleep (3000);
                 
                 hotspot_idle_minutes = 0;
@@ -1477,7 +1344,28 @@ public class NmWifiClient : GLib.Object {
                 throw new IOError.FAILED ("Failed to spawn create_ap: " + e.message);
             }
         } else {
-            yield client.activate_connection_async (conn, dev, null, cancellable);
+            // Native NM Hotspot (Volatile)
+            var connections = client.get_connections ();
+            foreach (var conn_check in connections) {
+                var s_wifi = conn_check.get_setting_wireless ();
+                if (s_wifi != null && s_wifi.mode == "ap") {
+                    if (conn_check is NM.RemoteConnection) {
+                        try {
+                            yield ((NM.RemoteConnection)conn_check).delete_async (cancellable);
+                        } catch (Error e) {}
+                    }
+                }
+            }
+            
+            var new_conn = NmWifiUtils.create_hotspot_connection (ssid, password, security, band, is_hidden, timeout);
+            var s_con = new_conn.get_setting_connection ();
+            if (s_con != null) {
+                if (ap_interface != "Auto" && ap_interface != "") {
+                    s_con.interface_name = ap_interface;
+                }
+            }
+            
+            yield client.add_and_activate_connection_async (new_conn, dev, null, cancellable);
             return true;
         }
     }
@@ -1504,7 +1392,8 @@ public class NmWifiClient : GLib.Object {
                     if (stdout_content != null && stdout_content.strip () != "") {
                         is_hotspot_stopping = true;
                         
-                        string[] pids = stdout_content.strip().split("\n");
+                        string[] pids = stdout_content.strip().split("
+");
                         foreach (string pid in pids) {
                             if (pid.strip() == "") continue;
                             string[] argv = { "pkexec", "create_ap", "--stop", pid.strip() };
@@ -1531,19 +1420,18 @@ public class NmWifiClient : GLib.Object {
                     throw new IOError.FAILED ("Failed to stop create_ap: " + e.message);
                 }
             }
-        }
-        
-        if (config.connection_uuid == "") {
-            return true;
-        }
-        
-        var active_conns = client.get_active_connections ();
-        foreach (var ac in active_conns) {
-            if (ac.get_uuid () == config.connection_uuid) {
-                yield client.deactivate_connection_async (ac, cancellable);
-                return true;
+        } else {
+            // Delete the connection entirely instead of just deactivating it.
+            if (config.connection_uuid != "") {
+                var conn = client.get_connection_by_uuid (config.connection_uuid);
+                if (conn != null && conn is NM.RemoteConnection) {
+                    try {
+                        yield ((NM.RemoteConnection)conn).delete_async (cancellable);
+                    } catch (Error e) {}
+                }
             }
         }
+        
         return true;
     }
 
