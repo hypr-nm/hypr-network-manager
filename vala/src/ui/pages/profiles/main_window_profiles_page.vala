@@ -89,6 +89,12 @@ public class MainWindowProfilesPage : Gtk.Box {
         this.wifi_saved_listbox = new Gtk.ListBox ();
         this.wifi_saved_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         this.wifi_saved_listbox.add_css_class (MainWindowCssClasses.LIST);
+        this.wifi_saved_listbox.row_activated.connect ((row) => {
+            var profile = row.get_data<WifiSavedProfile> ("profile");
+            if (profile != null) {
+                this.open_profile (profile);
+            }
+        });
 
         // Filter Wi-Fi saved profiles
         this.wifi_saved_listbox.set_filter_func ((row) => {
@@ -130,6 +136,12 @@ public class MainWindowProfilesPage : Gtk.Box {
         this.ethernet_saved_listbox = new Gtk.ListBox ();
         this.ethernet_saved_listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         this.ethernet_saved_listbox.add_css_class (MainWindowCssClasses.LIST);
+        this.ethernet_saved_listbox.row_activated.connect ((row) => {
+            var device = row.get_data<NetworkDevice> ("device");
+            if (device != null) {
+                this.open_ethernet_profile (device);
+            }
+        });
 
         // Filter Ethernet saved profiles
         this.ethernet_saved_listbox.set_filter_func ((row) => {
@@ -229,6 +241,7 @@ public class MainWindowProfilesPage : Gtk.Box {
             root.append (info);
 
             row.set_data<string> ("search-key", primary.down () + " " + (subtitle != "" ? subtitle.down () : ""));
+            row.set_data<WifiSavedProfile> ("profile", row_profile);
 
             var details_btn = new Gtk.Button ();
             MainWindowCssClassResolver.add_best_class (
@@ -266,12 +279,6 @@ public class MainWindowProfilesPage : Gtk.Box {
             actions_box.append (details_btn);
             actions_box.append (delete_btn);
             root.append (actions_box);
-
-            var click = new Gtk.GestureClick ();
-            click.released.connect ((n_press, x, y) => {
-                this.open_profile (row_profile);
-            });
-            info.add_controller (click);
 
             row.set_child (root);
             this.wifi_saved_listbox.append (row);
@@ -329,6 +336,7 @@ public class MainWindowProfilesPage : Gtk.Box {
             root.append (info);
 
             row.set_data<string> ("search-key", primary.down () + " " + (subtitle != "" ? subtitle.down () : ""));
+            row.set_data<NetworkDevice> ("device", row_device);
 
             var details_btn = new Gtk.Button ();
             MainWindowCssClassResolver.add_best_class (
@@ -349,12 +357,6 @@ public class MainWindowProfilesPage : Gtk.Box {
                 this.open_ethernet_profile (row_device);
             });
             root.append (details_btn);
-
-            var click = new Gtk.GestureClick ();
-            click.released.connect ((n_press, x, y) => {
-                this.open_ethernet_profile (row_device);
-            });
-            info.add_controller (click);
 
             row.set_child (root);
             this.ethernet_saved_listbox.append (row);
