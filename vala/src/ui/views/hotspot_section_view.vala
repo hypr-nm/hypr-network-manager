@@ -120,10 +120,10 @@ namespace HyprNetworkManager.UI.Views {
             
             var timeout_model = new Gtk.StringList (new string[] {
                 _("Never"),
-                _("5 minutes"),
-                _("10 minutes"),
-                _("30 minutes"),
-                _("1 hour")
+                _("%d minutes").printf (5),
+                _("%d minutes").printf (10),
+                _("%d minutes").printf (30),
+                _("%d hour").printf (1)
             });
             timeout_dropdown = window_host.create_tracked_dropdown (timeout_model);
             timeout_dropdown.hexpand = true;
@@ -252,8 +252,8 @@ namespace HyprNetworkManager.UI.Views {
             
             var band_model = new Gtk.StringList (new string[] {
                 _("Auto"),
-                _("2.4 GHz"),
-                _("5 GHz")
+                "2.4 GHz",
+                "5 GHz"
             });
             band_dropdown = window_host.create_tracked_dropdown (band_model);
             band_dropdown.hexpand = true;
@@ -352,7 +352,7 @@ namespace HyprNetworkManager.UI.Views {
             var pass_text = config.password != "" ? config.password : _("None");
             
             var info_label = new Gtk.Label ("");
-            info_label.set_markup ("<b>" + GLib.Markup.escape_text(config.ssid) + "</b> • " + _("Password: ") + GLib.Markup.escape_text(pass_text));
+            info_label.set_markup ("<b>" + GLib.Markup.escape_text(config.ssid) + "</b> • " + _("Password") + ": " + GLib.Markup.escape_text(pass_text));
             info_label.selectable = true;
             info_label.wrap = true;
             info_label.wrap_mode = Pango.WrapMode.CHAR;
