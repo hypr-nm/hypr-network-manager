@@ -78,7 +78,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         wifi_page_box.set_vexpand (true);
 
         wifi_search_entry = new Gtk.SearchEntry ();
-        wifi_search_entry.placeholder_text = _("Search Wi-Fi profiles...");
+        wifi_search_entry.placeholder_text = _("Search Wi-Fi profiles");
         wifi_search_entry.margin_start = 12;
         wifi_search_entry.margin_end = 12;
         wifi_search_entry.margin_top = 4;
@@ -125,7 +125,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         eth_page_box.set_vexpand (true);
 
         eth_search_entry = new Gtk.SearchEntry ();
-        eth_search_entry.placeholder_text = _("Search Ethernet profiles...");
+        eth_search_entry.placeholder_text = _("Search Ethernet profiles");
         eth_search_entry.margin_start = 12;
         eth_search_entry.margin_end = 12;
         eth_search_entry.margin_top = 4;
@@ -167,10 +167,10 @@ public class MainWindowProfilesPage : Gtk.Box {
         eth_scroll.set_child (this.ethernet_saved_listbox);
         eth_page_box.append (eth_scroll);
 
-        wifi_tab_label = new Gtk.Label (_("Wi-Fi (0)"));
+        wifi_tab_label = new Gtk.Label (_("Wi-Fi (%d)").printf (0));
         wifi_tab_label.add_css_class (MainWindowCssClasses.TAB_LABEL);
 
-        eth_tab_label = new Gtk.Label (_("Ethernet (0)"));
+        eth_tab_label = new Gtk.Label (_("Ethernet (%d)").printf (0));
         eth_tab_label.add_css_class (MainWindowCssClasses.TAB_LABEL);
 
         notebook.append_page (wifi_page_box, wifi_tab_label);
