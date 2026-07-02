@@ -286,7 +286,7 @@ namespace NmWifiUtils {
             }
         }
         
-        s_wifi.mac_address_randomization = NM.SettingMacRandomization.NEVER;
+        s_wifi.cloned_mac_address = "preserve";
         conn.add_setting (s_wifi);
 
         if (security != "none") {

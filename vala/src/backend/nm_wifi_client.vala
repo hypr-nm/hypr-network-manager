@@ -1392,7 +1392,6 @@ public class NmWifiClient : GLib.Object {
             
             var s_wifi = new_conn.get_setting_wireless();
             if (s_wifi != null) {
-                 s_wifi.mac_address_randomization = NM.SettingMacRandomization.DEFAULT;
                  s_wifi.cloned_mac_address = null;
                  s_wifi.mac_address = null;
             }

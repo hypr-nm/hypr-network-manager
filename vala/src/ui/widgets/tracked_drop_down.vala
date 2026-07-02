@@ -110,9 +110,12 @@ namespace HyprNetworkManager.UI.Widgets {
 
                 var root_widget = this.get_root () as Gtk.Widget;
                 if (root_widget != null) {
-                    double dest_x = 0.0;
-                    double dest_y = 0.0;
-                    if (menu_button.translate_coordinates (root_widget, 0.0, 0.0, out dest_x, out dest_y)) {
+                    Graphene.Point p = Graphene.Point ();
+                    p.x = 0;
+                    p.y = 0;
+                    Graphene.Point out_p;
+                    if (menu_button.compute_point (root_widget, p, out out_p)) {
+                        double dest_y = out_p.y;
                         int min_height = 0;
                         int nat_height = 0;
                         int min_baseline = 0;

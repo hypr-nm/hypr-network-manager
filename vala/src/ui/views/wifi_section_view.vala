@@ -205,38 +205,33 @@ namespace HyprNetworkManager.UI.Views {
                 window_host.debug_log ("Share clicked for SSID: " + selected_wifi_network.ssid + ", uuid: " + selected_wifi_network.saved_connection_uuid);
 
                 nm.get_wifi_password.begin (selected_wifi_network.saved_connection_uuid, null, (obj, res) => {
-                    try {
-                        string? password = nm.get_wifi_password.end (res);
-                        
-                        window_host.debug_log ("Got password. Password empty? " + (password == null || password == "").to_string ());
+                    string? password = nm.get_wifi_password.end (res);
+                    
+                    window_host.debug_log ("Got password. Password empty? " + (password == null || password == "").to_string ());
 
-                        if (selected_wifi_network.is_secured && (password == null || password == "")) {
-                            window_host.show_wifi_error (selected_wifi_network.network_key, _("Cannot share: password is empty"));
-                            return;
-                        }
-                        
-                        string ssid = selected_wifi_network.ssid.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:");
-                        string escaped_password = (password != null) ? password.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:") : "";
-
-                        string security = "nopass";
-                        if (selected_wifi_network.is_secured) {
-                            // Assume WPA for now since we don't have security_mode from IP settings directly,
-                            // but usually it's WPA unless otherwise configured.
-                            // WEP is rarely used but we'll default to WPA.
-                            security = "WPA";
-                        }
-                        
-                        string hidden_flag = selected_wifi_network.is_hidden ? "true" : "false";
-                        string qr_text = "WIFI:T:" + security + ";S:" + ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
-                        
-                        window_host.debug_log ("Generated QR text: " + qr_text);
-
-                        share_page.set_share_data (selected_wifi_network.ssid, qr_text);
-                        stack.set_visible_child_name ("share");
-                    } catch (Error e) {
-                        window_host.debug_log ("Failed to get details for share: " + e.message);
-                        window_host.show_wifi_error (selected_wifi_network.network_key, _("Failed to get details for share: %s").printf(e.message));
+                    if (selected_wifi_network.is_secured && (password == null || password == "")) {
+                        window_host.show_wifi_error (selected_wifi_network.network_key, _("Cannot share: password is empty"));
+                        return;
                     }
+                    
+                    string ssid = selected_wifi_network.ssid.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:");
+                    string escaped_password = (password != null) ? password.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:") : "";
+
+                    string security = "nopass";
+                    if (selected_wifi_network.is_secured) {
+                        // Assume WPA for now since we don't have security_mode from IP settings directly,
+                        // but usually it's WPA unless otherwise configured.
+                        // WEP is rarely used but we'll default to WPA.
+                        security = "WPA";
+                    }
+                    
+                    string hidden_flag = selected_wifi_network.is_hidden ? "true" : "false";
+                    string qr_text = "WIFI:T:" + security + ";S:" + ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
+                    
+                    window_host.debug_log ("Generated QR text: " + qr_text);
+
+                    share_page.set_share_data (selected_wifi_network.ssid, qr_text);
+                    stack.set_visible_child_name ("share");
                 });
             });
         }
