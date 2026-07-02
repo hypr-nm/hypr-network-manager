@@ -200,8 +200,7 @@ namespace MainWindowWifiPageBuilder {
         MainWindowCssClassResolver.add_best_class (hs_icon, {MainWindowCssClasses.ICON_SIZE_24, MainWindowCssClasses.ICON_SIZE});
         MainWindowCssClassResolver.add_best_class (hs_icon, {MainWindowCssClasses.WIFI_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON});
         
-        var hs_label = new Gtk.Label (_("Hotspot is currently active.
-Wi-Fi scanning is paused on this interface."));
+        var hs_label = new Gtk.Label (_("Hotspot is currently active.\nWi-Fi scanning is paused on this interface."));
         hs_label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
         hs_label.justify = Gtk.Justification.CENTER;
         

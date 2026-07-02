@@ -1255,8 +1255,7 @@ public class NmWifiClient : GLib.Object {
                 string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
                 if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
                     if (exit_status == 0 && stdout_content.strip () != "") {
-                        string pid = stdout_content.strip().split("
-")[0];
+                        string pid = stdout_content.strip().split("\n")[0];
                         string[] stop_argv = { "pkexec", "create_ap", "--stop", pid };
                         Process.spawn_sync (null, stop_argv, null, SpawnFlags.SEARCH_PATH, null, null, null, null);
                     }
@@ -1434,8 +1433,7 @@ public class NmWifiClient : GLib.Object {
                     if (stdout_content != null && stdout_content.strip () != "") {
                         is_hotspot_stopping = true;
                         
-                        string[] pids = stdout_content.strip().split("
-");
+                        string[] pids = stdout_content.strip().split("\n");
                         foreach (string pid in pids) {
                             if (pid.strip() == "") continue;
                             string[] argv = { "pkexec", "create_ap", "--stop", pid.strip() };
