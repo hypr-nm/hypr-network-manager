@@ -1,0 +1,6 @@
+option(
+  'install-polkit',
+  type: 'boolean',
+  value: true,
+  description: 'Install polkit policy/rules so wheel/sudo users can run the vendored create_ap hotspot helper without a pkexec password prompt on every invocation. Disable for distros that ship their own polkit rules or for unprivileged build sandboxes.'
+)
