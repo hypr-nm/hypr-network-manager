@@ -798,6 +798,16 @@ _cleanup() {
                 networkmanager_rm_unmanaged_if_needed $INTERNET_IFACE
             fi
         fi
+    else
+        # Restore the per-interface forwarding flag we disabled for "none" and
+        # remove the isolation DROP rules we inserted, in reverse order.
+        iptables -w -D FORWARD -o ${WIFI_IFACE} -j DROP 2> /dev/null || true
+        iptables -w -D FORWARD -i ${WIFI_IFACE} -j DROP 2> /dev/null || true
+        if [[ -f $CONFDIR/wifi_iface_forwarding ]]; then
+            cp -f $CONFDIR/wifi_iface_forwarding \
+                /proc/sys/net/ipv4/conf/${WIFI_IFACE} 2> /dev/null || true
+            rm -f $CONFDIR/wifi_iface_forwarding
+        fi
     fi
 
     if [[ "$SHARE_METHOD" != "bridge" ]]; then
@@ -1969,6 +1979,20 @@ if [[ "$SHARE_METHOD" != "none" ]]; then
     fi
 else
     echo "No Internet sharing"
+    # "none" means we must NOT share the internet. create_ap normally only
+    # abstains from configuring sharing, but the host may already forward and
+    # masquerade traffic (e.g. global net.ipv4.ip_forward=1 plus firewalld or
+    # nftables masquerading on the egress interface), which would still NAT the
+    # hotspot clients and silently share the internet. Actively isolate the
+    # hotspot so connected clients cannot reach other networks regardless of
+    # the surrounding system firewall state.
+    cp_n /proc/sys/net/ipv4/conf/${WIFI_IFACE}/forwarding \
+        $CONFDIR/wifi_iface_forwarding
+    echo 0 > /proc/sys/net/ipv4/conf/${WIFI_IFACE}/forwarding || true
+    # Block any forwarding of the hotspot subnet even if some other component
+    # re-enables global/interface forwarding later while we run.
+    iptables -w -I FORWARD -i ${WIFI_IFACE} -j DROP || true
+    iptables -w -I FORWARD -o ${WIFI_IFACE} -j DROP || true
 fi
 
 # start dhcp + dns (optional)

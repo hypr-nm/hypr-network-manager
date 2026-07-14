@@ -458,6 +458,37 @@ namespace HyprNetworkManager.UI.Views {
             if (uplink_interface_dropdown != null) uplink_interface_dropdown.notify_selected.connect (validate_inputs);
         }
 
+        // Map the selected AP-interface dropdown row to a locale-independent
+        // token ("Auto" for the synthetic first row, otherwise the raw kernel
+        // interface name) so the backend never has to match translated labels.
+        private string get_ap_interface_token () {
+            if (ap_interface_dropdown == null || this.ap_model == null) {
+                return "";
+            }
+            uint idx = ap_interface_dropdown.get_selected ();
+            if (idx == 0) {
+                return "Auto";
+            }
+            return this.ap_model.get_string (idx);
+        }
+
+        // Map the selected uplink dropdown row to a locale-independent token
+        // ("Auto" / "None" for the synthetic rows, otherwise the raw interface
+        // name). Indices are fixed: 0 = Auto, 1 = None, 2+ = interfaces.
+        private string get_uplink_token () {
+            if (uplink_interface_dropdown == null || this.uplink_model == null) {
+                return "";
+            }
+            uint idx = uplink_interface_dropdown.get_selected ();
+            if (idx == 0) {
+                return "Auto";
+            }
+            if (idx == 1) {
+                return "None";
+            }
+            return this.uplink_model.get_string (idx);
+        }
+
         private void validate_inputs () {
             if (is_updating) {
                 return;
@@ -555,14 +586,8 @@ namespace HyprNetworkManager.UI.Views {
             else if (timeout_index == 3) timeout = 30;
             else if (timeout_index == 4) timeout = 60;
             
-            string ap_iface = "";
-            if (ap_interface_dropdown != null && this.ap_model != null) {
-                ap_iface = this.ap_model.get_string (ap_interface_dropdown.get_selected ());
-            }
-            string up_iface = "";
-            if (uplink_interface_dropdown != null && this.uplink_model != null) {
-                up_iface = this.uplink_model.get_string (uplink_interface_dropdown.get_selected ());
-            }
+            string ap_iface = get_ap_interface_token ();
+            string up_iface = get_uplink_token ();
             
             if (ssid == "") {
                 validate_inputs ();
@@ -629,14 +654,8 @@ namespace HyprNetworkManager.UI.Views {
                 else if (timeout_index == 3) timeout = 30;
                 else if (timeout_index == 4) timeout = 60;
                 
-                string ap_iface = "";
-                if (ap_interface_dropdown != null && this.ap_model != null) {
-                    ap_iface = this.ap_model.get_string (ap_interface_dropdown.get_selected ());
-                }
-                string up_iface = "";
-                if (uplink_interface_dropdown != null && this.uplink_model != null) {
-                    up_iface = this.uplink_model.get_string (uplink_interface_dropdown.get_selected ());
-                }
+                string ap_iface = get_ap_interface_token ();
+                string up_iface = get_uplink_token ();
                 
                 if (ssid == "") {
                     throw new IOError.INVALID_ARGUMENT("SSID cannot be empty");
@@ -730,20 +749,43 @@ namespace HyprNetworkManager.UI.Views {
                         timeout_dropdown.set_selected (0);
                     }
 
-                    if (ap_interface_dropdown != null && config.ap_interface != "" && this.ap_model != null) {
-                        for (uint i = 0; i < this.ap_model.get_n_items (); i++) {
-                            if (this.ap_model.get_string (i) == config.ap_interface) {
-                                ap_interface_dropdown.set_selected (i);
-                                break;
+                    if (ap_interface_dropdown != null && this.ap_model != null) {
+                        // "Auto" / "" maps to the synthetic first row; any other
+                        // stored value is a raw interface name matched from 1+.
+                        if (config.ap_interface == "" || config.ap_interface == "Auto") {
+                            ap_interface_dropdown.set_selected (0);
+                        } else {
+                            bool found = false;
+                            for (uint i = 1; i < this.ap_model.get_n_items (); i++) {
+                                if (this.ap_model.get_string (i) == config.ap_interface) {
+                                    ap_interface_dropdown.set_selected (i);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                ap_interface_dropdown.set_selected (0);
                             }
                         }
                     }
 
-                    if (uplink_interface_dropdown != null && config.uplink_interface != "" && this.uplink_model != null) {
-                        for (uint i = 0; i < this.uplink_model.get_n_items (); i++) {
-                            if (this.uplink_model.get_string (i) == config.uplink_interface) {
-                                uplink_interface_dropdown.set_selected (i);
-                                break;
+                    if (uplink_interface_dropdown != null && this.uplink_model != null) {
+                        // Fixed semantics: 0 = Auto, 1 = None, 2+ = interfaces.
+                        if (config.uplink_interface == "" || config.uplink_interface == "Auto") {
+                            uplink_interface_dropdown.set_selected (0);
+                        } else if (config.uplink_interface == "None") {
+                            uplink_interface_dropdown.set_selected (1);
+                        } else {
+                            bool found = false;
+                            for (uint i = 2; i < this.uplink_model.get_n_items (); i++) {
+                                if (this.uplink_model.get_string (i) == config.uplink_interface) {
+                                    uplink_interface_dropdown.set_selected (i);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                uplink_interface_dropdown.set_selected (0);
                             }
                         }
                     }

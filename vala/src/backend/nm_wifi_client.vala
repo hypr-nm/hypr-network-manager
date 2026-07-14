@@ -1294,7 +1294,14 @@ public class NmWifiClient : GLib.Object {
 
         yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
         
-        if (has_create_ap () && dev.get_active_connection () != null) {
+        // create_ap honors the "None" uplink selection (-m none) and can run
+        // without an active connection on the Wi-Fi device. Use it whenever it
+        // is available so the user's internet-sharing choice is respected;
+        // otherwise fall back to the native NM hotspot (which always shares the
+        // default route and cannot represent "None").
+        bool use_create_ap = has_create_ap ()
+            && (uplink_interface == "None" || dev.get_active_connection () != null);
+        if (use_create_ap) {
             string create_ap_bin = get_create_ap_path () ?? "create_ap";
             // Stop any existing instance just in case
             try {
