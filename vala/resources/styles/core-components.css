@@ -69,6 +69,8 @@ window.nm-window,
   padding: 0;
   box-shadow: none;
   border: none;
+  background-color: var(--selected);
+  background-image: none;
 }
 
 /* Keep subtle depth only on top-level list pages. */
@@ -627,6 +629,11 @@ entry.nm-edit-field-entry,
   background: alpha(#000000, .16);
   color: var(--text);
   padding: 6px 10px;
+  transition: none;
+}
+
+entry {
+  outline-color: var(--selected);
 }
 
 entry.nm-inline-password-entry,
@@ -638,12 +645,15 @@ entry.nm-inline-ssid-entry,
   background: alpha(#000000, .16);
   color: var(--text);
   padding: 6px 10px;
+  transition: none;
 }
 
 .nm-password-entry:focus,
 entry.nm-edit-field-entry:focus,
 .nm-edit-field-entry:focus {
   border-color: var(--selected);
+  outline: none;
+  box-shadow: none;
 }
 
 entry.nm-inline-password-entry:focus,
@@ -651,6 +661,14 @@ entry.nm-inline-password-entry:focus,
 entry.nm-inline-ssid-entry:focus,
 .nm-inline-ssid-entry:focus {
   border-color: var(--selected);
+  outline: none;
+  box-shadow: none;
+}
+
+popover entry:focus,
+popover.menu entry:focus,
+popover.background entry:focus {
+  outline: none;
 }
 
 .nm-edit-dropdown {
@@ -1248,7 +1266,7 @@ list.boxed-list.nm-details-rows > row:hover {
   border: 1px solid alpha(var(--on_surface), 0.08);
   padding: 4px 8px;
   margin-top: 4px;
-  transition: all 180ms ease;
+  transition: background-color 120ms ease;
 }
 
 .nm-page-saved-profiles searchentry:focus,
@@ -1256,6 +1274,7 @@ list.boxed-list.nm-details-rows > row:hover {
   background-color: alpha(var(--on_surface), 0.04);
   border-color: var(--primary);
   box-shadow: 0 0 0 2px alpha(var(--primary), 0.15);
+  outline: none;
 }
 
 /* Strip Gtk.Notebook background, border frame, and shadows completely on Saved Profiles page */
