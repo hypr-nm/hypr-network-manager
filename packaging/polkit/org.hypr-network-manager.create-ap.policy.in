@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+
+<!--
+  This policy authorizes pkexec to launch the vendored create_ap helper shipped
+  inside hypr-network-manager (installed to @CREATE_AP_PATH@). Without it pkexec
+  falls back to default auth_admin, which prompts for an administrator password
+  on every invocation — and create_ap is potentially called several times per
+  hotspot enable/disable cycle.
+-->
+
+<policyconfig>
+  <action id="org.hypr-network-manager.create-ap">
+    <description>Run the hypr-network-manager hotspot helper</description>
+    <message>Authentication is required to start or stop the Wi-Fi hotspot</message>
+    <icon_name>network-wireless</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">@CREATE_AP_PATH@</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>

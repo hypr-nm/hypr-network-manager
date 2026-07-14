@@ -1,0 +1,18 @@
+// Allow members of the wheel/sudo groups to start/stop the hypr-network-manager
+// hotspot helper (create_ap) without an authentication prompt. Other users
+// still get a single auth_admin prompt per pkexec invocation.
+//
+// Matches both the installed-vendored action and the dev-tree variant so the
+// same rule file works for end users and for developers running uninstalled
+// builds out of the source tree.
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.hypr-network-manager.create-ap" ||
+        action.id == "org.hypr-network-manager.create-ap.dev") {
+
+        if (subject.isInGroup("wheel") || subject.isInGroup("sudo")) {
+            return polkit.Result.YES;
+        }
+        return polkit.Result.AUTH_ADMIN;
+    }
+});

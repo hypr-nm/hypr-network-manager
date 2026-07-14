@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+
+<!--
+  Dev-tree variant of the create_ap policy. This is generated at meson
+  configure-time with @CREATE_AP_DEV_PATH@ pointing at the uninstalled
+  vendored script under scripts/create_ap/. It lets developers run the
+  freshly-built binary straight out of the build directory without a
+  per-invocation pkexec password prompt (the user must still be in wheel or
+  sudo, see the matching .rules file). On production hosts the annotated path
+  will not exist, so this policy simply never matches and has no effect.
+-->
+
+<policyconfig>
+  <action id="org.hypr-network-manager.create-ap.dev">
+    <description>Run the hypr-network-manager hotspot helper (dev tree)</description>
+    <message>Authentication is required to start or stop the Wi-Fi hotspot</message>
+    <icon_name>network-wireless</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">@CREATE_AP_DEV_PATH@</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>
