@@ -48,6 +48,7 @@ namespace HyprNetworkManager.UI.Views {
         private Gtk.ScrolledWindow scroll;
         
         private bool is_updating = false;
+        private bool is_dirty = false;
         private uint scroll_tick_id = 0;
         private uint poll_source_id = 0;
 
@@ -458,9 +459,15 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void validate_inputs () {
+            if (is_updating) {
+                return;
+            }
+
             if (toggle_switch.active) {
                 return;
             }
+
+            is_dirty = true;
 
             string ssid = ssid_entry.get_text ().strip ();
             string pass = password_entry.get_text ();
@@ -583,6 +590,7 @@ namespace HyprNetworkManager.UI.Views {
                 // since they already contain the typed configuration.
                 // We just refresh the toggle status in case anything else changed.
                 var config = yield nm.get_hotspot_status ();
+                is_dirty = false;
                 is_updating = true;
                 toggle_switch.active = config.is_active;
                 is_updating = false;
@@ -645,6 +653,7 @@ namespace HyprNetworkManager.UI.Views {
                 }
 
                 yield nm.enable_hotspot_async (ssid, pass, security, band, is_hidden, timeout, ap_iface, up_iface);
+                is_dirty = false;
             } catch (Error e) {
                 warning ("Failed to enable hotspot: " + e.message);
                 
@@ -680,76 +689,80 @@ namespace HyprNetworkManager.UI.Views {
         private async void fetch_status () {
             try {
                 var config = yield nm.get_hotspot_status ();
-                
-                if (config.ssid != "") {
-                    ssid_entry.set_text (config.ssid);
-                }
-                if (config.password != "") {
-                    password_entry.set_text (config.password);
-                }
-                
-                if (config.security == "sae") {
-                    security_dropdown.set_selected (0);
-                } else if (config.security == "none") {
-                    security_dropdown.set_selected (2);
-                } else {
-                    security_dropdown.set_selected (1);
-                }
-                
-                if (config.band == "bg") {
-                    band_dropdown.set_selected (1);
-                } else if (config.band == "a") {
-                    band_dropdown.set_selected (2);
-                } else {
-                    band_dropdown.set_selected (0);
-                }
-                
-                hidden_check.active = config.is_hidden;
-                
-                if (config.timeout == 5) {
-                    timeout_dropdown.set_selected (1);
-                } else if (config.timeout == 10) {
-                    timeout_dropdown.set_selected (2);
-                } else if (config.timeout == 30) {
-                    timeout_dropdown.set_selected (3);
-                } else if (config.timeout == 60) {
-                    timeout_dropdown.set_selected (4);
-                } else {
-                    timeout_dropdown.set_selected (0);
-                }
-                
-                if (ap_interface_dropdown != null && config.ap_interface != "" && this.ap_model != null) {
-                    for (uint i = 0; i < this.ap_model.get_n_items (); i++) {
-                        if (this.ap_model.get_string (i) == config.ap_interface) {
-                            ap_interface_dropdown.set_selected (i);
-                            break;
+
+                is_updating = true;
+
+                if (!is_dirty) {
+                    if (config.ssid != "") {
+                        ssid_entry.set_text (config.ssid);
+                    }
+                    if (config.password != "") {
+                        password_entry.set_text (config.password);
+                    }
+
+                    if (config.security == "sae") {
+                        security_dropdown.set_selected (0);
+                    } else if (config.security == "none") {
+                        security_dropdown.set_selected (2);
+                    } else {
+                        security_dropdown.set_selected (1);
+                    }
+
+                    if (config.band == "bg") {
+                        band_dropdown.set_selected (1);
+                    } else if (config.band == "a") {
+                        band_dropdown.set_selected (2);
+                    } else {
+                        band_dropdown.set_selected (0);
+                    }
+
+                    hidden_check.active = config.is_hidden;
+
+                    if (config.timeout == 5) {
+                        timeout_dropdown.set_selected (1);
+                    } else if (config.timeout == 10) {
+                        timeout_dropdown.set_selected (2);
+                    } else if (config.timeout == 30) {
+                        timeout_dropdown.set_selected (3);
+                    } else if (config.timeout == 60) {
+                        timeout_dropdown.set_selected (4);
+                    } else {
+                        timeout_dropdown.set_selected (0);
+                    }
+
+                    if (ap_interface_dropdown != null && config.ap_interface != "" && this.ap_model != null) {
+                        for (uint i = 0; i < this.ap_model.get_n_items (); i++) {
+                            if (this.ap_model.get_string (i) == config.ap_interface) {
+                                ap_interface_dropdown.set_selected (i);
+                                break;
+                            }
+                        }
+                    }
+
+                    if (uplink_interface_dropdown != null && config.uplink_interface != "" && this.uplink_model != null) {
+                        for (uint i = 0; i < this.uplink_model.get_n_items (); i++) {
+                            if (this.uplink_model.get_string (i) == config.uplink_interface) {
+                                uplink_interface_dropdown.set_selected (i);
+                                break;
+                            }
                         }
                     }
                 }
-                
-                if (uplink_interface_dropdown != null && config.uplink_interface != "" && this.uplink_model != null) {
-                    for (uint i = 0; i < this.uplink_model.get_n_items (); i++) {
-                        if (this.uplink_model.get_string (i) == config.uplink_interface) {
-                            uplink_interface_dropdown.set_selected (i);
-                            break;
-                        }
-                    }
-                }
-                
+
                 // Make sure to disable unsupported bands (though TrackedDropDown might not support disabling individual rows,
                 // we'll just let the model handle it if it does, otherwise the user could select an unsupported band which would fail gracefully).
                 // But let's at least keep the model intact.
 
-                is_updating = true;
                 toggle_switch.active = config.is_active;
                 is_updating = false;
 
                 update_sensitivity (config.is_active);
                 toggle_switch.sensitive = !config.is_starting;
-                
+
                 update_qr_code (config);
             } catch (Error e) {
                 warning ("Failed to fetch hotspot status: " + e.message);
+                is_updating = false;
             }
         }
     }
