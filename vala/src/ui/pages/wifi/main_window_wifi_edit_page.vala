@@ -49,7 +49,6 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.password_entry.set_visibility (false);
 
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
-        this.password_entry.grab_focus ();
 
         this.ipv4_method_dropdown.set_selected (0);
         this.ipv4_address_entry.set_text ("");

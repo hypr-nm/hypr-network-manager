@@ -114,7 +114,6 @@ public class MainWindowWifiHiddenNetworkController : Object {
 
         wifi_stack.set_visible_child_name ("add");
         host.set_popup_text_input_mode (true);
-        wifi_add_ssid_entry.grab_focus ();
     }
 
     public void apply_add_network (

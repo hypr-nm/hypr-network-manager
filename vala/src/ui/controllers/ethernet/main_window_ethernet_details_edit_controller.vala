@@ -111,7 +111,6 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
 
             NetworkIpSettings ip_settings = nm.get_ethernet_device_ip_settings.end (res);
             ethernet_edit_page.populate_ip_settings (ip_settings);
-            ethernet_edit_page.ipv4_address_entry.grab_focus ();
         });
     }
 
