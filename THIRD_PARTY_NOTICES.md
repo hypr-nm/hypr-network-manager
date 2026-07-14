@@ -6,7 +6,7 @@ This project incorporates third-party software components. The licenses and copy
 
 - **Source Files:** `vala/src/backend/utils/qrcodegen.c`, `vala/src/backend/utils/qrcodegen.h`
 - **Copyright:** Copyright (c) Project Nayuki.
-- **Website:** https://www.nayuki.io/page/qr-code-generator-library
+- **Website:** <https://www.nayuki.io/page/qr-code-generator-library>
 - **License:** MIT License
 
 ### License Text
@@ -34,24 +34,25 @@ SOFTWARE.
 - **Source Files:** `scripts/create_ap/create_ap`, `scripts/create_ap/LICENSE`
 - **Copyright:** Copyright (c) 2013, oblique; Copyright (c) 2023, lakinduaksh
 - **Upstream Project:** linux-wifi-hotspot
-- **Website:** https://github.com/lakinduakh/linux-wifi-hotspot
-- **Communities:** original author `@oblique` (https://github.com/oblique); maintained by lakinduakash
+- **Website:** <https://github.com/lakinduakh/linux-wifi-hotspot>
+- **Communities:** original author `@oblique` (<https://github.com/oblique>); maintained by lakinduakash
 - **License:** BSD-2-Clause
 
-The `create_ap` script is included **verbatim**, without modification, so that
-upstream bug fixes can be cherry-picked into this repository. The only change
-from upstream is the directory layout. The full license text is preserved in
+The `create_ap` script is included with modification. The full license text is preserved in
 `scripts/create_ap/LICENSE`.
 
 ### License Text
 
+Copyright (c) 2023, lakinduaksh
+All rights reserved.
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+- Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+- Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 

@@ -113,10 +113,19 @@ INSTALL_SCOPE=user bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/h
 
 ### Dependencies
 
-* GTK 4 runtime and development libraries
-* gtk4-layer-shell
-* json-glib
-* NetworkManager
+#### Build
+* `meson`, `ninja`, `vala`, `pkg-config`
+* `gtk4` (`gtk4-layer-shell`), `json-glib`, `libnm` (>= 1.0)
+
+#### Runtime
+* `gtk4`, `gtk4-layer-shell`, `json-glib`, `networkmanager`
+* `polkit` (allows passwordless hotspot operations for `wheel`/`sudo` users)
+
+#### Optional Runtime (Wi-Fi Hotspot Internet Sharing)
+To enable internet sharing via the vendored `create_ap` script, the following are required:
+* `hostapd`, `dnsmasq`, `iptables`, `iproute2`, `iw`, `util-linux`
+
+> **Note:** If these are missing, the app falls back to NetworkManager's native standalone hotspot (no internet sharing).
 
 The install script auto-installs dependencies when supported package managers are available.
 
@@ -570,13 +579,7 @@ layerrule = match:namespace ^(hypr-network-manager)$, blur on
 
 ### Dependencies
 
-* Vala toolchain
-* GTK 4 runtime and development libraries
-* gtk4-layer-shell
-* json-glib
-* NetworkManager
-
-The install script auto-installs dependencies when supported package managers are available.
+See the [Build Dependencies](#build) under the Installation section.
 
 ### Manual Build
 
