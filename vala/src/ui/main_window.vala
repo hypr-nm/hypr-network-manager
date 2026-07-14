@@ -334,7 +334,37 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         root_container.add_css_class (MainWindowCssClasses.ROOT);
         set_child (root_container);
         dismiss_handler.set_root_container (root_container);
+
+        var click_release = new Gtk.GestureClick ();
+        click_release.set_button (0);
+        click_release.pressed.connect ((n_press, x, y) => {
+            var picked = root_container.pick (x, y, Gtk.PickFlags.DEFAULT);
+            if (is_interactive_target (picked)) {
+                return;
+            }
+            this.set_focus (null);
+        });
+        root_container.add_controller (click_release);
+
         return root_container;
+    }
+
+    private bool is_interactive_target (Gtk.Widget? widget) {
+        for (var w = widget; w != null && w != root_container; w = w.get_parent ()) {
+            if (w is Gtk.Editable) {
+                return true;
+            }
+            if (w is Gtk.Button || w is Gtk.ToggleButton || w is Gtk.Switch) {
+                return true;
+            }
+            if (w is Gtk.DropDown || w is Gtk.SpinButton || w is Gtk.Scale) {
+                return true;
+            }
+            if (w is Gtk.CheckButton) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void build_status_chrome (Gtk.Box root) {
@@ -439,6 +469,10 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
         nav_manager.focus_mode_changed.connect ((focus_mode) => {
             update_main_chrome_visibility (focus_mode);
+            GLib.Idle.add (() => {
+                this.set_focus (null);
+                return GLib.Source.REMOVE;
+            });
         });
 
         content_stack.set_visible_child_name ("main");
