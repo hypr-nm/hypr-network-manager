@@ -16,6 +16,7 @@
  */
 
 using GLib;
+using Constants;
 using HyprNetworkManager.Models;
 
 public class NmWifiClient : GLib.Object {
@@ -25,8 +26,54 @@ public class NmWifiClient : GLib.Object {
 
     private bool is_hotspot_starting = false;
 
+    private string? get_create_ap_path () {
+        string vendored = Constants.CREATE_AP_PATH;
+        if (vendored != "" && FileUtils.test (vendored, FileTest.EXISTS | FileTest.IS_EXECUTABLE)) {
+            return vendored;
+        }
+        string dev = Constants.CREATE_AP_DEV_PATH;
+        if (dev != "" && dev != vendored
+            && FileUtils.test (dev, FileTest.EXISTS | FileTest.IS_EXECUTABLE)) {
+            return dev;
+        }
+        return GLib.Environment.find_program_in_path ("create_ap");
+    }
+
+    private bool create_ap_deps_available () {
+        foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip" }) {
+            if (GLib.Environment.find_program_in_path (tool) == null) {
+                return false;
+            }
+        }
+        if (GLib.Environment.find_program_in_path ("iptables") == null) {
+            return false;
+        }
+        return true;
+    }
+
+    private bool can_use_create_ap () {
+        return get_create_ap_path () != null && create_ap_deps_available ();
+    }
+
+    private bool warned_create_ap_fallback = false;
+    private void warn_create_ap_fallback_once () {
+        if (warned_create_ap_fallback) return;
+        warned_create_ap_fallback = true;
+        var missing = new GLib.GenericArray<string> ();
+        if (get_create_ap_path () == null) {
+            missing.add ("create_ap");
+        }
+        foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip", "iptables" }) {
+            if (GLib.Environment.find_program_in_path (tool) == null) {
+                missing.add (tool);
+            }
+        }
+        string list = string.joinv (", ", (string[]) missing.data);
+        warning ("create_ap runtime dependencies missing (%s); falling back to the native NetworkManager hotspot, which cannot share internet from another interface.", list);
+    }
+
     private bool has_create_ap () {
-        return GLib.Environment.find_program_in_path ("create_ap") != null;
+        return can_use_create_ap ();
     }
 
     private async void nm_async_sleep (uint ms) {
@@ -1248,6 +1295,7 @@ public class NmWifiClient : GLib.Object {
         yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
         
         if (has_create_ap () && dev.get_active_connection () != null) {
+            string create_ap_bin = get_create_ap_path () ?? "create_ap";
             // Stop any existing instance just in case
             try {
                 string stdout_content;
@@ -1256,52 +1304,62 @@ public class NmWifiClient : GLib.Object {
                 if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
                     if (exit_status == 0 && stdout_content.strip () != "") {
                         string pid = stdout_content.strip().split("\n")[0];
-                        string[] stop_argv = { "pkexec", "create_ap", "--stop", pid };
+                        string[] stop_argv = { "pkexec", create_ap_bin, "--stop", pid };
                         Process.spawn_sync (null, stop_argv, null, SpawnFlags.SEARCH_PATH, null, null, null, null);
                     }
                 }
             } catch (Error e) {
             }
             
-            int channel = 0;
+            string resolved_band = band;
             var active_ap = dev.get_active_access_point ();
+
+            int channel = 0;
             if (active_ap != null) {
                 uint32 freq = active_ap.get_frequency ();
-                if (band == "bg" && freq >= 2412 && freq <= 2484) {
+                bool is_2_4 = (freq >= 2412 && freq <= 2484);
+                bool is_5 = (freq >= 5000);
+                if (resolved_band == "") {
+                    if (is_2_4) {
+                        resolved_band = "bg";
+                    } else if (is_5) {
+                        resolved_band = "a";
+                    }
+                }
+                if (resolved_band == "bg" && is_2_4) {
                     channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
-                } else if (band == "a" && freq >= 5000) {
+                } else if (resolved_band == "a" && is_5) {
                     channel = ((int)freq - 5000) / 5;
                 }
             }
-            
+
             if (channel == 0) {
-                if (band == "a") {
+                if (resolved_band == "a") {
                     channel = 36;
-                } else if (band == "bg") {
+                } else {
+                    resolved_band = (resolved_band == "a") ? "a" : "bg";
                     channel = 6;
                 }
             }
-            
+
             try {
                 var argv = new GLib.GenericArray<string> ();
                 argv.add ("pkexec");
-                argv.add ("create_ap");
+                argv.add (create_ap_bin);
                 argv.add ("--daemon");
-                
-                if (band == "a") {
+
+                if (resolved_band == "a") {
                     argv.add ("--freq-band"); argv.add ("5");
-                } else if (band == "bg") {
+                } else {
                     argv.add ("--freq-band"); argv.add ("2.4");
                 }
-                
+
                 if (is_hidden) {
                     argv.add ("--hidden");
                 }
-                
-                if (channel > 0) {
-                    argv.add ("-c"); argv.add (channel.to_string ());
-                }
-                
+
+                argv.add ("-c"); argv.add (channel.to_string ());
+
                 string final_ap_iface = (ap_interface != "" && ap_interface != "Auto") ? ap_interface : dev.get_iface ();
                 string final_uplink_iface = (uplink_interface != "" && uplink_interface != "Auto") ? uplink_interface : dev.get_iface ();
                 
@@ -1351,6 +1409,9 @@ public class NmWifiClient : GLib.Object {
             }
         } else {
             // Native NM Hotspot (Volatile)
+            if (!can_use_create_ap ()) {
+                warn_create_ap_fallback_once ();
+            }
             core.debug_log ("Starting native NM hotspot creation...");
             var connections = client.get_connections ();
             foreach (var conn_check in connections) {
@@ -1415,6 +1476,7 @@ public class NmWifiClient : GLib.Object {
         var config = yield get_hotspot_status (cancellable);
         
         if (has_create_ap ()) {
+            string create_ap_bin = get_create_ap_path () ?? "create_ap";
             NM.DeviceWifi? dev = null;
             if (config.ap_interface != "" && config.ap_interface != "Auto") {
                 var nm_dev = client.get_device_by_iface (config.ap_interface);
@@ -1431,11 +1493,11 @@ public class NmWifiClient : GLib.Object {
 
                     if (stdout_content != null && stdout_content.strip () != "") {
                         is_hotspot_stopping = true;
-                        
+
                         string[] pids = stdout_content.strip().split("\n");
                         foreach (string pid in pids) {
                             if (pid.strip() == "") continue;
-                            string[] argv = { "pkexec", "create_ap", "--stop", pid.strip() };
+                            string[] argv = { "pkexec", create_ap_bin, "--stop", pid.strip() };
                             var launcher = new GLib.SubprocessLauncher (GLib.SubprocessFlags.NONE);
                             var stop_proc = launcher.spawnv (argv);
                             yield stop_proc.wait_async (cancellable);
@@ -1461,6 +1523,7 @@ public class NmWifiClient : GLib.Object {
             }
         } else {
             // Delete the connection entirely instead of just deactivating it.
+            warn_create_ap_fallback_once ();
             if (config.connection_uuid != "") {
                 var conn = client.get_connection_by_uuid (config.connection_uuid);
                 if (conn != null && conn is NM.RemoteConnection) {
