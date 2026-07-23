@@ -84,6 +84,32 @@ public class NmWifiClient : GLib.Object {
         yield;
     }
 
+    private async bool interface_is_ap_mode (string iface, uint timeout_ms = 10000) {
+        if (iface == null || iface == "") {
+            return false;
+        }
+        uint elapsed = 0;
+        uint step = 500;
+        while (elapsed < timeout_ms) {
+            try {
+                string stdout_content;
+                string stderr_content;
+                int exit_status;
+                string[] argv = { "iw", "dev", iface, "info" };
+                if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null,
+                                        out stdout_content, out stderr_content, out exit_status)) {
+                    if (exit_status == 0 && stdout_content.contains ("type AP")) {
+                        return true;
+                    }
+                }
+            } catch (Error e) {
+            }
+            yield nm_async_sleep (step);
+            elapsed += step;
+        }
+        return false;
+    }
+
     public NmWifiClient (NetworkManagerClient core) {
         this.core = core;
         GLib.Timeout.add_seconds (60, check_hotspot_timeout);
@@ -1304,20 +1330,38 @@ public class NmWifiClient : GLib.Object {
 
         yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
         
-        // create_ap honors the "None" uplink selection (-m none) and can run
-        // without an active connection on the Wi-Fi device. Use it whenever it
-        // is available so the user's internet-sharing choice is respected;
-        // otherwise fall back to the native NM hotspot (which always shares the
-        // default route and cannot represent "None").
+        string resolved_ap_iface = (ap_interface != "" && ap_interface != "Auto")
+            ? ap_interface : dev.get_iface ();
+        string resolved_uplink_iface = (uplink_interface != "" && uplink_interface != "Auto")
+            ? uplink_interface : dev.get_iface ();
+
+        NM.DeviceWifi? uplink_dev = null;
+        if (resolved_uplink_iface != "None" && resolved_uplink_iface != resolved_ap_iface) {
+            var nm_uplink = client.get_device_by_iface (resolved_uplink_iface);
+            if (nm_uplink is NM.DeviceWifi) {
+                uplink_dev = (NM.DeviceWifi) nm_uplink;
+            }
+        }
+        bool uplink_has_connection = (uplink_dev != null)
+            ? (uplink_dev.get_active_connection () != null)
+            : (dev.get_active_connection () != null);
         bool use_create_ap = has_create_ap ()
-            && (uplink_interface == "None" || dev.get_active_connection () != null);
+            && (resolved_uplink_iface == "None"
+                || resolved_uplink_iface == resolved_ap_iface
+                || uplink_has_connection);
+        if (has_create_ap () && !use_create_ap) {
+            throw new IOError.NOT_SUPPORTED (
+                ("Hotspot uplink '%s' on '%s' requires an active connection to share; " +
+                 "create_ap cannot start without one and the native NM fallback is disabled.").printf (
+                    resolved_uplink_iface, resolved_ap_iface));
+        }
         if (use_create_ap) {
             string create_ap_bin = get_create_ap_path () ?? "create_ap";
             // Stop any existing instance just in case
             try {
                 string stdout_content;
                 int exit_status;
-                string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
+                string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + resolved_ap_iface };
                 if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
                     if (exit_status == 0 && stdout_content.strip () != "") {
                         string pid = stdout_content.strip().split("\n")[0];
@@ -1377,8 +1421,8 @@ public class NmWifiClient : GLib.Object {
 
                 argv.add ("-c"); argv.add (channel.to_string ());
 
-                string final_ap_iface = (ap_interface != "" && ap_interface != "Auto") ? ap_interface : dev.get_iface ();
-                string final_uplink_iface = (uplink_interface != "" && uplink_interface != "Auto") ? uplink_interface : dev.get_iface ();
+                string final_ap_iface = resolved_ap_iface;
+                string final_uplink_iface = resolved_uplink_iface;
                 
                 if (final_ap_iface.has_prefix ("-") || !is_valid_interface_name (final_ap_iface)) {
                     throw new IOError.INVALID_ARGUMENT ("Invalid AP interface name");
@@ -1415,7 +1459,26 @@ public class NmWifiClient : GLib.Object {
                 var proc = launcher.spawnv (spawn_args);
                 yield proc.wait_async (cancellable);
                 
-                yield nm_async_sleep (3000);
+                bool daemon_up = false;
+                for (int i = 0; i < 20; i++) {
+                    try {
+                        string stdout_content;
+                        int exit_status;
+                        string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + final_ap_iface };
+                        if (Process.spawn_sync (null, pgrep_argv, null, SpawnFlags.SEARCH_PATH, null,
+                                                out stdout_content, null, out exit_status)
+                            && exit_status == 0 && stdout_content.strip () != "") {
+                            daemon_up = true;
+                            break;
+                        }
+                    } catch (Error e) {
+                    }
+                    yield nm_async_sleep (500);
+                }
+
+                if (daemon_up) {
+                    yield interface_is_ap_mode (final_ap_iface, 8000);
+                }
                 
                 hotspot_idle_minutes = 0;
                 is_hotspot_starting = false;
@@ -1478,8 +1541,17 @@ public class NmWifiClient : GLib.Object {
                 core.debug_log ("Adding connection...");
                 var remote_conn = yield client.add_connection_async (new_conn, false, cancellable);
                 core.debug_log ("Connection added successfully. Activating...");
-                yield client.activate_connection_async (remote_conn, dev, null, cancellable);
-                core.debug_log ("Connection activated successfully.");
+                try {
+                    yield client.activate_connection_async (remote_conn, dev, null, cancellable);
+                    core.debug_log ("Connection activated successfully.");
+                } catch (Error act_err) {
+                    core.debug_log ("Activation reported error, polling AP state: " + act_err.message);
+                    if (yield interface_is_ap_mode (dev.get_iface ())) {
+                        core.debug_log ("Interface reached AP mode despite activation error; treating as success.");
+                    } else {
+                        throw act_err;
+                    }
+                }
                 return true;
             } catch (Error e) {
                 core.debug_log ("Failed to add/activate AP connection: " + e.message);
