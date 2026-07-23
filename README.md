@@ -65,7 +65,8 @@ Upcoming features include:
 
 ## Security
 
-* All communication with NetworkManager is done via D-Bus
+* Network configuration is performed through NetworkManager over D-Bus
+* Hotspot band availability is detected read-only through the kernel's nl80211 interface
 * Credentials are passed securely using NetworkManager APIs
 
 ---

@@ -103,5 +103,6 @@ jobs:
               set -euo pipefail
               meson setup builddir --buildtype=release
               meson compile -C builddir
+              meson test -C builddir --print-errorlogs
               ./builddir/vala/hypr-network-manager --version
             "

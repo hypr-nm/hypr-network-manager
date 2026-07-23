@@ -38,6 +38,7 @@
             gtk4
             gtk4-layer-shell
             json-glib
+            libnl
             networkmanager
           ];
 

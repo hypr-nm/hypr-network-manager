@@ -3,6 +3,8 @@ gio_dep = dependency('gio-2.0')
 layer_shell_dep = dependency('gtk4-layer-shell-0')
 json_glib_dep = dependency('json-glib-1.0')
 libnm_dep = dependency('libnm', version: '>= 1.0')
+libnl_dep = dependency('libnl-3.0')
+libnl_genl_dep = dependency('libnl-genl-3.0')
 gnome = import('gnome')
 
 conf_data = configuration_data()
@@ -29,6 +31,13 @@ add_project_arguments(
   '-w',
   '-DGETTEXT_PACKAGE="' + meson.project_name() + '"',
   language: 'c'
+)
+
+nl80211_band_lib = static_library(
+  'nl80211-band',
+  'src/backend/utils/nl80211_band.c',
+  dependencies: [libnl_dep, libnl_genl_dep],
+  install: false,
 )
 
 executable(
@@ -74,6 +83,7 @@ executable(
     'src/backend/hotspot_config_storage.vala',
     'src/backend/utils/qrcodegen.c',
     'src/backend/utils/qrcodegen.vapi',
+    'src/backend/utils/nl80211_band.vapi',
     'src/backend/mappers/vpn_mapper.vala',
     'src/backend/nm_status_formatter.vala',
     'src/backend/nm_ethernet_client.vala',
@@ -143,5 +153,17 @@ executable(
     'src/main.vala',
   ],
   dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep, libnm_dep],
+  link_with: nl80211_band_lib,
   install: true
 )
+
+nl80211_band_test = executable(
+  'test-nl80211-band',
+  'tests/test_nl80211_band.c',
+  link_with: nl80211_band_lib,
+  dependencies: [libnl_dep, libnl_genl_dep],
+  override_options: ['b_ndebug=false'],
+  install: false,
+)
+
+test('nl80211-band', nl80211_band_test)

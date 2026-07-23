@@ -116,9 +116,10 @@ INSTALL_SCOPE=user bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/h
 #### Build
 * `meson`, `ninja`, `vala`, `pkg-config`
 * `gtk4` (`gtk4-layer-shell`), `json-glib`, `libnm` (>= 1.0)
+* `libnl-3` and `libnl-genl-3`
 
 #### Runtime
-* `gtk4`, `gtk4-layer-shell`, `json-glib`, `networkmanager`
+* `gtk4`, `gtk4-layer-shell`, `json-glib`, `networkmanager`, `libnl-3`
 * `polkit` (allows passwordless hotspot operations for `wheel`/`sudo` users)
 
 #### Optional Runtime (Wi-Fi Hotspot Internet Sharing)
@@ -646,8 +647,9 @@ For run/build convenience during development:
 
 ## Security
 
-* All communication with NetworkManager is done over D-Bus
-* network credentials are handled securely
+* Network configuration is performed through NetworkManager over D-Bus
+* Hotspot band availability is detected read-only through the kernel's nl80211 interface
+* Network credentials are handled securely
 
 ---
 
