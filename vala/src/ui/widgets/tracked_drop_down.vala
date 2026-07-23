@@ -54,29 +54,12 @@ namespace HyprNetworkManager.UI.Widgets {
             listbox.set_selection_mode (Gtk.SelectionMode.NONE);
             listbox.add_css_class ("nm-dropdown-list");
 
-            for (uint i = 0; i < model.get_n_items (); i++) {
-                var item = (Gtk.StringObject) model.get_item (i);
-                var row = new Gtk.ListBoxRow ();
+            populate_listbox ();
 
-                var row_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
-                row_box.set_margin_start (2);
-                row_box.set_margin_end (2);
-                row_box.set_margin_top (2);
-                row_box.set_margin_bottom (2);
-
-                var label = new Gtk.Label (item.get_string ());
-                label.set_halign (Gtk.Align.START);
-                label.set_hexpand (true);
-
-                var check_icon = MainWindowIconResources.create_dropdown_check_icon ();
-                check_icon.set_opacity (0.0);
-
-                row_box.append (label);
-                row_box.append (check_icon);
-
-                row.set_child (row_box);
-                listbox.append (row);
-            }
+            model.items_changed.connect (() => {
+                populate_listbox ();
+                set_selected (_selected);
+            });
 
             listbox.row_activated.connect ((row) => {
                 uint index = (uint) row.get_index ();
@@ -146,6 +129,38 @@ namespace HyprNetworkManager.UI.Widgets {
 
         public uint get_selected () {
             return _selected;
+        }
+
+        private void populate_listbox () {
+            for (Gtk.ListBoxRow? row = (Gtk.ListBoxRow?) listbox.get_first_child ();
+                 row != null;
+                 row = (Gtk.ListBoxRow?) listbox.get_first_child ()) {
+                listbox.remove (row);
+            }
+
+            for (uint i = 0; i < model.get_n_items (); i++) {
+                var item = (Gtk.StringObject) model.get_item (i);
+                var row = new Gtk.ListBoxRow ();
+
+                var row_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+                row_box.set_margin_start (2);
+                row_box.set_margin_end (2);
+                row_box.set_margin_top (2);
+                row_box.set_margin_bottom (2);
+
+                var label = new Gtk.Label (item.get_string ());
+                label.set_halign (Gtk.Align.START);
+                label.set_hexpand (true);
+
+                var check_icon = MainWindowIconResources.create_dropdown_check_icon ();
+                check_icon.set_opacity (0.0);
+
+                row_box.append (label);
+                row_box.append (check_icon);
+
+                row.set_child (row_box);
+                listbox.append (row);
+            }
         }
 
         public void set_selected (uint index) {

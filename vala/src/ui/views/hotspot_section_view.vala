@@ -41,6 +41,7 @@ namespace HyprNetworkManager.UI.Views {
         private HyprNetworkManager.UI.Widgets.TrackedDropDown uplink_interface_dropdown;
         private Gtk.StringList ap_model;
         private Gtk.StringList uplink_model;
+        private Gtk.StringList band_model;
         private Gtk.CheckButton hidden_check;
         private Gtk.Button save_button;
         private Gtk.Box qr_container;
@@ -51,6 +52,7 @@ namespace HyprNetworkManager.UI.Views {
         private bool is_dirty = false;
         private uint scroll_tick_id = 0;
         private uint poll_source_id = 0;
+        private uint band_query_generation = 0;
 
         public HotspotSectionView (NetworkManagerClient client, IWindowHost host) {
             this.nm = client;
@@ -251,12 +253,9 @@ namespace HyprNetworkManager.UI.Views {
             MainWindowCssClassResolver.add_best_class (band_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
             band_label.xalign = 0;
             
-            var band_model = new Gtk.StringList (new string[] {
-                _("Auto"),
-                "2.4 GHz",
-                "5 GHz"
-            });
-            band_dropdown = window_host.create_tracked_dropdown (band_model);
+            this.band_model = new Gtk.StringList (new string[] { _("Auto") });
+            band_dropdown = window_host.create_tracked_dropdown (this.band_model);
+            rebuild_band_options (get_ap_interface_token ());
             band_dropdown.hexpand = true;
             MainWindowCssClassResolver.add_best_class (band_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
             band_col.append (band_label);
@@ -454,7 +453,15 @@ namespace HyprNetworkManager.UI.Views {
             band_dropdown.notify_selected.connect (validate_inputs);
             hidden_check.toggled.connect (validate_inputs);
             timeout_dropdown.notify_selected.connect (validate_inputs);
-            if (ap_interface_dropdown != null) ap_interface_dropdown.notify_selected.connect (validate_inputs);
+            if (ap_interface_dropdown != null) {
+                ap_interface_dropdown.notify_selected.connect (validate_inputs);
+                ap_interface_dropdown.notify_selected.connect (() => {
+                    string tok = get_ap_interface_token ();
+                    log_debug ("hotspot-ui",
+                        "ap_interface notify_selected: token='%s' -> rebuilding band".printf (tok));
+                    rebuild_band_options (tok);
+                });
+            }
             if (uplink_interface_dropdown != null) uplink_interface_dropdown.notify_selected.connect (validate_inputs);
         }
 
@@ -470,6 +477,89 @@ namespace HyprNetworkManager.UI.Views {
                 return "Auto";
             }
             return this.ap_model.get_string (idx);
+        }
+
+        private void rebuild_band_options (string ap_iface) {
+            if (this.band_model == null || band_dropdown == null) {
+                return;
+            }
+
+            uint generation = ++band_query_generation;
+            nm.get_wifi_band_support_async.begin (ap_iface, null, (obj, res) => {
+                WifiBandSupport support;
+
+                try {
+                    support = nm.get_wifi_band_support_async.end (res);
+                } catch (Error e) {
+                    log_warn ("hotspot-ui",
+                        "rebuild_band_options: band query failed: " + e.message);
+                    return;
+                }
+
+                if (generation != band_query_generation ||
+                    ap_iface != get_ap_interface_token ()) {
+                    log_debug ("hotspot-ui",
+                        "rebuild_band_options: ignoring stale result for '%s'".printf (ap_iface));
+                    return;
+                }
+
+                apply_band_options (
+                    support.supports_2ghz,
+                    support.supports_5ghz);
+            });
+        }
+
+        private void apply_band_options (bool supports_2ghz, bool supports_5ghz) {
+            string previous_token = band_value_token ();
+            bool was_updating = is_updating;
+            is_updating = true;
+
+            while (this.band_model.get_n_items () > 0) {
+                this.band_model.remove (0);
+            }
+            this.band_model.append (_("Auto"));
+            if (supports_2ghz) {
+                this.band_model.append ("2.4 GHz");
+            }
+            if (supports_5ghz) {
+                this.band_model.append ("5 GHz");
+            }
+
+            band_dropdown.set_selected (band_index_for_value (previous_token));
+            is_updating = was_updating;
+        }
+
+        private string band_value_token () {
+            if (band_dropdown == null || this.band_model == null) {
+                return "";
+            }
+            uint idx = band_dropdown.get_selected ();
+            if (idx >= this.band_model.get_n_items ()) {
+                return "";
+            }
+            return token_to_band_value (this.band_model.get_string (idx));
+        }
+
+        private static string token_to_band_value (string label) {
+            if (label == "2.4 GHz") {
+                return "bg";
+            }
+            if (label == "5 GHz") {
+                return "a";
+            }
+            return "";
+        }
+
+        private uint band_index_for_value (string band_value) {
+            if (this.band_model == null) {
+                return 0;
+            }
+            for (uint i = 0; i < this.band_model.get_n_items (); i++) {
+                if (token_to_band_value (this.band_model.get_string (i)) == band_value) {
+                    return i;
+                }
+            }
+            return 0;
         }
 
         // Map the selected uplink dropdown row to a locale-independent token
@@ -572,10 +662,7 @@ namespace HyprNetworkManager.UI.Views {
             if (sec_index == 0) security = "sae";
             else if (sec_index == 2) security = "none";
             
-            uint band_index = band_dropdown.get_selected ();
-            string band = "";
-            if (band_index == 1) band = "bg";
-            else if (band_index == 2) band = "a";
+            string band = band_value_token ();
             
             bool is_hidden = hidden_check.active;
             
@@ -640,10 +727,7 @@ namespace HyprNetworkManager.UI.Views {
                 if (sec_index == 0) security = "sae";
                 else if (sec_index == 2) security = "none";
                 
-                uint band_index = band_dropdown.get_selected ();
-                string band = "";
-                if (band_index == 1) band = "bg";
-                else if (band_index == 2) band = "a";
+                string band = band_value_token ();
                 
                 bool is_hidden = hidden_check.active;
                 
@@ -727,10 +811,8 @@ namespace HyprNetworkManager.UI.Views {
                         security_dropdown.set_selected (1);
                     }
 
-                    if (config.band == "bg") {
-                        band_dropdown.set_selected (1);
-                    } else if (config.band == "a") {
-                        band_dropdown.set_selected (2);
+                    if (config.band == "bg" || config.band == "a") {
+                        band_dropdown.set_selected (band_index_for_value (config.band));
                     } else {
                         band_dropdown.set_selected (0);
                     }
