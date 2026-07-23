@@ -278,12 +278,22 @@ public class NmWifiClient : GLib.Object {
 
                 var valid_conns = ap.filter_connections (connections);
                 if (valid_conns != null && valid_conns.length > 0) {
-                    var conn = (NM.Connection) valid_conns[0];
-                    saved = true;
-                    saved_uuid = conn.get_uuid ();
-                    var s_conn = conn.get_setting_connection ();
-                    if (s_conn != null) {
-                        autoconnect = s_conn.autoconnect;
+                    foreach (var candidate in valid_conns) {
+                        var conn = (NM.Connection) candidate;
+                        try {
+                            if (!wifidev.connection_compatible (conn)) {
+                                continue;
+                            }
+                        } catch (GLib.Error compat_err) {
+                            continue;
+                        }
+                        saved = true;
+                        saved_uuid = conn.get_uuid ();
+                        var s_conn = conn.get_setting_connection ();
+                        if (s_conn != null) {
+                            autoconnect = s_conn.autoconnect;
+                        }
+                        break;
                     }
                 }
 
