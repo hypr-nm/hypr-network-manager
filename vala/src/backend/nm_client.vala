@@ -33,6 +33,16 @@ public class WifiRefreshData : GLib.Object {
     }
 }
 
+public class WifiBandSupport : GLib.Object {
+    public bool supports_2ghz;
+    public bool supports_5ghz;
+
+    public WifiBandSupport (bool supports_2ghz, bool supports_5ghz) {
+        this.supports_2ghz = supports_2ghz;
+        this.supports_5ghz = supports_5ghz;
+    }
+}
+
 public class NetworkManagerClient : GLib.Object {
     public NM.Client nm_client;
 
@@ -464,7 +474,90 @@ public class NetworkManagerClient : GLib.Object {
         }
         return list;
     }
-    
+
+    public async WifiBandSupport get_wifi_band_support_async (string iface, Cancellable? cancellable = null) throws Error {
+        var resolved_iface = (iface != "" && iface != "Auto") ? iface : primary_wifi_iface ();
+        var fallback = fallback_wifi_band_support (resolved_iface);
+
+        log_debug ("nm-client",
+            "get_wifi_band_support_async: in_iface='%s' resolved_iface='%s'".printf (iface, resolved_iface));
+
+        if (resolved_iface == "") {
+            return fallback;
+        }
+
+        int result = -1;
+        int supports_2ghz = 0;
+        int supports_5ghz = 0;
+        SourceFunc resume = get_wifi_band_support_async.callback;
+        MainContext caller_context = MainContext.ref_thread_default ();
+
+        new Thread<void*> ("nl80211-band-query", () => {
+            result = Nl80211Band.band_support_by_iface (
+                resolved_iface,
+                out supports_2ghz,
+                out supports_5ghz);
+            caller_context.invoke ((owned) resume);
+            return null;
+        });
+
+        yield;
+
+        if (cancellable != null && cancellable.is_cancelled ()) {
+            throw new IOError.CANCELLED ("Wi-Fi band query was cancelled");
+        }
+
+        if (result == 0) {
+            log_debug ("nm-client",
+                "get_wifi_band_support_async: nl80211 succeeded -> 2ghz=%s 5ghz=%s".printf (
+                    supports_2ghz != 0 ? "true" : "false",
+                    supports_5ghz != 0 ? "true" : "false"));
+            return new WifiBandSupport (
+                supports_2ghz != 0,
+                supports_5ghz != 0);
+        }
+
+        log_debug ("nm-client",
+            "get_wifi_band_support_async: nl80211 failed for '%s' -> falling back to NM.DeviceWifi capabilities".printf (
+                resolved_iface));
+        return fallback;
+    }
+
+    private WifiBandSupport fallback_wifi_band_support (string resolved_iface) {
+        bool supports_2ghz = true;
+        bool supports_5ghz = true;
+        NM.DeviceWifi? dev = null;
+        if (resolved_iface != "") {
+            var nm_dev = nm_client.get_device_by_iface (resolved_iface);
+            if (nm_dev is NM.DeviceWifi) {
+                dev = (NM.DeviceWifi) nm_dev;
+            }
+        }
+        if (dev == null) {
+            foreach (var d in nm_client.get_devices ()) {
+                if (d is NM.DeviceWifi) {
+                    dev = (NM.DeviceWifi) d;
+                    break;
+                }
+            }
+        }
+        if (dev != null) {
+            var cap = dev.get_capabilities ();
+            supports_2ghz = (cap & NM.DeviceWifiCapabilities.FREQ_2GHZ) != 0;
+            supports_5ghz = (cap & NM.DeviceWifiCapabilities.FREQ_5GHZ) != 0;
+        }
+        return new WifiBandSupport (supports_2ghz, supports_5ghz);
+    }
+
+    private string primary_wifi_iface () {
+        foreach (var d in nm_client.get_devices ()) {
+            if (d is NM.DeviceWifi && d.get_iface () != null && d.get_iface () != "") {
+                return d.get_iface ();
+            }
+        }
+        return "";
+    }
+
     public bool has_create_ap () {
         string vendored = Constants.CREATE_AP_PATH;
         bool binary_present = (vendored != "" && FileUtils.test (vendored, FileTest.EXISTS | FileTest.IS_EXECUTABLE))
