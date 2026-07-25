@@ -80,6 +80,7 @@ executable(
     'src/ui/views/vpn_section_view.vala',
     'src/backend/utils/nm_ip_config_helper.vala',
     'src/backend/utils/nm_wifi_utils.vala',
+    'src/backend/utils/nm_hotspot_utils.vala',
     'src/backend/hotspot_config_storage.vala',
     'src/backend/utils/qrcodegen.c',
     'src/backend/utils/qrcodegen.vapi',
@@ -167,3 +168,16 @@ nl80211_client_test = executable(
 )
 
 test('nl80211-client', nl80211_client_test)
+
+nm_hotspot_profile_test = executable(
+  'test-nm-hotspot-profile',
+  [
+    'tests/test_nm_hotspot_profile.vala',
+    'src/backend/utils/nm_hotspot_utils.vala',
+  ],
+  dependencies: [gio_dep, libnm_dep],
+  override_options: ['b_ndebug=false'],
+  install: false,
+)
+
+test('nm-hotspot-profile', nm_hotspot_profile_test)
