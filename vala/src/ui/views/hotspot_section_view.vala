@@ -329,37 +329,34 @@ namespace HyprNetworkManager.UI.Views {
                 child = next;
             }
             
-            if (!config.is_active || config.ssid == "") {
+            if ((!config.is_active && !config.is_starting)
+                || config.ssid == "") {
                 qr_revealer.set_reveal_child (false);
                 return;
             }
-            
-            string security = "WPA";
-            if (config.security == "none") {
-                security = "nopass";
+
+            string qr_text;
+            if (config.is_starting) {
+                // The animation needs a QR grid, but it must not receive the
+                // real SSID or password before the hotspot is verified ready.
+                qr_text = "HOTSPOT:STARTING";
+            } else {
+                string security = "WPA";
+                if (config.security == "none") {
+                    security = "nopass";
+                }
+
+                string escaped_password = config.password.replace ("\\", "\\\\").replace (";", "\\;").replace (",", "\\,").replace (":", "\\:");
+                string hidden_flag = config.is_hidden ? "true" : "false";
+                qr_text = "WIFI:T:" + security + ";S:" + config.ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
             }
-            
-            string escaped_password = config.password.replace ("\\", "\\\\").replace (";", "\\;").replace (",", "\\,").replace (":", "\\:");
-            string hidden_flag = config.is_hidden ? "true" : "false";
-            string qr_text = "WIFI:T:" + security + ";S:" + config.ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
-            
+
             var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (qr_text);
             qr_widget.set_size_request (150, 150);
             qr_widget.halign = Gtk.Align.CENTER;
             qr_widget.valign = Gtk.Align.CENTER;
             qr_widget.is_loading = config.is_starting;
-            
-            var pass_text = config.password != "" ? config.password : _("None");
-            
-            var info_label = new Gtk.Label ("");
-            info_label.set_markup ("<b>" + GLib.Markup.escape_text(config.ssid) + "</b> • " + _("Password") + ": " + GLib.Markup.escape_text(pass_text));
-            info_label.selectable = true;
-            info_label.wrap = true;
-            info_label.wrap_mode = Pango.WrapMode.CHAR;
-            info_label.max_width_chars = 35;
-            info_label.justify = Gtk.Justification.CENTER;
-            MainWindowCssClassResolver.add_best_class (info_label, {MainWindowCssClasses.FORM_LABEL});
-            
+
             var qr_code_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
             qr_code_box.halign = Gtk.Align.CENTER;
             qr_code_box.valign = Gtk.Align.CENTER;
@@ -370,6 +367,17 @@ namespace HyprNetworkManager.UI.Views {
             qr_container.append (qr_code_box);
             
             if (!config.is_starting) {
+                var pass_text = config.password != "" ? config.password : _("None");
+
+                var info_label = new Gtk.Label ("");
+                info_label.set_markup ("<b>" + GLib.Markup.escape_text(config.ssid) + "</b> • " + _("Password") + ": " + GLib.Markup.escape_text(pass_text));
+                info_label.selectable = true;
+                info_label.wrap = true;
+                info_label.wrap_mode = Pango.WrapMode.CHAR;
+                info_label.max_width_chars = 35;
+                info_label.justify = Gtk.Justification.CENTER;
+                MainWindowCssClassResolver.add_best_class (info_label, {MainWindowCssClasses.FORM_LABEL});
+
                 qr_container.append (info_label);
                 
                 string connected_text = _("Connected Users: %d").printf (config.connected_clients);
@@ -877,10 +885,12 @@ namespace HyprNetworkManager.UI.Views {
                 // we'll just let the model handle it if it does, otherwise the user could select an unsupported band which would fail gracefully).
                 // But let's at least keep the model intact.
 
-                toggle_switch.active = config.is_active;
+                bool active_or_starting =
+                    config.is_active || config.is_starting;
+                toggle_switch.active = active_or_starting;
                 is_updating = false;
 
-                update_sensitivity (config.is_active);
+                update_sensitivity (active_or_starting);
                 toggle_switch.sensitive = !config.is_starting;
 
                 update_qr_code (config);
