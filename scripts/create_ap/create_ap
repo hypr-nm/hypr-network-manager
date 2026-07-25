@@ -71,6 +71,9 @@ usage() {
     echo "  --daemon                Run create_ap in the background"
     echo "  --pidfile <pidfile>     Save daemon PID to file"
     echo "  --logfile <logfile>     Save daemon messages to file"
+    echo "  --ready-file <file>     Write 'ready' after AP and DHCP services are stable"
+    echo "  --passphrase-file <file>"
+    echo "                          Read the WPA passphrase from a private file"
     echo "  --dns-logfile <logfile> Log DNS queries to file"
     echo "  --stop <id>             Send stop command to an already running create_ap. For an <id>"
     echo "                          you can put the PID of create_ap or the WiFi interface. You can"
@@ -668,6 +671,8 @@ NEW_MACADDR=
 DAEMONIZE=0
 DAEMON_PIDFILE=
 DAEMON_LOGFILE=/dev/null
+READY_FILE=
+PASSPHRASE_FILE=
 DNS_LOGFILE=
 NO_HAVEGED=0
 USE_PSK=0
@@ -705,6 +710,9 @@ _cleanup() {
     trap "" SIGINT SIGUSR1 SIGUSR2 EXIT
     mutex_lock
     disown -a
+
+    [[ -n "$READY_FILE" ]] && rm -f -- "$READY_FILE"
+    [[ -n "$PASSPHRASE_FILE" ]] && rm -f -- "$PASSPHRASE_FILE"
 
     # kill haveged_watchdog
     [[ -n "$HAVEGED_WATCHDOG_PID" ]] && kill $HAVEGED_WATCHDOG_PID
@@ -1113,7 +1121,7 @@ for ((i=0; i<$#; i++)); do
     fi
 done
 
-GETOPT_ARGS=$(getopt -o hc:w:g:de:nm: -l "help","hidden","hostapd-debug:","hostapd-timestamps","redirect-to-localhost","mac-filter","mac-filter-accept:","isolate-clients","ieee80211n","ieee80211ac","ieee80211ax","ht_capab:","vht_capab:","driver:","no-virt","fix-unmanaged","country:","freq-band:","mac:","dhcp-dns:","daemon","pidfile:","logfile:","dns-logfile:","stop:","list","list-running","list-clients:","version","psk","no-haveged","no-dns","no-dnsmasq","mkconfig:","config:","dhcp-hosts:" -n "$PROGNAME" -- "$@")
+GETOPT_ARGS=$(getopt -o hc:w:g:de:nm: -l "help","hidden","hostapd-debug:","hostapd-timestamps","redirect-to-localhost","mac-filter","mac-filter-accept:","isolate-clients","ieee80211n","ieee80211ac","ieee80211ax","ht_capab:","vht_capab:","driver:","no-virt","fix-unmanaged","country:","freq-band:","mac:","dhcp-dns:","daemon","pidfile:","logfile:","ready-file:","passphrase-file:","dns-logfile:","stop:","list","list-running","list-clients:","version","psk","no-haveged","no-dns","no-dnsmasq","mkconfig:","config:","dhcp-hosts:" -n "$PROGNAME" -- "$@")
 [[ $? -ne 0 ]] && exit 1
 eval set -- "$GETOPT_ARGS"
 
@@ -1251,6 +1259,16 @@ while :; do
         --logfile)
             shift
             DAEMON_LOGFILE="$1"
+            shift
+            ;;
+        --ready-file)
+            shift
+            READY_FILE="$1"
+            shift
+            ;;
+        --passphrase-file)
+            shift
+            PASSPHRASE_FILE="$1"
             shift
             ;;
         --dns-logfile)
@@ -1429,7 +1447,6 @@ else
     USING_DEFAULT_CHANNEL=0
 fi
 
-
 if [[ $FREQ_BAND != 5 && $CHANNEL -gt 14 ]]; then
     echo "Channel number is greater than 14, assuming 5GHz frequency band"
     FREQ_BAND=5
@@ -1567,6 +1584,14 @@ else
         read SSID
         read PASSPHRASE
     fi
+fi
+
+if [[ -n "$PASSPHRASE_FILE" ]]; then
+    if [[ ! -f "$PASSPHRASE_FILE" || ! -r "$PASSPHRASE_FILE" ]]; then
+        die "Unable to read the passphrase file"
+    fi
+    PASSPHRASE=$(cat -- "$PASSPHRASE_FILE") || die "Unable to read the passphrase file"
+    rm -f -- "$PASSPHRASE_FILE"
 fi
 
 if [[ "$SHARE_METHOD" != "none" ]] && ! is_interface $INTERNET_IFACE; then
@@ -2042,6 +2067,38 @@ fi
 $STDBUF_PATH $HOSTAPD $HOSTAPD_DEBUG_ARGS $CONFDIR/hostapd.conf &
 HOSTAPD_PID=$!
 echo $HOSTAPD_PID > $CONFDIR/hostapd.pid
+
+if [[ -n "$READY_FILE" ]]; then
+    READY_STABLE_POLLS=0
+    for _ in {1..50}; do
+        DNSMASQ_READY=1
+        if [[ "$SHARE_METHOD" != "bridge" && $NO_DNSMASQ -eq 0 ]]; then
+            DNSMASQ_READY=0
+            if [[ -s "$CONFDIR/dnsmasq.pid" ]]; then
+                DNSMASQ_PID=$(cat "$CONFDIR/dnsmasq.pid")
+                kill -0 "$DNSMASQ_PID" > /dev/null 2>&1 && DNSMASQ_READY=1
+            fi
+        fi
+
+        if kill -0 "$HOSTAPD_PID" > /dev/null 2>&1 \
+            && iw dev "$WIFI_IFACE" info 2>/dev/null | grep -q 'type AP' \
+            && [[ $DNSMASQ_READY -eq 1 ]]; then
+            ((READY_STABLE_POLLS++))
+            if [[ $READY_STABLE_POLLS -ge 5 ]]; then
+                printf 'ready\n' > "$READY_FILE"
+                chmod 600 "$READY_FILE"
+                break
+            fi
+        else
+            READY_STABLE_POLLS=0
+        fi
+        sleep 0.2
+    done
+
+    if [[ ! -s "$READY_FILE" ]]; then
+        die "Hotspot services did not become ready"
+    fi
+fi
 
 if ! wait $HOSTAPD_PID; then
     echo -e "\nError: Failed to run hostapd, maybe a program is interfering." >&2

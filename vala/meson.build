@@ -181,3 +181,12 @@ nm_hotspot_profile_test = executable(
 )
 
 test('nm-hotspot-profile', nm_hotspot_profile_test)
+
+test(
+  'create-ap-script',
+  find_program('bash'),
+  args: [
+    files('tests/test_create_ap_script.sh'),
+    meson.project_source_root() / 'scripts' / 'create_ap' / 'create_ap',
+  ],
+)
