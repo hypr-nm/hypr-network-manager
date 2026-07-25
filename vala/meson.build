@@ -190,3 +190,17 @@ test(
     meson.project_source_root() / 'scripts' / 'create_ap' / 'create_ap',
   ],
 )
+
+hotspot_config_storage_test = executable(
+  'test-hotspot-config-storage',
+  [
+    'tests/test_hotspot_config_storage.vala',
+    'src/models/hotspot_config.vala',
+    'src/backend/hotspot_config_storage.vala',
+  ],
+  dependencies: [gio_dep, json_glib_dep],
+  override_options: ['b_ndebug=false'],
+  install: false,
+)
+
+test('hotspot-config-storage', hotspot_config_storage_test)

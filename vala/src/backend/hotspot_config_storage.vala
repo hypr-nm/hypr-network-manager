@@ -5,14 +5,16 @@ public class HotspotConfigStorage : GLib.Object {
         private static string get_config_path () {
             string config_dir = GLib.Path.build_filename (Environment.get_user_state_dir (), "hypr-network-manager");
             if (!FileUtils.test (config_dir, FileTest.EXISTS)) {
-                DirUtils.create_with_parents (config_dir, 0755);
+                DirUtils.create_with_parents (config_dir, 0700);
             }
+            FileUtils.chmod (config_dir, 0700);
             return GLib.Path.build_filename (config_dir, "hotspot.json");
         }
 
         public static void load (HyprNetworkManager.Models.HotspotConfig config) {
             string path = get_config_path ();
             if (!FileUtils.test (path, FileTest.EXISTS)) return;
+            FileUtils.chmod (path, 0600);
             
             try {
                 string content;
@@ -75,7 +77,14 @@ public class HotspotConfigStorage : GLib.Object {
                 generator.pretty = true;
                 
                 string content = generator.to_data (null);
-                FileUtils.set_contents (get_config_path (), content);
+                string path = get_config_path ();
+                FileUtils.set_contents_full (
+                    path,
+                    content,
+                    -1,
+                    FileSetContentsFlags.CONSISTENT,
+                    0600);
+                FileUtils.chmod (path, 0600);
             } catch (Error e) {
                 warning ("Failed to save hotspot config: %s", e.message);
             }
