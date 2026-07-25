@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef NM_NL80211_BAND_H
-#define NM_NL80211_BAND_H
+#ifndef NM_NL80211_CLIENT_H
+#define NM_NL80211_CLIENT_H
 
 #include <stdint.h>
 
@@ -45,6 +45,21 @@ int nm_nl80211_parse_band_support_message (struct nl_msg *message,
                                            int *supports_5ghz);
 
 /*
+ * Parse one nl80211 interface response. Returns 0 for a complete record,
+ * 1 when required interface attributes are absent, and -1 when malformed.
+ */
+int nm_nl80211_parse_interface_message (struct nl_msg *message,
+                                        uint32_t *ifindex,
+                                        uint32_t *wiphy,
+                                        uint32_t *iftype);
+
+/*
+ * Returns 1 for a complete station response, 0 when station attributes are
+ * absent, and -1 when malformed.
+ */
+int nm_nl80211_parse_station_message (struct nl_msg *message);
+
+/*
  * Query 2.4 GHz / 5 GHz AP-capable band support for `ifname` via the kernel
  * nl80211 netlink ABI. Returns 0 on success (flags set to 0/1), -1 on error.
  */
@@ -52,8 +67,21 @@ int nm_nl80211_band_support_by_iface (const char *ifname,
                                       int *supports_2ghz,
                                       int *supports_5ghz);
 
+/*
+ * Report whether the radio owning `ifname` currently has an AP interface.
+ * This also detects virtual AP interfaces such as create_ap's ap0.
+ */
+int nm_nl80211_ap_active_by_iface (const char *ifname, int *is_active);
+
+/*
+ * Count stations on every AP interface belonging to the radio that owns
+ * `ifname`.
+ */
+int nm_nl80211_ap_station_count_by_iface (const char *ifname,
+                                          int *station_count);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NM_NL80211_BAND_H */
+#endif /* NM_NL80211_CLIENT_H */

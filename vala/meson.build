@@ -33,9 +33,9 @@ add_project_arguments(
   language: 'c'
 )
 
-nl80211_band_lib = static_library(
-  'nl80211-band',
-  'src/backend/utils/nl80211_band.c',
+nl80211_client_lib = static_library(
+  'nl80211-client',
+  'src/backend/utils/nl80211_client.c',
   dependencies: [libnl_dep, libnl_genl_dep],
   install: false,
 )
@@ -83,7 +83,7 @@ executable(
     'src/backend/hotspot_config_storage.vala',
     'src/backend/utils/qrcodegen.c',
     'src/backend/utils/qrcodegen.vapi',
-    'src/backend/utils/nl80211_band.vapi',
+    'src/backend/utils/nl80211_client.vapi',
     'src/backend/mappers/vpn_mapper.vala',
     'src/backend/nm_status_formatter.vala',
     'src/backend/nm_ethernet_client.vala',
@@ -153,17 +153,17 @@ executable(
     'src/main.vala',
   ],
   dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep, libnm_dep],
-  link_with: nl80211_band_lib,
+  link_with: nl80211_client_lib,
   install: true
 )
 
-nl80211_band_test = executable(
-  'test-nl80211-band',
-  'tests/test_nl80211_band.c',
-  link_with: nl80211_band_lib,
+nl80211_client_test = executable(
+  'test-nl80211-client',
+  'tests/test_nl80211_client.c',
+  link_with: nl80211_client_lib,
   dependencies: [libnl_dep, libnl_genl_dep],
   override_options: ['b_ndebug=false'],
   install: false,
 )
 
-test('nl80211-band', nl80211_band_test)
+test('nl80211-client', nl80211_client_test)

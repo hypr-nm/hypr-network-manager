@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../src/backend/utils/nl80211_band.h"
+#include "../src/backend/utils/nl80211_client.h"
 
 #include <assert.h>
 #include <linux/nl80211.h>
@@ -23,9 +23,10 @@
 #include <netlink/genl/genl.h>
 #include <netlink/msg.h>
 #include <stddef.h>
+#include <stdint.h>
 
 static struct nl_msg *
-new_wiphy_message (void)
+new_nl80211_message (uint8_t command)
 {
     struct nl_msg *message = nlmsg_alloc ();
 
@@ -36,9 +37,15 @@ new_wiphy_message (void)
                          NLMSG_MIN_TYPE,
                          0,
                          0,
-                         NL80211_CMD_NEW_WIPHY,
+                         command,
                          0) != NULL);
     return message;
+}
+
+static struct nl_msg *
+new_wiphy_message (void)
+{
+    return new_nl80211_message (NL80211_CMD_NEW_WIPHY);
 }
 
 static void
@@ -175,6 +182,8 @@ test_query_argument_contract (void)
 {
     int supports_2ghz = 1;
     int supports_5ghz = 1;
+    int is_ap_active = 1;
+    int station_count = 12;
 
     assert (nm_nl80211_band_support_by_iface (
                 NULL,
@@ -187,6 +196,88 @@ test_query_argument_contract (void)
                 "interface-that-does-not-exist",
                 &supports_2ghz,
                 &supports_5ghz) == -1);
+
+    assert (nm_nl80211_ap_active_by_iface (NULL, &is_ap_active) == -1);
+    assert (is_ap_active == 0);
+    assert (nm_nl80211_ap_active_by_iface (
+                "interface-that-does-not-exist",
+                &is_ap_active) == -1);
+
+    assert (nm_nl80211_ap_station_count_by_iface (
+                NULL,
+                &station_count) == -1);
+    assert (station_count == 0);
+    assert (nm_nl80211_ap_station_count_by_iface (
+                "interface-that-does-not-exist",
+                &station_count) == -1);
+}
+
+static void
+test_interface_message_parsing (void)
+{
+    struct nl_msg *message = new_nl80211_message (NL80211_CMD_NEW_INTERFACE);
+    uint32_t ifindex = 0U;
+    uint32_t wiphy = 0U;
+    uint32_t iftype = 0U;
+
+    assert (nla_put_u32 (message, NL80211_ATTR_IFINDEX, 42U) == 0);
+    assert (nla_put_u32 (message, NL80211_ATTR_WIPHY, 7U) == 0);
+    assert (nla_put_u32 (
+                message,
+                NL80211_ATTR_IFTYPE,
+                (uint32_t) NL80211_IFTYPE_AP) == 0);
+
+    assert (nm_nl80211_parse_interface_message (
+                message,
+                &ifindex,
+                &wiphy,
+                &iftype) == 0);
+    assert (ifindex == 42U);
+    assert (wiphy == 7U);
+    assert (iftype == (uint32_t) NL80211_IFTYPE_AP);
+    nlmsg_free (message);
+
+    message = new_nl80211_message (NL80211_CMD_NEW_INTERFACE);
+    assert (nm_nl80211_parse_interface_message (
+                message,
+                &ifindex,
+                &wiphy,
+                &iftype) == 1);
+    assert (ifindex == 0U);
+    assert (wiphy == 0U);
+    assert (iftype == 0U);
+    nlmsg_free (message);
+}
+
+static void
+test_station_message_parsing (void)
+{
+    static const unsigned char station_mac[6] = {
+        0x02U, 0x00U, 0x00U, 0x00U, 0x00U, 0x01U,
+    };
+    struct nl_msg *message = new_nl80211_message (NL80211_CMD_NEW_STATION);
+    struct nlattr *station_info;
+
+    assert (nla_put_u32 (message, NL80211_ATTR_IFINDEX, 42U) == 0);
+    assert (nla_put (
+                message,
+                NL80211_ATTR_MAC,
+                sizeof (station_mac),
+                station_mac) == 0);
+    station_info = nla_nest_start (message, NL80211_ATTR_STA_INFO);
+    assert (station_info != NULL);
+    assert (nla_put_u32 (
+                message,
+                NL80211_STA_INFO_INACTIVE_TIME,
+                0U) == 0);
+    nla_nest_end (message, station_info);
+
+    assert (nm_nl80211_parse_station_message (message) == 1);
+    nlmsg_free (message);
+
+    message = new_nl80211_message (NL80211_CMD_NEW_STATION);
+    assert (nm_nl80211_parse_station_message (message) == 0);
+    nlmsg_free (message);
 }
 
 int
@@ -196,6 +287,8 @@ main (void)
     test_nested_band_parsing ();
     test_no_band_attribute ();
     test_restricted_and_6ghz_frequencies_are_ignored ();
+    test_interface_message_parsing ();
+    test_station_message_parsing ();
     test_query_argument_contract ();
     return 0;
 }

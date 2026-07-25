@@ -16,8 +16,8 @@
  */
 
 [CCode (cprefix = "nm_nl80211_", lower_case_cprefix = "nm_nl80211_",
-        cheader_filename = "src/backend/utils/nl80211_band.h")]
-namespace Nl80211Band {
+        cheader_filename = "src/backend/utils/nl80211_client.h")]
+namespace Nl80211 {
     /*
      * Queries the wireless band (2.4 GHz / 5 GHz) AP-capable support for the
      * given interface name via the stable kernel nl80211 netlink ABI.
@@ -28,4 +28,17 @@ namespace Nl80211Band {
      */
     [CCode (cname = "nm_nl80211_band_support_by_iface")]
     public int band_support_by_iface (string ifname, out int supports_2ghz, out int supports_5ghz);
+
+    /*
+     * Reports whether the radio that owns the given interface currently has
+     * an AP-mode interface. This includes virtual AP interfaces.
+     */
+    [CCode (cname = "nm_nl80211_ap_active_by_iface")]
+    public int ap_active_by_iface (string ifname, out int is_active);
+
+    /*
+     * Counts associated stations across AP interfaces on the same radio.
+     */
+    [CCode (cname = "nm_nl80211_ap_station_count_by_iface")]
+    public int ap_station_count_by_iface (string ifname, out int station_count);
 }

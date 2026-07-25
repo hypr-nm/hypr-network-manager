@@ -493,7 +493,7 @@ public class NetworkManagerClient : GLib.Object {
         MainContext caller_context = MainContext.ref_thread_default ();
 
         new Thread<void*> ("nl80211-band-query", () => {
-            result = Nl80211Band.band_support_by_iface (
+            result = Nl80211.band_support_by_iface (
                 resolved_iface,
                 out supports_2ghz,
                 out supports_5ghz);
