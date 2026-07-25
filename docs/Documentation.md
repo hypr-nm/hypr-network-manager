@@ -119,14 +119,21 @@ INSTALL_SCOPE=user bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/h
 * `libnl-3` and `libnl-genl-3`
 
 #### Runtime
-* `gtk4`, `gtk4-layer-shell`, `json-glib`, `networkmanager`, `libnl-3`
+* `gtk4`, `gtk4-layer-shell`, `json-glib`, `networkmanager`, `libnl-3`, `libnl-genl-3`
 * `polkit` (allows passwordless hotspot operations for `wheel`/`sudo` users)
 
 #### Optional Runtime (Wi-Fi Hotspot Internet Sharing)
 To enable internet sharing via the vendored `create_ap` script, the following are required:
 * `hostapd`, `dnsmasq`, `iptables`, `iproute2`, `iw`, `util-linux`
 
-> **Note:** If these are missing, the app falls back to NetworkManager's native standalone hotspot (no internet sharing).
+> **Note:** `iw` is required internally by the vendored `create_ap` script. The
+> application itself uses libnl for hotspot detection and client counts. If
+> these optional tools are missing, the app falls back to NetworkManager's
+> managed hotspot. The fallback uses NetworkManager's current default route
+> for sharing; it cannot honor a specifically selected uplink interface.
+> When `create_ap` is used, the app selects an unused private `/24`, keeps
+> credentials out of process arguments, and records the latest daemon output
+> in `$XDG_STATE_HOME/hypr-network-manager/create-ap-<interface>.log`.
 
 The install script auto-installs dependencies when supported package managers are available.
 
@@ -648,7 +655,8 @@ For run/build convenience during development:
 ## Security
 
 * Network configuration is performed through NetworkManager over D-Bus
-* Hotspot band availability is detected read-only through the kernel's nl80211 interface
+* Hotspot bands, AP-mode state, and connected-client counts are read directly
+  from the kernel through nl80211; the Vala backend does not parse `iw` output
 * Network credentials are handled securely
 
 ---

@@ -66,7 +66,9 @@ Upcoming features include:
 ## Security
 
 * Network configuration is performed through NetworkManager over D-Bus
-* Hotspot band availability is detected read-only through the kernel's nl80211 interface
+* Hotspot bands, AP-mode state, and connected-client counts are read directly
+  from the kernel through nl80211; the Vala backend does not parse `iw` output
+  (the optional vendored `create_ap` script still requires `iw` internally)
 * Credentials are passed securely using NetworkManager APIs
 
 ---
