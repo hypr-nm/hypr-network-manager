@@ -398,6 +398,36 @@ is_unicast_macaddr() {
     [[ $(expr $x % 2) -eq 0 ]]
 }
 
+# Encode a string to lowercase hex (two hex digits per byte). Used for the SSID
+# so any byte value can be placed into hostapd.conf safely: the hex output is a
+# single line of [0-9a-f], so a newline (or any control char) in the SSID can
+# never break out of the value and inject an arbitrary hostapd directive.
+# LC_ALL=C is set for the whole script, so ${s:i:1} iterates over raw bytes.
+ssid_to_hex() {
+    local s=$1 i byte hex out=""
+    for ((i=0; i<${#s}; i++)); do
+        byte=${s:i:1}
+        printf -v hex '%02x' "'$byte"
+        out+="$hex"
+    done
+    printf '%s' "$out"
+}
+
+# Return 0 iff every byte of $1 is printable ASCII (0x20..0x7e). Rejects
+# newlines, tabs, NUL, DEL and any high byte. The passphrase is written
+# verbatim as wpa_passphrase= into hostapd.conf (parsed line-by-line as root),
+# so a stray newline would inject an arbitrary directive; WPA passphrases are
+# by spec 8..63 ASCII-printable characters, so this rejects nothing legitimate.
+is_printable_ascii() {
+    local s=$1 i c
+    [[ -z "$s" ]] && return 0
+    for ((i=0; i<${#s}; i++)); do
+        c=$(printf '%d' "'${s:i:1}")
+        (( c < 32 || c > 126 )) && return 1
+    done
+    return 0
+}
+
 get_macaddr() {
     is_interface "$1" || return
     cat "/sys/class/net/${1}/address"
@@ -1614,6 +1644,19 @@ elif [[ ${#PASSPHRASE} -gt 0 && ${#PASSPHRASE} -ne 64 ]]; then
     exit 1
 fi
 
+# Reject control characters / non-printable bytes in the passphrase. The value
+# is written verbatim into hostapd.conf as wpa_passphrase= and the file is
+# parsed line-by-line as root, so a newline would inject an arbitrary hostapd
+# directive (config injection running as root). A raw passphrase is, by spec,
+# 8..63 ASCII-printable characters, so this rejects nothing legitimate. PSK
+# mode ($USE_PSK -eq 1) is already constrained to exactly 64 hex digits above.
+if [[ -n "$PASSPHRASE" && $USE_PSK -eq 0 ]]; then
+    if ! is_printable_ascii "$PASSPHRASE"; then
+        echo "ERROR: Passphrase contains non-printable or control characters" >&2
+        exit 1
+    fi
+fi
+
 if [[ $(get_adapter_kernel_module ${WIFI_IFACE}) =~ ^rtl[0-9].*$ ]]; then
     if [[ -n "$PASSPHRASE" ]]; then
         echo "WARN: Realtek drivers usually have problems with WPA1, enabling -w 2" >&2
@@ -1768,9 +1811,13 @@ fi
 [[ $ISOLATE_CLIENTS -eq 1 ]] && echo "Access Point's clients will be isolated!"
 
 # hostapd config
+# Hex-encode the SSID so any byte value (including newlines / control chars
+# that would otherwise break out of the value and inject a hostapd directive)
+# is rendered as a single line of hex digits consumed safely by hostapd.
+SSID_HEX=$(ssid_to_hex "$SSID")
 cat << EOF > $CONFDIR/hostapd.conf
 beacon_int=100
-ssid=${SSID}
+ssid2=${SSID_HEX}
 interface=${WIFI_IFACE}
 driver=${DRIVER}
 channel=${CHANNEL}
