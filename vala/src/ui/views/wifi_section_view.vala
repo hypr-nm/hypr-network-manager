@@ -205,12 +205,17 @@ namespace HyprNetworkManager.UI.Views {
                 window_host.debug_log ("Share clicked for SSID: " + selected_wifi_network.ssid + ", uuid: " + selected_wifi_network.saved_connection_uuid);
 
                 nm.get_wifi_password.begin (selected_wifi_network.saved_connection_uuid, null, (obj, res) => {
-                    string? password = nm.get_wifi_password.end (res);
-                    
+                    string? read_failure = null;
+                    string? password = nm.get_wifi_password.end (res, out read_failure);
+
                     window_host.debug_log ("Got password. Password empty? " + (password == null || password == "").to_string ());
 
                     if (selected_wifi_network.is_secured && (password == null || password == "")) {
-                        window_host.show_wifi_error (selected_wifi_network.network_key, _("Cannot share: password is empty"));
+                        if (read_failure != null) {
+                            window_host.show_wifi_error (selected_wifi_network.network_key, _("Could not read Wi-Fi password") + ": " + read_failure);
+                        } else {
+                            window_host.show_wifi_error (selected_wifi_network.network_key, _("Cannot share: password is empty"));
+                        }
                         return;
                     }
                     

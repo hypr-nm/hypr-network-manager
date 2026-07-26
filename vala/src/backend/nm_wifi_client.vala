@@ -902,8 +902,10 @@ public class NmWifiClient : GLib.Object {
 
     public async string? get_wifi_password (
         string connection_uuid,
-        Cancellable? cancellable = null
+        Cancellable? cancellable = null,
+        out string? read_failure
     ) {
+        read_failure = null;
         var client = core.nm_client;
         var conn = client.get_connection_by_uuid (connection_uuid);
         if (conn == null) {
@@ -921,6 +923,7 @@ public class NmWifiClient : GLib.Object {
         }
 
         if (conn is NM.RemoteConnection) {
+            string? last_error = null;
             try {
                 var secrets = yield ((NM.RemoteConnection) conn).get_secrets_async ("802-1x", cancellable);
                 if (secrets != null) {
@@ -933,6 +936,7 @@ public class NmWifiClient : GLib.Object {
                     }
                 }
             } catch (Error e) {
+                last_error = e.message;
                 log_debug ("nm-wifi-client", "get_wifi_password: unable to read 802-1x secrets: " + e.message);
             }
 
@@ -948,8 +952,11 @@ public class NmWifiClient : GLib.Object {
                     }
                 }
             } catch (Error e) {
+                last_error = e.message;
                 log_debug ("nm-wifi-client", "get_wifi_password: unable to read wireless secrets: " + e.message);
             }
+
+            read_failure = last_error;
         }
         return null;
     }

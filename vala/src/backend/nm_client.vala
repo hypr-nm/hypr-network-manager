@@ -295,9 +295,10 @@ public class NetworkManagerClient : GLib.Object {
 
     public async string? get_wifi_password (
         string connection_uuid,
-        Cancellable? cancellable = null
+        Cancellable? cancellable = null,
+        out string? read_failure
     ) {
-        return yield wifi_client.get_wifi_password (connection_uuid, cancellable);
+        return yield wifi_client.get_wifi_password (connection_uuid, cancellable, out read_failure);
     }
 
     public async bool update_saved_wifi_profile_settings (
