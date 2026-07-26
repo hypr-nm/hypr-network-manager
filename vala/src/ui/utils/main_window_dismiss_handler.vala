@@ -125,7 +125,7 @@ namespace HyprNetworkManager.UI.Utils {
                     release_bounds_success = root_container.compute_bounds (window, out release_bounds);
                 }
 
-                if (release_bounds_success && release_bounds != null && release_bounds.size.width > 0 &
+                if (release_bounds_success && release_bounds != null && release_bounds.size.width > 0 &&
                     release_bounds.size.height > 0) {
                      if (release_bounds.contains_point (release_point)) {
                          log_debug ("gui", "MainWindow NOT closing: click released inside valid bounds");
@@ -156,7 +156,7 @@ namespace HyprNetworkManager.UI.Utils {
             if (root_container != null) {
                 bounds_success = root_container.compute_bounds (window, out bounds);
             }
-            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0 &
+            if (bounds_success && bounds != null && bounds.size.width > 0 && bounds.size.height > 0 &&
                 bounds.contains_point (click_point)) {
                 blank_window_in = false;
             }

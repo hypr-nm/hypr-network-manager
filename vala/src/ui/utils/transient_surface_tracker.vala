@@ -53,7 +53,7 @@ namespace HyprNetworkManager.UI.Utils {
         public bool has_active_surfaces () {
             // Provide a 300ms grace period after a surface closes where we still
             // consider surfaces "active" to absorb the click that dismissed them.
-            return transient_surface_count > 0 |
+            return transient_surface_count > 0 ||
                 (GLib.get_monotonic_time () - last_surface_closed_time) < ACTIVE_SURFACE_GRACE_US;
         }
 
