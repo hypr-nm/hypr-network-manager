@@ -43,6 +43,16 @@ public class WifiBandSupport : GLib.Object {
     }
 }
 
+private class NmSignalSubscription {
+    public GLib.Object instance;
+    public ulong handler_id;
+
+    public NmSignalSubscription (GLib.Object instance, ulong handler_id) {
+        this.instance = instance;
+        this.handler_id = handler_id;
+    }
+}
+
 public class NetworkManagerClient : GLib.Object {
     public NM.Client nm_client;
 
@@ -50,6 +60,7 @@ public class NetworkManagerClient : GLib.Object {
     private NmEthernetClient ethernet_client;
     private NmVpnClient vpn_client;
     private bool nm_signals_active = false;
+    private GLib.List<NmSignalSubscription> nm_signal_subscriptions;
 
     public signal void network_events_changed ();
 
@@ -121,65 +132,76 @@ public class NetworkManagerClient : GLib.Object {
         return ethernet_client.has_profile (device);
     }
 
+    private void track_subscription (GLib.Object instance, ulong handler_id) {
+        nm_signal_subscriptions.append (new NmSignalSubscription (instance, handler_id));
+    }
+
     public async bool subscribe_network_events_dbus (Cancellable? cancellable = null) throws Error {
         if (nm_signals_active || nm_client == null) {
             return true;
         }
 
-        nm_client.device_added.connect ((dev) => {
+        // Every handler is an anonymous closure that captures `this`, so each one
+        // must be tracked and later disconnected in unsubscribe_network_events() --
+        // otherwise the long-lived NM.Client keeps the closures (and thus this
+        // NetworkManagerClient) alive forever, leaking it and dead-locking its
+        // finalizer.
+        track_subscription (nm_client, nm_client.device_added.connect ((dev) => {
             emit_nm_change_event ("DeviceAdded (" + dev.get_iface () + ")");
-            dev.state_changed.connect ((new_state, old_state, reason) => {
+            track_subscription (dev, dev.state_changed.connect ((new_state, old_state, reason) => {
                 emit_nm_change_event ("DeviceStateChanged (" + dev.get_iface () + ")");
-            });
+            }));
             if (dev is NM.DeviceWifi) {
-                ((NM.DeviceWifi)dev).access_point_added.connect ((ap) => {
+                var wifi_dev = (NM.DeviceWifi) dev;
+                track_subscription (wifi_dev, wifi_dev.access_point_added.connect ((ap) => {
                     emit_nm_change_event ("AccessPointAdded (" + dev.get_iface () + ")");
-                });
-                ((NM.DeviceWifi)dev).access_point_removed.connect ((ap) => {
+                }));
+                track_subscription (wifi_dev, wifi_dev.access_point_removed.connect ((ap) => {
                     emit_nm_change_event ("AccessPointRemoved (" + dev.get_iface () + ")");
-                });
+                }));
             }
-        });
+        }));
 
-        nm_client.device_removed.connect ((dev) => {
+        track_subscription (nm_client, nm_client.device_removed.connect ((dev) => {
             emit_nm_change_event ("DeviceRemoved (" + dev.get_iface () + ")");
-        });
+        }));
 
-        nm_client.any_device_added.connect ((dev) => {
+        track_subscription (nm_client, nm_client.any_device_added.connect ((dev) => {
             emit_nm_change_event ("AnyDeviceAdded");
-        });
+        }));
 
-        nm_client.any_device_removed.connect ((dev) => {
+        track_subscription (nm_client, nm_client.any_device_removed.connect ((dev) => {
             emit_nm_change_event ("AnyDeviceRemoved");
-        });
+        }));
 
-        nm_client.active_connection_added.connect ((conn) => {
+        track_subscription (nm_client, nm_client.active_connection_added.connect ((conn) => {
             emit_nm_change_event ("ActiveConnectionAdded");
-        });
+        }));
 
-        nm_client.active_connection_removed.connect ((conn) => {
+        track_subscription (nm_client, nm_client.active_connection_removed.connect ((conn) => {
             emit_nm_change_event ("ActiveConnectionRemoved");
-        });
+        }));
 
-        nm_client.notify["wireless-enabled"].connect (() => {
+        track_subscription (nm_client, nm_client.notify["wireless-enabled"].connect (() => {
             emit_nm_change_event ("WirelessEnabled");
-        });
+        }));
 
-        nm_client.notify["networking-enabled"].connect (() => {
+        track_subscription (nm_client, nm_client.notify["networking-enabled"].connect (() => {
             emit_nm_change_event ("NetworkingEnabled");
-        });
+        }));
 
         foreach (var dev in nm_client.get_devices ()) {
-            dev.state_changed.connect ((new_state, old_state, reason) => {
+            track_subscription (dev, dev.state_changed.connect ((new_state, old_state, reason) => {
                 emit_nm_change_event ("DeviceStateChanged (" + dev.get_iface () + ")");
-            });
+            }));
             if (dev is NM.DeviceWifi) {
-                ((NM.DeviceWifi)dev).access_point_added.connect ((ap) => {
+                var wifi_dev = (NM.DeviceWifi) dev;
+                track_subscription (wifi_dev, wifi_dev.access_point_added.connect ((ap) => {
                     emit_nm_change_event ("AccessPointAdded (" + dev.get_iface () + ")");
-                });
-                ((NM.DeviceWifi)dev).access_point_removed.connect ((ap) => {
+                }));
+                track_subscription (wifi_dev, wifi_dev.access_point_removed.connect ((ap) => {
                     emit_nm_change_event ("AccessPointRemoved (" + dev.get_iface () + ")");
-                });
+                }));
             }
         }
 
@@ -193,6 +215,18 @@ public class NetworkManagerClient : GLib.Object {
             return;
         }
         nm_signals_active = false;
+
+        // Disconnect every tracked handler so the closures (which capture `this`)
+        // are released by their host objects. This includes both the client-level
+        // signals on nm_client and the per-device handlers attached at subscribe
+        // time and dynamically inside device_added.
+        foreach (var sub in nm_signal_subscriptions) {
+            if (sub.handler_id != 0) {
+                sub.instance.disconnect (sub.handler_id);
+            }
+        }
+        nm_signal_subscriptions = null;
+
         log_info ("nm-client", "nm_events_subscribe: disabled");
     }
 
