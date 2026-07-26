@@ -138,9 +138,7 @@ public class MainWindowWifiHiddenNetworkController : Object {
 
         if (!HiddenWifiSecurityModeUtils.is_password_valid_for_mode (security_mode, password)) {
             host.show_add_page_error (
-                _("Password must be at least %d characters for the selected security mode.").printf (
-                    HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH
-                )
+                HiddenWifiSecurityModeUtils.password_requirement_hint (security_mode)
             );
             return;
         }

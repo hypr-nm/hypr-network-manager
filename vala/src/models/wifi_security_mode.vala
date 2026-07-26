@@ -25,6 +25,10 @@ public enum HiddenWifiSecurityMode {
 
 public class HiddenWifiSecurityModeUtils : Object {
     public const int MIN_PASSWORD_LENGTH = 8;
+    public const int WEP_KEY_SHORT_ASCII = 5;
+    public const int WEP_KEY_LONG_ASCII = 13;
+    public const int WEP_KEY_SHORT_HEX = 10;
+    public const int WEP_KEY_LONG_HEX = 26;
 
     public static HiddenWifiSecurityMode[] get_dropdown_modes () {
         return {
@@ -87,11 +91,42 @@ public class HiddenWifiSecurityModeUtils : Object {
         return password.strip ().char_count () >= MIN_PASSWORD_LENGTH;
     }
 
+    public static bool is_wep_key_valid (string password) {
+        string trimmed = password.strip ();
+        int len = (int) trimmed.length;
+        if (len != WEP_KEY_SHORT_ASCII && len != WEP_KEY_LONG_ASCII
+            && len != WEP_KEY_SHORT_HEX && len != WEP_KEY_LONG_HEX) {
+            return false;
+        }
+        if (len == WEP_KEY_SHORT_HEX || len == WEP_KEY_LONG_HEX) {
+            for (int i = 0; i < len; i++) {
+                char c = trimmed[i];
+                bool hex = (c >= '0' && c <= '9')
+                    || (c >= 'a' && c <= 'f')
+                    || (c >= 'A' && c <= 'F');
+                if (!hex) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public static bool is_password_valid_for_mode (HiddenWifiSecurityMode mode, string password) {
         if (!requires_password (mode)) {
             return true;
         }
+        if (mode == HiddenWifiSecurityMode.WEP) {
+            return is_wep_key_valid (password);
+        }
         return is_password_valid (password);
+    }
+
+    public static string password_requirement_hint (HiddenWifiSecurityMode mode) {
+        if (mode == HiddenWifiSecurityMode.WEP) {
+            return _("WEP key must be 5 or 13 ASCII characters, or 10 or 26 hex digits");
+        }
+        return _("Password must be at least %d characters").printf (MIN_PASSWORD_LENGTH);
     }
 
     public static string to_nm_key_mgmt (HiddenWifiSecurityMode mode) {
