@@ -46,6 +46,15 @@ public class MainWindowRefreshCoordinator : Object {
     public void start () {
         configure_nm_signal_refresh ();
 
+        // start() is invoked both from the window constructor and again on
+        // ::map, with no intervening stop(). Drop any previously armed periodic
+        // source first so we never orphan one (which would run the Wi-Fi scan
+        // twice per interval and leave stop() able to remove only the latest).
+        if (periodic_refresh_source_id != 0) {
+            Source.remove (periodic_refresh_source_id);
+            periodic_refresh_source_id = 0;
+        }
+
         periodic_refresh_source_id = Timeout.add_seconds (refresh_interval_seconds, () => {
             nm.scan_wifi.begin (null, (obj, res) => {
                 try {
