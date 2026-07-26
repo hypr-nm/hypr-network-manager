@@ -117,21 +117,23 @@ public class NmIpConfigHelper : GLib.Object {
         }
     }
 
-    public static void apply_ipv4_settings (NM.SettingIPConfig s_ip4, Ipv4UpdateSection req) {
+    public static void apply_ipv4_settings (NM.SettingIPConfig s_ip4, Ipv4UpdateSection req) throws Error {
+        string method = req.normalized_method ();
+
+        NM.IPAddress? manual_address = null;
+        if (method == "manual" && req.address != "") {
+            manual_address = new NM.IPAddress (2, req.address, req.prefix);
+        }
+
         s_ip4.clear_addresses ();
         s_ip4.clear_dns ();
 
-        string method = req.normalized_method ();
         if (method == "auto" || method == "") {
             s_ip4.method = NM.SettingIP4Config.METHOD_AUTO;
         } else if (method == "manual") {
             s_ip4.method = NM.SettingIP4Config.METHOD_MANUAL;
-            if (req.address != "") {
-                try {
-                    var addr = new NM.IPAddress (2, req.address, req.prefix);
-                    s_ip4.add_address (addr);
-                } catch (Error e) {
-                }
+            if (manual_address != null) {
+                s_ip4.add_address (manual_address);
             }
         } else if (method == "link-local") {
             s_ip4.method = NM.SettingIP4Config.METHOD_LINK_LOCAL;
@@ -158,21 +160,23 @@ public class NmIpConfigHelper : GLib.Object {
         }
     }
 
-    public static void apply_ipv6_settings (NM.SettingIPConfig s_ip6, Ipv6UpdateSection req) {
+    public static void apply_ipv6_settings (NM.SettingIPConfig s_ip6, Ipv6UpdateSection req) throws Error {
+        string method = req.normalized_method ();
+
+        NM.IPAddress? manual_address = null;
+        if (method == "manual" && req.address != "") {
+            manual_address = new NM.IPAddress (10, req.address, req.prefix);
+        }
+
         s_ip6.clear_addresses ();
         s_ip6.clear_dns ();
 
-        string method = req.normalized_method ();
         if (method == "auto" || method == "") {
             s_ip6.method = NM.SettingIP6Config.METHOD_AUTO;
         } else if (method == "manual") {
             s_ip6.method = NM.SettingIP6Config.METHOD_MANUAL;
-            if (req.address != "") {
-                try {
-                    var addr = new NM.IPAddress (10, req.address, req.prefix);
-                    s_ip6.add_address (addr);
-                } catch (Error e) {
-                }
+            if (manual_address != null) {
+                s_ip6.add_address (manual_address);
             }
         } else if (method == "link-local") {
             s_ip6.method = NM.SettingIP6Config.METHOD_LINK_LOCAL;
