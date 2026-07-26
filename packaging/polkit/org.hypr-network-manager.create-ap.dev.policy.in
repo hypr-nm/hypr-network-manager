@@ -7,10 +7,20 @@
   Dev-tree variant of the create_ap policy. This is generated at meson
   configure-time with @CREATE_AP_DEV_PATH@ pointing at the uninstalled
   vendored script under scripts/create_ap/. It lets developers run the
-  freshly-built binary straight out of the build directory without a
-  per-invocation pkexec password prompt (the user must still be in wheel or
-  sudo, see the matching .rules file). On production hosts the annotated path
-  will not exist, so this policy simply never matches and has no effect.
+  freshly-built binary straight out of the source tree.
+
+  SECURITY: polkit/pkexec does NOT verify that the annotated exec.path is
+  root-owned, and this path lives in the (user-writable) source tree. A
+  passwordless (allow_active = yes) rule here would therefore let any user
+  who can overwrite that one script execute arbitrary code as root with no
+  prompt. To eliminate that privilege-escalation vector this action ALWAYS
+  requires auth_admin, even for wheel/sudo members, and the matching
+  .rules file deliberately does NOT grant Result.YES for it. Developers
+  who want passwordless execution must install the app, which copies the
+  helper to a root-owned libexec path covered by the non-dev action.
+
+  This file is only installed behind the explicit -Dinstall-dev-polkit=true
+  opt-in; on ordinary and production hosts it is absent and has no effect.
 -->
 
 <policyconfig>
@@ -21,7 +31,7 @@
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
-      <allow_active>yes</allow_active>
+      <allow_active>auth_admin</allow_active>
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">@CREATE_AP_DEV_PATH@</annotate>
     <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>

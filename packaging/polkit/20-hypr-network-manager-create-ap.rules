@@ -2,14 +2,15 @@
 // hotspot helper (create_ap) without an authentication prompt. Other users
 // still get a single auth_admin prompt per pkexec invocation.
 //
-// Matches both the installed-vendored action and the dev-tree variant so the
-// same rule file works for end users and for developers running uninstalled
-// builds out of the source tree.
+// SECURITY: this rule intentionally matches ONLY the installed action
+// (org.hypr-network-manager.create-ap), whose exec.path is the root-owned
+// libexec copy. It must NOT cover the .dev action, whose exec.path points at
+// the user-writable source tree — granting Result.YES there would let any user
+// who can overwrite that one script execute arbitrary code as root with no
+// prompt. The .dev action therefore always falls through to auth_admin.
 
 polkit.addRule(function(action, subject) {
-    if (action.id == "org.hypr-network-manager.create-ap" ||
-        action.id == "org.hypr-network-manager.create-ap.dev") {
-
+    if (action.id == "org.hypr-network-manager.create-ap") {
         if (subject.isInGroup("wheel") || subject.isInGroup("sudo")) {
             return polkit.Result.YES;
         }

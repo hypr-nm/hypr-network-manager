@@ -57,12 +57,11 @@ configure_file(
   install_dir: polkit_actions_dir,
 )
 
-is_dev_build = buildtype != 'release'
 configure_file(
   input: 'packaging/polkit/org.hypr-network-manager.create-ap.dev.policy.in',
   output: 'org.hypr-network-manager.create-ap.dev.policy',
   configuration: conf_data_polkit,
-  install: get_option('install-polkit') and is_dev_build,
+  install: get_option('install-polkit') and get_option('install-dev-polkit'),
   install_dir: polkit_actions_dir,
 )
 
