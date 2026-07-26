@@ -20,6 +20,12 @@ grep -q 'DNSMASQ_READY' "$script"
 grep -q "grep -q 'type AP'" "$script"
 grep -q "printf 'ready" "$script"
 
+# create_ap must surface critical failures: pipefail plus `|| die` on system-mutating commands.
+grep -q 'set -o pipefail' "$script"
+grep -q 'COMMON_CONFDIR || die' "$script"
+grep -q 'bridge-nf-call-iptables || die' "$script"
+grep -q 'forward_delay || die' "$script"
+
 # hostapd config-injection guards (C2): the SSID must be written hex-encoded
 # via ssid2= (so a newline/control char can never break out of the value) and
 # the raw, injectable `ssid=${SSID}` line must be gone; the passphrase must be
