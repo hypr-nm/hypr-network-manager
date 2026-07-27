@@ -89,106 +89,50 @@ public interface IMainWindowIpEditPage : Object {
 
     public virtual NetworkIpUpdateRequest? build_ip_update_request (out string? error_message) {
         error_message = null;
-        string method = MainWindowWifiEditUtils.get_selected_ipv4_method (this.ipv4_method_dropdown);
-        string ipv4_address = this.ipv4_address_entry.get_text ().strip ();
-        string ipv4_gateway = this.ipv4_gateway_entry.get_text ().strip ();
-        bool gateway_auto = method != "manual";
-        bool dns_auto = this.dns_auto_switch.get_active ();
-        string dns_csv = this.ipv4_dns_entry.get_text ().strip ();
-        string method6 = MainWindowWifiEditUtils.get_selected_ipv6_method (this.ipv6_method_dropdown);
-        string ipv6_address = this.ipv6_address_entry.get_text ().strip ();
-        string ipv6_gateway = this.ipv6_gateway_entry.get_text ().strip ();
-        bool ipv6_gateway_auto = method6 != "manual";
-        bool ipv6_dns_auto = this.ipv6_dns_auto_switch.get_active ();
-        string ipv6_dns_csv = this.ipv6_dns_entry.get_text ().strip ();
 
-        if (MainWindowIpSensitivityRules.should_force_ipv4_dns_auto_from_method (method)) {
-            dns_auto = true;
-        }
-
-        if (MainWindowIpSensitivityRules.should_force_ipv6_dns_auto_from_method (method6)) {
-            ipv6_dns_auto = true;
-        }
-
-        uint32 ipv4_prefix;
-        string prefix_error;
-        if (!MainWindowWifiEditUtils.try_parse_prefix (
+        var v4 = MainWindowIpValidation.validate (
+            MainWindowIpValidation.Family.IPV4,
+            MainWindowWifiEditUtils.get_selected_ipv4_method (this.ipv4_method_dropdown),
+            this.ipv4_address_entry.get_text ().strip (),
             this.ipv4_prefix_entry.get_text (),
-            out ipv4_prefix,
-            out prefix_error
-        )) {
-            error_message = prefix_error;
+            this.ipv4_gateway_entry.get_text ().strip (),
+            this.dns_auto_switch.get_active (),
+            this.ipv4_dns_entry.get_text ().strip (),
+            out error_message);
+        if (v4 == null) {
             return null;
         }
 
-        uint32 ipv6_prefix;
-        string prefix6_error;
-        if (!MainWindowWifiEditUtils.try_parse_ipv6_prefix (
+        string error6;
+        var v6 = MainWindowIpValidation.validate (
+            MainWindowIpValidation.Family.IPV6,
+            MainWindowWifiEditUtils.get_selected_ipv6_method (this.ipv6_method_dropdown),
+            this.ipv6_address_entry.get_text ().strip (),
             this.ipv6_prefix_entry.get_text (),
-            out ipv6_prefix,
-            out prefix6_error
-        )) {
-            error_message = prefix6_error;
-            return null;
-        }
-
-        if (method == "manual") {
-            if (ipv4_address == "") {
-                error_message = _("Manual IPv4 requires an address.");
-                return null;
-            }
-            if (ipv4_prefix == 0) {
-                error_message = _("Manual IPv4 requires a prefix between 1 and 32.");
-                return null;
-            }
-            if (ipv4_gateway == "") {
-                error_message = _("Manual IPv4 requires a gateway address.");
-                return null;
-            }
-        }
-
-        string[] dns_servers = MainWindowWifiEditUtils.parse_dns_csv (dns_csv);
-        if (!dns_auto && dns_servers.length == 0) {
-            error_message = _("Manual DNS is enabled; provide at least one DNS server.");
-            return null;
-        }
-
-        if (method6 == "manual") {
-            if (ipv6_address == "") {
-                error_message = _("Manual IPv6 requires an address.");
-                return null;
-            }
-            if (ipv6_prefix == 0) {
-                error_message = _("Manual IPv6 requires a prefix between 1 and 128.");
-                return null;
-            }
-            if (ipv6_gateway == "") {
-                error_message = _("Manual IPv6 requires a gateway address.");
-                return null;
-            }
-        }
-
-        string[] ipv6_dns_servers = MainWindowWifiEditUtils.parse_dns_csv (ipv6_dns_csv);
-        if (!ipv6_dns_auto && ipv6_dns_servers.length == 0) {
-            error_message = _("Manual IPv6 DNS is enabled; provide at least one DNS server.");
+            this.ipv6_gateway_entry.get_text ().strip (),
+            this.ipv6_dns_auto_switch.get_active (),
+            this.ipv6_dns_entry.get_text ().strip (),
+            out error6);
+        if (v6 == null) {
+            error_message = error6;
             return null;
         }
 
         return new NetworkIpUpdateRequest () {
-            ipv4_method = method,
-            ipv4_address = ipv4_address,
-            ipv4_prefix = ipv4_prefix,
-            ipv4_gateway_auto = gateway_auto,
-            ipv4_gateway = ipv4_gateway,
-            ipv4_dns_auto = dns_auto,
-            ipv4_dns_servers = dns_servers,
-            ipv6_method = method6,
-            ipv6_address = ipv6_address,
-            ipv6_prefix = ipv6_prefix,
-            ipv6_gateway_auto = ipv6_gateway_auto,
-            ipv6_gateway = ipv6_gateway,
-            ipv6_dns_auto = ipv6_dns_auto,
-            ipv6_dns_servers = ipv6_dns_servers
+            ipv4_method = v4.method,
+            ipv4_address = v4.address,
+            ipv4_prefix = v4.prefix,
+            ipv4_gateway_auto = v4.gateway_auto,
+            ipv4_gateway = v4.gateway,
+            ipv4_dns_auto = v4.dns_auto,
+            ipv4_dns_servers = v4.dns_servers,
+            ipv6_method = v6.method,
+            ipv6_address = v6.address,
+            ipv6_prefix = v6.prefix,
+            ipv6_gateway_auto = v6.gateway_auto,
+            ipv6_gateway = v6.gateway,
+            ipv6_dns_auto = v6.dns_auto,
+            ipv6_dns_servers = v6.dns_servers
         };
     }
 }
