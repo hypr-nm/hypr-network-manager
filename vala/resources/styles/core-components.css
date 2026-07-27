@@ -564,6 +564,31 @@ button.suggested-action:disabled,
   color: var(--primary_hover);
 }
 
+button.nm-button.row-link-action {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  min-height: 26px;
+  min-width: 0;
+  background: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0 2px;
+}
+
+button.nm-button.row-link-action:hover {
+  background: transparent;
+  border: none;
+}
+
+button.nm-button.row-link-action:disabled {
+  background: transparent;
+  border: none;
+  opacity: 0.5;
+}
+
 /* Universal list details action: icon only by default, chip on interaction only. */
 .nm-page button.row-icon-action,
 .nm-page .row-icon-action {

@@ -170,6 +170,9 @@ button.nm-button,
   font-size: 12px;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.row-link-action {
   min-height: 26px;
   min-width: 0;
   background: transparent;
