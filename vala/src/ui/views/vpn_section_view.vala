@@ -25,7 +25,6 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Stack stack { get; private set; }
         public Gtk.ListBox listbox { get; private set; }
 
-        private NetworkManagerClient nm;
         private MainWindowVpnController controller;
         private HyprNetworkManager.UI.Interfaces.IWindowHost window_host;
         private VpnConnection? selected_vpn = null;
@@ -38,11 +37,9 @@ namespace HyprNetworkManager.UI.Views {
         private string peer_edit_return_page = "list";
 
         public VpnSectionView (
-            NetworkManagerClient nm,
             MainWindowVpnController controller,
             HyprNetworkManager.UI.Interfaces.IWindowHost window_host
         ) {
-            this.nm = nm;
             this.controller = controller;
             this.window_host = window_host;
             this.details_page = new MainWindowVpnDetailsPage ();
@@ -99,7 +96,7 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             setup_page.apply.connect (() => {
-                controller.apply_setup (nm, setup_page, stack);
+                controller.apply_setup (setup_page, stack);
             });
             
             setup_page.edit_peer_requested.connect ((index, peer) => {
@@ -114,27 +111,8 @@ namespace HyprNetworkManager.UI.Views {
 
             details_page.primary_action.connect (() => {
                 if (selected_vpn == null) return;
-                
-                string connection_id = selected_vpn.uuid != "" ? selected_vpn.uuid : selected_vpn.name;
-                if (selected_vpn.is_connected) {
-                    nm.disconnect_vpn.begin (connection_id, null, (obj, res) => {
-                        try {
-                            nm.disconnect_vpn.end (res);
-                            open_vpn_details (selected_vpn); // Refresh details
-                        } catch (Error e) {
-                            window_host.show_vpn_error (selected_vpn.name, _("VPN disconnect failed: %s").printf (e.message));
-                        }
-                    });
-                } else {
-                    nm.connect_vpn.begin (connection_id, null, (obj, res) => {
-                        try {
-                            nm.connect_vpn.end (res);
-                            open_vpn_details (selected_vpn); // Refresh details
-                        } catch (Error e) {
-                            window_host.show_vpn_error (selected_vpn.name, _("VPN connect failed: %s").printf (e.message));
-                        }
-                    });
-                }
+                var conn = selected_vpn;
+                controller.toggle_vpn_connection (conn, details_page);
             });
 
             details_page.edit.connect (() => {
@@ -144,7 +122,7 @@ namespace HyprNetworkManager.UI.Views {
 
             details_page.delete.connect (() => {
                 if (selected_vpn == null) return;
-                delete_vpn_profile (selected_vpn);
+                controller.delete_vpn (selected_vpn);
             });
 
             edit_page.back.connect (() => {
@@ -156,7 +134,7 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             edit_page.apply.connect (() => {
-                controller.apply_edit (ref selected_vpn, nm, edit_page, stack, details_page, true);
+                controller.apply_edit (ref selected_vpn, edit_page, stack, details_page, true);
             });
             
             edit_page.edit_peer_requested.connect ((index, peer) => {
@@ -180,27 +158,12 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void open_vpn_details (VpnConnection conn) {
-            controller.populate_details (nm, conn, details_page);
+            controller.populate_details (conn, details_page);
             controller.open_details (ref selected_vpn, conn, stack);
         }
 
         private void open_vpn_edit (VpnConnection conn) {
-            controller.open_edit (ref selected_vpn, nm, conn, edit_page, stack);
-        }
-
-        private void delete_vpn_profile (VpnConnection conn) {
-            controller.refresh_started ();
-            string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
-            nm.delete_vpn.begin (connection_id, null, (obj, res) => {
-                try {
-                    nm.delete_vpn.end (res);
-                    show_vpn_list_or_empty ();
-                    controller.refresh ();
-                } catch (Error e) {
-                    controller.refresh_finished ();
-                    window_host.show_vpn_error (conn.name, _("VPN delete failed: %s").printf (e.message));
-                }
-            });
+            controller.open_edit (ref selected_vpn, conn, edit_page, stack);
         }
 
         private void show_vpn_list_or_empty () {

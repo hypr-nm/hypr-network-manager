@@ -16,27 +16,9 @@
  */
 
 public class MainWindowVpnController : Object {
+    private NetworkManagerClient nm;
     private MainWindowVpnPageBuilder page_builder;
-
-    private static bool try_parse_optional_uint32 (
-        string raw_value,
-        uint32 max_value,
-        out uint32 parsed_value
-    ) {
-        parsed_value = 0;
-        string trimmed = raw_value.strip ();
-        if (trimmed == "") {
-            return true;
-        }
-
-        uint parsed_uint;
-        if (!uint.try_parse (trimmed, out parsed_uint) || parsed_uint > max_value) {
-            return false;
-        }
-
-        parsed_value = (uint32) parsed_uint;
-        return true;
-    }
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
@@ -53,6 +35,8 @@ public class MainWindowVpnController : Object {
             host,
             state_context
         );
+        this.host = host;
+        this.nm = nm;
 
         page_builder.refresh_started.connect (() => {
             refresh_started ();
@@ -69,7 +53,6 @@ public class MainWindowVpnController : Object {
     }
 
     public void populate_details (
-        NetworkManagerClient nm,
         VpnConnection conn,
         MainWindowVpnDetailsPage details_page
     ) {
@@ -99,7 +82,6 @@ public class MainWindowVpnController : Object {
 
     public void open_edit (
         ref VpnConnection? selected_vpn,
-        NetworkManagerClient nm,
         VpnConnection conn,
         MainWindowVpnEditPage edit_page,
         Gtk.Stack stack
@@ -119,7 +101,6 @@ public class MainWindowVpnController : Object {
 
     public bool apply_edit (
         ref VpnConnection? selected_vpn,
-        NetworkManagerClient nm,
         MainWindowVpnEditPage edit_page,
         Gtk.Stack stack,
         MainWindowVpnDetailsPage details_page,
@@ -141,7 +122,7 @@ public class MainWindowVpnController : Object {
             try {
                 nm.update_vpn_settings.end (res);
                 if (close_after_apply) {
-                    this.populate_details (nm, conn, details_page);
+                    this.populate_details (conn, details_page);
                     stack.set_visible_child_name ("details");
                 }
             } catch (Error e) {
@@ -153,108 +134,14 @@ public class MainWindowVpnController : Object {
     }
 
     public void apply_setup (
-        NetworkManagerClient nm,
         MainWindowVpnSetupPage setup_page,
         Gtk.Stack stack
     ) {
-        VpnUpdateRequest request;
-        if (setup_page.vpn_type == "wireguard") {
-            request = new WireGuardVpnUpdateRequest ();
-        } else if (setup_page.vpn_type == "openvpn") {
-            request = new OpenVpnUpdateRequest ();
-        } else {
-            var generic_request = new GenericVpnUpdateRequest ();
-            generic_request.vpn_type = setup_page.vpn_type;
-            request = generic_request;
-        }
-        request.name = setup_page.name_entry.get_text ().strip ();
-
-        if (request.name == "") {
-            setup_page.show_error (_("Connection name is required."));
+        string? request_error = null;
+        var request = setup_page.build_create_request (out request_error);
+        if (request == null) {
+            setup_page.show_error (MainWindowHelpers.safe_text (request_error));
             return;
-        }
-
-        string? ip_error = null;
-        var ip_request = setup_page.build_ip_update_request (out ip_error);
-        if (ip_request == null) {
-            setup_page.show_error (MainWindowHelpers.safe_text (ip_error));
-            return;
-        }
-        request.ip_request = ip_request;
-
-        var wg_request = request as WireGuardVpnUpdateRequest;
-        if (wg_request != null) {
-            wg_request.interface_name = setup_page.wg_interface_name_entry != null ? setup_page.wg_interface_name_entry.get_text ().strip () : "";
-            wg_request.wg_private_key = setup_page.wg_private_key_entry.get_text ().strip ();
-            if (setup_page.wg_peers_list != null) {
-                wg_request.peers = setup_page.wg_peers_list.get_peers ();
-            }
-            wg_request.wg_peer_routes = setup_page.wg_peer_routes_switch.get_active ();
-
-            uint32 parsed_listen_port;
-            if (!try_parse_optional_uint32 (
-                setup_page.wg_listen_port_entry.get_text (),
-                65535,
-                out parsed_listen_port
-            )) {
-                setup_page.show_error (_("WireGuard listen port must be a number between 0 and 65535."));
-                return;
-            }
-            wg_request.wg_listen_port = parsed_listen_port;
-
-            uint32 parsed_fwmark;
-            if (!try_parse_optional_uint32 (
-                setup_page.wg_fwmark_entry.get_text (),
-                uint32.MAX,
-                out parsed_fwmark
-            )) {
-                setup_page.show_error (_("WireGuard fwmark must be a valid unsigned integer."));
-                return;
-            }
-            wg_request.wg_fwmark = parsed_fwmark;
-
-            string? validation_err;
-            if (!wg_request.validate(out validation_err)) {
-                setup_page.show_error (MainWindowHelpers.safe_text (validation_err));
-                return;
-            }
-        } else {
-            var ovpn_request = request as OpenVpnUpdateRequest;
-            if (ovpn_request != null) {
-                ovpn_request.ovpn_remote = setup_page.ovpn_remote_entry.get_text ().strip ();
-                ovpn_request.ovpn_proto = setup_page.ovpn_proto_dropdown != null && setup_page.ovpn_proto_dropdown.get_selected() == 1 ? "tcp" : "udp";
-                ovpn_request.ovpn_username = setup_page.ovpn_user_entry.get_text ().strip ();
-                ovpn_request.ovpn_password = setup_page.ovpn_password_entry.get_text ();
-                ovpn_request.ovpn_ca_cert = setup_page.ovpn_ca_cert_entry.get_text ().strip ();
-                ovpn_request.ovpn_client_cert = setup_page.ovpn_client_cert_entry.get_text ().strip ();
-                ovpn_request.ovpn_private_key = setup_page.ovpn_private_key_entry.get_text ().strip ();
-                ovpn_request.ovpn_tls_auth_key = setup_page.ovpn_tls_auth_key_entry.get_text ().strip ();
-                ovpn_request.ovpn_cipher = setup_page.ovpn_cipher_entry.get_text ().strip ();
-                ovpn_request.ovpn_auth = setup_page.ovpn_auth_entry.get_text ().strip ();
-
-                uint32 parsed_openvpn_port;
-                if (!try_parse_optional_uint32 (
-                    setup_page.ovpn_port_entry.get_text (),
-                    65535,
-                    out parsed_openvpn_port
-                )) {
-                    setup_page.show_error (_("OpenVPN port must be a number between 0 and 65535."));
-                    return;
-                }
-                ovpn_request.ovpn_port = parsed_openvpn_port;
-
-                if (ovpn_request.ovpn_remote == "") {
-                    setup_page.show_error (_("OpenVPN remote is required."));
-                    return;
-                }
-            } else {
-                var generic_request = request as GenericVpnUpdateRequest;
-                if (generic_request != null) {
-                    generic_request.gateway = setup_page.gateway_entry.get_text ().strip ();
-                    generic_request.user = setup_page.user_entry.get_text ().strip ();
-                    generic_request.password = setup_page.password_entry.get_text ();
-                }
-            }
         }
 
         nm.create_vpn.begin (request, null, (obj, res) => {
@@ -265,6 +152,49 @@ public class MainWindowVpnController : Object {
             } catch (Error e) {
                 setup_page.show_error (e.message);
             }
+        });
+    }
+
+    public void toggle_vpn_connection (
+        VpnConnection conn,
+        MainWindowVpnDetailsPage details_page
+    ) {
+        string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
+        if (conn.is_connected) {
+            nm.disconnect_vpn.begin (connection_id, null, (obj, res) => {
+                try {
+                    nm.disconnect_vpn.end (res);
+                } catch (Error e) {
+                    host.show_vpn_error (conn.name, _("VPN disconnect failed: %s").printf (e.message));
+                    return;
+                }
+                populate_details (conn, details_page);
+            });
+        } else {
+            nm.connect_vpn.begin (connection_id, null, (obj, res) => {
+                try {
+                    nm.connect_vpn.end (res);
+                } catch (Error e) {
+                    host.show_vpn_error (conn.name, _("VPN connect failed: %s").printf (e.message));
+                    return;
+                }
+                populate_details (conn, details_page);
+            });
+        }
+    }
+
+    public void delete_vpn (
+        VpnConnection conn
+    ) {
+        string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
+        nm.delete_vpn.begin (connection_id, null, (obj, res) => {
+            try {
+                nm.delete_vpn.end (res);
+            } catch (Error e) {
+                host.show_vpn_error (conn.name, _("VPN delete failed: %s").printf (e.message));
+                return;
+            }
+            this.refresh ();
         });
     }
 

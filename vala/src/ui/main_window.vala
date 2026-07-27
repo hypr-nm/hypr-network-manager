@@ -434,7 +434,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             this.set_popup_text_input_mode (false);
         });
 
-        vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (nm, vpn_controller, this);
+        vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (vpn_controller, this);
 
         notebook.append_page (wifi_section.widget, build_tab_label (_("Wi-Fi")));
         notebook.append_page (ethernet_section.widget, build_tab_label (_("Ethernet")));
