@@ -44,6 +44,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private MainWindowRefreshCoordinator refresh_coordinator;
     private MainWindowEthernetController ethernet_controller;
     private MainWindowVpnController vpn_controller;
+    private MainWindowHotspotController hotspot_controller;
     private MainWindowFlightModeController flight_mode_controller;
     private HyprNetworkManager.UI.Views.VpnSectionView vpn_section;
     private Gtk.Stack content_stack;
@@ -90,6 +91,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             state_context
         );
         flight_mode_controller = new MainWindowFlightModeController (nm, this);
+        hotspot_controller = new MainWindowHotspotController (nm);
         refresh_coordinator = new MainWindowRefreshCoordinator (
             nm,
             wifi_controller,
@@ -426,7 +428,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             this
         );
 
-        hotspot_section = new HyprNetworkManager.UI.Views.HotspotSectionView (nm, this);
+        hotspot_section = new HyprNetworkManager.UI.Views.HotspotSectionView (hotspot_controller, this);
         hotspot_section.back.connect (() => {
             content_stack.set_visible_child_name ("main");
             this.set_popup_text_input_mode (false);

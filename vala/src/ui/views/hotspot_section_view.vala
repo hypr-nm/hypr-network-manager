@@ -28,7 +28,7 @@ namespace HyprNetworkManager.UI.Views {
 
         public Gtk.Widget widget { get; private set; }
         
-        private NetworkManagerClient nm;
+        private MainWindowHotspotController controller;
         private IWindowHost window_host;
 
         private Gtk.Switch toggle_switch;
@@ -54,8 +54,8 @@ namespace HyprNetworkManager.UI.Views {
         private uint poll_source_id = 0;
         private uint band_query_generation = 0;
 
-        public HotspotSectionView (NetworkManagerClient client, IWindowHost host) {
-            this.nm = client;
+        public HotspotSectionView (MainWindowHotspotController controller, IWindowHost host) {
+            this.controller = controller;
             this.window_host = host;
 
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
@@ -104,7 +104,7 @@ namespace HyprNetworkManager.UI.Views {
             ap_label.xalign = 0;
             
             this.ap_model = new Gtk.StringList (new string[] { _("Auto") });
-            foreach (var iface in nm.get_wifi_interfaces ()) {
+            foreach (var iface in controller.get_wifi_interfaces ()) {
                 this.ap_model.append (iface);
             }
             ap_interface_dropdown = window_host.create_tracked_dropdown (this.ap_model);
@@ -134,15 +134,15 @@ namespace HyprNetworkManager.UI.Views {
             timeout_col.append (timeout_label);
             timeout_col.append (timeout_dropdown);
 
-            if (nm.has_create_ap ()) {
+            if (controller.has_create_ap ()) {
                 // Uplink Interface col
                 var uplink_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
                 var uplink_label = new Gtk.Label (_("Share Internet From"));
                 MainWindowCssClassResolver.add_best_class (uplink_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
                 uplink_label.xalign = 0;
-                
+
                 this.uplink_model = new Gtk.StringList (new string[] { _("Auto"), _("None") });
-                foreach (var iface in nm.get_all_interfaces ()) {
+                foreach (var iface in controller.get_all_interfaces ()) {
                     this.uplink_model.append (iface);
                 }
                 uplink_interface_dropdown = window_host.create_tracked_dropdown (this.uplink_model);
@@ -264,7 +264,7 @@ namespace HyprNetworkManager.UI.Views {
             row2_box.append (band_col);
             form_box.append (row2_box);
             
-            if (nm.has_create_ap ()) {
+            if (controller.has_create_ap ()) {
                 // --- ROW 3 ---
                 var row3_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_SECTION);
                 row3_box.homogeneous = true;
@@ -493,11 +493,11 @@ namespace HyprNetworkManager.UI.Views {
             }
 
             uint generation = ++band_query_generation;
-            nm.get_wifi_band_support_async.begin (ap_iface, null, (obj, res) => {
+            controller.get_band_support.begin (ap_iface, (obj, res) => {
                 WifiBandSupport support;
 
                 try {
-                    support = nm.get_wifi_band_support_async.end (res);
+                    support = controller.get_band_support.end (res);
                 } catch (Error e) {
                     log_warn ("hotspot-ui",
                         "rebuild_band_options: band query failed: " + e.message);
@@ -587,6 +587,18 @@ namespace HyprNetworkManager.UI.Views {
             return this.uplink_model.get_string (idx);
         }
 
+        private HotspotRequest build_current_request () {
+            return controller.build_request (
+                ssid_entry.get_text ().strip (),
+                password_entry.get_text (),
+                security_dropdown.get_selected (),
+                band_value_token (),
+                hidden_check.active,
+                timeout_dropdown.get_selected (),
+                get_ap_interface_token (),
+                get_uplink_token ());
+        }
+
         private void validate_inputs () {
             if (is_updating) {
                 return;
@@ -598,29 +610,7 @@ namespace HyprNetworkManager.UI.Views {
 
             is_dirty = true;
 
-            string ssid = ssid_entry.get_text ().strip ();
-            string pass = password_entry.get_text ();
-            bool is_open = security_dropdown.get_selected () == 2;
-
-            bool is_valid = ssid != "";
-            if (!is_open && pass.length < 8) {
-                is_valid = false;
-            }
-
-            if (!nm.has_create_ap () && ap_interface_dropdown != null && uplink_interface_dropdown != null && ap_model != null && uplink_model != null) {
-                uint ap_idx = ap_interface_dropdown.get_selected ();
-                uint up_idx = uplink_interface_dropdown.get_selected ();
-                
-                if (ap_idx > 0 && up_idx > 1) {
-                    string ap_iface = ap_model.get_string (ap_idx);
-                    string up_iface = uplink_model.get_string (up_idx);
-                    if (ap_iface == up_iface) {
-                        is_valid = false;
-                    }
-                }
-            }
-
-            save_button.sensitive = is_valid;
+            save_button.sensitive = controller.is_valid (build_current_request ());
         }
 
         private void on_toggle_switch_changed () {
@@ -662,54 +652,17 @@ namespace HyprNetworkManager.UI.Views {
 
         private async void save_configuration () {
             save_button.sensitive = false;
-            string ssid = ssid_entry.get_text ().strip ();
-            string pass = password_entry.get_text ();
-            
-            uint sec_index = security_dropdown.get_selected ();
-            string security = "wpa-psk";
-            if (sec_index == 0) security = "sae";
-            else if (sec_index == 2) security = "none";
-            
-            string band = band_value_token ();
-            
-            bool is_hidden = hidden_check.active;
-            
-            uint timeout_index = timeout_dropdown.get_selected ();
-            int timeout = 0;
-            if (timeout_index == 1) timeout = 5;
-            else if (timeout_index == 2) timeout = 10;
-            else if (timeout_index == 3) timeout = 30;
-            else if (timeout_index == 4) timeout = 60;
-            
-            string ap_iface = get_ap_interface_token ();
-            string up_iface = get_uplink_token ();
-            
-            if (ssid == "") {
+            HotspotRequest req = build_current_request ();
+
+            if (!controller.is_valid (req)) {
                 validate_inputs ();
                 return;
             }
-            if (security != "none" && pass.length < 8) {
-                warning ("Password must be at least 8 characters");
-                validate_inputs ();
-                return;
-            }
-            if (!nm.has_create_ap () && ap_interface_dropdown != null && uplink_interface_dropdown != null) {
-                if (ap_interface_dropdown.get_selected () > 0 && uplink_interface_dropdown.get_selected () > 1) {
-                    if (ap_iface == up_iface) {
-                        warning ("AP and Uplink interfaces cannot be the same");
-                        validate_inputs ();
-                        return;
-                    }
-                }
-            }
-            
+
             try {
-                yield nm.create_or_update_hotspot (ssid, pass, security, band, is_hidden, timeout, ap_iface, up_iface);
-                
-                // After successful save, we don't need to refresh the entries
-                // since they already contain the typed configuration.
-                // We just refresh the toggle status in case anything else changed.
-                var config = yield nm.get_hotspot_status ();
+                yield controller.save_configuration (req);
+
+                var config = yield controller.get_status ();
                 is_dirty = false;
                 is_updating = true;
                 toggle_switch.active = config.is_active;
@@ -718,7 +671,7 @@ namespace HyprNetworkManager.UI.Views {
                 update_qr_code (config);
             } catch (Error e) {
                 warning ("Failed to save hotspot configuration: " + e.message);
-                perform_refresh (); // Only refresh if it failed to revert to actual state
+                perform_refresh ();
                 validate_inputs ();
             }
         }
@@ -726,48 +679,11 @@ namespace HyprNetworkManager.UI.Views {
         private async void enable_hotspot () {
             toggle_switch.sensitive = false;
             try {
-                // auto save if there are changes
-                string ssid = ssid_entry.get_text ().strip ();
-                string pass = password_entry.get_text ();
-                
-                uint sec_index = security_dropdown.get_selected ();
-                string security = "wpa-psk";
-                if (sec_index == 0) security = "sae";
-                else if (sec_index == 2) security = "none";
-                
-                string band = band_value_token ();
-                
-                bool is_hidden = hidden_check.active;
-                
-                uint timeout_index = timeout_dropdown.get_selected ();
-                int timeout = 0;
-                if (timeout_index == 1) timeout = 5;
-                else if (timeout_index == 2) timeout = 10;
-                else if (timeout_index == 3) timeout = 30;
-                else if (timeout_index == 4) timeout = 60;
-                
-                string ap_iface = get_ap_interface_token ();
-                string up_iface = get_uplink_token ();
-                
-                if (ssid == "") {
-                    throw new IOError.INVALID_ARGUMENT("SSID cannot be empty");
-                }
-                if (security != "none" && pass.length < 8) {
-                    throw new IOError.INVALID_ARGUMENT("Password must be at least 8 characters");
-                }
-                if (!nm.has_create_ap () && ap_interface_dropdown != null && uplink_interface_dropdown != null) {
-                    if (ap_interface_dropdown.get_selected () > 0 && uplink_interface_dropdown.get_selected () > 1) {
-                        if (ap_iface == up_iface) {
-                            throw new IOError.INVALID_ARGUMENT("AP and Uplink interfaces cannot be the same");
-                        }
-                    }
-                }
-
-                yield nm.enable_hotspot_async (ssid, pass, security, band, is_hidden, timeout, ap_iface, up_iface);
+                yield controller.enable_hotspot (build_current_request ());
                 is_dirty = false;
             } catch (Error e) {
                 warning ("Failed to enable hotspot: " + e.message);
-                
+
                 is_updating = true;
                 toggle_switch.active = false;
                 is_updating = false;
@@ -775,14 +691,14 @@ namespace HyprNetworkManager.UI.Views {
             toggle_switch.sensitive = true;
             perform_refresh ();
         }
-        
+
         private async void disable_hotspot () {
             toggle_switch.sensitive = false;
             try {
-                yield nm.disable_hotspot_async ();
+                yield controller.disable_hotspot ();
             } catch (Error e) {
                 warning ("Failed to disable hotspot: " + e.message);
-                
+
                 is_updating = true;
                 toggle_switch.active = true;
                 is_updating = false;
@@ -799,7 +715,7 @@ namespace HyprNetworkManager.UI.Views {
 
         private async void fetch_status () {
             try {
-                var config = yield nm.get_hotspot_status ();
+                var config = yield controller.get_status ();
 
                 is_updating = true;
 

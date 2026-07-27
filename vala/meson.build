@@ -108,6 +108,7 @@ executable(
     'src/ui/controllers/ethernet/main_window_ethernet_details_edit_controller.vala',
     'src/ui/controllers/ethernet/main_window_ethernet_controller.vala',
     'src/ui/controllers/vpn/main_window_vpn_controller.vala',
+    'src/ui/controllers/hotspot/main_window_hotspot_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_controller.vala',
     'src/ui/controllers/main_window_refresh_coordinator.vala',
     'src/ui/controllers/main_window_flight_mode_controller.vala',
