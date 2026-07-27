@@ -18,6 +18,15 @@
 using GLib;
 
 namespace NmWifiUtils {
+    public NM.DeviceWifi? primary_wifi_device (NM.Client client) {
+        foreach (var dev in client.get_devices ()) {
+            if (dev is NM.DeviceWifi) {
+                return (NM.DeviceWifi) dev;
+            }
+        }
+        return null;
+    }
+
     public string bytes_to_ssid (Bytes? value) {
         if (value == null) {
             return "";

@@ -33,6 +33,18 @@ public class WifiRefreshData : GLib.Object {
     }
 }
 
+public class WifiScanData : GLib.Object {
+    public WifiNetwork[] networks;
+    public NetworkDevice[] devices;
+    public int num_wifi_devices;
+
+    public WifiScanData (WifiNetwork[] networks_in, NetworkDevice[] devices_in, int num_wifi_devices = 0) {
+        networks = networks_in;
+        devices = devices_in;
+        this.num_wifi_devices = num_wifi_devices;
+    }
+}
+
 public class WifiBandSupport : GLib.Object {
     public bool supports_2ghz;
     public bool supports_5ghz;
@@ -56,7 +68,11 @@ private class NmSignalSubscription {
 public class NetworkManagerClient : GLib.Object {
     public NM.Client nm_client;
 
-    private NmWifiClient wifi_client;
+    private WifiScannerService wifi_scanner;
+    private SavedProfileService saved_profiles;
+    private SecretsService secrets;
+    private HotspotService hotspot;
+    private Nl80211ApMonitor ap_monitor;
     private NmEthernetClient ethernet_client;
     private NmVpnClient vpn_client;
     private bool nm_signals_active = false;
@@ -86,7 +102,11 @@ public class NetworkManagerClient : GLib.Object {
             log_error ("nm-client", "Failed to initialize NM.Client: " + e.message);
             throw e;
         }
-        wifi_client = new NmWifiClient (this);
+        ap_monitor = new Nl80211ApMonitor (this);
+        secrets = new SecretsService (this);
+        hotspot = new HotspotService (this, ap_monitor);
+        wifi_scanner = new WifiScannerService (this);
+        saved_profiles = new SavedProfileService (this, secrets);
         ethernet_client = new NmEthernetClient (this);
         vpn_client = new NmVpnClient (this);
     }
@@ -260,18 +280,24 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public async WifiRefreshData get_wifi_refresh_data (Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.get_refresh_data (cancellable);
+        var scan = yield wifi_scanner.scan_networks (cancellable);
+        var hotspot_config = yield hotspot.get_hotspot_status (cancellable);
+        return new WifiRefreshData (
+            scan.networks,
+            scan.devices,
+            hotspot_config.is_active,
+            scan.num_wifi_devices);
     }
 
     public async WifiSavedProfile[] get_saved_wifi_profiles (Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.get_saved_profiles (cancellable);
+        return yield saved_profiles.get_saved_profiles (cancellable);
     }
 
     public async NetworkIpSettings get_wifi_network_ip_settings (
         WifiNetwork network,
         Cancellable? cancellable = null
     ) {
-        return yield wifi_client.get_network_ip_settings (network, cancellable);
+        return yield saved_profiles.get_network_ip_settings (network, cancellable);
     }
 
     public async bool update_wifi_network_settings (
@@ -279,7 +305,7 @@ public class NetworkManagerClient : GLib.Object {
         WifiNetworkUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.update_network_settings (
+        return yield saved_profiles.update_network_settings (
             network,
             request,
             cancellable
@@ -290,7 +316,7 @@ public class NetworkManagerClient : GLib.Object {
         WifiSavedProfile profile,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.get_saved_profile_settings (profile, cancellable);
+        return yield saved_profiles.get_saved_profile_settings (profile, cancellable);
     }
 
     public async string? get_wifi_password (
@@ -298,7 +324,7 @@ public class NetworkManagerClient : GLib.Object {
         Cancellable? cancellable = null,
         out string? read_failure
     ) {
-        return yield wifi_client.get_wifi_password (connection_uuid, cancellable, out read_failure);
+        return yield secrets.get_wifi_password (connection_uuid, cancellable, out read_failure);
     }
 
     public async bool update_saved_wifi_profile_settings (
@@ -306,7 +332,7 @@ public class NetworkManagerClient : GLib.Object {
         WifiSavedProfileUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.update_saved_profile_settings (profile, request, cancellable);
+        return yield saved_profiles.update_saved_profile_settings (profile, request, cancellable);
     }
 
     public async bool update_saved_wifi_profile_network_settings (
@@ -314,7 +340,7 @@ public class NetworkManagerClient : GLib.Object {
         WifiNetworkUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.update_saved_profile_network_settings (profile, request, cancellable);
+        return yield saved_profiles.update_saved_profile_network_settings (profile, request, cancellable);
     }
 
     public async bool connect_ethernet_device (
@@ -383,7 +409,7 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public async bool connect_saved_wifi (WifiNetwork network, Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.connect_saved (network, cancellable);
+        return yield saved_profiles.connect_saved (network, cancellable);
     }
 
     public async bool connect_wifi (
@@ -392,7 +418,7 @@ public class NetworkManagerClient : GLib.Object {
         bool autoconnect = true,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.connect (network, password, autoconnect, cancellable);
+        return yield saved_profiles.connect (network, password, autoconnect, cancellable);
     }
 
     public async bool connect_wifi_with_password (
@@ -401,7 +427,7 @@ public class NetworkManagerClient : GLib.Object {
         bool autoconnect = true,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.connect_with_password (network, password, autoconnect, cancellable);
+        return yield saved_profiles.connect_with_password (network, password, autoconnect, cancellable);
     }
 
     public async bool connect_hidden_wifi (
@@ -410,11 +436,11 @@ public class NetworkManagerClient : GLib.Object {
         string password,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.connect_hidden_network (ssid, security_mode, password, cancellable);
+        return yield saved_profiles.connect_hidden_network (ssid, security_mode, password, cancellable);
     }
 
     public async bool disconnect_wifi (WifiNetwork network, Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.disconnect (network, cancellable);
+        return yield saved_profiles.disconnect (network, cancellable);
     }
 
     public async bool forget_network (
@@ -422,7 +448,7 @@ public class NetworkManagerClient : GLib.Object {
         string network_key,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.forget_network (profile_uuid, network_key, cancellable);
+        return yield saved_profiles.forget_network (profile_uuid, network_key, cancellable);
     }
 
     public async bool set_wifi_network_autoconnect (
@@ -431,7 +457,7 @@ public class NetworkManagerClient : GLib.Object {
         int32 priority = 10,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield wifi_client.set_network_autoconnect (network, enabled, priority, cancellable);
+        return yield saved_profiles.set_network_autoconnect (network, enabled, priority, cancellable);
     }
 
     public async bool connect_vpn (string name, Cancellable? cancellable = null) throws Error {
@@ -476,19 +502,19 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public async bool scan_wifi (Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.scan (cancellable);
+        return yield wifi_scanner.scan (cancellable);
     }
 
     public async HyprNetworkManager.Models.HotspotConfig get_hotspot_status (Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.get_hotspot_status (cancellable);
+        return yield hotspot.get_hotspot_status (cancellable);
     }
 
     public async void create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
-        yield wifi_client.create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
+        yield hotspot.create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
     }
 
     public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.enable_hotspot_async (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
+        return yield hotspot.enable_hotspot_async (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
     }
 
     public string[] get_all_interfaces () {
@@ -607,7 +633,7 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {
-        return yield wifi_client.disable_hotspot_async (cancellable);
+        return yield hotspot.disable_hotspot_async (cancellable);
     }
 
     public async string get_status_json_dbus (Cancellable? cancellable = null) {
