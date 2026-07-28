@@ -61,12 +61,18 @@ public class Nl80211ApMonitor : GLib.Object {
         MainContext caller_context = MainContext.ref_thread_default ();
 
         new Thread<void*> ("nl80211-ap-query", () => {
-            if (query == Query.ACTIVE) {
-                result = Nl80211.ap_active_by_iface (iface, out value);
-            } else {
-                result = Nl80211.ap_station_count_by_iface (iface, out value);
+            try {
+                if (query == Query.ACTIVE) {
+                    result = Nl80211.ap_active_by_iface (iface, out value);
+                } else {
+                    result = Nl80211.ap_station_count_by_iface (iface, out value);
+                }
+            } catch (Error e) {
+                result = -1;
+                core.debug_log ("nl80211 AP query raised: " + e.message);
+            } finally {
+                caller_context.invoke ((owned) resume);
             }
-            caller_context.invoke ((owned) resume);
             return null;
         });
 

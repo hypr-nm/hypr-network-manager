@@ -554,11 +554,18 @@ public class NetworkManagerClient : GLib.Object {
         MainContext caller_context = MainContext.ref_thread_default ();
 
         new Thread<void*> ("nl80211-band-query", () => {
-            result = Nl80211.band_support_by_iface (
-                resolved_iface,
-                out supports_2ghz,
-                out supports_5ghz);
-            caller_context.invoke ((owned) resume);
+            try {
+                result = Nl80211.band_support_by_iface (
+                    resolved_iface,
+                    out supports_2ghz,
+                    out supports_5ghz);
+            } catch (Error e) {
+                result = -1;
+                log_debug ("nm-client",
+                    "get_wifi_band_support_async: nl80211 query raised: %s".printf (e.message));
+            } finally {
+                caller_context.invoke ((owned) resume);
+            }
             return null;
         });
 
