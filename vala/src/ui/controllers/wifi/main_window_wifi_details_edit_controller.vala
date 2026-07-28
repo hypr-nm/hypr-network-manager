@@ -149,7 +149,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                         }
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
-                        host.show_edit_page_error ("Reconnect after edit failed: " + e.message);
+                        host.show_edit_page_error (_("Reconnect after edit failed: %s").printf (e.message));
                         host.refresh_after_action (false);
                     }
                 });
@@ -309,7 +309,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                     if (is_cancelled_error (e)) {
                         return;
                     }
-                    host.show_edit_page_error ("Apply failed: " + e.message);
+                    host.show_edit_page_error (_("Apply failed: %s").printf (e.message));
                     return;
                 }
 
@@ -337,7 +337,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
                         if (is_cancelled_error (e)) {
                             return;
                         }
-                        host.show_edit_page_error ("Disconnect before reconnect failed: " + e.message);
+                        host.show_edit_page_error (_("Disconnect before reconnect failed: %s").printf (e.message));
                         return;
                     }
 

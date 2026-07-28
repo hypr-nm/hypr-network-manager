@@ -650,6 +650,7 @@ namespace HyprNetworkManager.UI.Views {
             HotspotRequest req = build_current_request ();
 
             if (!controller.is_valid (req)) {
+                window_host.show_error (controller.validation_message (req));
                 validate_inputs ();
                 return;
             }
@@ -665,7 +666,7 @@ namespace HyprNetworkManager.UI.Views {
                 update_sensitivity (config.is_active);
                 update_qr_code (config);
             } catch (Error e) {
-                warning ("Failed to save hotspot configuration: " + e.message);
+                window_host.show_error (_("Failed to save hotspot configuration: %s").printf (e.message));
                 perform_refresh ();
                 validate_inputs ();
             }
@@ -677,8 +678,7 @@ namespace HyprNetworkManager.UI.Views {
                 yield controller.enable_hotspot (build_current_request ());
                 is_dirty = false;
             } catch (Error e) {
-                warning ("Failed to enable hotspot: " + e.message);
-
+                window_host.show_error (_("Failed to enable hotspot: %s").printf (e.message));
                 is_updating = true;
                 toggle_switch.active = false;
                 is_updating = false;
@@ -692,8 +692,7 @@ namespace HyprNetworkManager.UI.Views {
             try {
                 yield controller.disable_hotspot ();
             } catch (Error e) {
-                warning ("Failed to disable hotspot: " + e.message);
-
+                window_host.show_error (_("Failed to disable hotspot: %s").printf (e.message));
                 is_updating = true;
                 toggle_switch.active = true;
                 is_updating = false;

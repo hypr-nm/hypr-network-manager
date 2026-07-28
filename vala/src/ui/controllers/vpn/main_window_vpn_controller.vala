@@ -127,7 +127,7 @@ public class MainWindowVpnController : Object {
                     stack.set_visible_child_name ("details");
                 }
             } catch (Error e) {
-                edit_page.show_error (e.message);
+                edit_page.show_error (_("Apply failed: %s").printf (e.message));
             }
         });
 
@@ -151,7 +151,7 @@ public class MainWindowVpnController : Object {
                 stack.set_visible_child_name ("list");
                 this.refresh ();
             } catch (Error e) {
-                setup_page.show_error (e.message);
+                setup_page.show_error (_("Setup failed: %s").printf (e.message));
             }
         });
     }
