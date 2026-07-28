@@ -627,30 +627,30 @@ public class HotspotService : GLib.Object {
                 bool is_5 = (freq >= 5000);
                 if (resolved_band == "") {
                     if (is_2_4) {
-                        resolved_band = "bg";
+                        resolved_band = WifiBand.BAND_2GHZ;
                     } else if (is_5) {
-                        resolved_band = "a";
+                        resolved_band = WifiBand.BAND_5GHZ;
                     }
                 }
-                if ((resolved_band == "bg" && is_5)
-                    || (resolved_band == "a" && is_2_4)) {
+                if ((resolved_band == WifiBand.BAND_2GHZ && is_5)
+                    || (resolved_band == WifiBand.BAND_5GHZ && is_2_4)) {
                     throw new IOError.INVALID_ARGUMENT (
                         ("Selected hotspot band does not match the active " +
                          "Wi-Fi channel on '%s'.").printf (
                             resolved_ap_iface));
                 }
-                if (resolved_band == "bg" && is_2_4) {
+                if (resolved_band == WifiBand.BAND_2GHZ && is_2_4) {
                     channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
-                } else if (resolved_band == "a" && is_5) {
+                } else if (resolved_band == WifiBand.BAND_5GHZ && is_5) {
                     channel = ((int)freq - 5000) / 5;
                 }
             }
 
             if (channel == 0) {
-                if (resolved_band == "a") {
+                if (resolved_band == WifiBand.BAND_5GHZ) {
                     channel = 36;
                 } else {
-                    resolved_band = (resolved_band == "a") ? "a" : "bg";
+                    resolved_band = (resolved_band == WifiBand.BAND_5GHZ) ? WifiBand.BAND_5GHZ : WifiBand.BAND_2GHZ;
                     channel = 6;
                 }
             }
@@ -660,7 +660,7 @@ public class HotspotService : GLib.Object {
                 write_private_file (pidfile, "");
                 write_private_file (ready_file, "");
                 write_private_file (log_file, "");
-                if (security != "none" && password != "") {
+                if (security != WifiKeyMgmt.NONE && password != "") {
                     write_private_file (passphrase_file, password);
                 } else {
                     remove_runtime_file (passphrase_file);
@@ -682,7 +682,7 @@ public class HotspotService : GLib.Object {
                     log_file,
                     ready_file,
                     gateway,
-                    security != "none" && password != ""
+                    security != WifiKeyMgmt.NONE && password != ""
                         ? passphrase_file
                         : "",
                     security,
@@ -778,9 +778,9 @@ public class HotspotService : GLib.Object {
             var active_ap = dev.get_active_access_point ();
             if (active_ap != null) {
                 uint32 freq = active_ap.get_frequency ();
-                if (band == "bg" && freq >= 2412 && freq <= 2484) {
+                if (band == WifiBand.BAND_2GHZ && freq >= 2412 && freq <= 2484) {
                     channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
-                } else if (band == "a" && freq >= 5000) {
+                } else if (band == WifiBand.BAND_5GHZ && freq >= 5000) {
                     channel = ((int)freq - 5000) / 5;
                 }
             }

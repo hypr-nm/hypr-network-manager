@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 
 public class WifiScannerService : GLib.Object {
@@ -84,7 +85,7 @@ public class WifiScannerService : GLib.Object {
                 }
 
                 bool is_secured = (ap.get_flags () != 0) || (ap.get_wpa_flags () != 0) || (ap.get_rsn_flags () != 0);
-                string network_key = ssid + ":" + (is_secured ? "secured" : "open");
+                string network_key = ssid + ":" + (is_secured ? "secured" : WifiSecurity.OPEN);
 
                 bool saved = false;
                 string saved_uuid = "";

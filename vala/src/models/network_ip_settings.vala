@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class NetworkIpSettings : Object {
     public string configured_password { get; set; default = ""; }
     public string ipv4_method { get; set; default = "auto"; }
@@ -47,15 +48,15 @@ public class WifiSavedProfileSettings : NetworkIpSettings {
     public string profile_name { get; set; default = ""; }
     public string ssid { get; set; default = ""; }
     public string bssid { get; set; default = ""; }
-    public string security_mode { get; set; default = "open"; }
+    public string security_mode { get; set; default = WifiSecurity.OPEN; }
     public bool available_to_all_users { get; set; default = true; }
     public string identity { get; set; default = ""; }
     public string anonymous_identity { get; set; default = ""; }
     public string domain_suffix_match { get; set; default = ""; }
     public string ca_cert { get; set; default = ""; }
     public string ca_cert_password { get; set; default = ""; }
-    public string eap_method { get; set; default = "peap"; }
-    public string phase2_auth { get; set; default = "mschapv2"; }
+    public string eap_method { get; set; default = EapMethod.PEAP; }
+    public string phase2_auth { get; set; default = Phase2Auth.MSCHAPV2; }
     public string user_cert { get; set; default = ""; }
     public string user_cert_password { get; set; default = ""; }
     public string user_private_key { get; set; default = ""; }

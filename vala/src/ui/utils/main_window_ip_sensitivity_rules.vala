@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 namespace MainWindowIpSensitivityRules {
     public bool should_show_manual_fields (uint selected_method) {
         return selected_method == 1;

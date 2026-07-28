@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class NetworkDevice : Object {
     public string name { get; construct set; }
     public string device_path { get; construct set; }
@@ -37,42 +38,42 @@ public class NetworkDevice : Object {
 
     public bool is_connected {
         get {
-            return state == NM_DEVICE_STATE_ACTIVATED;
+            return state == ((uint32) NM.DeviceState.ACTIVATED);
         }
     }
 
     public bool is_connecting {
         get {
-            return state >= 40 && state < NM_DEVICE_STATE_ACTIVATED;
+            return state >= ((uint32) NM.DeviceState.PREPARE) && state < ((uint32) NM.DeviceState.ACTIVATED);
         }
     }
 
     public string state_label {
         owned get {
             switch (state) {
-            case 10:
+            case ((uint32) NM.DeviceState.UNMANAGED):
                 return _("Unknown");
-            case 20:
+            case ((uint32) NM.DeviceState.UNAVAILABLE):
                 return _("Unavailable");
-            case 30:
+            case ((uint32) NM.DeviceState.DISCONNECTED):
                 return _("Disconnected");
-            case 40:
+            case ((uint32) NM.DeviceState.PREPARE):
                 return _("Preparing");
-            case 50:
+            case ((uint32) NM.DeviceState.CONFIG):
                 return _("Configuring");
-            case 60:
+            case ((uint32) NM.DeviceState.NEED_AUTH):
                 return _("Auth required");
-            case 70:
+            case ((uint32) NM.DeviceState.IP_CONFIG):
                 return _("IP configuring");
-            case 80:
+            case ((uint32) NM.DeviceState.IP_CHECK):
                 return _("IP checking");
-            case 90:
+            case ((uint32) NM.DeviceState.SECONDARIES):
                 return _("Secondaries");
-            case 100:
+            case ((uint32) NM.DeviceState.ACTIVATED):
                 return _("Connected");
-            case 110:
+            case ((uint32) NM.DeviceState.DEACTIVATING):
                 return _("Disconnecting");
-            case 120:
+            case ((uint32) NM.DeviceState.FAILED):
                 return _("Failed");
             default:
                 return _("State %u").printf (state);

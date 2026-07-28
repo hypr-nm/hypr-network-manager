@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class WifiNetwork : Object {
     public string ssid { get; construct set; }
     public string saved_connection_uuid { get; construct set; }
@@ -36,7 +37,7 @@ public class WifiNetwork : Object {
 
     public string network_key {
         owned get {
-            return ssid + ":" + (is_secured ? "secured" : "open");
+            return ssid + ":" + (is_secured ? "secured" : WifiSecurity.OPEN);
         }
     }
 

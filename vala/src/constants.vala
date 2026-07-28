@@ -32,10 +32,149 @@ const string NM_CONN_IFACE = "org.freedesktop.NetworkManager.Settings.Connection
 const int NM_DBUS_TIMEOUT_MS = 20000;
 const uint32 NM_DEVICE_TYPE_ETHERNET = 1;
 const uint32 NM_DEVICE_TYPE_WIFI = 2;
-const uint32 NM_DEVICE_STATE_UNAVAILABLE = 20;
-const uint32 NM_DEVICE_STATE_DISCONNECTED = 30;
-const uint32 NM_DEVICE_STATE_ACTIVATED = 100;
-const uint32 NM_DEVICE_STATE_FAILED = 120;
 const uint32 NM_80211_AP_SEC_KEY_MGMT_PSK = 0x00000100;
 const uint32 NM_80211_AP_SEC_KEY_MGMT_SAE = 0x00000400;
 const uint32 NM_DAEMON_TIMEOUT_MS = 2000;
+
+namespace Constants {
+    namespace VpnState {
+        public const string ACTIVATED = "activated";
+        public const string CONNECTED = "connected";
+        public const string ACTIVATING = "activating";
+        public const string DEACTIVATING = "deactivating";
+        public const string DEACTIVATED = "deactivated";
+        public const string UNKNOWN = "unknown";
+    }
+
+    namespace WifiKeyMgmt {
+        public const string NONE = "none";
+        public const string WPA_PSK = "wpa-psk";
+        public const string SAE = "sae";
+        public const string WPA_EAP = "wpa-eap";
+        public const string OWE = "owe";
+    }
+
+    namespace WifiSecurity {
+        public const string OPEN = "open";
+        public const string WEP = "wep";
+    }
+
+    namespace WifiBand {
+        public const string BAND_2GHZ = "bg";
+        public const string BAND_5GHZ = "a";
+    }
+
+    namespace EapMethod {
+        public const string PEAP = "peap";
+        public const string TLS = "tls";
+        public const string TTLS = "ttls";
+        public const string PWD = "pwd";
+    }
+
+    namespace Phase2Auth {
+        public const string MSCHAPV2 = "mschapv2";
+        public const string MD5 = "md5";
+        public const string GTC = "gtc";
+        public const string PAP = "pap";
+        public const string CHAP = "chap";
+    }
+
+    namespace IpMethod {
+        public const string AUTO = "auto";
+        public const string MANUAL = "manual";
+        public const string DISABLED = "disabled";
+        public const string SHARED = "shared";
+        public const string LINK_LOCAL = "link-local";
+        public const string IGNORE = "ignore";
+        public const string DHCP = "dhcp";
+    }
+
+    namespace VpnType {
+        public const string WIREGUARD = "wireguard";
+        public const string OPENVPN = "openvpn";
+        public const string GENERIC = "vpn";
+        public const string TUN = "tun";
+        public const string IP_TUNNEL = "ip-tunnel";
+    }
+
+    namespace ConnectionType {
+        public const string WIFI_ALIAS = "wifi";
+    }
+
+    namespace NetworkInterface {
+        public const string AUTO = "Auto";
+        public const string NONE = "None";
+        public const string LOOPBACK = "lo";
+    }
+
+    namespace AppPage {
+        public const string LIST = "list";
+        public const string DETAILS = "details";
+        public const string EDIT = "edit";
+        public const string ADD = "add";
+        public const string SETUP = "setup";
+        public const string SHARE = "share";
+        public const string SAVED = "saved";
+        public const string SAVED_EDIT = "saved-edit";
+        public const string PEER_EDIT = "peer_edit";
+        public const string HOTSPOT = "hotspot";
+        public const string HOTSPOT_ACTIVE = "hotspot-active";
+        public const string MAIN = "main";
+        public const string PROFILES = "profiles";
+        public const string VPN = "vpn";
+        public const string EMPTY = "empty";
+    }
+
+    namespace WifiState {
+        public const string FLIGHT_MODE = "flight-mode";
+        public const string DISABLED = "wifi-disabled";
+    }
+
+    namespace WifiMode {
+        public const string AP = "ap";
+    }
+
+    namespace Protocol {
+        public const string TCP = "tcp";
+        public const string UDP = "udp";
+    }
+
+    namespace HotspotMarker {
+        public const string READY = "ready";
+    }
+
+    namespace Keyval {
+        public const string ESCAPE = "Escape";
+    }
+
+    namespace CssFile {
+        public const string STRUCTURE = "structure.css";
+        public const string CORE_COMPONENTS = "core-components.css";
+    }
+
+    namespace LayerShellAnchor {
+        public const string TOP = "top";
+        public const string BOTTOM = "bottom";
+        public const string LEFT = "left";
+        public const string RIGHT = "right";
+        public const string TOP_LEFT = "top-left";
+        public const string TOP_RIGHT = "top-right";
+        public const string BOTTOM_LEFT = "bottom-left";
+        public const string BOTTOM_RIGHT = "bottom-right";
+    }
+
+    namespace LayerShellLayer {
+        public const string BACKGROUND = "background";
+        public const string OVERLAY = "overlay";
+    }
+
+    namespace LogLevel {
+        public const string DEBUG = "debug";
+        public const string INFO = "info";
+        public const string MESSAGE = "message";
+        public const string WARN = "warn";
+        public const string WARNING = "warning";
+        public const string ERROR = "error";
+        public const string CRITICAL = "critical";
+    }
+}

@@ -7,6 +7,7 @@
  * (at your option) any later version.
  */
 
+using Constants;
 using GLib;
 using HyprNetworkManager.Models;
 

@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 namespace MainWindowCssClasses {
     // Structural & Pages
     public const string PAGE = "nm-page";

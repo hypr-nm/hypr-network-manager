@@ -22,6 +22,7 @@
 // https://github.com/ErikReider/SwayNotificationCenter
 // Original license: GPL-3.0
 
+using Constants;
 using GLib;
 using Gtk;
 using Gdk;

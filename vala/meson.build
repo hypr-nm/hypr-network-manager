@@ -180,6 +180,7 @@ nm_hotspot_profile_test = executable(
   'test-nm-hotspot-profile',
   [
     'tests/test_nm_hotspot_profile.vala',
+    'src/constants.vala',
     'src/backend/utils/nm_hotspot_utils.vala',
   ],
   dependencies: [gio_dep, libnm_dep],
@@ -202,6 +203,7 @@ hotspot_config_storage_test = executable(
   'test-hotspot-config-storage',
   [
     'tests/test_hotspot_config_storage.vala',
+    'src/constants.vala',
     'src/models/hotspot_config.vala',
     'src/backend/hotspot_config_storage.vala',
   ],

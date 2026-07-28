@@ -16,6 +16,7 @@
  */
 
 // SPDX-License-Identifier: GPL-3.0-or-later
+using Constants;
 using GLib;
 using Gtk;
 using HyprNetworkManager.Models;
@@ -342,7 +343,7 @@ namespace HyprNetworkManager.UI.Views {
                 qr_text = "HOTSPOT:STARTING";
             } else {
                 string security = "WPA";
-                if (config.security == "none") {
+                if (config.security == WifiKeyMgmt.NONE) {
                     security = "nopass";
                 }
 
@@ -550,10 +551,10 @@ namespace HyprNetworkManager.UI.Views {
 
         private static string token_to_band_value (string label) {
             if (label == "2.4 GHz") {
-                return "bg";
+                return WifiBand.BAND_2GHZ;
             }
             if (label == "5 GHz") {
-                return "a";
+                return WifiBand.BAND_5GHZ;
             }
             return "";
         }
@@ -727,15 +728,15 @@ namespace HyprNetworkManager.UI.Views {
                         password_entry.set_text (config.password);
                     }
 
-                    if (config.security == "sae") {
+                    if (config.security == WifiKeyMgmt.SAE) {
                         security_dropdown.set_selected (0);
-                    } else if (config.security == "none") {
+                    } else if (config.security == WifiKeyMgmt.NONE) {
                         security_dropdown.set_selected (2);
                     } else {
                         security_dropdown.set_selected (1);
                     }
 
-                    if (config.band == "bg" || config.band == "a") {
+                    if (config.band == WifiBand.BAND_2GHZ || config.band == WifiBand.BAND_5GHZ) {
                         band_dropdown.set_selected (band_index_for_value (config.band));
                     } else {
                         band_dropdown.set_selected (0);

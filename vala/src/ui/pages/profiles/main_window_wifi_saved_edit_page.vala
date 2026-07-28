@@ -15,32 +15,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using Gtk;
 using HyprNetworkManager.UI.Interfaces;
 
 public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     private static string[] security_mode_keys = {
-        "open",
-        "wpa-psk",
-        "sae",
-        "owe",
-        "wep",
-        "wpa-eap"
+        WifiSecurity.OPEN,
+        WifiKeyMgmt.WPA_PSK,
+        WifiKeyMgmt.SAE,
+        WifiKeyMgmt.OWE,
+        WifiSecurity.WEP,
+        WifiKeyMgmt.WPA_EAP
     };
 
     private static string[] eap_method_keys = {
-        "peap",
-        "tls",
-        "ttls",
-        "pwd"
+        EapMethod.PEAP,
+        EapMethod.TLS,
+        EapMethod.TTLS,
+        EapMethod.PWD
     };
 
     private static string[] phase2_auth_keys = {
-        "mschapv2",
-        "md5",
-        "gtc",
-        "pap",
-        "chap"
+        Phase2Auth.MSCHAPV2,
+        Phase2Auth.MD5,
+        Phase2Auth.GTC,
+        Phase2Auth.PAP,
+        Phase2Auth.CHAP
     };
 
     public Gtk.Label title_label { get; set; }
@@ -261,7 +262,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public string get_selected_security_mode_key () {
         uint idx = this.security_mode_dropdown.get_selected ();
         if (idx >= security_mode_keys.length) {
-            return "open";
+            return WifiSecurity.OPEN;
         }
         return security_mode_keys[idx];
     }
@@ -282,7 +283,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public string get_selected_eap_method_key () {
         uint idx = this.eap_method_dropdown.get_selected ();
         if (idx >= eap_method_keys.length) {
-            return "peap";
+            return EapMethod.PEAP;
         }
         return eap_method_keys[idx];
     }
@@ -303,7 +304,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
     public string get_selected_phase2_auth_key () {
         uint idx = this.phase2_auth_dropdown.get_selected ();
         if (idx >= phase2_auth_keys.length) {
-            return "mschapv2";
+            return Phase2Auth.MSCHAPV2;
         }
         return phase2_auth_keys[idx];
     }
@@ -323,7 +324,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
     public void sync_eap_field_visibilities () {
         string selected_mode = this.get_selected_security_mode_key ();
-        bool is_eap = selected_mode == "wpa-eap";
+        bool is_eap = selected_mode == WifiKeyMgmt.WPA_EAP;
 
         if (!is_eap) {
             if (this.identity_label != null) this.identity_label.set_visible (false);
@@ -355,18 +356,18 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         string eap_method = this.get_selected_eap_method_key ();
         
-        bool show_identity = eap_method == "peap" || eap_method == "tls" || eap_method == "ttls" || eap_method == "pwd";
-        bool show_anonymous_identity = eap_method == "peap" || eap_method == "ttls";
-        bool show_domain = eap_method == "peap" || eap_method == "tls";
-        bool show_ca_cert = eap_method == "peap" || eap_method == "tls" || eap_method == "ttls";
-        bool show_user_cert = eap_method == "tls";
-        bool show_user_private_key = eap_method == "tls";
-        bool show_user_private_key_password = eap_method == "tls";
-        bool show_phase2_auth = eap_method == "peap" || eap_method == "ttls";
-        bool show_password = eap_method == "peap" || eap_method == "ttls" || eap_method == "pwd";
+        bool show_identity = eap_method == EapMethod.PEAP || eap_method == EapMethod.TLS || eap_method == EapMethod.TTLS || eap_method == EapMethod.PWD;
+        bool show_anonymous_identity = eap_method == EapMethod.PEAP || eap_method == EapMethod.TTLS;
+        bool show_domain = eap_method == EapMethod.PEAP || eap_method == EapMethod.TLS;
+        bool show_ca_cert = eap_method == EapMethod.PEAP || eap_method == EapMethod.TLS || eap_method == EapMethod.TTLS;
+        bool show_user_cert = eap_method == EapMethod.TLS;
+        bool show_user_private_key = eap_method == EapMethod.TLS;
+        bool show_user_private_key_password = eap_method == EapMethod.TLS;
+        bool show_phase2_auth = eap_method == EapMethod.PEAP || eap_method == EapMethod.TTLS;
+        bool show_password = eap_method == EapMethod.PEAP || eap_method == EapMethod.TTLS || eap_method == EapMethod.PWD;
 
         if (this.identity_label != null) {
-            this.identity_label.set_text (eap_method == "tls" ? _("Identity") : _("Username"));
+            this.identity_label.set_text (eap_method == EapMethod.TLS ? _("Identity") : _("Username"));
             this.identity_label.set_visible (show_identity);
         }
         if (this.identity_entry != null) this.identity_entry.set_visible (show_identity);

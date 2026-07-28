@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public enum HiddenWifiSecurityMode {
     OPEN,
     WPA_PSK,
@@ -134,15 +135,15 @@ public class HiddenWifiSecurityModeUtils : Object {
         case HiddenWifiSecurityMode.OPEN:
             return "";
         case HiddenWifiSecurityMode.WPA_PSK:
-            return "wpa-psk";
+            return WifiKeyMgmt.WPA_PSK;
         case HiddenWifiSecurityMode.SAE:
-            return "sae";
+            return WifiKeyMgmt.SAE;
         case HiddenWifiSecurityMode.WPA_PSK_SAE:
-            return "wpa-psk";
+            return WifiKeyMgmt.WPA_PSK;
         case HiddenWifiSecurityMode.WEP:
-            return "none";
+            return WifiKeyMgmt.NONE;
         default:
-            return "wpa-psk";
+            return WifiKeyMgmt.WPA_PSK;
         }
     }
 }

@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 using Gtk;
 
@@ -82,7 +83,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             return false;
         }
 
-        bool is_connecting = dev.state >= 40 && dev.state < NM_DEVICE_STATE_ACTIVATED;
+        bool is_connecting = dev.state >= ((uint32) NM.DeviceState.PREPARE) && dev.state < ((uint32) NM.DeviceState.ACTIVATED);
         return !is_connecting;
     }
 

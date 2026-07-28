@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class VpnConnection : Object {
     public string uuid { get; construct set; }
     public string name { get; construct set; }

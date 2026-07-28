@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class MainWindowEthernetConnectionController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
@@ -109,7 +110,7 @@ public class MainWindowEthernetConnectionController : Object {
     public bool can_connect_with_profile (NetworkDevice dev) {
         return is_networking_enabled ()
             && has_saved_profile (dev)
-            && dev.state != NM_DEVICE_STATE_UNAVAILABLE;
+            && dev.state != ((uint32) NM.DeviceState.UNAVAILABLE);
     }
 
     public void track_pending_action (

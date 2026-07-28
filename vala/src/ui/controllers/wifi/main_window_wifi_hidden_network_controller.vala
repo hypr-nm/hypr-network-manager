@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class MainWindowWifiHiddenNetworkController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;

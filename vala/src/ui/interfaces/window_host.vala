@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 namespace HyprNetworkManager.UI.Interfaces {
     public delegate HyprNetworkManager.UI.Widgets.TrackedDropDown TrackedDropDownFactory (
         owned Gtk.StringList model

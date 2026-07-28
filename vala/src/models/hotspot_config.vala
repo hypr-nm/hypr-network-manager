@@ -17,6 +17,7 @@
 
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+using Constants;
 namespace HyprNetworkManager.Models {
     public class HotspotConfig : GLib.Object {
         public string ssid { get; set; }
@@ -24,8 +25,8 @@ namespace HyprNetworkManager.Models {
         public bool is_active { get; set; }
         public bool is_starting { get; set; }
         public string connection_uuid { get; set; }
-        public string security { get; set; } // "none", "wpa-psk", "sae"
-        public string band { get; set; } // "", "bg", "a"
+        public string security { get; set; } // "none", WifiKeyMgmt.WPA_PSK, WifiKeyMgmt.SAE
+        public string band { get; set; } // "", WifiBand.BAND_2GHZ, WifiBand.BAND_5GHZ
         public bool supports_2ghz { get; set; }
         public bool supports_5ghz { get; set; }
         public bool is_hidden { get; set; }
@@ -40,7 +41,7 @@ namespace HyprNetworkManager.Models {
             is_active = false;
             is_starting = false;
             connection_uuid = "";
-            security = "wpa-psk";
+            security = WifiKeyMgmt.WPA_PSK;
             band = "";
             supports_2ghz = false;
             supports_5ghz = false;

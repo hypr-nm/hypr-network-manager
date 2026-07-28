@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class MainWindowWifiRefreshController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
@@ -141,7 +142,7 @@ public class MainWindowWifiRefreshController : Object {
 
                     uint? device_state = wifi_device_states.lookup (net.device_path);
                     bool is_fully_activated = device_state != null
-                        && device_state == NM_DEVICE_STATE_ACTIVATED;
+                        && device_state == ((uint32) NM.DeviceState.ACTIVATED);
                     if (!is_fully_activated) {
                         continue;
                     }
@@ -197,16 +198,16 @@ public class MainWindowWifiRefreshController : Object {
                         continue;
                     }
 
-                    bool is_connecting_state = matched_device.state >= 40
-                        && matched_device.state < NM_DEVICE_STATE_ACTIVATED;
+                    bool is_connecting_state = matched_device.state >= ((uint32) NM.DeviceState.PREPARE)
+                        && matched_device.state < ((uint32) NM.DeviceState.ACTIVATED);
                     if (is_connecting_state) {
                         state_context.pending_wifi_seen_connecting.insert (net_key, true);
                         continue;
                     }
 
-                    bool activated_on_other_network = matched_device.state == NM_DEVICE_STATE_ACTIVATED
+                    bool activated_on_other_network = matched_device.state == ((uint32) NM.DeviceState.ACTIVATED)
                         && !state_context.active_wifi_connections.contains (net_key);
-                    if (activated_on_other_network || matched_device.state == NM_DEVICE_STATE_FAILED) {
+                    if (activated_on_other_network || matched_device.state == ((uint32) NM.DeviceState.FAILED)) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
                         state_context.mark_wifi_error (net_key, _("Connection failed or interrupted."));
@@ -214,7 +215,7 @@ public class MainWindowWifiRefreshController : Object {
                     }
 
                     if (state_context.pending_wifi_seen_connecting.contains (net_key)
-                        && matched_device.state <= NM_DEVICE_STATE_DISCONNECTED) {
+                        && matched_device.state <= ((uint32) NM.DeviceState.DISCONNECTED)) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
                         state_context.mark_wifi_error (net_key, _("Connection failed."));

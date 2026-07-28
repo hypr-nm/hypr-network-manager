@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class MainWindowVpnController : Object {
     private NetworkManagerClient nm;
     private MainWindowVpnPageBuilder page_builder;

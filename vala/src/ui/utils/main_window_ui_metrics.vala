@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 namespace MainWindowUiMetrics {
     public const int SPACING_NONE = 0;
     public const int SPACING_INFO_INLINE = 1;

@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetailsEditController {
     public signal void complete_profile_edit_mode ();
 

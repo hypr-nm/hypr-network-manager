@@ -16,6 +16,7 @@
  */
 
 // SPDX-License-Identifier: GPL-3.0-or-later
+using Constants;
 using GLib;
 using Gtk;
 using HyprNetworkManager.UI.Interfaces;
@@ -219,19 +220,12 @@ namespace HyprNetworkManager.UI.Views {
                         return;
                     }
                     
-                    string ssid = selected_wifi_network.ssid.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:");
-                    string escaped_password = (password != null) ? password.replace("\\", "\\\\").replace(";", "\\;").replace(":", "\\:") : "";
-
-                    string security = "nopass";
-                    if (selected_wifi_network.is_secured) {
-                        // Assume WPA for now since we don't have security_mode from IP settings directly,
-                        // but usually it's WPA unless otherwise configured.
-                        // WEP is rarely used but we'll default to WPA.
-                        security = "WPA";
-                    }
-                    
-                    string hidden_flag = selected_wifi_network.is_hidden ? "true" : "false";
-                    string qr_text = "WIFI:T:" + security + ";S:" + ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
+                    string password_value = (password != null) ? password : "";
+                    string qr_text = WifiQrBuilder.build (
+                        selected_wifi_network.ssid,
+                        password_value,
+                        selected_wifi_network.is_secured,
+                        selected_wifi_network.is_hidden);
                     
                     window_host.debug_log ("Generated QR text: " + qr_text);
 

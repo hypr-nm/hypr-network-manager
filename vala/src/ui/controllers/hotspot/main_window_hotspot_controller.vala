@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using HyprNetworkManager.Models;
 
 public class HotspotRequest : Object {
@@ -70,9 +71,9 @@ public class MainWindowHotspotController : Object {
     }
 
     public static string security_for_index (uint index) {
-        if (index == 0) return "sae";
-        if (index == 2) return "none";
-        return "wpa-psk";
+        if (index == 0) return WifiKeyMgmt.SAE;
+        if (index == 2) return WifiKeyMgmt.NONE;
+        return WifiKeyMgmt.WPA_PSK;
     }
 
     public static int timeout_for_index (uint index) {
@@ -91,7 +92,7 @@ public class MainWindowHotspotController : Object {
         if (req.ssid == "") {
             return "SSID cannot be empty";
         }
-        if (req.security != "none" && req.password.length < 8) {
+        if (req.security != WifiKeyMgmt.NONE && req.password.length < 8) {
             return "Password must be at least 8 characters";
         }
         if (!nm.has_create_ap ()

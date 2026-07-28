@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 
 namespace NmWifiUtils {
@@ -141,37 +142,37 @@ namespace NmWifiUtils {
 
     public string infer_security_mode (NM.SettingWirelessSecurity? s_sec) {
         if (s_sec == null) {
-            return "open";
+            return WifiSecurity.OPEN;
         }
 
         string key_mgmt = s_sec.key_mgmt != null ? s_sec.key_mgmt.strip ().down () : "";
-        if (key_mgmt == "sae") {
-            return "sae";
+        if (key_mgmt == WifiKeyMgmt.SAE) {
+            return WifiKeyMgmt.SAE;
         }
-        if (key_mgmt == "owe") {
-            return "owe";
+        if (key_mgmt == WifiKeyMgmt.OWE) {
+            return WifiKeyMgmt.OWE;
         }
-        if (key_mgmt == "wpa-psk") {
-            return "wpa-psk";
+        if (key_mgmt == WifiKeyMgmt.WPA_PSK) {
+            return WifiKeyMgmt.WPA_PSK;
         }
-        if (key_mgmt == "wpa-eap") {
-            return "wpa-eap";
+        if (key_mgmt == WifiKeyMgmt.WPA_EAP) {
+            return WifiKeyMgmt.WPA_EAP;
         }
-        if (key_mgmt == "none") {
+        if (key_mgmt == WifiKeyMgmt.NONE) {
             string wep = s_sec.wep_key0 != null ? s_sec.wep_key0.strip () : "";
-            return wep != "" ? "wep" : "open";
+            return wep != "" ? WifiSecurity.WEP : WifiSecurity.OPEN;
         }
 
-        return "wpa-psk";
+        return WifiKeyMgmt.WPA_PSK;
     }
 
     public void apply_security_mode (NM.Connection conn, string security_mode) {
         string mode = security_mode.strip ().down ();
         if (mode == "") {
-            mode = "open";
+            mode = WifiSecurity.OPEN;
         }
 
-        if (mode == "open") {
+        if (mode == WifiSecurity.OPEN) {
             conn.remove_setting (typeof (NM.SettingWirelessSecurity));
             conn.remove_setting (typeof (NM.Setting8021x));
             return;
@@ -184,31 +185,31 @@ namespace NmWifiUtils {
         }
 
         switch (mode) {
-        case "wep":
-            s_sec.key_mgmt = "none";
+        case WifiSecurity.WEP:
+            s_sec.key_mgmt = WifiKeyMgmt.NONE;
             conn.remove_setting (typeof (NM.Setting8021x));
             break;
-        case "sae":
-            s_sec.key_mgmt = "sae";
+        case WifiKeyMgmt.SAE:
+            s_sec.key_mgmt = WifiKeyMgmt.SAE;
             conn.remove_setting (typeof (NM.Setting8021x));
             break;
-        case "owe":
-            s_sec.key_mgmt = "owe";
+        case WifiKeyMgmt.OWE:
+            s_sec.key_mgmt = WifiKeyMgmt.OWE;
             conn.remove_setting (typeof (NM.Setting8021x));
             break;
-        case "wpa-eap":
-            s_sec.key_mgmt = "wpa-eap";
+        case WifiKeyMgmt.WPA_EAP:
+            s_sec.key_mgmt = WifiKeyMgmt.WPA_EAP;
             var s_8021x = conn.get_setting_802_1x ();
             if (s_8021x == null) {
                 s_8021x = new NM.Setting8021x ();
                 conn.add_setting (s_8021x);
             }
-            s_8021x.add_eap_method ("peap");
-            s_8021x.phase2_auth = "mschapv2";
+            s_8021x.add_eap_method (EapMethod.PEAP);
+            s_8021x.phase2_auth = Phase2Auth.MSCHAPV2;
             break;
-        case "wpa-psk":
+        case WifiKeyMgmt.WPA_PSK:
         default:
-            s_sec.key_mgmt = "wpa-psk";
+            s_sec.key_mgmt = WifiKeyMgmt.WPA_PSK;
             conn.remove_setting (typeof (NM.Setting8021x));
             break;
         }
@@ -223,7 +224,7 @@ namespace NmWifiUtils {
 
         var s_con = new NM.SettingConnection ();
         s_con.id = ssid;
-        s_con.type = "802-11-wireless";
+        s_con.type = NM.SettingWireless.SETTING_NAME;
         s_con.uuid = NM.Utils.uuid_generate ();
         s_con.autoconnect = true;
         conn.add_setting (s_con);
@@ -238,29 +239,29 @@ namespace NmWifiUtils {
             var s_sec = new NM.SettingWirelessSecurity ();
 
             if (security_mode == HiddenWifiSecurityMode.WPA_PSK) {
-                s_sec.key_mgmt = "wpa-psk";
+                s_sec.key_mgmt = WifiKeyMgmt.WPA_PSK;
                 s_sec.psk = password;
             } else if (security_mode == HiddenWifiSecurityMode.WEP) {
-                s_sec.key_mgmt = "none";
+                s_sec.key_mgmt = WifiKeyMgmt.NONE;
                 s_sec.wep_key0 = password;
                 s_sec.wep_key_type = NM.WepKeyType.PASSPHRASE;
             } else if (security_mode == HiddenWifiSecurityMode.SAE
                 || security_mode == HiddenWifiSecurityMode.WPA_PSK_SAE) {
-                s_sec.key_mgmt = "sae";
+                s_sec.key_mgmt = WifiKeyMgmt.SAE;
                 s_sec.psk = password;
             } else {
-                s_sec.key_mgmt = "wpa-psk";
+                s_sec.key_mgmt = WifiKeyMgmt.WPA_PSK;
                 s_sec.psk = password;
             }
             conn.add_setting (s_sec);
         }
 
         var s_ip4 = new NM.SettingIP4Config ();
-        s_ip4.method = "auto";
+        s_ip4.method = IpMethod.AUTO;
         conn.add_setting (s_ip4);
 
         var s_ip6 = new NM.SettingIP6Config ();
-        s_ip6.method = "auto";
+        s_ip6.method = IpMethod.AUTO;
         conn.add_setting (s_ip6);
 
         return conn;

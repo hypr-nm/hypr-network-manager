@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 
 private const string APP_LOG_DOMAIN_PREFIX = "hypr-nm";

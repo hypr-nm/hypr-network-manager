@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 
 namespace NmHotspotUtils {
@@ -155,10 +156,10 @@ namespace NmHotspotUtils {
             argv.add ("--passphrase-file");
             argv.add (passphrase_file);
         }
-        if (security == "sae") {
+        if (security == WifiKeyMgmt.SAE) {
             argv.add ("-w"); argv.add ("3");
         }
-        if (band == "a") {
+        if (band == WifiBand.BAND_5GHZ) {
             argv.add ("--freq-band"); argv.add ("5");
         } else {
             argv.add ("--freq-band"); argv.add ("2.4");
@@ -241,7 +242,7 @@ namespace NmHotspotUtils {
 
         var s_con = new NM.SettingConnection ();
         s_con.id = CONNECTION_ID_PREFIX + ssid;
-        s_con.type = "802-11-wireless";
+        s_con.type = NM.SettingWireless.SETTING_NAME;
         s_con.uuid = NM.Utils.uuid_generate ();
         s_con.autoconnect = false;
         s_con.interface_name = interface_name;
@@ -258,14 +259,14 @@ namespace NmHotspotUtils {
         }
         if (channel > 0) {
             s_wifi.channel = channel;
-        } else if (band == "a") {
+        } else if (band == WifiBand.BAND_5GHZ) {
             s_wifi.channel = 36;
-        } else if (band == "bg") {
+        } else if (band == WifiBand.BAND_2GHZ) {
             s_wifi.channel = 6;
         }
         conn.add_setting (s_wifi);
 
-        if (security != "none") {
+        if (security != WifiKeyMgmt.NONE) {
             var s_sec = new NM.SettingWirelessSecurity ();
             s_sec.key_mgmt = security;
             if (password != null && password != "") {

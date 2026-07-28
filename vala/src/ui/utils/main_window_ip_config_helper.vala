@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 public class MainWindowIpConfigHelper : Object {
     public static uint method_to_index (string method, bool is_ipv4 = true) {
         string m = method.down ();

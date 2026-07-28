@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 
 public class SecretsService : GLib.Object {
@@ -57,7 +58,7 @@ public class SecretsService : GLib.Object {
 
             try {
                 string? found = yield read_remote_secret (
-                    (NM.RemoteConnection) conn, "802-11-wireless-security", "psk", cancellable);
+                    (NM.RemoteConnection) conn, NM.SettingWirelessSecurity.SETTING_NAME, "psk", cancellable);
                 if (found != null) {
                     return found;
                 }

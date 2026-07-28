@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 
 public class SavedProfileService : GLib.Object {
@@ -181,7 +182,7 @@ public class SavedProfileService : GLib.Object {
         s_wireless.bssid = request.bssid.strip ();
 
         NmWifiUtils.apply_security_mode (conn, request.security_mode);
-        if (request.security_mode == "wpa-eap") {
+        if (request.security_mode == WifiKeyMgmt.WPA_EAP) {
             var s_8021x = conn.get_setting_802_1x ();
             if (s_8021x != null) {
                 s_8021x.clear_eap_methods ();
@@ -228,7 +229,7 @@ public class SavedProfileService : GLib.Object {
         NmIpConfigHelper.apply_ipv6_settings (s_ip6, request.get_ipv6_section ());
 
         var s_sec = conn.get_setting_wireless_security ();
-        if (s_sec != null && s_sec.key_mgmt == "wpa-eap") {
+        if (s_sec != null && s_sec.key_mgmt == WifiKeyMgmt.WPA_EAP) {
             var s_8021x = conn.get_setting_802_1x ();
             if (s_8021x == null) {
                 s_8021x = new NM.Setting8021x ();
@@ -409,7 +410,7 @@ public class SavedProfileService : GLib.Object {
             s_conn.id = ssid;
         }
         if (s_conn.type == null || s_conn.type.strip () == "") {
-            s_conn.type = "802-11-wireless";
+            s_conn.type = NM.SettingWireless.SETTING_NAME;
         }
         if (s_conn.uuid == null || s_conn.uuid.strip () == "") {
             s_conn.uuid = NM.Utils.uuid_generate ();
@@ -448,14 +449,14 @@ public class SavedProfileService : GLib.Object {
                 apply_connection_autoconnect (existing_conn, network.ssid, autoconnect);
                 if (password != null && password != "") {
                     var s_sec = existing_conn.get_setting_wireless_security ();
-                    if (s_sec != null && s_sec.key_mgmt == "wpa-eap") {
+                    if (s_sec != null && s_sec.key_mgmt == WifiKeyMgmt.WPA_EAP) {
                         var s_8021x = existing_conn.get_setting_802_1x ();
                         if (s_8021x == null) {
                             s_8021x = new NM.Setting8021x ();
                             existing_conn.add_setting (s_8021x);
                         }
-                        s_8021x.add_eap_method ("peap");
-                        s_8021x.phase2_auth = "mschapv2";
+                        s_8021x.add_eap_method (EapMethod.PEAP);
+                        s_8021x.phase2_auth = Phase2Auth.MSCHAPV2;
                         if (password.contains ("\x1f")) {
                             string[] parts = password.split ("\x1f", 2);
                             s_8021x.identity = parts[0];
@@ -510,12 +511,12 @@ public class SavedProfileService : GLib.Object {
 
             if (is_enterprise) {
                 var s_sec = new NM.SettingWirelessSecurity ();
-                s_sec.key_mgmt = "wpa-eap";
+                s_sec.key_mgmt = WifiKeyMgmt.WPA_EAP;
                 partial.add_setting (s_sec);
 
                 var s_8021x = new NM.Setting8021x ();
-                s_8021x.add_eap_method ("peap");
-                s_8021x.phase2_auth = "mschapv2";
+                s_8021x.add_eap_method (EapMethod.PEAP);
+                s_8021x.phase2_auth = Phase2Auth.MSCHAPV2;
                 if (password != null) {
                     if (password.contains ("\x1f")) {
                         string[] parts = password.split ("\x1f", 2);
