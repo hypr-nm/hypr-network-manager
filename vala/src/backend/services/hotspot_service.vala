@@ -975,7 +975,9 @@ public class HotspotService : GLib.Object {
                     try {
                         yield ((NM.RemoteConnection) conn).delete_async (
                             cancellable);
-                    } catch (Error e) {}
+                    } catch (Error e) {
+                        core.debug_log ("Failed to delete previous hotspot connection: " + e.message);
+                    }
                 }
             }
         }
@@ -1012,7 +1014,9 @@ public class HotspotService : GLib.Object {
                         }
                     }
                 }
-            } catch (Error e) {}
+            } catch (Error e) {
+                core.debug_log ("Failed to check create_ap process: " + e.message);
+            }
 
             if (!is_running) {
                 // Not running via create_ap, fallback to checking NM below

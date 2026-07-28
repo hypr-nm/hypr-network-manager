@@ -627,7 +627,7 @@ public class NetworkManagerClient : GLib.Object {
         return yield hotspot.disable_hotspot_async (cancellable);
     }
 
-    public async string get_status_json_dbus (Cancellable? cancellable = null) {
+    public async string get_status_json_dbus (Cancellable? cancellable = null) throws Error {
         bool networking_on = nm_client.networking_enabled;
         bool wifi_on = nm_client.wireless_enabled;
 
@@ -638,7 +638,11 @@ public class NetworkManagerClient : GLib.Object {
             devices = refresh_data.devices;
             wifi_nets = refresh_data.networks;
         } catch (Error e) {
+            if (e is IOError.CANCELLED) {
+                throw e;
+            }
             debug_log ("status_read: device/network snapshot failed error=" + e.message);
+            throw e;
         }
 
         NetworkDevice? active_wifi = null;

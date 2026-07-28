@@ -27,14 +27,29 @@ public class HotspotConfigStorage : GLib.Object {
                 if (root != null && root.get_node_type () == Json.NodeType.OBJECT) {
                     var obj = root.get_object ();
                     
-                    if (obj.has_member ("ssid")) config.ssid = obj.get_string_member ("ssid");
+                                        if (obj.has_member ("ssid")) config.ssid = obj.get_string_member ("ssid").strip ();
                     if (obj.has_member ("password")) config.password = obj.get_string_member ("password");
-                    if (obj.has_member ("security")) config.security = obj.get_string_member ("security");
-                    if (obj.has_member ("band")) config.band = obj.get_string_member ("band");
+                    if (obj.has_member ("security")) {
+                        string sec = obj.get_string_member ("security").strip ();
+                        if (sec == Constants.WifiKeyMgmt.NONE || sec == Constants.WifiKeyMgmt.WPA_PSK || sec == Constants.WifiKeyMgmt.SAE) {
+                            config.security = sec;
+                        }
+                    }
+                    if (obj.has_member ("band")) {
+                        string band = obj.get_string_member ("band").strip ();
+                        if (band == Constants.WifiBand.BAND_2GHZ || band == Constants.WifiBand.BAND_5GHZ) {
+                            config.band = band;
+                        }
+                    }
                     if (obj.has_member ("is_hidden")) config.is_hidden = obj.get_boolean_member ("is_hidden");
-                    if (obj.has_member ("timeout")) config.timeout = (int) obj.get_int_member ("timeout");
-                    if (obj.has_member ("ap_interface")) config.ap_interface = obj.get_string_member ("ap_interface");
-                    if (obj.has_member ("uplink_interface")) config.uplink_interface = obj.get_string_member ("uplink_interface");
+                    if (obj.has_member ("timeout")) {
+                        int t = (int) obj.get_int_member ("timeout");
+                        if (t == 0 || t == 5 || t == 10 || t == 30 || t == 60) {
+                            config.timeout = t;
+                        }
+                    }
+                    if (obj.has_member ("ap_interface")) config.ap_interface = obj.get_string_member ("ap_interface").strip ();
+                    if (obj.has_member ("uplink_interface")) config.uplink_interface = obj.get_string_member ("uplink_interface").strip ();
                 }
             } catch (Error e) {
                 warning ("Failed to load hotspot config: %s", e.message);

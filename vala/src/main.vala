@@ -106,7 +106,11 @@ int main (string[] args) {
         string status_json = "";
         var loop = new MainLoop ();
         nm.get_status_json_dbus.begin (null, (obj, res) => {
-            status_json = nm.get_status_json_dbus.end (res);
+            try {
+                status_json = nm.get_status_json_dbus.end (res);
+            } catch (Error e) {
+                status_json = "{\"error\": \"" + e.message + "\"}";
+            }
             loop.quit ();
         });
         loop.run ();
