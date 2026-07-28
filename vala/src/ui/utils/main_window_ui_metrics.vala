@@ -28,6 +28,10 @@ namespace MainWindowUiMetrics {
     public const int SPACING_LARGE = 20;
     public const int QR_CODE_SIZE = 150;
 
+    public const int DEFAULT_WINDOW_WIDTH = 480;
+    public const int DEFAULT_WINDOW_HEIGHT = 680;
+    public const int DEFAULT_SHELL_MARGIN = 8;
+
 
     public const int TRANSITION_STACK_MS = 320;
     public const int TRANSITION_REVEALER_MS = 220;

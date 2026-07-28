@@ -61,15 +61,15 @@ namespace HyprNetworkManager.UI.Utils {
 
         public static GtkLayerShell.Layer parse_layer_mode (string value) {
             switch (value.strip ().down ()) {
-            case "top":
-                return GtkLayerShell.Layer.TOP;
-            case "bottom":
-                return GtkLayerShell.Layer.BOTTOM;
-            case "background":
-                return GtkLayerShell.Layer.BACKGROUND;
-            case "overlay":
-            default:
+            case LayerShellLayer.OVERLAY:
                 return GtkLayerShell.Layer.OVERLAY;
+            case LayerShellLayer.BOTTOM:
+                return GtkLayerShell.Layer.BOTTOM;
+            case LayerShellLayer.BACKGROUND:
+                return GtkLayerShell.Layer.BACKGROUND;
+            case LayerShellLayer.TOP:
+            default:
+                return GtkLayerShell.Layer.TOP;
             }
         }
 

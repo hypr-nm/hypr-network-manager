@@ -206,7 +206,7 @@ namespace MainWindowWifiPageBuilder {
         hs_label.justify = Gtk.Justification.CENTER;
         
         var hs_button = new Gtk.Button.with_label (_("Manage Hotspot"));
-        hs_button.margin_top = 12;
+        hs_button.margin_top = MainWindowUiMetrics.SPACING_SECTION;
         hs_button.halign = Gtk.Align.CENTER;
         hs_button.add_css_class ("row-link-action");
         hs_button.clicked.connect (() => {

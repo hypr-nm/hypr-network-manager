@@ -95,8 +95,8 @@ public class MainWindowVpnAddPage : Gtk.Box {
 
     private void add_type_row (Gtk.ListBox listbox, string label, string id, string icon_name) {
         var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 12);
-        row.set_margin_top (12);
-        row.set_margin_bottom (12);
+        row.set_margin_top (MainWindowUiMetrics.SPACING_SECTION);
+        row.set_margin_bottom (MainWindowUiMetrics.SPACING_SECTION);
         row.set_margin_start (16);
         row.set_margin_end (16);
 

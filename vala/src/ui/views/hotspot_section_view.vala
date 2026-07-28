@@ -307,7 +307,7 @@ namespace HyprNetworkManager.UI.Views {
             
             qr_container = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             qr_container.halign = Gtk.Align.CENTER;
-            qr_container.margin_top = 20;
+            qr_container.margin_top = MainWindowUiMetrics.SPACING_LARGE;
             qr_revealer.set_child (qr_container);
             
             scroll_content.append (qr_revealer);
@@ -356,7 +356,7 @@ namespace HyprNetworkManager.UI.Views {
             qr_code_box.halign = Gtk.Align.CENTER;
             qr_code_box.valign = Gtk.Align.CENTER;
             qr_code_box.add_css_class ("nm-qr-share-code-box");
-            qr_code_box.margin_bottom = 4;
+            qr_code_box.margin_bottom = MainWindowUiMetrics.SPACING_COMPACT;
             qr_code_box.append (qr_widget);
             
             qr_container.append (qr_code_box);

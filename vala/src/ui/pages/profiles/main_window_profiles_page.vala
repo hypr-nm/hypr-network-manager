@@ -72,7 +72,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         notebook.set_show_border (false);
         notebook.set_show_tabs (true);
         notebook.set_vexpand (true);
-        notebook.margin_top = 4; // Give perfect compact breathing room below back button header
+        notebook.margin_top = MainWindowUiMetrics.SPACING_COMPACT; // Give perfect compact breathing room below back button header
 
         // Wi-Fi Page Box
         var wifi_page_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
@@ -82,7 +82,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         wifi_search_entry.placeholder_text = _("Search Wi-Fi profiles");
         wifi_search_entry.margin_start = 12;
         wifi_search_entry.margin_end = 12;
-        wifi_search_entry.margin_top = 4;
+        wifi_search_entry.margin_top = MainWindowUiMetrics.SPACING_COMPACT;
         wifi_search_entry.margin_bottom = 6;
         wifi_search_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
         wifi_page_box.append (wifi_search_entry);
@@ -129,7 +129,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         eth_search_entry.placeholder_text = _("Search Ethernet profiles");
         eth_search_entry.margin_start = 12;
         eth_search_entry.margin_end = 12;
-        eth_search_entry.margin_top = 4;
+        eth_search_entry.margin_top = MainWindowUiMetrics.SPACING_COMPACT;
         eth_search_entry.margin_bottom = 6;
         eth_search_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
         eth_page_box.append (eth_search_entry);

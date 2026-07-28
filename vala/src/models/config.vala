@@ -21,20 +21,20 @@ using GLib;
 public class AppConfig : Object {
     private const int64 MAX_CONFIG_FILE_BYTES = 1024 * 1024;
 
-    public int window_width = 480;
-    public int window_height = 680;
+    public int window_width = MainWindowUiMetrics.DEFAULT_WINDOW_WIDTH;
+    public int window_height = MainWindowUiMetrics.DEFAULT_WINDOW_HEIGHT;
     public bool anchor_top = true;
     public bool anchor_right = true;
     public bool anchor_bottom = false;
     public bool anchor_left = false;
-    public int margin_top = 8;
-    public int margin_right = 8;
-    public int margin_bottom = 8;
-    public int margin_left = 8;
-    public string layer = "overlay";
+    public int margin_top = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN;
+    public int margin_right = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN;
+    public int margin_bottom = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN;
+    public int margin_left = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN;
+    public string layer = LayerShellLayer.OVERLAY;
     public AppLogLevel log_level = AppLogLevel.INFO;
-    public int scan_interval = 30;
-    public int pending_wifi_connect_timeout_ms = 45000;
+    public int scan_interval = (int) Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS;
+    public int pending_wifi_connect_timeout_ms = (int) Timeouts.PENDING_WIFI_CONNECT_TIMEOUT_MS;
     public bool close_on_connect = true;
     public bool show_bssid = false;
     public bool show_frequency = true;
@@ -208,32 +208,32 @@ public class AppConfig : Object {
         anchor_left = false;
 
         switch (position.down ().strip ()) {
-        case "top-left":
+        case LayerShellAnchor.TOP_LEFT:
             anchor_top = true;
             anchor_left = true;
             break;
-        case "top-right":
+        case LayerShellAnchor.TOP_RIGHT:
             anchor_top = true;
             anchor_right = true;
             break;
-        case "bottom-left":
+        case LayerShellAnchor.BOTTOM_LEFT:
             anchor_bottom = true;
             anchor_left = true;
             break;
-        case "bottom-right":
+        case LayerShellAnchor.BOTTOM_RIGHT:
             anchor_bottom = true;
             anchor_right = true;
             break;
-        case "top":
+        case LayerShellAnchor.TOP:
             anchor_top = true;
             break;
-        case "right":
+        case LayerShellAnchor.RIGHT:
             anchor_right = true;
             break;
-        case "bottom":
+        case LayerShellAnchor.BOTTOM:
             anchor_bottom = true;
             break;
-        case "left":
+        case LayerShellAnchor.LEFT:
             anchor_left = true;
             break;
         default:
@@ -346,7 +346,7 @@ public class AppConfig : Object {
     }
 
     private void apply_position_config (Json.Object obj, string path) {
-        string position = "top-right";
+        string position = LayerShellAnchor.TOP_RIGHT;
 
         string? cfg_position = extract_json_string (obj, "position", path);
         if (cfg_position != null) {
@@ -360,6 +360,21 @@ public class AppConfig : Object {
         this.anchor_right = right;
         this.anchor_bottom = bottom;
         this.anchor_left = left;
+
+        string? cfg_layer = extract_json_string (obj, "layer", path);
+        if (cfg_layer != null) {
+            string l = cfg_layer.strip ().down ();
+            if (l == LayerShellLayer.BACKGROUND || l == LayerShellLayer.BOTTOM || l == LayerShellLayer.TOP || l == LayerShellLayer.OVERLAY) {
+                this.layer = l;
+            } else {
+                warn_invalid_config_value (
+                    path,
+                    "layer",
+                    cfg_layer,
+                    "background|bottom|top|overlay"
+                );
+            }
+        }
     }
 
     private void apply_window_config (Json.Object obj, string path) {

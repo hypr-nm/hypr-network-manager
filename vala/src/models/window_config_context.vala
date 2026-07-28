@@ -22,8 +22,8 @@ namespace HyprNetworkManager.Models {
      * Context for application window configuration and display options.
      */
     public class WindowConfigContext : Object {
-        public const int MIN_WINDOW_WIDTH = 480;
-        public const int MIN_WINDOW_HEIGHT = 680;
+        public const int MIN_WINDOW_WIDTH = MainWindowUiMetrics.DEFAULT_WINDOW_WIDTH;
+        public const int MIN_WINDOW_HEIGHT = MainWindowUiMetrics.DEFAULT_WINDOW_HEIGHT;
 
         public int window_width { get; set; default = MIN_WINDOW_WIDTH; }
         public int window_height { get; set; default = MIN_WINDOW_HEIGHT; }
@@ -32,18 +32,18 @@ namespace HyprNetworkManager.Models {
         public bool anchor_bottom { get; set; default = false; }
         public bool anchor_left { get; set; default = false; }
 
-        public int shell_margin_top { get; set; default = 8; }
-        public int shell_margin_right { get; set; default = 8; }
-        public int shell_margin_bottom { get; set; default = 8; }
-        public int shell_margin_left { get; set; default = 8; }
-        public string shell_layer { get; set; default = "overlay"; }
+        public int shell_margin_top { get; set; default = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN; }
+        public int shell_margin_right { get; set; default = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN; }
+        public int shell_margin_bottom { get; set; default = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN; }
+        public int shell_margin_left { get; set; default = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN; }
+        public string shell_layer { get; set; default = LayerShellLayer.OVERLAY; }
 
-        public uint refresh_interval_seconds { get; set; default = 30; }
-        public uint pending_wifi_connect_timeout_ms { get; set; default = 45000; }
-        public bool close_on_connect { get; set; default = false; }
+        public uint refresh_interval_seconds { get; set; default = Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS; }
+        public uint pending_wifi_connect_timeout_ms { get; set; default = Timeouts.PENDING_WIFI_CONNECT_TIMEOUT_MS; }
+        public bool close_on_connect { get; set; default = true; }
 
         public bool show_bssid { get; set; default = false; }
-        public bool show_frequency { get; set; default = false; }
+        public bool show_frequency { get; set; default = true; }
         public bool show_band { get; set; default = false; }
 
         public WindowConfigContext.from_app_config (AppConfig config) {
@@ -64,11 +64,11 @@ namespace HyprNetworkManager.Models {
             shell_margin_left = config.margin_left >= 0 ? config.margin_left : 0;
 
             string parsed_layer = config.layer.strip ();
-            shell_layer = parsed_layer != "" ? parsed_layer : "overlay";
+            shell_layer = parsed_layer != "" ? parsed_layer : LayerShellLayer.OVERLAY;
 
-            refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval : 30);
+            refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval : Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS);
             pending_wifi_connect_timeout_ms = (uint) (
-                config.pending_wifi_connect_timeout_ms > 0 ? config.pending_wifi_connect_timeout_ms : 45000
+                config.pending_wifi_connect_timeout_ms > 0 ? config.pending_wifi_connect_timeout_ms : Timeouts.PENDING_WIFI_CONNECT_TIMEOUT_MS
             );
             close_on_connect = config.close_on_connect;
 

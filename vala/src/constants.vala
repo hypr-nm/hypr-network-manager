@@ -165,6 +165,8 @@ namespace Constants {
 
     namespace LayerShellLayer {
         public const string BACKGROUND = "background";
+        public const string BOTTOM = "bottom";
+        public const string TOP = "top";
         public const string OVERLAY = "overlay";
     }
 
@@ -211,6 +213,8 @@ namespace Constants {
         public const uint AP_MONITOR_POLL_INTERVAL_MS = 500;
         public const uint AP_ACTIVATION_TIMEOUT_MS = 10000;
         public const uint ERROR_HIDE_DELAY_MS = 5000;
+        public const uint DEFAULT_SCAN_INTERVAL_SECONDS = 30;
+        public const uint PENDING_WIFI_CONNECT_TIMEOUT_MS = 45000;
     }
 
     public class Misc {
