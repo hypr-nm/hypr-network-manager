@@ -436,6 +436,10 @@ namespace HyprNetworkManager.UI.Views {
                     GLib.Source.remove (poll_source_id);
                     poll_source_id = 0;
                 }
+                if (scroll_tick_id != 0) {
+                    this.scroll.remove_tick_callback (scroll_tick_id);
+                    scroll_tick_id = 0;
+                }
             });
 
             save_button.clicked.connect (() => {

@@ -58,6 +58,14 @@ public class HyprNetworkManager.UI.Widgets.QrCodeWidget : Gtk.DrawingArea {
         set_draw_func (on_draw);
     }
 
+    public override void dispose () {
+        if (tick_cb_id != 0) {
+            remove_tick_callback (tick_cb_id);
+            tick_cb_id = 0;
+        }
+        base.dispose ();
+    }
+
     private void generate_qr (string text) {
         uint8[] tempBuffer = new uint8[QRCodeGen.BUFFER_LEN_MAX];
         uint8[] qrcode = new uint8[QRCodeGen.BUFFER_LEN_MAX];
