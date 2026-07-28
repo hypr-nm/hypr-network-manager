@@ -147,7 +147,7 @@ namespace HyprNetworkManager.UI.Widgets {
                 row_box.set_margin_start (2);
                 row_box.set_margin_end (2);
                 row_box.set_margin_top (2);
-                row_box.set_margin_bottom (2);
+                row_box.set_margin_bottom (MainWindowUiMetrics.SPACING_INFO_GROUP);
 
                 var label = new Gtk.Label (item.get_string ());
                 label.set_halign (Gtk.Align.START);

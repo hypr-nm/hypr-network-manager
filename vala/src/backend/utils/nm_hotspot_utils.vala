@@ -260,9 +260,9 @@ namespace NmHotspotUtils {
         if (channel > 0) {
             s_wifi.channel = channel;
         } else if (band == WifiBand.BAND_5GHZ) {
-            s_wifi.channel = 36;
+            s_wifi.channel = WifiChannel.DEFAULT_5GHZ;
         } else if (band == WifiBand.BAND_2GHZ) {
-            s_wifi.channel = 6;
+            s_wifi.channel = WifiChannel.DEFAULT_2GHZ;
         }
         conn.add_setting (s_wifi);
 

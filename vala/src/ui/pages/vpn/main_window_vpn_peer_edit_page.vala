@@ -44,7 +44,7 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public MainWindowVpnPeerEditPage () {
-            Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+            Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
             this.add_css_class (MainWindowCssClasses.PAGE);
             this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
             MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,

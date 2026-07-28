@@ -25,6 +25,9 @@ namespace MainWindowUiMetrics {
     public const int SPACING_HEADER = 8;
     public const int SPACING_ROW = 10;
     public const int SPACING_SECTION = 12;
+    public const int SPACING_LARGE = 20;
+    public const int QR_CODE_SIZE = 150;
+
 
     public const int TRANSITION_STACK_MS = 320;
     public const int TRANSITION_REVEALER_MS = 220;

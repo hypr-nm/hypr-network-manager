@@ -27,7 +27,7 @@ public class MainWindowWifiSharePage : Gtk.Box {
     public signal void back ();
 
     public MainWindowWifiSharePage () {
-        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);

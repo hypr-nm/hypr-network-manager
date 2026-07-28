@@ -23,7 +23,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
     public signal void type_selected (string type);
     
     public MainWindowVpnAddPage () {
-        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
 
         this.set_hexpand (true);
         this.set_vexpand (true);

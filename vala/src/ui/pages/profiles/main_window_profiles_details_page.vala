@@ -30,7 +30,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
     public signal void delete_profile ();
 
     public MainWindowProfilesDetailsPage () {
-        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);

@@ -124,7 +124,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
     }
 
     public MainWindowVpnSetupPage (IWindowHost window_host) {
-        Object (orientation: Gtk.Orientation.VERTICAL, spacing: 10);
+        Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
         this.create_dropdown_func = window_host.create_tracked_dropdown;
 
         this.set_hexpand (true);

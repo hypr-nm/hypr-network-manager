@@ -623,8 +623,8 @@ public class HotspotService : GLib.Object {
             int channel = 0;
             if (active_ap != null) {
                 uint32 freq = active_ap.get_frequency ();
-                bool is_2_4 = (freq >= 2412 && freq <= 2484);
-                bool is_5 = (freq >= 5000);
+                bool is_2_4 = (freq >= WifiFreq.BAND_2GHZ_MIN && freq <= WifiFreq.BAND_2GHZ_MAX);
+                bool is_5 = (freq >= WifiFreq.BAND_5GHZ_MIN);
                 if (resolved_band == "") {
                     if (is_2_4) {
                         resolved_band = WifiBand.BAND_2GHZ;
@@ -640,18 +640,18 @@ public class HotspotService : GLib.Object {
                             resolved_ap_iface));
                 }
                 if (resolved_band == WifiBand.BAND_2GHZ && is_2_4) {
-                    channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
+                    channel = (int) ((freq == WifiFreq.CHANNEL_14) ? WifiChannel.CHANNEL_14 : ((int)freq - (int)WifiFreq.BAND_2GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP + 1);
                 } else if (resolved_band == WifiBand.BAND_5GHZ && is_5) {
-                    channel = ((int)freq - 5000) / 5;
+                    channel = (int) (((int)freq - (int)WifiFreq.BAND_5GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP);
                 }
             }
 
             if (channel == 0) {
                 if (resolved_band == WifiBand.BAND_5GHZ) {
-                    channel = 36;
+                    channel = WifiChannel.DEFAULT_5GHZ;
                 } else {
                     resolved_band = (resolved_band == WifiBand.BAND_5GHZ) ? WifiBand.BAND_5GHZ : WifiBand.BAND_2GHZ;
-                    channel = 6;
+                    channel = WifiChannel.DEFAULT_2GHZ;
                 }
             }
 
@@ -778,10 +778,10 @@ public class HotspotService : GLib.Object {
             var active_ap = dev.get_active_access_point ();
             if (active_ap != null) {
                 uint32 freq = active_ap.get_frequency ();
-                if (band == WifiBand.BAND_2GHZ && freq >= 2412 && freq <= 2484) {
-                    channel = (freq == 2484) ? 14 : ((int)freq - 2412) / 5 + 1;
-                } else if (band == WifiBand.BAND_5GHZ && freq >= 5000) {
-                    channel = ((int)freq - 5000) / 5;
+                if (band == WifiBand.BAND_2GHZ && freq >= WifiFreq.BAND_2GHZ_MIN && freq <= WifiFreq.BAND_2GHZ_MAX) {
+                    channel = (int) ((freq == WifiFreq.CHANNEL_14) ? WifiChannel.CHANNEL_14 : ((int)freq - (int)WifiFreq.BAND_2GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP + 1);
+                } else if (band == WifiBand.BAND_5GHZ && freq >= WifiFreq.BAND_5GHZ_MIN) {
+                    channel = (int) (((int)freq - (int)WifiFreq.BAND_5GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP);
                 }
             }
 

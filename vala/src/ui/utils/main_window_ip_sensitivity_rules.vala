@@ -18,19 +18,19 @@
 using Constants;
 namespace MainWindowIpSensitivityRules {
     public bool should_show_manual_fields (uint selected_method) {
-        return selected_method == 1;
+        return selected_method == Constants.IpMethodIndex.MANUAL;
     }
 
     public bool should_show_override_fields (uint selected_method) {
-        return selected_method == 0 || selected_method == 1;
+        return selected_method == Constants.IpMethodIndex.AUTO || selected_method == Constants.IpMethodIndex.MANUAL;
     }
 
     public bool should_force_ipv4_dns_auto_from_dropdown (uint selected_method) {
-        return selected_method == 2;
+        return selected_method == Constants.IpMethodIndex.DISABLED;
     }
 
     public bool should_force_ipv6_dns_auto_from_dropdown (uint selected_method) {
-        return selected_method == 2 || selected_method == 3;
+        return selected_method == Constants.IpMethodIndex.DISABLED || selected_method == Constants.IpMethodIndex.IGNORE;
     }
 
     public bool is_dns_entry_sensitive (bool dns_auto_enabled) {

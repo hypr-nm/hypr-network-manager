@@ -177,4 +177,43 @@ namespace Constants {
         public const string ERROR = "error";
         public const string CRITICAL = "critical";
     }
+
+    public class WifiFreq {
+        public const uint32 BAND_2GHZ_MIN = 2412;
+        public const uint32 BAND_2GHZ_MAX = 2484;
+        public const uint32 BAND_5GHZ_MIN = 5000;
+        public const uint32 CHANNEL_14 = 2484;
+        public const uint32 CHANNEL_STEP = 5;
+    }
+
+    public class WifiChannel {
+        public const int DEFAULT_2GHZ = 6;
+        public const int DEFAULT_5GHZ = 36;
+        public const int CHANNEL_14 = 14;
+    }
+
+    public class DropdownIndex {
+        public const uint AUTO = 0;
+        public const uint NONE = 1;
+    }
+
+    public class IpMethodIndex {
+        public const uint AUTO = 0;
+        public const uint MANUAL = 1;
+        public const uint DISABLED = 2;
+        public const uint IGNORE = 3;
+    }
+
+    public class Timeouts {
+        public const uint HOTSPOT_IDLE_CHECK_SECONDS = 60;
+        public const int CREATE_AP_MAX_ATTEMPTS = 30;
+        public const int CREATE_AP_STABLE_POLLS = 4;
+        public const uint AP_MONITOR_POLL_INTERVAL_MS = 500;
+        public const uint AP_ACTIVATION_TIMEOUT_MS = 10000;
+        public const uint ERROR_HIDE_DELAY_MS = 5000;
+    }
+
+    public class Misc {
+        public const int CREATE_AP_LOG_TAIL_LINES = 8;
+    }
 }

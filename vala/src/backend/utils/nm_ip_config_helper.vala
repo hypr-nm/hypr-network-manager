@@ -123,7 +123,7 @@ public class NmIpConfigHelper : GLib.Object {
 
         NM.IPAddress? manual_address = null;
         if (method == "manual" && req.address != "") {
-            manual_address = new NM.IPAddress (2, req.address, req.prefix);
+            manual_address = new NM.IPAddress (GLib.SocketFamily.IPV4, req.address, req.prefix);
         }
 
         s_ip4.clear_addresses ();
@@ -166,7 +166,7 @@ public class NmIpConfigHelper : GLib.Object {
 
         NM.IPAddress? manual_address = null;
         if (method == "manual" && req.address != "") {
-            manual_address = new NM.IPAddress (10, req.address, req.prefix);
+            manual_address = new NM.IPAddress (GLib.SocketFamily.IPV6, req.address, req.prefix);
         }
 
         s_ip6.clear_addresses ();

@@ -53,7 +53,7 @@ public class HyprNetworkManager.UI.Widgets.QrCodeWidget : Gtk.DrawingArea {
     }
 
     public QrCodeWidget (string text) {
-        set_size_request (150, 150);
+        set_size_request (MainWindowUiMetrics.QR_CODE_SIZE, MainWindowUiMetrics.QR_CODE_SIZE);
         generate_qr (text);
         set_draw_func (on_draw);
     }

@@ -347,7 +347,7 @@ namespace HyprNetworkManager.UI.Views {
             }
 
             var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (qr_text);
-            qr_widget.set_size_request (150, 150);
+            qr_widget.set_size_request (MainWindowUiMetrics.QR_CODE_SIZE, MainWindowUiMetrics.QR_CODE_SIZE);
             qr_widget.halign = Gtk.Align.CENTER;
             qr_widget.valign = Gtk.Align.CENTER;
             qr_widget.is_loading = config.is_starting;
@@ -476,7 +476,7 @@ namespace HyprNetworkManager.UI.Views {
                 return "";
             }
             uint idx = ap_interface_dropdown.get_selected ();
-            if (idx == 0) {
+            if (idx == Constants.DropdownIndex.AUTO) {
                 return "Auto";
             }
             return this.ap_model.get_string (idx);
@@ -573,10 +573,10 @@ namespace HyprNetworkManager.UI.Views {
                 return "";
             }
             uint idx = uplink_interface_dropdown.get_selected ();
-            if (idx == 0) {
+            if (idx == Constants.DropdownIndex.AUTO) {
                 return "Auto";
             }
-            if (idx == 1) {
+            if (idx == Constants.DropdownIndex.NONE) {
                 return "None";
             }
             return this.uplink_model.get_string (idx);

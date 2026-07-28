@@ -22,11 +22,11 @@ using Gtk;
 namespace MainWindowWifiEditUtils {
     public string get_selected_ipv4_method (HyprNetworkManager.UI.Widgets.TrackedDropDown dropdown) {
         switch (dropdown.get_selected ()) {
-        case 1:
+        case Constants.IpMethodIndex.MANUAL:
             return "manual";
-        case 2:
+        case Constants.IpMethodIndex.DISABLED:
             return "disabled";
-        case 0:
+        case Constants.IpMethodIndex.AUTO:
         default:
             return "auto";
         }
@@ -34,13 +34,13 @@ namespace MainWindowWifiEditUtils {
 
     public string get_selected_ipv6_method (HyprNetworkManager.UI.Widgets.TrackedDropDown dropdown) {
         switch (dropdown.get_selected ()) {
-        case 1:
+        case Constants.IpMethodIndex.MANUAL:
             return "manual";
-        case 2:
+        case Constants.IpMethodIndex.DISABLED:
             return "disabled";
-        case 3:
+        case Constants.IpMethodIndex.IGNORE:
             return "ignore";
-        case 0:
+        case Constants.IpMethodIndex.AUTO:
         default:
             return "auto";
         }
