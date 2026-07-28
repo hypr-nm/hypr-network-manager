@@ -64,7 +64,7 @@ public class HotspotService : GLib.Object {
         return get_create_ap_path () != null && create_ap_deps_available ();
     }
 
-    private bool has_create_ap () {
+    public bool has_create_ap () {
         return can_use_create_ap ();
     }
 

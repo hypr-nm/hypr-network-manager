@@ -620,16 +620,7 @@ public class NetworkManagerClient : GLib.Object {
     }
 
     public bool has_create_ap () {
-        string vendored = Constants.CREATE_AP_PATH;
-        bool binary_present = (vendored != "" && FileUtils.test (vendored, FileTest.EXISTS | FileTest.IS_EXECUTABLE))
-            || GLib.Environment.find_program_in_path ("create_ap") != null;
-        if (!binary_present) return false;
-        foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip", "iptables" }) {
-            if (GLib.Environment.find_program_in_path (tool) == null) {
-                return false;
-            }
-        }
-        return true;
+        return hotspot.has_create_ap ();
     }
 
     public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {
