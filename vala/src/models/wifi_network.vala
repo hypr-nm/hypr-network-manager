@@ -21,7 +21,18 @@ public class WifiNetwork : Object {
     public string saved_connection_uuid { get; construct set; }
     public uint8 signal { get; construct set; }
     public bool connected { get; construct set; }
-    public bool is_secured { get; construct set; }
+        private bool _is_secured;
+    public bool is_secured {
+        get {
+            if (flags != 0 || wpa_flags != 0 || rsn_flags != 0) {
+                return true;
+            }
+            return _is_secured;
+        }
+        construct set {
+            _is_secured = value;
+        }
+    }
     public bool is_hidden { get; construct set; default = false; }
     public bool saved { get; construct set; }
     public bool autoconnect { get; construct set; }

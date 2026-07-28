@@ -84,10 +84,7 @@ public class WifiScannerService : GLib.Object {
                     }
                 }
 
-                bool is_secured = (ap.get_flags () != 0) || (ap.get_wpa_flags () != 0) || (ap.get_rsn_flags () != 0);
-                string network_key = ssid + ":" + (is_secured ? "secured" : WifiSecurity.OPEN);
-
-                bool saved = false;
+                                bool saved = false;
                 string saved_uuid = "";
                 bool autoconnect = true;
 
@@ -119,7 +116,7 @@ public class WifiScannerService : GLib.Object {
                     saved_connection_uuid = saved_uuid,
                     signal = ap.get_strength (),
                     connected = connected,
-                    is_secured = is_secured,
+                    is_secured = false, // derived automatically if flags are non-zero
                     is_hidden = is_hidden,
                     saved = saved,
                     autoconnect = autoconnect,
@@ -133,6 +130,8 @@ public class WifiScannerService : GLib.Object {
                     wpa_flags = ap.get_wpa_flags (),
                     rsn_flags = ap.get_rsn_flags ()
                 };
+
+                string network_key = net.network_key;
 
                 // Deduplicate by network_key, keeping the best signal but prioritizing saved networks
                 if (!networks_map.contains (network_key)) {
