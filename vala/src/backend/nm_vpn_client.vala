@@ -21,32 +21,29 @@ using HyprNetworkManager.Backend.Mappers;
 
 public class NmVpnClient : GLib.Object {
     private NetworkManagerClient core;
-    private static HashTable<string, string>? plugin_names = null;
+    private static GLib.Once<HashTable<string, string>> plugin_names_once;
 
     public NmVpnClient (NetworkManagerClient core) {
         this.core = core;
     }
 
-    private static HashTable<string, string> get_plugin_names () {
-        if (plugin_names != null) {
-            return plugin_names;
-        }
-
-        var map = new HashTable<string, string> (str_hash, str_equal);
-        map.insert ("vpn", "VPN");
-        map.insert ("openvpn", "OpenVPN");
-        map.insert ("openconnect", "OpenConnect");
-        map.insert ("wireguard", "WireGuard");
-        map.insert ("vpnc", "VPNC");
-        map.insert ("l2tp", "L2TP");
-        map.insert ("pptp", "PPTP");
-        map.insert ("sstp", "SSTP");
-        map.insert ("openfortivpn", "OpenFortiVPN");
-        map.insert ("fortisslvpn", "FortiSSLVPN");
-        map.insert ("libreswan", "Libreswan");
-        map.insert ("strongswan", "strongSwan");
-        plugin_names = map;
-        return plugin_names;
+    private static unowned HashTable<string, string> get_plugin_names () {
+        return plugin_names_once.once (() => {
+            var map = new HashTable<string, string> (str_hash, str_equal);
+            map.insert ("vpn", "VPN");
+            map.insert ("openvpn", "OpenVPN");
+            map.insert ("openconnect", "OpenConnect");
+            map.insert ("wireguard", "WireGuard");
+            map.insert ("vpnc", "VPNC");
+            map.insert ("l2tp", "L2TP");
+            map.insert ("pptp", "PPTP");
+            map.insert ("sstp", "SSTP");
+            map.insert ("openfortivpn", "OpenFortiVPN");
+            map.insert ("fortisslvpn", "FortiSSLVPN");
+            map.insert ("libreswan", "Libreswan");
+            map.insert ("strongswan", "strongSwan");
+            return map;
+        });
     }
 
     private static string normalize_string (string? value) {
