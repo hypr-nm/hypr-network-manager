@@ -155,6 +155,7 @@ executable(
     'src/ui/utils/main_window_helpers_formatting.vala',
     'src/ui/utils/main_window_wifi_edit_utils.vala',
     'src/ui/utils/main_window_vpn_request_builder.vala',
+    'src/ui/utils/wifi_qr_builder.vala',
     'src/ui/widgets/main_window_refresh_progress_bar.vala',
     'src/ui/main_window.vala',
     'src/app.vala',

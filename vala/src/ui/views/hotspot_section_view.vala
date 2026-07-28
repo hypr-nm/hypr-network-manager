@@ -338,18 +338,12 @@ namespace HyprNetworkManager.UI.Views {
 
             string qr_text;
             if (config.is_starting) {
-                // The animation needs a QR grid, but it must not receive the
-                // real SSID or password before the hotspot is verified ready.
-                qr_text = "HOTSPOT:STARTING";
+                // Placeholder grid so the animation can render before the
+                // hotspot is verified, without exposing real credentials.
+                qr_text = WifiQrBuilder.starting_placeholder ();
             } else {
-                string security = "WPA";
-                if (config.security == WifiKeyMgmt.NONE) {
-                    security = "nopass";
-                }
-
-                string escaped_password = config.password.replace ("\\", "\\\\").replace (";", "\\;").replace (",", "\\,").replace (":", "\\:");
-                string hidden_flag = config.is_hidden ? "true" : "false";
-                qr_text = "WIFI:T:" + security + ";S:" + config.ssid + ";P:" + escaped_password + ";H:" + hidden_flag + ";;";
+                bool is_open = config.security == WifiKeyMgmt.NONE;
+                qr_text = WifiQrBuilder.build (config.ssid, config.password, !is_open, config.is_hidden);
             }
 
             var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (qr_text);
