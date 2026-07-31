@@ -80,21 +80,6 @@ public class NetworkManagerClient : GLib.Object {
 
     public signal void network_events_changed ();
 
-    public static string normalize_ipv4_method (string value) {
-        if (value == "auto" || value == "manual" || value == "link-local" || value == "shared" || value == "disabled") {
-            return value;
-        }
-        return "auto";
-    }
-
-    public static string normalize_ipv6_method (string value) {
-        if (value == "auto" || value == "manual" || value == "ignore" || value == "shared" || value == "disabled" ||
-            value == "link-local") {
-            return value;
-        }
-        return "auto";
-    }
-
     public NetworkManagerClient () throws Error {
         try {
             nm_client = new NM.Client (null);

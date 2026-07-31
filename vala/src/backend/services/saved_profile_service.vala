@@ -132,6 +132,24 @@ public class SavedProfileService : GLib.Object {
         return settings;
     }
 
+    private void apply_8021x_certificates (NM.Setting8021x s, Eap8021xFields eap) throws Error {
+        if (eap.ca_cert != null && eap.ca_cert.strip () != "") {
+            s.set_ca_cert (eap.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+        } else {
+            s.set_ca_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+        }
+        if (eap.user_cert != null && eap.user_cert.strip () != "") {
+            s.set_client_cert (eap.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+        } else {
+            s.set_client_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+        }
+        if (eap.user_private_key != null && eap.user_private_key.strip () != "") {
+            s.set_private_key (eap.user_private_key.strip (), eap.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+        } else {
+            s.set_private_key ((string?) null, eap.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+        }
+    }
+
     public async bool update_saved_profile_settings (
         WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest request,
@@ -193,21 +211,7 @@ public class SavedProfileService : GLib.Object {
                 s_8021x.domain_suffix_match = request.domain_suffix_match;
                 s_8021x.ca_cert_password = request.ca_cert_password;
                 s_8021x.client_cert_password = request.user_cert_password;
-                if (request.ca_cert != null && request.ca_cert.strip () != "") {
-                    s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                } else {
-                    s_8021x.set_ca_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                }
-                if (request.user_cert != null && request.user_cert.strip () != "") {
-                    s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                } else {
-                    s_8021x.set_client_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                }
-                if (request.user_private_key != null && request.user_private_key.strip () != "") {
-                    s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                } else {
-                    s_8021x.set_private_key ((string?) null, request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-                }
+                apply_8021x_certificates (s_8021x, request);
             }
         }
 
@@ -249,24 +253,10 @@ public class SavedProfileService : GLib.Object {
             }
             s_8021x.ca_cert_password = request.ca_cert_password;
             s_8021x.client_cert_password = request.user_cert_password;
-            if (request.ca_cert != null && request.ca_cert.strip () != "") {
-                s_8021x.set_ca_cert (request.ca_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-            } else {
-                s_8021x.set_ca_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-            }
-            if (request.user_cert != null && request.user_cert.strip () != "") {
-                s_8021x.set_client_cert (request.user_cert.strip (), NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-            } else {
-                s_8021x.set_client_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-            }
-            if (request.user_private_key != null && request.user_private_key.strip () != "") {
-                s_8021x.set_private_key (request.user_private_key.strip (), request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-            } else {
-                s_8021x.set_private_key ((string?) null, request.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
-            }
-            if (request.password != null && request.password != "") {
-                s_8021x.password = request.password;
-            }
+                apply_8021x_certificates (s_8021x, request);
+                if (request.password != null && request.password != "") {
+                    s_8021x.password = request.password;
+                }
         } else {
             if (request.password != null && request.password != "") {
                 if (s_sec != null) {

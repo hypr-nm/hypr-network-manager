@@ -44,7 +44,7 @@ public class NetworkIpSettings : Object {
     public string current_ipv6_dns { get; set; default = ""; }
 }
 
-public class WifiSavedProfileSettings : NetworkIpSettings {
+public class WifiSavedProfileSettings : NetworkIpSettings, Eap8021xFields {
     public string profile_name { get; set; default = ""; }
     public string ssid { get; set; default = ""; }
     public string bssid { get; set; default = ""; }

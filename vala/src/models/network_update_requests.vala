@@ -26,6 +26,41 @@ private static string[] copy_string_array (string[] values) {
     return copied;
 }
 
+private static string normalize_ip_method (string method, bool allow_ignore) {
+    string m = method.strip ().down ();
+    if (m == "" || m == "auto") return "auto";
+    if (m == "manual") return "manual";
+    if (m == "link-local") return "link-local";
+    if (m == "shared") return "shared";
+    if (m == "disabled") return "disabled";
+    if (allow_ignore && m == "ignore") return "ignore";
+    return "auto";
+}
+
+private static string[] clean_dns_array (string[] dns_servers) {
+    string[] cleaned = {};
+    foreach (var item in dns_servers) {
+        if (item != null && item.strip () != "") {
+            cleaned += item;
+        }
+    }
+    return cleaned;
+}
+
+public interface Eap8021xFields : Object {
+    public abstract string identity { get; set; }
+    public abstract string anonymous_identity { get; set; }
+    public abstract string domain_suffix_match { get; set; }
+    public abstract string ca_cert { get; set; }
+    public abstract string ca_cert_password { get; set; }
+    public abstract string eap_method { get; set; }
+    public abstract string phase2_auth { get; set; }
+    public abstract string user_cert { get; set; }
+    public abstract string user_cert_password { get; set; }
+    public abstract string user_private_key { get; set; }
+    public abstract string user_private_key_password { get; set; }
+}
+
 public class Ipv4UpdateSection : Object {
     public string method { get; set; default = "auto"; }
     public string address { get; set; default = ""; }
@@ -36,23 +71,11 @@ public class Ipv4UpdateSection : Object {
     public string[] dns_servers { get; set; default = {}; }
 
     public string normalized_method () {
-        string m = method.strip ().down ();
-        if (m == "" || m == "auto") return "auto";
-        if (m == "manual") return "manual";
-        if (m == "link-local") return "link-local";
-        if (m == "shared") return "shared";
-        if (m == "disabled") return "disabled";
-        return "auto";
+        return normalize_ip_method (method, false);
     }
 
     public void clean_dns () {
-        string[] cleaned = {};
-        foreach (var item in dns_servers) {
-            if (item != null && item.strip () != "") {
-                cleaned += item;
-            }
-        }
-        dns_servers = cleaned;
+        dns_servers = clean_dns_array (dns_servers);
     }
 }
 
@@ -66,24 +89,11 @@ public class Ipv6UpdateSection : Object {
     public string[] dns_servers { get; set; default = {}; }
 
     public string normalized_method () {
-        string m = method.strip ().down ();
-        if (m == "" || m == "auto") return "auto";
-        if (m == "manual") return "manual";
-        if (m == "link-local") return "link-local";
-        if (m == "shared") return "shared";
-        if (m == "disabled") return "disabled";
-        if (m == "ignore") return "ignore";
-        return "auto";
+        return normalize_ip_method (method, true);
     }
 
     public void clean_dns () {
-        string[] cleaned = {};
-        foreach (var item in dns_servers) {
-            if (item != null && item.strip () != "") {
-                cleaned += item;
-            }
-        }
-        dns_servers = cleaned;
+        dns_servers = clean_dns_array (dns_servers);
     }
 }
 
@@ -130,7 +140,7 @@ public class NetworkIpUpdateRequest : Object {
     }
 }
 
-public class WifiNetworkUpdateRequest : NetworkIpUpdateRequest {
+public class WifiNetworkUpdateRequest : NetworkIpUpdateRequest, Eap8021xFields {
     public string password { get; set; default = ""; }
     public string identity { get; set; default = ""; }
     public string anonymous_identity { get; set; default = ""; }
@@ -145,7 +155,7 @@ public class WifiNetworkUpdateRequest : NetworkIpUpdateRequest {
     public string user_private_key_password { get; set; default = ""; }
 }
 
-public class WifiSavedProfileUpdateRequest : Object {
+public class WifiSavedProfileUpdateRequest : Object, Eap8021xFields {
     public string profile_name { get; set; default = ""; }
     public string ssid { get; set; default = ""; }
     public string bssid { get; set; default = ""; }
