@@ -113,6 +113,16 @@ public class NmVpnClient : GLib.Object {
             || normalize_key (candidate_name) == normalized_target;
     }
 
+    private static NM.Connection? find_vpn_connection_by_id (NM.Client client, string id) {
+        foreach (var conn in client.get_connections ()) {
+            if (is_supported_vpn_profile (conn)
+                && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
+                return conn;
+            }
+        }
+        return null;
+    }
+
     private static bool active_connection_matches_profile (NM.ActiveConnection ac, NM.Connection conn) {
         string active_uuid = normalize_key (ac.get_uuid ());
         string profile_uuid = normalize_key (conn.get_uuid ());
@@ -289,15 +299,7 @@ public class NmVpnClient : GLib.Object {
 
     public new async bool connect (string id, Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
-        NM.Connection? vpn_conn = null;
-
-        foreach (var conn in client.get_connections ()) {
-            if (is_supported_vpn_profile (conn)
-                && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
-                vpn_conn = conn;
-                break;
-            }
-        }
+        NM.Connection? vpn_conn = find_vpn_connection_by_id (client, id);
 
         if (vpn_conn == null) {
             throw new IOError.NOT_FOUND ("VPN connection not found");
@@ -370,14 +372,7 @@ public class NmVpnClient : GLib.Object {
         var client = core.nm_client;
         VpnProfileDetails details;
 
-        NM.Connection? vpn_conn = null;
-        foreach (var conn in client.get_connections ()) {
-            if (is_supported_vpn_profile (conn)
-                && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
-                vpn_conn = conn;
-                break;
-            }
-        }
+        NM.Connection? vpn_conn = find_vpn_connection_by_id (client, id);
 
         if (vpn_conn == null) {
             throw new IOError.NOT_FOUND ("VPN connection not found");
@@ -458,15 +453,7 @@ public class NmVpnClient : GLib.Object {
         Cancellable? cancellable = null
     ) throws Error {
         var client = core.nm_client;
-        NM.Connection? vpn_conn = null;
-
-        foreach (var conn in client.get_connections ()) {
-            if (is_supported_vpn_profile (conn)
-                && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
-                vpn_conn = conn;
-                break;
-            }
-        }
+        NM.Connection? vpn_conn = find_vpn_connection_by_id (client, id);
 
         if (vpn_conn == null) {
             throw new IOError.NOT_FOUND ("VPN connection not found");
