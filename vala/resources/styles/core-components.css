@@ -1080,6 +1080,7 @@ popover.background list row:checked:hover {
 
 .nm-edit-gateway-mode-row,
 .nm-edit-dns-mode-row,
+.nm-edit-ipv4-dns-mode-row,
 .nm-edit-ipv6-dns-mode-row {
   background: transparent;
   border: none;
