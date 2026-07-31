@@ -33,10 +33,14 @@ public class MainWindowProfilesPage : Gtk.Box {
     private Gtk.Label eth_tab_label;
     private int wifi_count = 0;
     private int eth_count = 0;
-    private Gtk.SearchEntry wifi_search_entry;
-    private Gtk.SearchEntry eth_search_entry;
+        private Gtk.SearchEntry wifi_search_entry;
+        private Gtk.SearchEntry eth_search_entry;
+        private Gtk.ScrolledWindow wifi_scroll;
+        private Gtk.ScrolledWindow eth_scroll;
+        private double saved_wifi_scroll = 0;
+        private double saved_eth_scroll = 0;
 
-    public MainWindowProfilesPage () {
+        public MainWindowProfilesPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_NONE);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
@@ -120,6 +124,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         wifi_scroll.set_vexpand (true);
         wifi_scroll.set_child (this.wifi_saved_listbox);
         wifi_page_box.append (wifi_scroll);
+        this.wifi_scroll = wifi_scroll;
 
         // Ethernet Page Box
         var eth_page_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
@@ -167,6 +172,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         eth_scroll.set_vexpand (true);
         eth_scroll.set_child (this.ethernet_saved_listbox);
         eth_page_box.append (eth_scroll);
+        this.eth_scroll = eth_scroll;
 
         wifi_tab_label = new Gtk.Label (_("Wi-Fi (%d)").printf (0));
         wifi_tab_label.add_css_class (MainWindowCssClasses.TAB_LABEL);
@@ -178,9 +184,6 @@ public class MainWindowProfilesPage : Gtk.Box {
         notebook.append_page (eth_page_box, eth_tab_label);
 
         this.append (notebook);
-    }
-
-    public void set_refreshing (bool refreshing) {
     }
 
     private void clear_listbox (Gtk.ListBox listbox) {
@@ -380,8 +383,12 @@ public class MainWindowProfilesPage : Gtk.Box {
     }
 
     public void remember_scroll_position () {
+        saved_wifi_scroll = wifi_scroll.get_vadjustment ().get_value ();
+        saved_eth_scroll = eth_scroll.get_vadjustment ().get_value ();
     }
 
     public void restore_scroll_position () {
+        wifi_scroll.get_vadjustment ().set_value (saved_wifi_scroll);
+        eth_scroll.get_vadjustment ().set_value (saved_eth_scroll);
     }
 }
