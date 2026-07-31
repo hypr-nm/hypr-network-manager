@@ -67,9 +67,6 @@ public class Nl80211ApMonitor : GLib.Object {
                 } else {
                     result = Nl80211.ap_station_count_by_iface (iface, out value);
                 }
-            } catch (Error e) {
-                result = -1;
-                core.debug_log ("nl80211 AP query raised: " + e.message);
             } finally {
                 caller_context.invoke ((owned) resume);
             }

@@ -559,10 +559,6 @@ public class NetworkManagerClient : GLib.Object {
                     resolved_iface,
                     out supports_2ghz,
                     out supports_5ghz);
-            } catch (Error e) {
-                result = -1;
-                log_debug ("nm-client",
-                    "get_wifi_band_support_async: nl80211 query raised: %s".printf (e.message));
             } finally {
                 caller_context.invoke ((owned) resume);
             }
