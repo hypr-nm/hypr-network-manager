@@ -75,7 +75,7 @@ namespace HyprNetworkManager.UI.Views {
             });
             header_box.append (back_btn);
             
-            var title_label = new Gtk.Label ("Wi-Fi Hotspot");
+            var title_label = new Gtk.Label (_("Wi-Fi Hotspot"));
             title_label.halign = Gtk.Align.START;
             title_label.add_css_class (MainWindowCssClasses.SECTION_TITLE);
             

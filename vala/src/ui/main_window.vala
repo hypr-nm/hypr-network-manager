@@ -250,12 +250,12 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         if (wifi_section != null) {
             bool wifi_enabled = wifi_section.wifi_switch.get_active ();
             bool wifi_refresh_enabled = wifi_enabled && !flight_mode_active;
-            string wifi_tooltip = "Refresh Wi-Fi networks";
+            string wifi_tooltip = _("Refresh Wi-Fi networks");
 
             if (flight_mode_active) {
-                wifi_tooltip = "Refresh unavailable while flight mode is on";
+                wifi_tooltip = _("Refresh unavailable while flight mode is on");
             } else if (!wifi_enabled) {
-                wifi_tooltip = "Refresh unavailable while Wi-Fi is off";
+                wifi_tooltip = _("Refresh unavailable while Wi-Fi is off");
             }
 
             wifi_section.wifi_switch.set_sensitive (!flight_mode_active);
@@ -272,8 +272,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         if (ethernet_section != null) {
             bool ethernet_refresh_enabled = !flight_mode_active;
             string ethernet_tooltip = ethernet_refresh_enabled
-                ? "Refresh Ethernet devices"
-                : "Refresh unavailable while flight mode is on";
+                ? _("Refresh Ethernet devices")
+                : _("Refresh unavailable while flight mode is on");
 
             ethernet_section.set_refresh_button_enabled (ethernet_refresh_enabled, ethernet_tooltip);
             ethernet_section.set_flight_mode_placeholder (flight_mode_active);

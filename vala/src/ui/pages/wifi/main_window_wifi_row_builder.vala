@@ -134,7 +134,7 @@ namespace MainWindowWifiRowBuilder {
     ) {
         bool is_saved_only = net.saved && net.ap_path.has_prefix ("saved:");
         if (is_saved_only) {
-            return "Saved network";
+            return _("Saved network");
         }
 
         string bssid_text = MainWindowHelpers.safe_text (net.bssid);

@@ -4,7 +4,7 @@ vala/src/backend/nm_client.vala
 vala/src/backend/nm_ethernet_client.vala
 vala/src/backend/nm_status_formatter.vala
 vala/src/backend/nm_vpn_client.vala
-vala/src/backend/nm_wifi_client.vala
+vala/src/backend/services/wifi_scanner_service.vala
 vala/src/backend/utils/nm_ip_config_helper.vala
 vala/src/backend/utils/nm_wifi_utils.vala
 vala/src/constants.vala
@@ -57,9 +57,12 @@ vala/src/ui/pages/ethernet/main_window_ethernet_view_context.vala
 vala/src/ui/pages/profiles/main_window_profiles_details_page.vala
 vala/src/ui/pages/profiles/main_window_profiles_page.vala
 vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala
+vala/src/ui/pages/vpn/main_window_vpn_add_page.vala
 vala/src/ui/pages/vpn/main_window_vpn_details_page.vala
+vala/src/ui/pages/vpn/main_window_vpn_edit_page.vala
 vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala
 vala/src/ui/pages/vpn/main_window_vpn_peer_edit_page.vala
+vala/src/ui/pages/vpn/main_window_vpn_setup_page.vala
 vala/src/ui/pages/wifi/main_window_wifi_details_page.vala
 vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala
 vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala
@@ -74,10 +77,12 @@ vala/src/ui/utils/main_window_icon_resources.vala
 vala/src/ui/utils/main_window_ip_details_row_builder.vala
 vala/src/ui/utils/main_window_ip_edit_form_builder.vala
 vala/src/ui/utils/main_window_ip_sensitivity_rules.vala
+vala/src/ui/utils/main_window_ip_validation.vala
 vala/src/ui/utils/main_window_layer_shell_configurator.vala
 vala/src/ui/utils/main_window_password_prompt_manager.vala
 vala/src/ui/utils/main_window_ui_metrics.vala
 vala/src/ui/utils/main_window_vpn_form_builder.vala
+vala/src/ui/utils/main_window_vpn_request_builder.vala
 vala/src/ui/utils/main_window_wifi_edit_utils.vala
 vala/src/ui/utils/transient_surface_tracker.vala
 vala/src/ui/views/app_content_navigation_manager.vala
