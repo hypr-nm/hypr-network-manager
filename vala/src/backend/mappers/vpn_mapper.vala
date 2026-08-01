@@ -55,36 +55,13 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
             uint32 port = 0;
 
             if (endpoint != "") {
-                if (endpoint.has_prefix ("[")) {
-                    int close_bracket_idx = endpoint.index_of ("]");
-                    if (close_bracket_idx != -1) {
-                        host = endpoint.substring (1, close_bracket_idx - 1);
-                        string remaining = endpoint.substring (close_bracket_idx + 1);
-                        if (remaining.has_prefix (":")) {
-                            uint parsed_port;
-                            if (uint.try_parse (remaining.substring (1), out parsed_port)) {
-                                port = (uint32) parsed_port;
-                            }
-                        }
-                    }
-                } else {
-                    int first_colon_idx = endpoint.index_of (":");
-                    int last_colon_idx = endpoint.last_index_of (":");
-                    if (first_colon_idx != -1) {
-                        if (first_colon_idx == last_colon_idx) {
-                            host = endpoint.substring (0, first_colon_idx);
-                            uint parsed_port;
-                            if (uint.try_parse (endpoint.substring (first_colon_idx + 1), out parsed_port)) {
-                                port = (uint32) parsed_port;
-                            }
-                        } else {
-                            host = endpoint;
-                            port = 0;
-                        }
-                    } else {
-                        host = endpoint;
-                        port = 0;
-                    }
+                try {
+                    var parsed = NetworkAddress.parse (endpoint, 0);
+                    host = parsed.hostname;
+                    port = (uint32) parsed.port;
+                } catch (Error e) {
+                    host = endpoint;
+                    port = 0;
                 }
             }
 
