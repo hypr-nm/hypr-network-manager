@@ -245,8 +245,7 @@ public class AppConfig : Object {
 
     private static string get_default_config_path () {
         return Path.build_filename (
-            Environment.get_home_dir (),
-            ".config",
+            Environment.get_user_config_dir (),
             "hypr-network-manager",
             "config.json"
         );

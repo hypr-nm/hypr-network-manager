@@ -52,8 +52,7 @@ public class NetworkManager : Gtk.Application {
 
     private string get_local_base_css_path () {
         return Path.build_filename (
-            Environment.get_home_dir (),
-            ".config",
+            Environment.get_user_config_dir (),
             "hypr-network-manager",
             "themes",
             "base.css"
