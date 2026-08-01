@@ -467,9 +467,9 @@ public class NmVpnClient : GLib.Object {
         Cancellable? cancellable = null
     ) throws Error {
         var client = core.nm_client;
-        NM.Connection? vpn_conn = find_vpn_connection_by_id (client, id);
+        NM.Connection? base_vpn_conn = find_vpn_connection_by_id (client, id);
 
-        if (vpn_conn == null) {
+        if (base_vpn_conn == null) {
             throw new IOError.NOT_FOUND ("VPN connection not found");
         }
 
@@ -478,7 +478,9 @@ public class NmVpnClient : GLib.Object {
             throw new IOError.FAILED (validation_error);
         }
 
-        var s_conn = vpn_conn.get_setting_connection ();
+        var cloned_conn = NM.SimpleConnection.new_clone (base_vpn_conn);
+
+        var s_conn = cloned_conn.get_setting_connection ();
         if (s_conn != null) {
             string new_name = request.name.strip ();
             if (new_name != "") {
@@ -491,16 +493,24 @@ public class NmVpnClient : GLib.Object {
         }
 
         var mapper = VpnMapperFactory.create (request.vpn_type);
-        mapper.map_from_request (request, vpn_conn);
+        mapper.map_from_request (request, cloned_conn);
 
-        var s_ip4 = NmIpConfigHelper.ensure_ip4_setting (vpn_conn);
+        var s_ip4 = NmIpConfigHelper.ensure_ip4_setting (cloned_conn);
         NmIpConfigHelper.apply_ipv4_settings (s_ip4, request.ip_request.get_ipv4_section ());
 
-        var s_ip6 = NmIpConfigHelper.ensure_ip6_setting (vpn_conn);
+        var s_ip6 = NmIpConfigHelper.ensure_ip6_setting (cloned_conn);
         NmIpConfigHelper.apply_ipv6_settings (s_ip6, request.ip_request.get_ipv6_section ());
 
-        if (vpn_conn is NM.RemoteConnection) {
-            yield ((NM.RemoteConnection)vpn_conn).commit_changes_async (true, cancellable);
+        try {
+            cloned_conn.verify ();
+        } catch (Error e) {
+            throw new IOError.FAILED ("VPN connection validation failed: " + e.message);
+        }
+
+        base_vpn_conn.replace_settings_from_connection (cloned_conn);
+
+        if (base_vpn_conn is NM.RemoteConnection) {
+            yield ((NM.RemoteConnection)base_vpn_conn).commit_changes_async (true, cancellable);
         }
         return true;
     }

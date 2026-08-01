@@ -100,15 +100,32 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
         }
         conn.remove_setting (typeof (NM.SettingVpn));
 
-        var s_wg = new NM.SettingWireGuard ();
-        s_wg.private_key = wg_request.wg_private_key.strip ();
-        if (wg_request.wg_listen_port > 0) {
-            s_wg.listen_port = wg_request.wg_listen_port;
+        var s_wg = (NM.SettingWireGuard) conn.get_setting_by_name (NM.SettingWireGuard.SETTING_NAME);
+        if (s_wg == null) {
+            s_wg = new NM.SettingWireGuard ();
+            conn.add_setting (s_wg);
         }
+
+        if (wg_request.wg_private_key.strip () != "") {
+            s_wg.private_key = wg_request.wg_private_key.strip ();
+        } else {
+            s_wg.private_key = null;
+        }
+
+        if (wg_request.wg_listen_port > 0) {
+            s_wg.listen_port = (uint16) wg_request.wg_listen_port;
+        } else {
+            s_wg.listen_port = 0;
+        }
+
         if (wg_request.wg_fwmark > 0) {
             s_wg.fwmark = wg_request.wg_fwmark;
+        } else {
+            s_wg.fwmark = 0;
         }
+
         s_wg.peer_routes = wg_request.wg_peer_routes;
+        s_wg.clear_peers ();
 
         foreach (var p in wg_request.peers) {
             var peer = new NM.WireGuardPeer ();
@@ -147,9 +164,6 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
             }
             s_wg.append_peer (peer);
         }
-
-        conn.remove_setting (typeof (NM.SettingWireGuard));
-        conn.add_setting (s_wg);
     }
 
     public string get_vpn_type_key () {
@@ -188,32 +202,33 @@ public class OpenVpnMapper : GLib.Object, VpnMapper {
         }
         conn.remove_setting (typeof (NM.SettingWireGuard));
 
-        var s_vpn = new NM.SettingVpn ();
+        var s_vpn = conn.get_setting_vpn ();
+        if (s_vpn == null) {
+            s_vpn = new NM.SettingVpn ();
+            conn.add_setting (s_vpn);
+        }
+        
         s_vpn.service_type = "org.freedesktop.NetworkManager.openvpn";
-        s_vpn.add_data_item ("remote", ovpn_request.ovpn_remote.strip ());
-        if (ovpn_request.ovpn_port > 0) {
-            s_vpn.add_data_item ("port", "%u".printf (ovpn_request.ovpn_port));
-        }
-        if (ovpn_request.ovpn_proto.strip () != "") {
-            s_vpn.add_data_item ("proto", ovpn_request.ovpn_proto.strip ());
-        }
+        
+        if (ovpn_request.ovpn_remote.strip () != "") s_vpn.add_data_item ("remote", ovpn_request.ovpn_remote.strip ()); else s_vpn.remove_data_item ("remote");
+        if (ovpn_request.ovpn_port > 0) s_vpn.add_data_item ("port", "%u".printf (ovpn_request.ovpn_port)); else s_vpn.remove_data_item ("port");
+        if (ovpn_request.ovpn_proto.strip () != "") s_vpn.add_data_item ("proto", ovpn_request.ovpn_proto.strip ()); else s_vpn.remove_data_item ("proto");
+        
         if (ovpn_request.ovpn_username.strip () != "") {
-            string username = ovpn_request.ovpn_username.strip ();
-            s_vpn.user_name = username;
-            s_vpn.add_data_item ("username", username);
+            s_vpn.user_name = ovpn_request.ovpn_username.strip ();
+            s_vpn.add_data_item ("username", ovpn_request.ovpn_username.strip ());
+        } else {
+            s_vpn.user_name = null;
+            s_vpn.remove_data_item ("username");
         }
-        if (ovpn_request.ovpn_password != "") {
-            s_vpn.add_secret ("password", ovpn_request.ovpn_password);
-        }
-        if (ovpn_request.ovpn_ca_cert.strip () != "") s_vpn.add_data_item ("ca", ovpn_request.ovpn_ca_cert.strip ());
-        if (ovpn_request.ovpn_client_cert.strip () != "") s_vpn.add_data_item ("cert", ovpn_request.ovpn_client_cert.strip ());
-        if (ovpn_request.ovpn_private_key.strip () != "") s_vpn.add_data_item ("key", ovpn_request.ovpn_private_key.strip ());
-        if (ovpn_request.ovpn_tls_auth_key.strip () != "") s_vpn.add_data_item ("ta", ovpn_request.ovpn_tls_auth_key.strip ());
-        if (ovpn_request.ovpn_cipher.strip () != "") s_vpn.add_data_item ("cipher", ovpn_request.ovpn_cipher.strip ());
-        if (ovpn_request.ovpn_auth.strip () != "") s_vpn.add_data_item ("auth", ovpn_request.ovpn_auth.strip ());
-
-        conn.remove_setting (typeof (NM.SettingVpn));
-        conn.add_setting (s_vpn);
+        
+        if (ovpn_request.ovpn_password != "") s_vpn.add_secret ("password", ovpn_request.ovpn_password); else s_vpn.remove_secret ("password");
+        if (ovpn_request.ovpn_ca_cert.strip () != "") s_vpn.add_data_item ("ca", ovpn_request.ovpn_ca_cert.strip ()); else s_vpn.remove_data_item ("ca");
+        if (ovpn_request.ovpn_client_cert.strip () != "") s_vpn.add_data_item ("cert", ovpn_request.ovpn_client_cert.strip ()); else s_vpn.remove_data_item ("cert");
+        if (ovpn_request.ovpn_private_key.strip () != "") s_vpn.add_data_item ("key", ovpn_request.ovpn_private_key.strip ()); else s_vpn.remove_data_item ("key");
+        if (ovpn_request.ovpn_tls_auth_key.strip () != "") s_vpn.add_data_item ("ta", ovpn_request.ovpn_tls_auth_key.strip ()); else s_vpn.remove_data_item ("ta");
+        if (ovpn_request.ovpn_cipher.strip () != "") s_vpn.add_data_item ("cipher", ovpn_request.ovpn_cipher.strip ()); else s_vpn.remove_data_item ("cipher");
+        if (ovpn_request.ovpn_auth.strip () != "") s_vpn.add_data_item ("auth", ovpn_request.ovpn_auth.strip ()); else s_vpn.remove_data_item ("auth");
     }
 
     public string get_vpn_type_key () {
@@ -256,7 +271,12 @@ public class GenericVpnMapper : GLib.Object, VpnMapper {
         }
         conn.remove_setting (typeof (NM.SettingWireGuard));
 
-        var s_vpn = new NM.SettingVpn ();
+        var s_vpn = conn.get_setting_vpn ();
+        if (s_vpn == null) {
+            s_vpn = new NM.SettingVpn ();
+            conn.add_setting (s_vpn);
+        }
+
         string service_key = request.vpn_type.strip ().ascii_down ();
         if (service_key == "" || service_key == "vpn") {
             service_key = "vpn";
@@ -265,13 +285,10 @@ public class GenericVpnMapper : GLib.Object, VpnMapper {
 
         var generic_request = request as GenericVpnUpdateRequest;
         if (generic_request != null) {
-            if (generic_request.gateway.strip () != "") s_vpn.add_data_item ("gateway", generic_request.gateway.strip ());
-            if (generic_request.user.strip () != "") s_vpn.add_data_item ("username", generic_request.user.strip ());
-            if (generic_request.password != "") s_vpn.add_secret ("password", generic_request.password);
+            if (generic_request.gateway.strip () != "") s_vpn.add_data_item ("gateway", generic_request.gateway.strip ()); else s_vpn.remove_data_item ("gateway");
+            if (generic_request.user.strip () != "") s_vpn.add_data_item ("username", generic_request.user.strip ()); else s_vpn.remove_data_item ("username");
+            if (generic_request.password != "") s_vpn.add_secret ("password", generic_request.password); else s_vpn.remove_secret ("password");
         }
-
-        conn.remove_setting (typeof (NM.SettingVpn));
-        conn.add_setting (s_vpn);
     }
 
     public string get_vpn_type_key () {

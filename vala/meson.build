@@ -216,3 +216,20 @@ hotspot_config_storage_test = executable(
 )
 
 test('hotspot-config-storage', hotspot_config_storage_test)
+
+vpn_roundtrip_test = executable(
+  'test-vpn-roundtrip',
+  [
+    'tests/test_vpn_roundtrip.vala',
+    'src/constants.vala',
+    'src/models/network_update_requests.vala',
+    'src/models/network_ip_settings.vala',
+    'src/models/wireguard_peer.vala',
+    'src/models/vpn_connection.vala',
+    'src/backend/mappers/vpn_mapper.vala',
+    'src/backend/utils/nm_ip_config_helper.vala',
+  ],
+  c_args: ['-w'],
+  dependencies: [gio_dep, libnm_dep],
+)
+test('VPN roundtrip', vpn_roundtrip_test)
