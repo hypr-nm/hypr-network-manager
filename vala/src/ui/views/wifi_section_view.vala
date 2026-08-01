@@ -39,6 +39,7 @@ namespace HyprNetworkManager.UI.Views {
         private NetworkStateContext state_context;
 
         private WifiNetwork? selected_wifi_network = null;
+        private uint share_operation_epoch = 0;
         private MainWindowWifiDetailsPage details_page;
         private MainWindowWifiEditPage edit_page;
         private MainWindowWifiSharePage share_page;
@@ -199,37 +200,50 @@ namespace HyprNetworkManager.UI.Views {
 
             details_page.share.connect (() => {
                 if (selected_wifi_network == null) {
-                    window_host.debug_log ("Share clicked but selected_wifi_network is null");
+                    window_host.debug_log ("Share requested but no network is selected");
                     return;
                 }
-                
-                window_host.debug_log ("Share clicked for SSID: " + selected_wifi_network.ssid + ", uuid: " + selected_wifi_network.saved_connection_uuid);
 
-                nm.get_wifi_password.begin (selected_wifi_network.saved_connection_uuid, null, (obj, res) => {
+                // Snapshot the network before the async password read so the QR is
+                // always built from one consistent network, even if selection changes
+                // while the read is in flight.
+                string share_uuid = selected_wifi_network.saved_connection_uuid;
+                string share_ssid = selected_wifi_network.ssid;
+                string share_network_key = selected_wifi_network.network_key;
+                bool share_secured = selected_wifi_network.is_secured;
+                bool share_hidden = selected_wifi_network.is_hidden;
+                uint share_epoch = ++share_operation_epoch;
+
+                window_host.debug_log ("Share requested for network %s".printf (
+                    redact_network_key (share_network_key)));
+
+                nm.get_wifi_password.begin (share_uuid, null, (obj, res) => {
+                    // Selection changed (or a newer share started) while the password
+                    // read was in flight; discard so stale credentials are never used.
+                    if (share_epoch != share_operation_epoch) {
+                        return;
+                    }
+
                     string? read_failure = null;
                     string? password = nm.get_wifi_password.end (res, out read_failure);
 
-                    window_host.debug_log ("Got password. Password empty? " + (password == null || password == "").to_string ());
-
-                    if (selected_wifi_network.is_secured && (password == null || password == "")) {
+                    if (share_secured && (password == null || password == "")) {
                         if (read_failure != null) {
-                            window_host.show_wifi_error (selected_wifi_network.network_key, _("Could not read Wi-Fi password") + ": " + read_failure);
+                            window_host.show_wifi_error (share_network_key, _("Could not read Wi-Fi password") + ": " + read_failure);
                         } else {
-                            window_host.show_wifi_error (selected_wifi_network.network_key, _("Cannot share: password is empty"));
+                            window_host.show_wifi_error (share_network_key, _("Cannot share: password is empty"));
                         }
                         return;
                     }
-                    
+
                     string password_value = (password != null) ? password : "";
                     string qr_text = WifiQrBuilder.build (
-                        selected_wifi_network.ssid,
+                        share_ssid,
                         password_value,
-                        selected_wifi_network.is_secured,
-                        selected_wifi_network.is_hidden);
-                    
-                    window_host.debug_log ("Generated QR text: " + qr_text);
+                        share_secured,
+                        share_hidden);
 
-                    share_page.set_share_data (selected_wifi_network.ssid, qr_text);
+                    share_page.set_share_data (share_ssid, qr_text);
                     stack.set_visible_child_name ("share");
                 });
             });
@@ -445,6 +459,7 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void open_wifi_details (WifiNetwork net) {
+            share_operation_epoch++;
             populate_wifi_details (net);
             controller.open_details (
                 ref selected_wifi_network,
