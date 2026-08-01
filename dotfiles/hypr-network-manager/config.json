@@ -14,6 +14,7 @@
   "load_core_styles": true,
 
   "scan_interval": 20,
+  "pending_wifi_connect_timeout_ms": 15000,
   "close_on_connect": false,
   "show_bssid": false,
   "show_frequency": false,

@@ -184,6 +184,7 @@ Configuration is handled via JSON files.
   "layer_shell_margin_bottom": 8,
   "layer_shell_margin_left": 8,
   "scan_interval": 30,
+  "pending_wifi_connect_timeout_ms": 15000,
   "close_on_connect": true,
   "show_bssid": false,
   "show_frequency": true,
@@ -212,6 +213,7 @@ The app reads `config.json` from this precedence order:
 | layer_shell_margin_bottom | int | 8 | Bottom margin in pixels. |
 | layer_shell_margin_left | int | 8 | Left margin in pixels. |
 | scan_interval | int (> 0) | 30 | Seconds between periodic refresh/scan cycles. |
+| pending_wifi_connect_timeout_ms | int (> 0) | 15000 | Maximum time in milliseconds to wait for a Wi-Fi connection to succeed before timing out. |
 | close_on_connect | bool | true | Close popup immediately after successful Wi-Fi connect. |
 | show_bssid | bool | false | Show access point BSSID in Wi-Fi row subtitle. |
 | show_frequency | bool | true | Show access point frequency in MHz in Wi-Fi row subtitle. |
