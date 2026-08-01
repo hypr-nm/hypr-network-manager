@@ -63,7 +63,7 @@ namespace HyprNetworkManager.Models {
             shell_margin_bottom = config.margin_bottom >= 0 ? config.margin_bottom : 0;
             shell_margin_left = config.margin_left >= 0 ? config.margin_left : 0;
 
-            string parsed_layer = config.layer.strip ();
+            string parsed_layer = config.layer_shell_layer.strip ();
             shell_layer = parsed_layer != "" ? parsed_layer : LayerShellLayer.OVERLAY;
 
             refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval : Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS);

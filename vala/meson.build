@@ -233,3 +233,17 @@ vpn_roundtrip_test = executable(
   dependencies: [gio_dep, libnm_dep],
 )
 test('VPN roundtrip', vpn_roundtrip_test)
+
+config_parser_test = executable(
+  'test-config-parser',
+  [
+    'tests/test_config_parser.vala',
+    'src/constants.vala',
+    'src/logging.vala',
+    'src/models/config.vala',
+    'src/ui/utils/main_window_ui_metrics.vala',
+  ],
+  c_args: ['-w'],
+  dependencies: [gio_dep, json_glib_dep],
+)
+test('config parser', config_parser_test)

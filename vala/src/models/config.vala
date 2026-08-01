@@ -31,7 +31,7 @@ public class AppConfig : Object {
     public int margin_right = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN;
     public int margin_bottom = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN;
     public int margin_left = MainWindowUiMetrics.DEFAULT_SHELL_MARGIN;
-    public string layer = LayerShellLayer.OVERLAY;
+    public string layer_shell_layer = LayerShellLayer.OVERLAY;
     public AppLogLevel log_level = AppLogLevel.INFO;
     public int scan_interval = (int) Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS;
     public int pending_wifi_connect_timeout_ms = (int) Timeouts.PENDING_WIFI_CONNECT_TIMEOUT_MS;
@@ -360,15 +360,22 @@ public class AppConfig : Object {
         this.anchor_bottom = bottom;
         this.anchor_left = left;
 
-        string? cfg_layer = extract_json_string (obj, "layer", path);
+        string? cfg_layer = extract_json_string (obj, "layer_shell_layer", path);
+        if (cfg_layer == null) {
+            cfg_layer = extract_json_string (obj, "layer", path);
+            if (cfg_layer != null) {
+                log_warn ("config", "Config key 'layer' is deprecated. Please use 'layer_shell_layer' instead.");
+            }
+        }
+
         if (cfg_layer != null) {
             string l = cfg_layer.strip ().down ();
             if (l == LayerShellLayer.BACKGROUND || l == LayerShellLayer.BOTTOM || l == LayerShellLayer.TOP || l == LayerShellLayer.OVERLAY) {
-                this.layer = l;
+                this.layer_shell_layer = l;
             } else {
                 warn_invalid_config_value (
                     path,
-                    "layer",
+                    "layer_shell_layer",
                     cfg_layer,
                     "background|bottom|top|overlay"
                 );
@@ -488,6 +495,38 @@ public class AppConfig : Object {
         Json.Object obj,
         string path
     ) {
+        var known_keys = new GenericArray<string> ();
+        known_keys.add ("window_width");
+        known_keys.add ("window_height");
+        known_keys.add ("log_level");
+        known_keys.add ("position");
+        known_keys.add ("layer"); // deprecated alias
+        known_keys.add ("layer_shell_layer");
+        known_keys.add ("layer_shell_margin_top");
+        known_keys.add ("layer_shell_margin_right");
+        known_keys.add ("layer_shell_margin_bottom");
+        known_keys.add ("layer_shell_margin_left");
+        known_keys.add ("scan_interval");
+        known_keys.add ("pending_wifi_connect_timeout_ms");
+        known_keys.add ("close_on_connect");
+        known_keys.add ("show_bssid");
+        known_keys.add ("show_frequency");
+        known_keys.add ("show_band");
+        known_keys.add ("load_core_styles");
+
+        foreach (unowned string key in obj.get_members ()) {
+            bool is_known = false;
+            for (int i = 0; i < known_keys.length; i++) {
+                if (known_keys[i] == key) {
+                    is_known = true;
+                    break;
+                }
+            }
+            if (!is_known && key != "_comment" && key != "_comment_edit") {
+                log_warn ("config", "Unknown configuration key '%s' in %s".printf (key, redact_fs_path (path)));
+            }
+        }
+
         apply_window_config (obj, path);
         apply_log_config (obj, path);
         apply_position_config (obj, path);
