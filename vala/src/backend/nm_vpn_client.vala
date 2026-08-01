@@ -378,6 +378,20 @@ public class NmVpnClient : GLib.Object {
             throw new IOError.NOT_FOUND ("VPN connection not found");
         }
 
+        if (vpn_conn is NM.RemoteConnection) {
+            try {
+                var s_name = (vpn_conn.get_setting_by_name (NM.SettingWireGuard.SETTING_NAME) != null || vpn_conn.is_type ("wireguard")) 
+                    ? NM.SettingWireGuard.SETTING_NAME 
+                    : NM.SettingVpn.SETTING_NAME;
+                var secrets = yield ((NM.RemoteConnection)vpn_conn).get_secrets_async (s_name, cancellable);
+                if (secrets != null) {
+                    vpn_conn.update_secrets (s_name, secrets);
+                }
+            } catch (Error e) {
+                log_warn ("NmVpnClient", "Failed to fetch secrets for connection '%s': %s".printf (vpn_conn.get_id (), e.message));
+            }
+        }
+
         var mapper = VpnMapperFactory.create_for_connection (vpn_conn);
         string vpn_type_key = mapper.get_vpn_type_key ();
 
