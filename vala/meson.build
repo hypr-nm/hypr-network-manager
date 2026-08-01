@@ -28,7 +28,6 @@ app_resources = gnome.compile_resources(
 )
 
 add_project_arguments(
-  '-w',
   '-DGETTEXT_PACKAGE="' + meson.project_name() + '"',
   language: 'c'
 )
@@ -161,6 +160,7 @@ executable(
     'src/app.vala',
     'src/main.vala',
   ],
+  c_args: ['-w'],
   dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep, libnm_dep],
   link_with: nl80211_client_lib,
   install: true
@@ -184,6 +184,7 @@ nm_hotspot_profile_test = executable(
     'src/constants.vala',
     'src/backend/utils/nm_hotspot_utils.vala',
   ],
+  c_args: ['-w'],
   dependencies: [gio_dep, libnm_dep],
   override_options: ['b_ndebug=false'],
   install: false,
@@ -208,6 +209,7 @@ hotspot_config_storage_test = executable(
     'src/models/hotspot_config.vala',
     'src/backend/hotspot_config_storage.vala',
   ],
+  c_args: ['-w'],
   dependencies: [gio_dep, json_glib_dep],
   override_options: ['b_ndebug=false'],
   install: false,
