@@ -442,25 +442,15 @@ button.nm-nav-back label,
   min-width: 36px;
 }
 
-.nm-edit-gateway-mode-switch,
-.nm-edit-dns-mode-switch,
 .nm-edit-ipv4-dns-mode-switch,
 .nm-edit-ipv6-dns-mode-switch {
   margin-left: 8px;
 }
 
-.nm-edit-gateway-mode-row,
-.nm-edit-dns-mode-row,
 .nm-edit-ipv4-dns-mode-row,
 .nm-edit-ipv6-dns-mode-row {
   padding-left: 2px;
   padding-right: 2px;
-}
-
-.nm-edit-field-entry:disabled,
-.nm-edit-dropdown:disabled,
-entry.nm-edit-field-entry:disabled {
-  opacity: 0.6;
 }
 
 .nm-edit-ipv4-method-dropdown {

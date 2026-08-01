@@ -394,6 +394,7 @@ namespace MainWindowIpEditFormBuilder {
         } else {
             dns_mode_row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
         }
+        dns_mode_row.add_css_class (MainWindowCssClasses.NM_FLAT);
 
         var dns_mode_label = new Gtk.Label (_("Automatic DNS"));
         dns_mode_label.set_xalign (0.0f);

@@ -182,6 +182,7 @@ public class MainWindowVpnFormBuilder : Object {
     private static Gtk.Switch build_labeled_switch_row (string label_text, bool default_active, Gtk.Box target_box) {
         var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
         row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
+        row.add_css_class (MainWindowCssClasses.NM_FLAT);
 
         var lbl = new Gtk.Label (label_text);
         lbl.set_xalign (0.0f);

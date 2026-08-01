@@ -178,6 +178,7 @@ namespace MainWindowCssClasses {
     public const string EDIT_IP_SECTION = "nm-edit-ip-section";
     public const string EDIT_IP_ADVANCED = "nm-edit-ip-advanced";
     public const string EDIT_IP_SUBSECTION_REVEALER = "nm-edit-ip-subsection-revealer";
+    public const string NM_FLAT = "nm-flat";
     public const string EDIT_MODE_ROW = "nm-edit-mode-row";
     public const string EDIT_MODE_LABEL = "nm-edit-mode-label";
     public const string EDIT_MODE_SWITCH = "nm-edit-mode-switch";

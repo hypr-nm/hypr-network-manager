@@ -223,6 +223,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFie
 
         var auto_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
         auto_row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
+        auto_row.add_css_class (MainWindowCssClasses.NM_FLAT);
         var auto_lbl = new Gtk.Label (_("Connect automatically"));
         auto_lbl.set_xalign (0.0f);
         auto_lbl.set_hexpand (true);

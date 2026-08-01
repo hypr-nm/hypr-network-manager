@@ -1072,16 +1072,8 @@ popover.background list row:checked:hover {
   opacity: 0.92;
 }
 
-.nm-edit-mode-row {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.nm-edit-gateway-mode-row,
-.nm-edit-dns-mode-row,
-.nm-edit-ipv4-dns-mode-row,
-.nm-edit-ipv6-dns-mode-row {
+/* Utility: neutralize GTK default chrome. Applied alongside component classes. */
+.nm-flat {
   background: transparent;
   border: none;
   box-shadow: none;

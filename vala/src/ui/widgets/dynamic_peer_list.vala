@@ -30,6 +30,7 @@ namespace HyprNetworkManager.UI.Widgets {
 
             var header_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
             header_box.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
+            header_box.add_css_class (MainWindowCssClasses.NM_FLAT);
             var title = new Gtk.Label (_("Peers"));
             title.set_hexpand (true);
             title.set_xalign (0.0f);
