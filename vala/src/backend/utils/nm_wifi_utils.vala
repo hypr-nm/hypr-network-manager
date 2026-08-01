@@ -145,7 +145,7 @@ namespace NmWifiUtils {
             return WifiSecurity.OPEN;
         }
 
-        string key_mgmt = s_sec.key_mgmt != null ? s_sec.key_mgmt.strip ().down () : "";
+        string key_mgmt = s_sec.key_mgmt != null ? s_sec.key_mgmt.strip ().ascii_down () : "";
         if (key_mgmt == WifiKeyMgmt.SAE) {
             return WifiKeyMgmt.SAE;
         }
@@ -167,7 +167,7 @@ namespace NmWifiUtils {
     }
 
     public void apply_security_mode (NM.Connection conn, string security_mode) {
-        string mode = security_mode.strip ().down ();
+        string mode = security_mode.strip ().ascii_down ();
         if (mode == "") {
             mode = WifiSecurity.OPEN;
         }

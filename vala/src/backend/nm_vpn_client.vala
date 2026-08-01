@@ -51,7 +51,7 @@ public class NmVpnClient : GLib.Object {
     }
 
     private static string normalize_key (string? value) {
-        return normalize_string (value).down ();
+        return normalize_string (value).ascii_down ();
     }
 
     private static string normalize_connection_type (string? value) {
@@ -184,8 +184,8 @@ public class NmVpnClient : GLib.Object {
                 builder.append (" ");
             }
 
-            string lower_piece = piece.down ();
-            builder.append (lower_piece.substring (0, 1).up ());
+            string lower_piece = piece.ascii_down ();
+            builder.append (lower_piece.substring (0, 1).ascii_up ());
             if (lower_piece.length > 1) {
                 builder.append (lower_piece.substring (1));
             }

@@ -280,7 +280,7 @@ public class GenericVpnMapper : GLib.Object, VpnMapper {
         conn.remove_setting (typeof (NM.SettingWireGuard));
 
         var s_vpn = new NM.SettingVpn ();
-        string service_key = request.vpn_type.strip ().down ();
+        string service_key = request.vpn_type.strip ().ascii_down ();
         if (service_key == "" || service_key == "vpn") {
             service_key = "vpn";
         }
@@ -304,7 +304,7 @@ public class GenericVpnMapper : GLib.Object, VpnMapper {
 
 public class VpnMapperFactory : GLib.Object {
     public static VpnMapper create (string vpn_type_key) {
-        string key = vpn_type_key.strip ().down ();
+        string key = vpn_type_key.strip ().ascii_down ();
         if (key == "wireguard") {
             return new WireGuardMapper ();
         } else if (key == "openvpn") {
@@ -329,7 +329,7 @@ public class VpnMapperFactory : GLib.Object {
             
             string[] parts = service_type.split (".");
             string plugin_name = parts.length > 0 ? parts[parts.length - 1] : "vpn";
-            return new GenericVpnMapper (plugin_name.down ());
+            return new GenericVpnMapper (plugin_name.ascii_down ());
         }
 
         return new GenericVpnMapper ("vpn");
