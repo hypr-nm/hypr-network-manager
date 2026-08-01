@@ -29,13 +29,21 @@ namespace NmHotspotUtils {
         }
 
         foreach (string octet in octets) {
-            int parsed;
-            if (!int.try_parse (octet, out parsed)
-                || parsed < 0
-                || parsed > 255) {
+            if (octet.length == 0 || octet.length > 3) {
                 return false;
             }
-            value = (value << 8) | (uint32) parsed;
+            uint32 octet_value = 0;
+            for (int i = 0; i < octet.length; i++) {
+                uint8 b = octet.data[i];
+                if (b < '0' || b > '9') {
+                    return false;
+                }
+                octet_value = octet_value * 10 + (uint32) (b - '0');
+            }
+            if (octet_value > 255) {
+                return false;
+            }
+            value = (value << 8) | octet_value;
         }
         return true;
     }
