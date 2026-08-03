@@ -20,6 +20,8 @@ public class MainWindowVpnController : Object {
     private NetworkManagerClient nm;
     private MainWindowVpnPageBuilder page_builder;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
+    private uint operation_epoch = 1;
+    private Cancellable? current_cancellable = null;
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
@@ -53,6 +55,42 @@ public class MainWindowVpnController : Object {
         });
     }
 
+    private void advance_operation_epoch () {
+        operation_epoch++;
+        if (operation_epoch == 0) operation_epoch = 1;
+    }
+
+    private uint begin_operation (out Cancellable cancellable) {
+        advance_operation_epoch ();
+        if (current_cancellable != null) {
+            current_cancellable.cancel ();
+        }
+
+        cancellable = new Cancellable ();
+        current_cancellable = cancellable;
+        return operation_epoch;
+    }
+
+    private bool is_operation_current (uint epoch, Cancellable cancellable) {
+        return epoch == operation_epoch
+            && current_cancellable == cancellable
+            && !cancellable.is_cancelled ();
+    }
+
+    private void finish_operation (Cancellable cancellable) {
+        if (current_cancellable == cancellable) {
+            current_cancellable = null;
+        }
+    }
+
+    private void invalidate_current_operation () {
+        advance_operation_epoch ();
+        if (current_cancellable != null) {
+            current_cancellable.cancel ();
+            current_cancellable = null;
+        }
+    }
+
     public void populate_details (
         VpnConnection conn,
         MainWindowVpnDetailsPage details_page
@@ -61,12 +99,19 @@ public class MainWindowVpnController : Object {
         details_page.show_loading_ip ();
 
         string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
-        nm.get_vpn_details.begin (connection_id, null, (obj, res) => {
+        Cancellable cancellable;
+        uint epoch = begin_operation (out cancellable);
+
+        nm.get_vpn_details.begin (connection_id, cancellable, (obj, res) => {
             try {
                 var settings = nm.get_vpn_details.end (res);
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 details_page.render_profile_fields (conn, settings);
                 details_page.render_ip_settings (settings, conn.is_connected);
             } catch (Error e) {
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 log_error ("vpn-controller", "Failed to fetch VPN details: " + e.message);
             }
         });
@@ -89,12 +134,19 @@ public class MainWindowVpnController : Object {
     ) {
         selected_vpn = conn;
         string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
-        nm.get_vpn_details.begin (connection_id, null, (obj, res) => {
+        Cancellable cancellable;
+        uint epoch = begin_operation (out cancellable);
+
+        nm.get_vpn_details.begin (connection_id, cancellable, (obj, res) => {
             try {
                 var settings = nm.get_vpn_details.end (res);
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 edit_page.setup_edit_form (conn, settings);
                 stack.set_visible_child_name ("edit");
             } catch (Error e) {
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 log_error ("vpn-controller", "Failed to fetch VPN details for edit: " + e.message);
             }
         });
@@ -119,14 +171,21 @@ public class MainWindowVpnController : Object {
         request.name = conn.name;
 
         string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
-        nm.update_vpn_settings.begin (connection_id, request, null, (obj, res) => {
+        Cancellable cancellable;
+        uint epoch = begin_operation (out cancellable);
+
+        nm.update_vpn_settings.begin (connection_id, request, cancellable, (obj, res) => {
             try {
                 nm.update_vpn_settings.end (res);
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 if (close_after_apply) {
                     this.populate_details (conn, details_page);
                     stack.set_visible_child_name ("details");
                 }
             } catch (Error e) {
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 edit_page.show_error (_("Apply failed: %s").printf (e.message));
             }
         });
@@ -145,12 +204,19 @@ public class MainWindowVpnController : Object {
             return;
         }
 
-        nm.create_vpn.begin (request, null, (obj, res) => {
+        Cancellable cancellable;
+        uint epoch = begin_operation (out cancellable);
+
+        nm.create_vpn.begin (request, cancellable, (obj, res) => {
             try {
                 nm.create_vpn.end (res);
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 stack.set_visible_child_name ("list");
                 this.refresh ();
             } catch (Error e) {
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 setup_page.show_error (_("Setup failed: %s").printf (e.message));
             }
         });
@@ -161,21 +227,32 @@ public class MainWindowVpnController : Object {
         MainWindowVpnDetailsPage details_page
     ) {
         string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
+        Cancellable cancellable;
+        uint epoch = begin_operation (out cancellable);
+
         if (conn.is_connected) {
-            nm.disconnect_vpn.begin (connection_id, null, (obj, res) => {
+            nm.disconnect_vpn.begin (connection_id, cancellable, (obj, res) => {
                 try {
                     nm.disconnect_vpn.end (res);
+                    if (!is_operation_current (epoch, cancellable)) return;
+                    finish_operation (cancellable);
                 } catch (Error e) {
+                    if (!is_operation_current (epoch, cancellable)) return;
+                    finish_operation (cancellable);
                     host.show_vpn_error (conn.name, _("VPN disconnect failed: %s").printf (e.message));
                     return;
                 }
                 populate_details (conn, details_page);
             });
         } else {
-            nm.connect_vpn.begin (connection_id, null, (obj, res) => {
+            nm.connect_vpn.begin (connection_id, cancellable, (obj, res) => {
                 try {
                     nm.connect_vpn.end (res);
+                    if (!is_operation_current (epoch, cancellable)) return;
+                    finish_operation (cancellable);
                 } catch (Error e) {
+                    if (!is_operation_current (epoch, cancellable)) return;
+                    finish_operation (cancellable);
                     host.show_vpn_error (conn.name, _("VPN connect failed: %s").printf (e.message));
                     return;
                 }
@@ -188,10 +265,17 @@ public class MainWindowVpnController : Object {
         VpnConnection conn
     ) {
         string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
-        nm.delete_vpn.begin (connection_id, null, (obj, res) => {
+        Cancellable cancellable;
+        uint epoch = begin_operation (out cancellable);
+
+        nm.delete_vpn.begin (connection_id, cancellable, (obj, res) => {
             try {
                 nm.delete_vpn.end (res);
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
             } catch (Error e) {
+                if (!is_operation_current (epoch, cancellable)) return;
+                finish_operation (cancellable);
                 host.show_vpn_error (conn.name, _("VPN delete failed: %s").printf (e.message));
                 return;
             }
@@ -200,10 +284,12 @@ public class MainWindowVpnController : Object {
     }
 
     public void on_page_leave () {
+        invalidate_current_operation ();
         page_builder.on_page_leave ();
     }
 
     public void dispose_controller () {
+        invalidate_current_operation ();
         page_builder.dispose_controller ();
     }
 
