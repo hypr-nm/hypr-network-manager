@@ -11,7 +11,7 @@ RUN dnf -y update && \
       meson ninja-build cmake vala pkgconf-pkg-config python3 \
       wayland-devel wayland-protocols-devel \
       gtk4-devel gobject-introspection-devel gtk-doc \
-      json-glib-devel NetworkManager-libnm-devel libnl3-devel \
+      json-glib-devel libsecret-devel NetworkManager-libnm-devel libnl3-devel \
             ca-certificates && \
         dnf -y install \
             "gtk4-layer-shell-${GTK4_LAYER_SHELL_VERSION}*" \

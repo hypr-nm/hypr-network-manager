@@ -132,21 +132,21 @@ nm_detect_pkg_manager() {
 
 _nm_install_deps_pacman() {
   nm_run_with_privilege pacman -S --needed --noconfirm \
-    vala meson ninja pkgconf gtk4 gtk4-layer-shell json-glib networkmanager libnl cmake
+    vala meson ninja pkgconf gtk4 gtk4-layer-shell json-glib libsecret networkmanager libnl cmake
 }
 
 _nm_install_deps_apt() {
   nm_run_with_privilege apt-get update
   nm_run_with_privilege apt-get install -y \
     valac meson ninja-build pkg-config \
-    libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev network-manager libnm-dev \
+    libgtk-4-dev libgtk4-layer-shell-dev libjson-glib-dev libsecret-1-dev network-manager libnm-dev \
     libnl-3-dev libnl-genl-3-dev cmake
 }
 
 _nm_install_deps_dnf() {
   nm_run_with_privilege dnf install -y \
     vala meson ninja-build pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-libnm-devel \
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel libsecret-devel NetworkManager NetworkManager-libnm-devel \
     libnl3-devel cmake
 }
 
@@ -154,7 +154,7 @@ _nm_install_deps_zypper() {
   nm_run_with_privilege zypper --non-interactive refresh
   nm_run_with_privilege zypper --non-interactive install \
     vala meson ninja pkgconf-pkg-config \
-    gtk4-devel gtk4-layer-shell-devel json-glib-devel NetworkManager NetworkManager-devel \
+    gtk4-devel gtk4-layer-shell-devel json-glib-devel libsecret-devel NetworkManager NetworkManager-devel \
     libnl3-devel cmake
 }
 
@@ -194,7 +194,7 @@ nm_check_build_dependencies() {
   done
 
   if command -v pkg-config >/dev/null 2>&1; then
-    for pkg in gtk4 gio-2.0 gtk4-layer-shell-0 json-glib-1.0 libnm libnl-3.0 libnl-genl-3.0; do
+    for pkg in gtk4 gio-2.0 gtk4-layer-shell-0 json-glib-1.0 libsecret-1 libnm libnl-3.0 libnl-genl-3.0; do
       if ! pkg-config --exists "$pkg"; then
         missing+=("pkg:$pkg")
       fi

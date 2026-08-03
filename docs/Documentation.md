@@ -115,11 +115,11 @@ INSTALL_SCOPE=user bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/h
 
 #### Build
 * `meson`, `ninja`, `vala`, `pkg-config`
-* `gtk4` (`gtk4-layer-shell`), `json-glib`, `libnm` (>= 1.0)
+* `gtk4` (`gtk4-layer-shell`), `json-glib`, `libsecret`, `libnm` (>= 1.0)
 * `libnl-3` and `libnl-genl-3`
 
 #### Runtime
-* `gtk4`, `gtk4-layer-shell`, `json-glib`, `networkmanager`, `libnl-3`, `libnl-genl-3`
+* `gtk4`, `gtk4-layer-shell`, `json-glib`, `libsecret`, `networkmanager`, `libnl-3`, `libnl-genl-3`
 * `polkit` (allows passwordless hotspot operations for `wheel`/`sudo` users)
 
 #### Optional Runtime (Wi-Fi Hotspot Internet Sharing)

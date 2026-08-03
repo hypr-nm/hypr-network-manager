@@ -5,6 +5,7 @@ json_glib_dep = dependency('json-glib-1.0')
 libnm_dep = dependency('libnm', version: '>= 1.0')
 libnl_dep = dependency('libnl-3.0')
 libnl_genl_dep = dependency('libnl-genl-3.0')
+libsecret_dep = dependency('libsecret-1')
 gnome = import('gnome')
 
 conf_data = configuration_data()
@@ -161,7 +162,7 @@ executable(
     'src/main.vala',
   ],
   c_args: ['-w'],
-  dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep, libnm_dep],
+  dependencies: [gtk_dep, gio_dep, layer_shell_dep, json_glib_dep, libnm_dep, libsecret_dep],
   link_with: nl80211_client_lib,
   install: true
 )

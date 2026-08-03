@@ -11,7 +11,7 @@ RUN pacman -Sy --noconfirm archlinux-keyring && \
     pacman -Syu --noconfirm \
       base-devel git ca-certificates-utils ca-certificates-mozilla meson cmake ninja vala pkgconf python \
               wayland wayland-protocols gtk4 gobject-introspection gtk-doc \
-            json-glib networkmanager libnl && \
+            json-glib libsecret networkmanager libnl && \
           pacman -U --noconfirm \
               "https://archive.archlinux.org/packages/g/gtk4-layer-shell/gtk4-layer-shell-${GTK4_LAYER_SHELL_VERSION}-${GTK4_LAYER_SHELL_RELEASE}-x86_64.pkg.tar.zst" && \
         pacman -Scc --noconfirm
