@@ -248,7 +248,13 @@ config_parser_test = executable(
   c_args: ['-w'],
   dependencies: [gio_dep, json_glib_dep],
 )
-test('config parser', config_parser_test)
+test(
+  'config parser',
+  config_parser_test,
+  args: [
+    meson.project_source_root() / 'dotfiles' / 'hypr-network-manager' / 'config.json',
+  ],
+)
 
 cli_config_test = executable(
   'test-cli-config',
