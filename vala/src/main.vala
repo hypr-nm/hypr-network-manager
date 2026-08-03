@@ -202,7 +202,11 @@ int main (string[] args) {
         if (!daemon_running) {
             log_info ("cli", "daemon not running, spawning background instance.");
             try {
-                string[] spawn_args = { args[0], "--daemon" };
+                string[] spawn_args = CliInvocation.build_daemon_args (
+                    args[0],
+                    debug_enabled,
+                    config_path
+                );
                 Process.spawn_async (null, spawn_args, null,
                     SpawnFlags.SEARCH_PATH | SpawnFlags.STDOUT_TO_DEV_NULL | SpawnFlags.STDERR_TO_DEV_NULL, null, null);
 

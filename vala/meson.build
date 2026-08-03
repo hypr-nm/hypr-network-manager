@@ -46,6 +46,7 @@ executable(
     config_file,
     app_resources,
     'src/logging.vala',
+    'src/cli_invocation.vala',
     'src/constants.vala',
     'src/models/config.vala',
     'src/models/hotspot_config.vala',
@@ -248,3 +249,14 @@ config_parser_test = executable(
   dependencies: [gio_dep, json_glib_dep],
 )
 test('config parser', config_parser_test)
+
+cli_config_test = executable(
+  'test-cli-config',
+  [
+    'tests/test_cli_config.vala',
+    'src/cli_invocation.vala',
+  ],
+  c_args: ['-w'],
+  dependencies: [gio_dep],
+)
+test('cli config forwarding', cli_config_test)
