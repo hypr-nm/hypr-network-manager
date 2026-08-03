@@ -35,6 +35,7 @@ public class MainWindowWifiController : Object {
     public signal void saved_profile_update_succeeded ();
     public signal void refresh_started ();
     public signal void refresh_finished ();
+    public signal void refresh_requested ();
     public signal void saved_refresh_started ();
     public signal void saved_refresh_finished ();
 
@@ -49,6 +50,9 @@ public class MainWindowWifiController : Object {
         });
         refresh_controller.refresh_finished.connect (() => {
             refresh_finished ();
+        });
+        refresh_controller.refresh_requested.connect (() => {
+            refresh_requested ();
         });
         connection_controller = new MainWindowWifiConnectionController (host, state_context, refresh_controller);
         hidden_network_controller = new MainWindowWifiHiddenNetworkController (host, connection_controller);

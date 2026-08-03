@@ -16,6 +16,7 @@
  */
 
 using Constants;
+
 public class MainWindowWifiRefreshController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
@@ -29,6 +30,7 @@ public class MainWindowWifiRefreshController : Object {
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
+    public signal void refresh_requested ();
 
     public MainWindowWifiRefreshController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
@@ -53,12 +55,16 @@ public class MainWindowWifiRefreshController : Object {
     }
 
     private void cancel_wifi_refresh () {
+        bool was_in_flight = wifi_refresh_in_flight;
         if (wifi_refresh_cancellable != null) {
             wifi_refresh_cancellable.cancel ();
             wifi_refresh_cancellable = null;
         }
         wifi_refresh_in_flight = false;
         wifi_refresh_queued = false;
+        if (was_in_flight) {
+            refresh_finished ();
+        }
     }
 
     private uint capture_ui_epoch () {
@@ -277,12 +283,15 @@ public class MainWindowWifiRefreshController : Object {
             } finally {
                 if (wifi_refresh_cancellable == request_cancellable) {
                     wifi_refresh_cancellable = null;
-                }
-                wifi_refresh_in_flight = false;
-                refresh_finished ();
+                    wifi_refresh_in_flight = false;
+                    refresh_finished ();
 
-                if (wifi_refresh_queued && is_ui_epoch_valid (epoch)) {
+                    bool request_another_refresh = wifi_refresh_queued
+                        && is_ui_epoch_valid (epoch);
                     wifi_refresh_queued = false;
+                    if (request_another_refresh) {
+                        refresh_requested ();
+                    }
                 }
             }
         });

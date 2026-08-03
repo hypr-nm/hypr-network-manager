@@ -122,6 +122,9 @@ namespace HyprNetworkManager.UI.Views {
             controller.refresh_finished.connect (() => {
                 local_progress_controller.finish ();
             });
+            controller.refresh_requested.connect (() => {
+                refresh_requested ();
+            });
 
             local_refresh_button.clicked.connect (() => {
                 refresh_requested ();
