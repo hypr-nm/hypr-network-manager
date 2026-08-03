@@ -161,9 +161,10 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
             _("Profile"),
             MainWindowHelpers.display_text_or_na (device.connection)
         ));
+        string state_label_str = HyprNetworkManager.UI.Formatters.NetworkDeviceFormatter.get_state_label (device.state);
         this.rows.append (MainWindowHelpers.build_details_row (
             _("State"),
-            MainWindowHelpers.display_text_or_na (device.state_label)
+            MainWindowHelpers.display_text_or_na (state_label_str)
         ));
         this.rows.append (MainWindowHelpers.build_details_row (
             _("UUID"),

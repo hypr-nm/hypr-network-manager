@@ -93,7 +93,7 @@ public class MainWindowWifiSavedProfilesController : Object {
     }
 
     public void refresh_saved_wifi_profiles (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         MainWindowProfilesPage page
     ) {
         uint epoch = capture_ui_epoch ();
@@ -124,7 +124,7 @@ public class MainWindowWifiSavedProfilesController : Object {
     }
 
     public void load_saved_wifi_profile_settings (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiSavedProfile profile,
         MainWindowWifiSavedEditPage page
     ) {
@@ -154,7 +154,7 @@ public class MainWindowWifiSavedProfilesController : Object {
     }
 
     public void apply_saved_wifi_profile_updates (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest profile_request,
         WifiNetworkUpdateRequest network_request

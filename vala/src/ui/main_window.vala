@@ -34,7 +34,7 @@ using HyprNetworkManager.Models;
 
 public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private WindowConfigContext config_context;
-    private NetworkManagerClient nm;
+    private HyprNetworkManager.Backend.INetworkManagerClient nm;
     private HyprNetworkManager.UI.Views.StatusBarView status_bar_view;
     private Gtk.Widget status_separator;
     private HyprNetworkManager.UI.Views.WifiSectionView wifi_section;
@@ -45,6 +45,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private MainWindowRefreshCoordinator refresh_coordinator;
     private MainWindowEthernetController ethernet_controller;
     private MainWindowVpnController vpn_controller;
+    private MainWindowProfilesController profiles_controller;
     private MainWindowHotspotController hotspot_controller;
     private MainWindowFlightModeController flight_mode_controller;
     private HyprNetworkManager.UI.Views.VpnSectionView vpn_section;
@@ -80,7 +81,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         set_opacity (MainWindowUiMetrics.WINDOW_OPACITY);
         add_css_class (MainWindowCssClasses.WINDOW);
         nm = new NetworkManagerClient ();
-        wifi_controller = new MainWindowWifiController (this, state_context);
+        wifi_controller = new MainWindowWifiController (nm, this, state_context);
         ethernet_controller = new MainWindowEthernetController (
             nm,
             this,
@@ -91,6 +92,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             this,
             state_context
         );
+        profiles_controller = new MainWindowProfilesController (nm, this);
         flight_mode_controller = new MainWindowFlightModeController (nm, this);
         hotspot_controller = new MainWindowHotspotController (nm);
         refresh_coordinator = new MainWindowRefreshCoordinator (
@@ -387,7 +389,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
 
     private void build_sections_and_tabs () {
         wifi_section = new HyprNetworkManager.UI.Views.WifiSectionView (
-            nm,
             wifi_controller,
             this,
             state_context,
@@ -411,9 +412,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         });
 
         profiles_section = new HyprNetworkManager.UI.Views.SavedProfilesView (
-            nm,
             wifi_controller,
             ethernet_controller,
+            profiles_controller,
             this,
             state_context,
             content_stack,

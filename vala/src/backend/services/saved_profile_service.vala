@@ -483,8 +483,7 @@ public class SavedProfileService : GLib.Object {
             throw new IOError.FAILED ("Hidden network requires an SSID.");
         }
 
-        bool is_enterprise = (network.rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0
-            || (network.wpa_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0;
+        bool is_enterprise = network.security != null && network.security.is_enterprise;
 
         NM.Connection? partial = null;
 
@@ -533,9 +532,8 @@ public class SavedProfileService : GLib.Object {
             // because specific_object is null and NM cannot infer settings.
             HiddenWifiSecurityMode mode = HiddenWifiSecurityMode.OPEN;
             if (password != null && password != "") {
-                bool supports_sae = (network.rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_SAE) != 0;
-                bool supports_psk = (network.rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_PSK) != 0
-                    || (network.wpa_flags & NM.80211ApSecurityFlags.KEY_MGMT_PSK) != 0;
+                bool supports_sae = network.security != null && network.security.supports_sae;
+                bool supports_psk = network.security != null && network.security.supports_psk;
 
                 if (supports_sae && supports_psk) {
                     mode = HiddenWifiSecurityMode.WPA_PSK_SAE;

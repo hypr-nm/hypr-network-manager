@@ -83,17 +83,5 @@ namespace HyprNetworkManager.Models {
         public bool is_wifi_connecting (string ssid_or_key) {
             return pending_wifi_connect.contains (ssid_or_key);
         }
-
-        public void update_active_connections (GLib.GenericArray<NM.ActiveConnection> active_connections) {
-            active_wifi_connections.remove_all ();
-            for (uint i = 0; i < active_connections.length; i++) {
-                var conn = active_connections.get (i);
-                if (conn.get_connection_type () == NM.SettingWireless.SETTING_NAME || conn.get_connection_type () == "wifi") {
-                    if (conn.get_state () == NM.ActiveConnectionState.ACTIVATED) {
-                        active_wifi_connections.insert (conn.get_id (), true);
-                    }
-                }
-            }
-        }
     }
 }

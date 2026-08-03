@@ -43,20 +43,7 @@ public class WifiScannerService : GLib.Object {
                 primary_wifi_device_path = ((NM.Object)dev).get_path ();
             }
 
-            var d = new NetworkDevice () {
-                name = dev.get_iface (),
-                device_path = ((NM.Object)dev).get_path (),
-                device_type = NM_DEVICE_TYPE_WIFI,
-                state = dev.get_state (),
-                connection = "",
-                connection_uuid = ""
-            };
-
-            var ac = dev.get_active_connection ();
-            if (ac != null) {
-                d.connection = ac.get_id ();
-                d.connection_uuid = ac.get_uuid ();
-            }
+            var d = HyprNetworkManager.Backend.Mappers.DeviceMapper.map_device (dev);
             devices_out.append (d);
 
             var aps = wifidev.get_access_points ();
@@ -116,7 +103,6 @@ public class WifiScannerService : GLib.Object {
                     saved_connection_uuid = saved_uuid,
                     signal = ap.get_strength (),
                     connected = connected,
-                    is_secured = false, // derived automatically if flags are non-zero
                     is_hidden = is_hidden,
                     saved = saved,
                     autoconnect = autoconnect,
@@ -125,10 +111,12 @@ public class WifiScannerService : GLib.Object {
                     bssid = ap.get_bssid (),
                     frequency_mhz = ap.get_frequency (),
                     max_bitrate_kbps = ap.get_max_bitrate (),
-                    mode = ap.get_mode (),
-                    flags = ap.get_flags (),
-                    wpa_flags = ap.get_wpa_flags (),
-                    rsn_flags = ap.get_rsn_flags ()
+                    mode = HyprNetworkManager.Backend.Mappers.WifiSecurityMapper.map_mode (ap.get_mode ()),
+                    security = HyprNetworkManager.Backend.Mappers.WifiSecurityMapper.map_capabilities (
+                        ap.get_flags (),
+                        ap.get_wpa_flags (),
+                        ap.get_rsn_flags ()
+                    )
                 };
 
                 string network_key = net.network_key;

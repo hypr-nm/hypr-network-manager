@@ -19,12 +19,6 @@ using Constants;
 using Gtk;
 
 public class MainWindowVpnPageBuilder : Object {
-    private bool is_disposed = false;
-    private uint ui_epoch = 1;
-    private uint[] timeout_source_ids = {};
-
-    private NetworkManagerClient nm;
-    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     private Gtk.ListBox? vpn_listbox = null;
@@ -32,56 +26,23 @@ public class MainWindowVpnPageBuilder : Object {
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
+    public signal void refresh_requested ();
+    public signal void toggle_requested (VpnConnection conn);
     public signal void open_details (VpnConnection conn);
     public signal void add_clicked ();
 
     public MainWindowVpnPageBuilder (
-        NetworkManagerClient nm,
-        HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context
     ) {
-        this.nm = nm;
-        this.host = host;
         this.state_context = state_context;
     }
 
     public void on_page_leave () {
-        invalidate_ui_state ();
+        refresh_finished ();
     }
 
     public void dispose_controller () {
-        if (is_disposed) {
-            return;
-        }
-        is_disposed = true;
-        invalidate_ui_state ();
-    }
-
-    private uint capture_ui_epoch () {
-        return ui_epoch;
-    }
-
-    private bool is_ui_epoch_valid (uint epoch) {
-        return !is_disposed && epoch == ui_epoch;
-    }
-
-    private void invalidate_ui_state () {
-        ui_epoch++;
-        if (ui_epoch == 0) {
-            ui_epoch = 1;
-        }
-        cancel_all_timeout_sources ();
-    }
-
-    private void cancel_all_timeout_sources () {
-        if (timeout_source_ids.length == 0) {
-            return;
-        }
-
-        foreach (uint source_id in timeout_source_ids) {
-            Source.remove (source_id);
-        }
-        timeout_source_ids = {};
+        refresh_finished ();
     }
 
     public Gtk.Widget build_page (
@@ -115,7 +76,7 @@ public class MainWindowVpnPageBuilder : Object {
         MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
             MainWindowCssClasses.BUTTON});
         refresh_btn.clicked.connect (() => {
-            refresh ();
+            refresh_requested ();
         });
         toolbar.append (refresh_btn);
 
@@ -244,42 +205,7 @@ public class MainWindowVpnPageBuilder : Object {
         action.add_css_class (
             conn.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.clicked.connect (() => {
-            uint epoch = capture_ui_epoch ();
-            state_context.clear_vpn_error (conn.name);
-            string connection_id = conn.uuid != "" ? conn.uuid : conn.name;
-
-            if (conn.is_connected) {
-                nm.disconnect_vpn.begin (connection_id, null, (obj, res) => {
-                    try {
-                        nm.disconnect_vpn.end (res);
-                    } catch (Error e) {
-                        if (!is_ui_epoch_valid (epoch)) {
-                            return;
-                        }
-                        host.show_vpn_error (conn.name, _("VPN disconnect failed: %s").printf (e.message));
-                    }
-                    if (!is_ui_epoch_valid (epoch)) {
-                        return;
-                    }
-                    host.refresh_after_action (false);
-                });
-                return;
-            }
-
-            nm.connect_vpn.begin (connection_id, null, (obj, res) => {
-                try {
-                    nm.connect_vpn.end (res);
-                } catch (Error e) {
-                    if (!is_ui_epoch_valid (epoch)) {
-                        return;
-                    }
-                    host.show_vpn_error (conn.name, _("VPN connect failed: %s").printf (e.message));
-                }
-                if (!is_ui_epoch_valid (epoch)) {
-                    return;
-                }
-                host.refresh_after_action (false);
-            });
+            toggle_requested (conn);
         });
         content.append (action);
 
@@ -308,35 +234,23 @@ public class MainWindowVpnPageBuilder : Object {
         return row;
     }
 
-    public void refresh () {
+    public void begin_refresh () {
+        refresh_started ();
+    }
+
+    public void finish_refresh () {
+        refresh_finished ();
+    }
+
+    public void render_connections (List<VpnConnection> connections) {
         if (vpn_listbox == null || vpn_stack == null) {
             return;
         }
 
-        uint epoch = capture_ui_epoch ();
-        refresh_started ();
-        nm.get_vpn_connections.begin (null, (obj, res) => {
-            try {
-                var connections = nm.get_vpn_connections.end (res);
-                if (!is_ui_epoch_valid (epoch)) {
-                    refresh_finished ();
-                    return;
-                }
-                MainWindowHelpers.clear_listbox (vpn_listbox);
-
-                foreach (var conn in connections) {
-                    vpn_listbox.append (build_row (conn));
-                }
-
-                vpn_stack.set_visible_child_name (connections.length () > 0 ? "list" : "empty");
-                refresh_finished ();
-            } catch (Error e) {
-                refresh_finished ();
-                if (!is_ui_epoch_valid (epoch)) {
-                    return;
-                }
-                host.show_vpn_error ("all", _("VPN refresh failed: %s").printf (e.message));
-            }
-        });
+        MainWindowHelpers.clear_listbox (vpn_listbox);
+        foreach (var conn in connections) {
+            vpn_listbox.append (build_row (conn));
+        }
+        vpn_stack.set_visible_child_name (connections.length () > 0 ? "list" : "empty");
     }
 }

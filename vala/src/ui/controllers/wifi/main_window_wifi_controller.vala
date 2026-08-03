@@ -18,10 +18,14 @@
 using Constants;
 using GLib;
 using Gtk;
+using HyprNetworkManager.Backend;
 
 public class MainWindowWifiController : Object {
+    private INetworkManagerClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
+    private uint share_operation_epoch = 1;
+    private Cancellable? share_cancellable = null;
 
     private MainWindowWifiRefreshController refresh_controller;
     private MainWindowWifiConnectionController connection_controller;
@@ -38,9 +42,12 @@ public class MainWindowWifiController : Object {
     public signal void refresh_requested ();
     public signal void saved_refresh_started ();
     public signal void saved_refresh_finished ();
+    public signal void wifi_share_ready (string ssid, string qr_text);
 
-    public MainWindowWifiController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
+    public MainWindowWifiController (INetworkManagerClient nm,
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
+        this.nm = nm;
         this.host = host;
         this.state_context = state_context;
 
@@ -74,6 +81,7 @@ public class MainWindowWifiController : Object {
     }
 
     public void on_page_leave () {
+        cancel_share_request ();
         refresh_controller.on_page_leave ();
         connection_controller.on_page_leave ();
         hidden_network_controller.on_page_leave ();
@@ -83,6 +91,7 @@ public class MainWindowWifiController : Object {
     }
 
     public void dispose_controller () {
+        cancel_share_request ();
         refresh_controller.dispose_controller ();
         connection_controller.dispose_controller ();
         hidden_network_controller.dispose_controller ();
@@ -118,7 +127,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void apply_add_network (
-        NetworkManagerClient nm,
         Gtk.Stack wifi_stack,
         Gtk.Entry wifi_add_ssid_entry,
         HyprNetworkManager.UI.Widgets.TrackedDropDown wifi_add_security_dropdown,
@@ -134,7 +142,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void populate_details (
-        NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiDetailsPage page
     ) {
@@ -150,13 +157,13 @@ public class MainWindowWifiController : Object {
         WifiNetwork net,
         Gtk.Stack wifi_stack
     ) {
+        cancel_share_request ();
         selected_wifi_network = net;
         wifi_stack.set_visible_child_name ("details");
     }
 
     public void open_edit (
         ref WifiNetwork? selected_wifi_network,
-        NetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack
@@ -177,7 +184,6 @@ public class MainWindowWifiController : Object {
 
     public bool apply_edit (
         ref WifiNetwork? selected_wifi_network,
-        NetworkManagerClient nm,
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,
         MainWindowWifiDetailsPage details_page,
@@ -201,7 +207,6 @@ public class MainWindowWifiController : Object {
 
 
     public void refresh (
-        NetworkManagerClient nm,
         Gtk.Stack wifi_stack,
         Gtk.ListBox wifi_listbox,
         Gtk.Label status_label,
@@ -223,7 +228,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void connect_with_optional_password (
-        NetworkManagerClient nm,
         WifiNetwork net,
         string? password,
         string? hidden_ssid,
@@ -243,7 +247,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void refresh_after_action (
-        NetworkManagerClient nm,
         bool request_wifi_scan
     ) {
         connection_controller.refresh_after_action (
@@ -253,7 +256,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void refresh_switch_states (
-        NetworkManagerClient nm,
         Gtk.Switch wifi_switch
     ) {
         switch_controller.refresh_switch_states (
@@ -263,7 +265,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void on_wifi_switch_changed (
-        NetworkManagerClient nm,
         Gtk.Switch wifi_switch
     ) {
         switch_controller.on_wifi_switch_changed (
@@ -299,7 +300,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void forget_wifi_network (
-        NetworkManagerClient nm,
         WifiNetwork net
     ) {
         connection_controller.forget_wifi_network (
@@ -309,7 +309,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void disconnect_wifi_network (
-        NetworkManagerClient nm,
         WifiNetwork net
     ) {
         connection_controller.disconnect_wifi_network (
@@ -319,7 +318,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void set_wifi_network_autoconnect (
-        NetworkManagerClient nm,
         WifiNetwork net,
         bool enabled
     ) {
@@ -331,14 +329,12 @@ public class MainWindowWifiController : Object {
     }
 
     public void refresh_saved_wifi_profiles (
-        NetworkManagerClient nm,
         MainWindowProfilesPage page
     ) {
         saved_profiles_controller.refresh_saved_wifi_profiles (nm, page);
     }
 
     public void load_saved_wifi_profile_settings (
-        NetworkManagerClient nm,
         WifiSavedProfile profile,
         MainWindowWifiSavedEditPage page
     ) {
@@ -350,7 +346,6 @@ public class MainWindowWifiController : Object {
     }
 
     public void apply_saved_wifi_profile_updates (
-        NetworkManagerClient nm,
         WifiSavedProfile profile,
         WifiSavedProfileUpdateRequest profile_request,
         WifiNetworkUpdateRequest network_request
@@ -361,5 +356,56 @@ public class MainWindowWifiController : Object {
             profile_request,
             network_request
         );
+    }
+
+    private void cancel_share_request () {
+        share_operation_epoch++;
+        if (share_operation_epoch == 0) {
+            share_operation_epoch = 1;
+        }
+        if (share_cancellable != null) {
+            share_cancellable.cancel ();
+            share_cancellable = null;
+        }
+    }
+
+    public void open_wifi_share (WifiNetwork net) {
+        cancel_share_request ();
+        uint epoch = share_operation_epoch;
+        share_cancellable = new Cancellable ();
+        var request = share_cancellable;
+        string share_uuid = net.saved_connection_uuid;
+        string share_ssid = net.ssid;
+        string share_network_key = net.network_key;
+        bool share_secured = net.is_secured;
+        bool share_hidden = net.is_hidden;
+
+        nm.get_wifi_password.begin (share_uuid, request, (obj, res) => {
+            if (epoch != share_operation_epoch || share_cancellable != request) {
+                return;
+            }
+
+            string? read_failure = null;
+            string? password = nm.get_wifi_password.end (res, out read_failure);
+            share_cancellable = null;
+
+            if (share_secured && (password == null || password == "")) {
+                if (read_failure != null) {
+                    host.show_wifi_error (share_network_key, _("Could not read Wi-Fi password") + ": " + read_failure);
+                } else {
+                    host.show_wifi_error (share_network_key, _("Cannot share: password is empty"));
+                }
+                return;
+            }
+
+            string password_value = (password != null) ? password : "";
+            string qr_text = WifiQrBuilder.build (
+                share_ssid,
+                password_value,
+                share_secured,
+                share_hidden);
+
+            wifi_share_ready (share_ssid, qr_text);
+        });
     }
 }

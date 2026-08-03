@@ -118,7 +118,7 @@ public class MainWindowWifiHiddenNetworkController : Object {
     }
 
     public void apply_add_network (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         Gtk.Stack wifi_stack,
         Gtk.Entry wifi_add_ssid_entry,
         HyprNetworkManager.UI.Widgets.TrackedDropDown wifi_add_security_dropdown,

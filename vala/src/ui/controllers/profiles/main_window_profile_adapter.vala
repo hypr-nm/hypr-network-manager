@@ -20,7 +20,6 @@ using GLib;
 using Gtk;
 
 public class MainWindowProfileAdapter : Object {
-    private NetworkManagerClient nm;
     private MainWindowWifiController wifi_controller;
     private Gtk.Stack profiles_stack;
     private MainWindowProfilesPage profiles_page;
@@ -31,7 +30,6 @@ public class MainWindowProfileAdapter : Object {
     private WifiSavedProfile? selected_profile = null;
 
     public MainWindowProfileAdapter (
-        NetworkManagerClient nm,
         MainWindowWifiController wifi_controller,
         Gtk.Stack profiles_stack,
         MainWindowProfilesPage profiles_page,
@@ -39,7 +37,6 @@ public class MainWindowProfileAdapter : Object {
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context
     ) {
-        this.nm = nm;
         this.wifi_controller = wifi_controller;
         this.profiles_stack = profiles_stack;
         this.profiles_page = profiles_page;
@@ -56,7 +53,6 @@ public class MainWindowProfileAdapter : Object {
 
     public void refresh_saved_networks () {
         wifi_controller.refresh_saved_wifi_profiles (
-            nm,
             profiles_page
         );
     }
@@ -73,7 +69,6 @@ public class MainWindowProfileAdapter : Object {
         profiles_stack.set_visible_child_name ("edit");
 
         wifi_controller.load_saved_wifi_profile_settings (
-            nm,
             profile,
             wifi_saved_edit_page
         );
@@ -81,7 +76,6 @@ public class MainWindowProfileAdapter : Object {
 
     public void delete_profile (WifiSavedProfile profile) {
         wifi_controller.forget_wifi_network (
-            nm,
             new WifiNetwork () {
                 saved_connection_uuid = profile.saved_connection_uuid,
                 ssid = profile.ssid,
@@ -118,7 +112,6 @@ public class MainWindowProfileAdapter : Object {
 
         var profile = selected_profile;
         wifi_controller.apply_saved_wifi_profile_updates (
-            nm,
             profile,
             profile_request,
             network_request

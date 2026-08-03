@@ -30,9 +30,9 @@ namespace HyprNetworkManager.UI.Views {
         private MainWindowProfilesPage profiles_page;
         private MainWindowProfilesDetailsPage profiles_details_page;
         private MainWindowWifiSavedEditPage wifi_saved_edit_page;
-        private NetworkManagerClient nm;
         private IWindowHost window_host;
         private MainWindowEthernetController ethernet_controller;
+        private MainWindowProfilesController profiles_controller;
         private Gtk.Stack main_content_stack;
         private Gtk.Stack main_wifi_stack;
         private Gtk.Notebook main_notebook;
@@ -43,17 +43,17 @@ namespace HyprNetworkManager.UI.Views {
         public signal void refresh_requested ();
 
         public SavedProfilesView (
-            NetworkManagerClient nm,
             MainWindowWifiController wifi_controller,
             MainWindowEthernetController ethernet_controller,
+            MainWindowProfilesController profiles_controller,
             IWindowHost window_host,
             NetworkStateContext state_context,
             Gtk.Stack main_content_stack,
             Gtk.Stack main_wifi_stack,
             Gtk.Notebook main_notebook
         ) {
-            this.nm = nm;
             this.ethernet_controller = ethernet_controller;
+            this.profiles_controller = profiles_controller;
             this.window_host = window_host;
             this.main_content_stack = main_content_stack;
             this.main_wifi_stack = main_wifi_stack;
@@ -74,7 +74,6 @@ namespace HyprNetworkManager.UI.Views {
             stack.set_visible_child_name ("list");
 
             wifi_saved_flow = new MainWindowProfileAdapter (
-                nm,
                 wifi_controller,
                 stack,
                 profiles_page,
@@ -87,6 +86,28 @@ namespace HyprNetworkManager.UI.Views {
             wire_profiles_details_page_signals ();
             wire_profiles_edit_page_signals ();
             wire_ethernet_controller_signals ();
+            wire_profiles_controller_signals ();
+        }
+
+        private void wire_profiles_controller_signals () {
+            profiles_controller.ethernet_profiles_loaded.connect ((devices) => {
+                profiles_page.set_ethernet_profiles (devices);
+            });
+            profiles_controller.wifi_profile_settings_loaded.connect ((connection_uuid, settings) => {
+                if (selected_saved_wifi_profile == null
+                    || selected_saved_wifi_profile.saved_connection_uuid != connection_uuid) {
+                    return;
+                }
+                profiles_details_page.apply_wifi_ip_settings (settings);
+            });
+            profiles_controller.ethernet_settings_loaded.connect ((device_path, device_name, settings) => {
+                if (selected_saved_ethernet_profile == null
+                    || (selected_saved_ethernet_profile.device_path != device_path
+                        && selected_saved_ethernet_profile.name != device_name)) {
+                    return;
+                }
+                profiles_details_page.apply_ethernet_ip_settings (settings);
+            });
         }
 
         private void wire_ethernet_controller_signals () {
@@ -163,36 +184,11 @@ namespace HyprNetworkManager.UI.Views {
             });
         }
 
-        private bool has_ethernet_profile (NetworkDevice dev) {
-            return nm.has_ethernet_profile_for_device (dev);
-        }
-
         private void refresh_saved_ethernet_profiles () {
             if (profiles_page == null) {
                 return;
             }
-
-            nm.get_devices.begin (null, (obj, res) => {
-                try {
-                    var devices = nm.get_devices.end (res);
-                    var ethernet_profiles = new List<NetworkDevice> ();
-                    foreach (var dev in devices) {
-                        if (!dev.is_ethernet || !has_ethernet_profile (dev)) {
-                            continue;
-                        }
-                        ethernet_profiles.append (dev);
-                    }
-
-                    var ethernet_profiles_arr = new NetworkDevice[ethernet_profiles.length ()];
-                    int idx = 0;
-                    foreach (var dev in ethernet_profiles) {
-                        ethernet_profiles_arr[idx++] = dev;
-                    }
-                    profiles_page.set_ethernet_profiles (ethernet_profiles_arr);
-                } catch (Error e) {
-                    window_host.show_error ("Could not load ethernet profiles: " + e.message);
-                }
-            });
+            profiles_controller.refresh_saved_ethernet_profiles ();
         }
 
         private void refresh_saved_networks () {
@@ -207,6 +203,7 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public void reset_view_state () {
+            profiles_controller.on_page_leave ();
             selected_saved_wifi_profile = null;
             selected_saved_ethernet_profile = null;
             if (stack != null) {
@@ -252,30 +249,11 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void load_saved_wifi_profile_details_settings (WifiSavedProfile profile) {
-            nm.get_saved_wifi_profile_settings.begin (profile, null, (obj, res) => {
-                try {
-                    var settings = nm.get_saved_wifi_profile_settings.end (res);
-                    if (selected_saved_wifi_profile == null
-                        || selected_saved_wifi_profile.saved_connection_uuid != profile.saved_connection_uuid) {
-                        return;
-                    }
-                    profiles_details_page.apply_wifi_ip_settings (settings);
-                } catch (Error e) {
-                    window_host.show_error ("Could not load saved profile settings: " + e.message);
-                }
-            });
+            profiles_controller.load_wifi_profile_settings (profile);
         }
 
         private void load_saved_ethernet_profile_ip_settings (NetworkDevice device) {
-            nm.get_ethernet_device_configured_ip_settings.begin (device, null, (obj, res) => {
-                var ip_settings = nm.get_ethernet_device_configured_ip_settings.end (res);
-                if (selected_saved_ethernet_profile == null
-                    || (selected_saved_ethernet_profile.device_path != device.device_path
-                        && selected_saved_ethernet_profile.name != device.name)) {
-                    return;
-                }
-                profiles_details_page.apply_ethernet_ip_settings (ip_settings);
-            });
+            profiles_controller.load_ethernet_profile_settings (device);
         }
 
         public bool apply_saved_wifi_edit () {

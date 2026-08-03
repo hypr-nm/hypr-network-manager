@@ -20,7 +20,7 @@ public class MainWindowEthernetConnectionController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
-    private NetworkManagerClient nm;
+    private HyprNetworkManager.Backend.INetworkManagerClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
@@ -29,7 +29,7 @@ public class MainWindowEthernetConnectionController : Object {
     public HashTable<string, bool> pending_action;
     public HashTable<string, bool> pending_target_connected;
 
-    public MainWindowEthernetConnectionController (NetworkManagerClient nm,
+    public MainWindowEthernetConnectionController (HyprNetworkManager.Backend.INetworkManagerClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.nm = nm;
@@ -104,13 +104,13 @@ public class MainWindowEthernetConnectionController : Object {
     }
 
     public bool is_networking_enabled () {
-        return nm.nm_client.networking_enabled;
+        return nm.is_networking_enabled ();
     }
 
     public bool can_connect_with_profile (NetworkDevice dev) {
         return is_networking_enabled ()
             && has_saved_profile (dev)
-            && dev.state != ((uint32) NM.DeviceState.UNAVAILABLE);
+            && dev.state != DeviceState.UNAVAILABLE;
     }
 
     public void track_pending_action (

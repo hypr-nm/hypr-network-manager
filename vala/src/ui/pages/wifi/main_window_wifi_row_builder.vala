@@ -138,7 +138,7 @@ namespace MainWindowWifiRowBuilder {
         }
 
         string bssid_text = MainWindowHelpers.safe_text (net.bssid);
-        string subtitle = "%s (%u%%)".printf (net.signal_label, net.signal);
+        string subtitle = "%s (%u%%)".printf (WifiSignalLevels.get_label (net.signal), net.signal);
         if (show_frequency && net.frequency_mhz > 0) {
             subtitle += " - %u MHz".printf (net.frequency_mhz);
         }
@@ -282,8 +282,7 @@ namespace MainWindowWifiRowBuilder {
         out Gtk.Entry prompt_entry,
         out Gtk.Entry hidden_ssid_entry
     ) {
-        bool is_enterprise = (net.rsn_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0
-            || (net.wpa_flags & NM.80211ApSecurityFlags.KEY_MGMT_802_1X) != 0;
+        bool is_enterprise = net.security != null && net.security.is_enterprise;
 
         var prompt_label = new Gtk.Label (_("Password for %s").printf (net.ssid));
         prompt_label.set_xalign (0.0f);

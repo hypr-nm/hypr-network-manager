@@ -64,7 +64,7 @@ public class MainWindowWifiSwitchController : Object {
     }
 
     public void refresh_switch_states (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         Gtk.Switch wifi_switch
     ) {
         uint epoch = capture_ui_epoch ();
@@ -94,7 +94,7 @@ public class MainWindowWifiSwitchController : Object {
     }
 
     public void on_wifi_switch_changed (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         Gtk.Switch wifi_switch
     ) {
         if (updating_switches) {

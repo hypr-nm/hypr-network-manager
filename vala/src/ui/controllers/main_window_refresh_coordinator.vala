@@ -21,7 +21,7 @@ using Gtk;
 using HyprNetworkManager.UI.Interfaces;
 
 public class MainWindowRefreshCoordinator : Object {
-    private NetworkManagerClient nm;
+    private HyprNetworkManager.Backend.INetworkManagerClient nm;
     private MainWindowWifiController wifi_controller;
     private uint refresh_interval_seconds;
     private IWindowHost host;
@@ -33,7 +33,7 @@ public class MainWindowRefreshCoordinator : Object {
     private bool periodic_scan_failure_reported = false;
 
     public MainWindowRefreshCoordinator (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         MainWindowWifiController wifi_controller,
         uint refresh_interval_seconds,
         IWindowHost host
@@ -85,14 +85,12 @@ public class MainWindowRefreshCoordinator : Object {
 
     public void refresh_after_action (bool request_wifi_scan) {
         wifi_controller.refresh_after_action (
-            nm,
             request_wifi_scan
         );
     }
 
     public void refresh_switch_states (Gtk.Switch wifi_switch) {
         wifi_controller.refresh_switch_states (
-            nm,
             wifi_switch
         );
     }

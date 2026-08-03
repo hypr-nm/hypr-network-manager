@@ -65,7 +65,7 @@ private class NmSignalSubscription {
     }
 }
 
-public class NetworkManagerClient : GLib.Object {
+public class NetworkManagerClient : GLib.Object, HyprNetworkManager.Backend.INetworkManagerClient {
     public NM.Client nm_client;
 
     private WifiScannerService wifi_scanner;
@@ -77,8 +77,6 @@ public class NetworkManagerClient : GLib.Object {
     private NmVpnClient vpn_client;
     private bool nm_signals_active = false;
     private GLib.List<NmSignalSubscription> nm_signal_subscriptions;
-
-    public signal void network_events_changed ();
 
     public NetworkManagerClient () throws Error {
         try {
@@ -135,6 +133,10 @@ public class NetworkManagerClient : GLib.Object {
 
     public bool has_ethernet_profile_for_device (NetworkDevice device) {
         return ethernet_client.has_profile (device);
+    }
+
+    public bool is_networking_enabled () {
+        return nm_client.networking_enabled;
     }
 
     private void track_subscription (GLib.Object instance, ulong handler_id) {
@@ -239,20 +241,8 @@ public class NetworkManagerClient : GLib.Object {
         var devices_out = new List<NetworkDevice> ();
         var devices = nm_client.get_devices ();
         foreach (var dev in devices) {
-            var d = new NetworkDevice () {
-                name = dev.get_iface (),
-                device_path = ((NM.Object)dev).get_path (),
-                device_type = dev.get_device_type (),
-                state = dev.get_state (),
-                connection = "",
-                connection_uuid = ""
-            };
-
-            var ac = dev.get_active_connection ();
-            if (ac != null) {
-                d.connection = ac.get_id ();
-                d.connection_uuid = ac.get_uuid ();
-            } else if (d.is_ethernet) {
+            var d = HyprNetworkManager.Backend.Mappers.DeviceMapper.map_device (dev);
+            if (d.is_ethernet && d.connection == "") {
                 var saved_profile = find_saved_ethernet_profile_for_iface (d.name);
                 if (saved_profile != null) {
                     d.connection = saved_profile.get_id ();

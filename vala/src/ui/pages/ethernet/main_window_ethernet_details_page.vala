@@ -46,7 +46,8 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
 
         this.basic_rows.append (MainWindowHelpers.build_details_row (_("Interface"), dev.name));
         this.basic_rows.append (MainWindowHelpers.build_details_row (_("Profile"), profile_name));
-        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), dev.state_label));
+        string state_label_str = HyprNetworkManager.UI.Formatters.NetworkDeviceFormatter.get_state_label (dev.state);
+        this.basic_rows.append (MainWindowHelpers.build_details_row (_("State"), state_label_str));
         this.basic_rows.append (
             MainWindowHelpers.build_details_row (_("Connected"), dev.is_connected ? _("Yes") : _("No"))
         );
@@ -55,7 +56,10 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
             MainWindowHelpers.build_details_row (_("Device Path"), dev.device_path)
         );
         this.advanced_rows.append (
-            MainWindowHelpers.build_details_row (_("State Code"), "%u".printf (dev.state))
+            MainWindowHelpers.build_details_row (
+                _("State ID"),
+                HyprNetworkManager.UI.Formatters.NetworkDeviceFormatter.get_state_identifier (dev.state)
+            )
         );
 
         if (pending) {

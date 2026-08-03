@@ -94,7 +94,6 @@ namespace NmWifiUtils {
             saved_connection_uuid = uuid,
             signal = 0,
             connected = active_uuid != "" && active_uuid == uuid,
-            is_secured = is_secured,
             is_hidden = s_wireless.hidden,
             saved = true,
             autoconnect = resolve_autoconnect (conn),
@@ -103,10 +102,13 @@ namespace NmWifiUtils {
             bssid = "",
             frequency_mhz = 0,
             max_bitrate_kbps = 0,
-            mode = 0,
-            flags = 0,
-            wpa_flags = 0,
-            rsn_flags = 0
+            mode = WifiNetworkMode.UNKNOWN,
+            security = new WifiSecurityCapabilities () {
+                is_secured = is_secured,
+                is_enterprise = false,
+                supports_psk = false,
+                supports_sae = false
+            }
         };
     }
 

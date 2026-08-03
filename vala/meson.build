@@ -54,7 +54,7 @@ executable(
     'src/models/wifi_network.vala',
     'src/models/wifi_saved_profile.vala',
     'src/models/wifi_security_mode.vala',
-    'src/models/wifi_signal_levels.vala',
+    'src/models/wifi_security_capabilities.vala',
     'src/models/network_update_requests.vala',
     'src/models/network_ip_settings.vala',
     'src/models/network_device.vala',
@@ -86,7 +86,12 @@ executable(
     'src/backend/utils/qrcodegen.c',
     'src/backend/utils/qrcodegen.vapi',
     'src/backend/utils/nl80211_client.vapi',
+    'src/backend/inetwork_manager_client.vala',
     'src/backend/mappers/vpn_mapper.vala',
+    'src/backend/mappers/device_mapper.vala',
+    'src/backend/mappers/wifi_security_mapper.vala',
+    'src/ui/formatters/network_device_formatter.vala',
+    'src/ui/formatters/wifi_signal_levels.vala',
     'src/backend/nm_status_formatter.vala',
     'src/backend/nm_ethernet_client.vala',
     'src/backend/services/secrets_service.vala',
@@ -118,6 +123,7 @@ executable(
     'src/ui/controllers/wifi/main_window_wifi_connection_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_hidden_network_controller.vala',
     'src/ui/controllers/profiles/main_window_wifi_saved_profiles_controller.vala',
+    'src/ui/controllers/profiles/main_window_profiles_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_switch_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_password_ui_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_row_reconciler.vala',
@@ -193,6 +199,25 @@ nm_hotspot_profile_test = executable(
 )
 
 test('nm-hotspot-profile', nm_hotspot_profile_test)
+
+nm_boundary_mappers_test = executable(
+  'test-nm-boundary-mappers',
+  [
+    'tests/test_nm_boundary_mappers.vala',
+    'src/constants.vala',
+    'src/models/network_device.vala',
+    'src/models/wifi_network.vala',
+    'src/models/wifi_security_capabilities.vala',
+    'src/backend/mappers/device_mapper.vala',
+    'src/backend/mappers/wifi_security_mapper.vala',
+  ],
+  c_args: ['-w'],
+  dependencies: [gio_dep, libnm_dep],
+  override_options: ['b_ndebug=false'],
+  install: false,
+)
+
+test('nm-boundary-mappers', nm_boundary_mappers_test)
 
 test(
   'create-ap-script',

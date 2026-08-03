@@ -32,14 +32,12 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Button refresh_button { get; private set; }
         public Gtk.Button add_button { get; private set; }
 
-        private NetworkManagerClient nm;
         private MainWindowWifiController controller;
         private IWindowHost window_host;
         private WindowConfigContext config_context;
         private NetworkStateContext state_context;
 
         private WifiNetwork? selected_wifi_network = null;
-        private uint share_operation_epoch = 0;
         private MainWindowWifiDetailsPage details_page;
         private MainWindowWifiEditPage edit_page;
         private MainWindowWifiSharePage share_page;
@@ -62,7 +60,6 @@ namespace HyprNetworkManager.UI.Views {
         private Gtk.Image status_icon;
 
         public WifiSectionView (
-            NetworkManagerClient nm,
             MainWindowWifiController controller,
             IWindowHost window_host,
             NetworkStateContext state_context,
@@ -70,7 +67,6 @@ namespace HyprNetworkManager.UI.Views {
             Gtk.Label status_label,
             Gtk.Image status_icon
         ) {
-            this.nm = nm;
             this.controller = controller;
             this.window_host = window_host;
             this.state_context = state_context;
@@ -81,6 +77,11 @@ namespace HyprNetworkManager.UI.Views {
             this.details_page = new MainWindowWifiDetailsPage ();
             this.edit_page = new MainWindowWifiEditPage (this.window_host);
             this.share_page = new MainWindowWifiSharePage ();
+
+            controller.wifi_share_ready.connect ((ssid, qr_text) => {
+                share_page.set_share_data (ssid, qr_text);
+                stack.set_visible_child_name ("share");
+            });
 
             wire_details_page_signals ();
             wire_edit_page_signals ();
@@ -210,45 +211,12 @@ namespace HyprNetworkManager.UI.Views {
                 // Snapshot the network before the async password read so the QR is
                 // always built from one consistent network, even if selection changes
                 // while the read is in flight.
-                string share_uuid = selected_wifi_network.saved_connection_uuid;
-                string share_ssid = selected_wifi_network.ssid;
                 string share_network_key = selected_wifi_network.network_key;
-                bool share_secured = selected_wifi_network.is_secured;
-                bool share_hidden = selected_wifi_network.is_hidden;
-                uint share_epoch = ++share_operation_epoch;
 
                 window_host.debug_log ("Share requested for network %s".printf (
                     redact_network_key (share_network_key)));
 
-                nm.get_wifi_password.begin (share_uuid, null, (obj, res) => {
-                    // Selection changed (or a newer share started) while the password
-                    // read was in flight; discard so stale credentials are never used.
-                    if (share_epoch != share_operation_epoch) {
-                        return;
-                    }
-
-                    string? read_failure = null;
-                    string? password = nm.get_wifi_password.end (res, out read_failure);
-
-                    if (share_secured && (password == null || password == "")) {
-                        if (read_failure != null) {
-                            window_host.show_wifi_error (share_network_key, _("Could not read Wi-Fi password") + ": " + read_failure);
-                        } else {
-                            window_host.show_wifi_error (share_network_key, _("Cannot share: password is empty"));
-                        }
-                        return;
-                    }
-
-                    string password_value = (password != null) ? password : "";
-                    string qr_text = WifiQrBuilder.build (
-                        share_ssid,
-                        password_value,
-                        share_secured,
-                        share_hidden);
-
-                    share_page.set_share_data (share_ssid, qr_text);
-                    stack.set_visible_child_name ("share");
-                });
+                controller.open_wifi_share (selected_wifi_network);
             });
         }
 
@@ -445,7 +413,6 @@ namespace HyprNetworkManager.UI.Views {
 
         private void submit_add_hidden_network () {
             controller.apply_add_network (
-                nm,
                 stack,
                 add_ssid_entry,
                 add_security_dropdown,
@@ -455,14 +422,12 @@ namespace HyprNetworkManager.UI.Views {
 
         private void populate_wifi_details (WifiNetwork net) {
             controller.populate_details (
-                nm,
                 net,
                 details_page
             );
         }
 
         private void open_wifi_details (WifiNetwork net) {
-            share_operation_epoch++;
             populate_wifi_details (net);
             controller.open_details (
                 ref selected_wifi_network,
@@ -474,7 +439,6 @@ namespace HyprNetworkManager.UI.Views {
         private void open_wifi_edit (WifiNetwork net) {
             controller.open_edit (
                 ref selected_wifi_network,
-                nm,
                 net,
                 edit_page,
                 stack
@@ -484,7 +448,6 @@ namespace HyprNetworkManager.UI.Views {
         private bool apply_wifi_edit (bool close_after_apply) {
             return controller.apply_edit (
                 ref selected_wifi_network,
-                nm,
                 edit_page,
                 stack,
                 details_page,
@@ -494,14 +457,12 @@ namespace HyprNetworkManager.UI.Views {
 
         private void forget_wifi_network (WifiNetwork net) {
             controller.forget_wifi_network (
-                nm,
                 net
             );
         }
 
         private void disconnect_wifi_network (WifiNetwork net) {
             controller.disconnect_wifi_network (
-                nm,
                 net
             );
         }
@@ -520,7 +481,6 @@ namespace HyprNetworkManager.UI.Views {
 
         public void connect_network (WifiNetwork net, string? password, string? hidden_ssid, bool autoconnect) {
             controller.connect_with_optional_password (
-                nm,
                 net,
                 password,
                 hidden_ssid,
@@ -532,7 +492,6 @@ namespace HyprNetworkManager.UI.Views {
 
         public void set_auto_connect (WifiNetwork net, bool auto_connect) {
             controller.set_wifi_network_autoconnect (
-                nm,
                 net,
                 auto_connect
             );
@@ -617,7 +576,6 @@ namespace HyprNetworkManager.UI.Views {
                 && active_wifi_password_revealer.get_reveal_child ();
 
             controller.refresh (
-                nm,
                 stack,
                 listbox,
                 status_label,
@@ -661,7 +619,6 @@ namespace HyprNetworkManager.UI.Views {
 
         private void on_wifi_switch_changed () {
             controller.on_wifi_switch_changed (
-                nm,
                 wifi_switch
             );
         }

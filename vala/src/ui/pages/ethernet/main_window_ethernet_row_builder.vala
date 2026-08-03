@@ -63,9 +63,10 @@ public class MainWindowEthernetRowBuilder {
             info.append (err);
         }
 
-        string subtitle = dev.state_label;
+        string state_label_str = HyprNetworkManager.UI.Formatters.NetworkDeviceFormatter.get_state_label (dev.state);
+        string subtitle = state_label_str;
         if (dev.connection != "") {
-            subtitle = "%s (%s)".printf (dev.state_label, dev.connection);
+            subtitle = "%s (%s)".printf (state_label_str, dev.connection);
         }
         var sub = new Gtk.Label (subtitle);
         sub.set_xalign (0.0f);

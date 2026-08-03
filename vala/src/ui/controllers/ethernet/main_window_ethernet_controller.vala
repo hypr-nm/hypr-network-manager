@@ -20,7 +20,7 @@ using GLib;
 using Gtk;
 
 public class MainWindowEthernetController : Object, IMainWindowEthernetRowActionHandler {
-    private NetworkManagerClient nm;
+    private HyprNetworkManager.Backend.INetworkManagerClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
@@ -40,7 +40,7 @@ public class MainWindowEthernetController : Object, IMainWindowEthernetRowAction
     public signal void refresh_finished ();
 
     public MainWindowEthernetController (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context
     ) {

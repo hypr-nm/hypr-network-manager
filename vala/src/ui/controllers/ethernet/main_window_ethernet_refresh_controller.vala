@@ -20,14 +20,14 @@ public class MainWindowEthernetRefreshController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private Cancellable? refresh_cancellable = null;
-    private NetworkManagerClient nm;
+    private HyprNetworkManager.Backend.INetworkManagerClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
 
-    public MainWindowEthernetRefreshController (NetworkManagerClient nm,
+    public MainWindowEthernetRefreshController (HyprNetworkManager.Backend.INetworkManagerClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.nm = nm;

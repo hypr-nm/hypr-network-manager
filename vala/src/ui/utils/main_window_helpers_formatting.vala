@@ -29,14 +29,16 @@ namespace MainWindowHelpers {
         return normalized != "" ? normalized : _("n/a");
     }
 
-    public string get_mode_label (uint32 mode) {
+    public string get_mode_label (WifiNetworkMode mode) {
         switch (mode) {
-        case 1:
+        case WifiNetworkMode.ADHOC:
             return _("Ad-hoc");
-        case 2:
+        case WifiNetworkMode.INFRA:
             return _("Infrastructure");
-        case 3:
+        case WifiNetworkMode.AP:
             return _("Access Point");
+        case WifiNetworkMode.MESH:
+            return _("Mesh");
         default:
             return _("Unknown");
         }
@@ -71,7 +73,7 @@ namespace MainWindowHelpers {
     }
 
     public string resolve_wifi_row_icon_name (WifiNetwork net) {
-        return net.signal_icon_name;
+        return WifiSignalLevels.get_icon_name (net.signal);
     }
 
     public string get_ipv4_method_label (string? method) {

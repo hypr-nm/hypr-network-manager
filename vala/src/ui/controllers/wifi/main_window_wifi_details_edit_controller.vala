@@ -83,12 +83,11 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             return false;
         }
 
-        bool is_connecting = dev.state >= ((uint32) NM.DeviceState.PREPARE) && dev.state < ((uint32) NM.DeviceState.ACTIVATED);
-        return !is_connecting;
+        return !dev.is_connecting;
     }
 
     private void reconnect_after_disconnect_with_retry (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiNetwork net,
         bool close_after_apply,
         Gtk.Stack wifi_stack,
@@ -187,7 +186,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
     }
 
     public void populate_wifi_details (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiDetailsPage page
     ) {
@@ -219,7 +218,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
 
 
     public void open_wifi_edit (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack
@@ -255,7 +254,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
     }
 
     public bool apply_wifi_edit (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiNetwork net,
         MainWindowWifiEditPage page,
         Gtk.Stack wifi_stack,

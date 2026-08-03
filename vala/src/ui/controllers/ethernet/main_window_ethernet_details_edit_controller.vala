@@ -21,10 +21,10 @@ public class MainWindowEthernetDetailsEditController : MainWindowAbstractDetails
 
     public NetworkDevice? selected_device { get; set; default = null; }
 
-    private NetworkManagerClient nm;
+    private HyprNetworkManager.Backend.INetworkManagerClient nm;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
-    public MainWindowEthernetDetailsEditController (NetworkManagerClient nm,
+    public MainWindowEthernetDetailsEditController (HyprNetworkManager.Backend.INetworkManagerClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
         base (host);

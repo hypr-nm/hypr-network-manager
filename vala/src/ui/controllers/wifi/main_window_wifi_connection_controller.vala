@@ -97,7 +97,7 @@ public class MainWindowWifiConnectionController : Object {
     }
 
     public void connect_wifi_with_optional_password (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiNetwork net,
         string? password,
         string? hidden_ssid,
@@ -138,7 +138,6 @@ public class MainWindowWifiConnectionController : Object {
                 saved_connection_uuid = "",
                 signal = net.signal,
                 connected = net.connected,
-                is_secured = net.is_secured,
                 is_hidden = net.is_hidden,
                 saved = false,
                 autoconnect = autoconnect,
@@ -148,9 +147,7 @@ public class MainWindowWifiConnectionController : Object {
                 frequency_mhz = net.frequency_mhz,
                 max_bitrate_kbps = net.max_bitrate_kbps,
                 mode = net.mode,
-                flags = net.flags,
-                wpa_flags = net.wpa_flags,
-                rsn_flags = net.rsn_flags
+                security = net.security
             };
         }
 
@@ -241,7 +238,7 @@ public class MainWindowWifiConnectionController : Object {
     }
 
     public void forget_wifi_network (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         WifiNetwork net
     ) {
         uint epoch = capture_ui_epoch ();
@@ -267,7 +264,7 @@ public class MainWindowWifiConnectionController : Object {
             }
 
             public void disconnect_wifi_network (
-            NetworkManagerClient nm,
+            HyprNetworkManager.Backend.INetworkManagerClient nm,
             WifiNetwork net
             ) {
             uint epoch = capture_ui_epoch ();
@@ -295,7 +292,7 @@ public class MainWindowWifiConnectionController : Object {
             }
 
             public void set_wifi_network_autoconnect (
-            NetworkManagerClient nm,
+            HyprNetworkManager.Backend.INetworkManagerClient nm,
             WifiNetwork net,
             bool enabled
             ) {
@@ -321,7 +318,7 @@ public class MainWindowWifiConnectionController : Object {
     }
 
     public void refresh_after_action (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         bool request_wifi_scan,
         uint? active_epoch = null
     ) {

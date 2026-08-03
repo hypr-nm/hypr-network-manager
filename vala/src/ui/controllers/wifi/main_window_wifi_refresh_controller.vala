@@ -85,7 +85,7 @@ public class MainWindowWifiRefreshController : Object {
     }
 
     public void refresh_wifi (
-        NetworkManagerClient nm,
+        HyprNetworkManager.Backend.INetworkManagerClient nm,
         Gtk.Stack wifi_stack,
         Gtk.ListBox wifi_listbox,
         Gtk.Label status_label,
@@ -123,7 +123,7 @@ public class MainWindowWifiRefreshController : Object {
 
                 string? primary_connected_ssid = null;
 
-                var wifi_device_states = new HashTable<string, uint> (str_hash, str_equal);
+                var wifi_device_states = new HashTable<string, DeviceState> (str_hash, str_equal);
                 foreach (var dev in devices) {
                     if (!dev.is_wifi) {
                         continue;
@@ -146,9 +146,9 @@ public class MainWindowWifiRefreshController : Object {
                         continue;
                     }
 
-                    uint? device_state = wifi_device_states.lookup (net.device_path);
-                    bool is_fully_activated = device_state != null
-                        && device_state == ((uint32) NM.DeviceState.ACTIVATED);
+                    DeviceState? device_state_ptr = wifi_device_states.lookup (net.device_path);
+                    bool is_fully_activated = device_state_ptr != null
+                        && device_state_ptr == DeviceState.ACTIVATED;
                     if (!is_fully_activated) {
                         continue;
                     }
@@ -204,24 +204,27 @@ public class MainWindowWifiRefreshController : Object {
                         continue;
                     }
 
-                    bool is_connecting_state = matched_device.state >= ((uint32) NM.DeviceState.PREPARE)
-                        && matched_device.state < ((uint32) NM.DeviceState.ACTIVATED);
+                    bool is_connecting_state = matched_device.is_connecting;
                     if (is_connecting_state) {
                         state_context.pending_wifi_seen_connecting.insert (net_key, true);
                         continue;
                     }
 
-                    bool activated_on_other_network = matched_device.state == ((uint32) NM.DeviceState.ACTIVATED)
+                    bool activated_on_other_network = matched_device.is_connected
                         && !state_context.active_wifi_connections.contains (net_key);
-                    if (activated_on_other_network || matched_device.state == ((uint32) NM.DeviceState.FAILED)) {
+                    if (activated_on_other_network || matched_device.state == DeviceState.FAILED) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
                         state_context.mark_wifi_error (net_key, _("Connection failed or interrupted."));
                         continue;
                     }
 
+                    bool is_disconnected_or_less = matched_device.state == DeviceState.UNKNOWN ||
+                                                   matched_device.state == DeviceState.UNMANAGED ||
+                                                   matched_device.state == DeviceState.UNAVAILABLE ||
+                                                   matched_device.state == DeviceState.DISCONNECTED;
                     if (state_context.pending_wifi_seen_connecting.contains (net_key)
-                        && matched_device.state <= ((uint32) NM.DeviceState.DISCONNECTED)) {
+                        && is_disconnected_or_less) {
                         state_context.pending_wifi_connect.remove (net_key);
                         state_context.pending_wifi_seen_connecting.remove (net_key);
                         state_context.mark_wifi_error (net_key, _("Connection failed."));
@@ -261,7 +264,7 @@ public class MainWindowWifiRefreshController : Object {
 
                     if (connected != null) {
                         status_label.set_text (_("Wi-Fi · %s (%u%%)").printf (connected.ssid, connected.signal));
-                        status_icon.set_from_icon_name (connected.signal_icon_name);
+                        status_icon.set_from_icon_name (WifiSignalLevels.get_icon_name (connected.signal));
                     } else if (primary_connected_ssid != null) {
                         status_label.set_text (_("Wi-Fi · %s").printf (primary_connected_ssid));
                         status_icon.set_from_icon_name ("network-wireless-signal-good-symbolic");
