@@ -71,17 +71,25 @@ public class MainWindowHotspotController : Object {
     }
 
     public static string security_for_index (uint index) {
-        if (index == 0) return WifiKeyMgmt.SAE;
-        if (index == 2) return WifiKeyMgmt.NONE;
+        if (index == HotspotSecurityIndex.SAE) return WifiKeyMgmt.SAE;
+        if (index == HotspotSecurityIndex.NONE) return WifiKeyMgmt.NONE;
         return WifiKeyMgmt.WPA_PSK;
     }
 
     public static int timeout_for_index (uint index) {
-        if (index == 1) return 5;
-        if (index == 2) return 10;
-        if (index == 3) return 30;
-        if (index == 4) return 60;
-        return 0;
+        if (index == HotspotTimeoutIndex.FIVE_MINUTES) {
+            return HotspotTimeout.FIVE_MINUTES;
+        }
+        if (index == HotspotTimeoutIndex.TEN_MINUTES) {
+            return HotspotTimeout.TEN_MINUTES;
+        }
+        if (index == HotspotTimeoutIndex.THIRTY_MINUTES) {
+            return HotspotTimeout.THIRTY_MINUTES;
+        }
+        if (index == HotspotTimeoutIndex.SIXTY_MINUTES) {
+            return HotspotTimeout.SIXTY_MINUTES;
+        }
+        return HotspotTimeout.DISABLED;
     }
 
     public bool is_valid (HotspotRequest req) {
@@ -90,24 +98,65 @@ public class MainWindowHotspotController : Object {
 
     public string? validation_message (HotspotRequest req) {
         if (req.ssid == "") {
-            return "SSID cannot be empty";
+            return _("SSID cannot be empty");
         }
-        if (req.security != WifiKeyMgmt.NONE && req.password.length < 8) {
-            return "Password must be at least 8 characters";
+        if (req.ssid.length > HotspotCredential.SSID_MAX_BYTES) {
+            return _("SSID cannot exceed %d bytes").printf (
+                HotspotCredential.SSID_MAX_BYTES
+            );
+        }
+        if (req.security != WifiKeyMgmt.NONE) {
+            bool is_raw_wpa_psk = req.security == WifiKeyMgmt.WPA_PSK
+                && req.password.length == HotspotCredential.WPA_PSK_HEX_BYTES;
+            if (is_raw_wpa_psk && !is_hex_string (req.password)) {
+                return _("A 64-character WPA-PSK must contain only hexadecimal digits");
+            }
+            if (!is_raw_wpa_psk
+                && req.password.length < HotspotCredential.PASSPHRASE_MIN_BYTES) {
+                return _("Password must be at least %d characters").printf (
+                    HotspotCredential.PASSPHRASE_MIN_BYTES
+                );
+            }
+            if (!is_raw_wpa_psk
+                && req.password.length > HotspotCredential.PASSPHRASE_MAX_BYTES) {
+                return _("Password cannot exceed %d characters").printf (
+                    HotspotCredential.PASSPHRASE_MAX_BYTES
+                );
+            }
+            for (int i = 0; i < req.password.length; i++) {
+                char c = req.password[i];
+                if (c < HotspotCredential.PRINTABLE_ASCII_MIN
+                    || c > HotspotCredential.PRINTABLE_ASCII_MAX) {
+                    return _("Password contains invalid characters");
+                }
+            }
         }
         if (!nm.has_create_ap ()
-            && req.ap_interface != "Auto" && req.ap_interface != ""
-            && req.uplink_interface != "Auto"
-            && req.uplink_interface != "None"
+            && req.ap_interface != NetworkInterface.AUTO
+            && req.ap_interface != ""
+            && req.uplink_interface != NetworkInterface.AUTO
+            && req.uplink_interface != NetworkInterface.NONE
             && req.uplink_interface != ""
             && req.ap_interface == req.uplink_interface) {
-            return "AP and Uplink interfaces cannot be the same";
+            return _("AP and uplink interfaces cannot be the same");
         }
         return null;
     }
 
-    public async HotspotConfig get_status () throws Error {
-        return yield nm.get_hotspot_status ();
+    private static bool is_hex_string (string value) {
+        for (int i = 0; i < value.length; i++) {
+            char c = value[i];
+            if (!((c >= '0' && c <= '9')
+                || (c >= 'a' && c <= 'f')
+                || (c >= 'A' && c <= 'F'))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public async HotspotConfig get_status (Cancellable? cancellable = null) throws Error {
+        return yield nm.get_hotspot_status (cancellable);
     }
 
     public async WifiBandSupport get_band_support (string ap_iface) throws Error {

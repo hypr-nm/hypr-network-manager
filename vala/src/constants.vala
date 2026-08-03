@@ -143,6 +143,45 @@ namespace Constants {
         public const string READY = "ready";
     }
 
+    namespace HotspotSecurityIndex {
+        public const uint SAE = 0;
+        public const uint WPA_PSK = 1;
+        public const uint NONE = 2;
+    }
+
+    namespace HotspotTimeoutIndex {
+        public const uint DISABLED = 0;
+        public const uint FIVE_MINUTES = 1;
+        public const uint TEN_MINUTES = 2;
+        public const uint THIRTY_MINUTES = 3;
+        public const uint SIXTY_MINUTES = 4;
+    }
+
+    namespace HotspotTimeout {
+        public const int DISABLED = 0;
+        public const int FIVE_MINUTES = 5;
+        public const int TEN_MINUTES = 10;
+        public const int THIRTY_MINUTES = 30;
+        public const int SIXTY_MINUTES = 60;
+
+        public bool is_valid (int minutes) {
+            return minutes == DISABLED
+                || minutes == FIVE_MINUTES
+                || minutes == TEN_MINUTES
+                || minutes == THIRTY_MINUTES
+                || minutes == SIXTY_MINUTES;
+        }
+    }
+
+    namespace HotspotCredential {
+        public const int SSID_MAX_BYTES = 32;
+        public const int PASSPHRASE_MIN_BYTES = 8;
+        public const int PASSPHRASE_MAX_BYTES = 63;
+        public const int WPA_PSK_HEX_BYTES = 64;
+        public const char PRINTABLE_ASCII_MIN = ' ';
+        public const char PRINTABLE_ASCII_MAX = '~';
+    }
+
     namespace Keyval {
         public const string ESCAPE = "Escape";
     }
@@ -208,6 +247,7 @@ namespace Constants {
 
     public class Timeouts {
         public const uint HOTSPOT_IDLE_CHECK_SECONDS = 60;
+        public const uint HOTSPOT_STATUS_POLL_SECONDS = 3;
         public const int CREATE_AP_MAX_ATTEMPTS = 30;
         public const int CREATE_AP_STABLE_POLLS = 4;
         public const uint AP_MONITOR_POLL_INTERVAL_MS = 500;

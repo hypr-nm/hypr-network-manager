@@ -27,6 +27,7 @@ vala/src/ui/controllers/ethernet/main_window_ethernet_connection_controller.vala
 vala/src/ui/controllers/ethernet/main_window_ethernet_controller.vala
 vala/src/ui/controllers/ethernet/main_window_ethernet_details_edit_controller.vala
 vala/src/ui/controllers/ethernet/main_window_ethernet_refresh_controller.vala
+vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala
 vala/src/ui/controllers/main_window_abstract_details_edit_controller.vala
 vala/src/ui/controllers/main_window_flight_mode_controller.vala
 vala/src/ui/controllers/main_window_refresh_coordinator.vala

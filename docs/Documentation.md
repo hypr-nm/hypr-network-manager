@@ -659,7 +659,8 @@ For run/build convenience during development:
 * Network configuration is performed through NetworkManager over D-Bus
 * Hotspot bands, AP-mode state, and connected-client counts are read directly
   from the kernel through nl80211; the Vala backend does not parse `iw` output
-* Network credentials are handled securely
+* Hotspot passwords are stored in Secret Service when available, with a
+  private per-user state file as the fallback
 
 ---
 

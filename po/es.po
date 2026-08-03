@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hypr-network-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-01 09:11+0300\n"
+"POT-Creation-Date: 2026-08-03 09:18+0300\n"
 "PO-Revision-Date: 2026-04-30 12:38+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -191,7 +191,7 @@ msgstr "Se requiere el host remoto de OpenVPN."
 #: vala/src/models/wifi_security_mode.vala:47
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:590
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:64
-#: vala/src/ui/views/hotspot_section_view.vala:241
+#: vala/src/ui/views/hotspot_section_view.vala:248
 msgid "Open"
 msgstr "Abierta"
 
@@ -201,12 +201,12 @@ msgid "WPA/WPA2 Personal"
 msgstr "WPA/WPA2 Personal"
 
 #: vala/src/models/wifi_security_mode.vala:51
-#: vala/src/ui/views/hotspot_section_view.vala:239
+#: vala/src/ui/views/hotspot_section_view.vala:246
 msgid "WPA3 Personal"
 msgstr "WPA3 Personal"
 
 #: vala/src/models/wifi_security_mode.vala:53
-#: vala/src/ui/views/hotspot_section_view.vala:240
+#: vala/src/ui/views/hotspot_section_view.vala:247
 msgid "WPA2/WPA3 Personal"
 msgstr "WPA2/WPA3 Personal"
 
@@ -219,11 +219,10 @@ msgid "WEP key must be 5 or 13 ASCII characters, or 10 or 26 hex digits"
 msgstr ""
 
 #: vala/src/models/wifi_security_mode.vala:130
-#, fuzzy, c-format
+#: vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala:116
+#, c-format
 msgid "Password must be at least %d characters"
-msgstr ""
-"La contraseña debe tener al menos %d caracteres para el modo de seguridad "
-"seleccionado."
+msgstr "La contraseña debe tener al menos %d caracteres."
 
 #: vala/src/models/wifi_signal_levels.vala:54
 msgid "Excellent"
@@ -245,35 +244,61 @@ msgstr "Débil"
 msgid "Very Weak"
 msgstr "Muy débil"
 
+#: vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala:101
+msgid "SSID cannot be empty"
+msgstr "El SSID no puede estar vacío."
+
+#: vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala:104
+#, c-format
+msgid "SSID cannot exceed %d bytes"
+msgstr "El SSID no puede superar los %d bytes."
+
+#: vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala:112
+msgid "A 64-character WPA-PSK must contain only hexadecimal digits"
+msgstr "Una WPA-PSK de 64 caracteres solo puede contener dígitos hexadecimales."
+
+#: vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala:122
+#, c-format
+msgid "Password cannot exceed %d characters"
+msgstr "La contraseña no puede superar los %d caracteres."
+
+#: vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala:130
+msgid "Password contains invalid characters"
+msgstr "La contraseña contiene caracteres no válidos."
+
+#: vala/src/ui/controllers/hotspot/main_window_hotspot_controller.vala:141
+msgid "AP and uplink interfaces cannot be the same"
+msgstr "Las interfaces del punto de acceso y de enlace ascendente no pueden ser la misma."
+
 #: vala/src/ui/controllers/profiles/main_window_profile_adapter.vala:71
 #, c-format
 msgid "Saved Profile: %s"
 msgstr "Perfil guardado: %s"
 
-#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:130
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:189
 #: vala/src/ui/controllers/wifi/main_window_wifi_details_edit_controller.vala:312
 #, fuzzy, c-format
 msgid "Apply failed: %s"
 msgstr "Error al olvidar la red: %s"
 
-#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:154
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:220
 #, fuzzy, c-format
 msgid "Setup failed: %s"
 msgstr "Error al olvidar la red: %s"
 
-#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:169
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:242
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:259
 #, c-format
 msgid "VPN disconnect failed: %s"
 msgstr "Error al desconectar la VPN: %s"
 
-#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:179
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:256
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:276
 #, c-format
 msgid "VPN connect failed: %s"
 msgstr "Error al conectar la VPN: %s"
 
-#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:195
+#: vala/src/ui/controllers/vpn/main_window_vpn_controller.vala:279
 #, c-format
 msgid "VPN delete failed: %s"
 msgstr "Error al conectar la VPN: %s"
@@ -331,30 +356,30 @@ msgstr "El SSID es obligatorio."
 msgid "Add hidden network failed: %s"
 msgstr "Error al añadir la red oculta: %s"
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:213
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:219
 msgid "Connection failed or interrupted."
 msgstr "Conexión fallida o interrumpida."
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:221
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:227
 msgid "Connection failed."
 msgstr "Conexión fallida."
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:257
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:263
 #, c-format
 msgid "Wi-Fi · %s (%u%%)"
 msgstr "Wi-Fi · %s (%u%%)"
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:260
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:266
 #, c-format
 msgid "Wi-Fi · %s"
 msgstr "Wi-Fi · %s"
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:263
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:269
 #, c-format
 msgid "Wi-Fi available (%u networks)"
 msgstr "Wi-Fi disponible (%u redes)"
 
-#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:267
+#: vala/src/ui/controllers/wifi/main_window_wifi_refresh_controller.vala:273
 #: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:177
 msgid "No Wi-Fi networks found"
 msgstr "No se han encontrado redes Wi-Fi"
@@ -474,7 +499,7 @@ msgstr "Desconectar"
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:239
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:264
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:375
-#: vala/src/ui/views/wifi_section_view.vala:350
+#: vala/src/ui/views/wifi_section_view.vala:367
 msgid "Connect"
 msgstr "Conectar"
 
@@ -565,7 +590,7 @@ msgstr "Nombre del perfil"
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:138
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:560
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:298
-#: vala/src/ui/views/wifi_section_view.vala:317
+#: vala/src/ui/views/wifi_section_view.vala:334
 msgid "SSID"
 msgstr "SSID"
 
@@ -583,8 +608,8 @@ msgstr "Perfil Ethernet"
 #. Security Mode col
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:179
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:64
-#: vala/src/ui/views/hotspot_section_view.vala:234
-#: vala/src/ui/views/wifi_section_view.vala:331
+#: vala/src/ui/views/hotspot_section_view.vala:241
+#: vala/src/ui/views/wifi_section_view.vala:348
 msgid "Security"
 msgstr "Seguridad"
 
@@ -855,9 +880,9 @@ msgstr "Autenticación"
 #: vala/src/ui/pages/vpn/main_window_vpn_details_page.vala:208
 #: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:132
 #: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:144
-#: vala/src/ui/views/hotspot_section_view.vala:197
-#: vala/src/ui/views/hotspot_section_view.vala:368
-#: vala/src/ui/views/wifi_section_view.vala:364
+#: vala/src/ui/views/hotspot_section_view.vala:202
+#: vala/src/ui/views/hotspot_section_view.vala:375
+#: vala/src/ui/views/wifi_section_view.vala:381
 msgid "Password"
 msgstr "Contraseña"
 
@@ -1105,7 +1130,7 @@ msgstr "Canal"
 
 #. Band col
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:82
-#: vala/src/ui/views/hotspot_section_view.vala:253
+#: vala/src/ui/views/hotspot_section_view.vala:260
 msgid "Band"
 msgstr "Banda"
 
@@ -1143,7 +1168,7 @@ msgid "Add Network"
 msgstr "Añadir red"
 
 #: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:82
-#: vala/src/ui/views/wifi_section_view.vala:287
+#: vala/src/ui/views/wifi_section_view.vala:304
 msgid "Add Hidden Network"
 msgstr "Añadir red oculta"
 
@@ -1469,89 +1494,89 @@ msgstr "El prefijo IPv4 debe ser un número entre 0 y 32."
 msgid "IPv6 prefix must be a number between 0 and 128."
 msgstr "El prefijo IPv6 debe ser un número entre 0 y 128."
 
-#: vala/src/ui/views/hotspot_section_view.vala:78
+#: vala/src/ui/views/hotspot_section_view.vala:83
 #, fuzzy
 msgid "Wi-Fi Hotspot"
 msgstr "Punto de acceso"
 
 #. AP Interface col
-#: vala/src/ui/views/hotspot_section_view.vala:103
+#: vala/src/ui/views/hotspot_section_view.vala:108
 msgid "Wi-Fi Interface"
 msgstr "Interfaz Wi-Fi"
 
-#: vala/src/ui/views/hotspot_section_view.vala:107
-#: vala/src/ui/views/hotspot_section_view.vala:145
-#: vala/src/ui/views/hotspot_section_view.vala:257
-#: vala/src/ui/views/hotspot_section_view.vala:527
+#: vala/src/ui/views/hotspot_section_view.vala:112
+#: vala/src/ui/views/hotspot_section_view.vala:150
+#: vala/src/ui/views/hotspot_section_view.vala:264
+#: vala/src/ui/views/hotspot_section_view.vala:548
 msgid "Auto"
 msgstr "Automático"
 
 #. Timeout col
-#: vala/src/ui/views/hotspot_section_view.vala:121
+#: vala/src/ui/views/hotspot_section_view.vala:126
 msgid "Turn off if inactive for"
 msgstr "Desactivar si está inactivo durante"
 
-#: vala/src/ui/views/hotspot_section_view.vala:126
+#: vala/src/ui/views/hotspot_section_view.vala:131
 msgid "Never"
 msgstr "Nunca"
 
-#: vala/src/ui/views/hotspot_section_view.vala:127
-#: vala/src/ui/views/hotspot_section_view.vala:128
-#: vala/src/ui/views/hotspot_section_view.vala:129
+#: vala/src/ui/views/hotspot_section_view.vala:132
+#: vala/src/ui/views/hotspot_section_view.vala:133
+#: vala/src/ui/views/hotspot_section_view.vala:134
 #, c-format
 msgid "%d minutes"
 msgstr "%d minutos"
 
-#: vala/src/ui/views/hotspot_section_view.vala:130
+#: vala/src/ui/views/hotspot_section_view.vala:135
 #, c-format
 msgid "%d hour"
 msgstr "%d hora"
 
 #. Uplink Interface col
-#: vala/src/ui/views/hotspot_section_view.vala:141
+#: vala/src/ui/views/hotspot_section_view.vala:146
 msgid "Share Internet From"
 msgstr "Compartir Internet desde"
 
-#: vala/src/ui/views/hotspot_section_view.vala:145
-#: vala/src/ui/views/hotspot_section_view.vala:365
+#: vala/src/ui/views/hotspot_section_view.vala:150
+#: vala/src/ui/views/hotspot_section_view.vala:372
 msgid "None"
 msgstr "Ninguno"
 
 #. SSID col
-#: vala/src/ui/views/hotspot_section_view.vala:168
+#: vala/src/ui/views/hotspot_section_view.vala:173
 msgid "Network Name (SSID)"
 msgstr "Nombre de la red (SSID)"
 
 #. Hidden col
-#: vala/src/ui/views/hotspot_section_view.vala:184
+#: vala/src/ui/views/hotspot_section_view.vala:189
 msgid "Hidden Network"
 msgstr "Red oculta"
 
-#: vala/src/ui/views/hotspot_section_view.vala:209
+#: vala/src/ui/views/hotspot_section_view.vala:215
 #, c-format
 msgid "Min %d chars"
 msgstr "Mín. %d caracteres"
 
-#: vala/src/ui/views/hotspot_section_view.vala:287
+#: vala/src/ui/views/hotspot_section_view.vala:294
 msgid "Save Configuration"
 msgstr "Guardar configuración"
 
-#: vala/src/ui/views/hotspot_section_view.vala:378
+#: vala/src/ui/views/hotspot_section_view.vala:385
 #, c-format
 msgid "Connected Users: %d"
 msgstr "Usuarios conectados: %d"
 
-#: vala/src/ui/views/hotspot_section_view.vala:673
+#: vala/src/ui/views/hotspot_section_view.vala:693
 #, c-format
 msgid "Failed to save hotspot configuration: %s"
 msgstr ""
 
-#: vala/src/ui/views/hotspot_section_view.vala:685
+#: vala/src/ui/views/hotspot_section_view.vala:708
 #, fuzzy, c-format
 msgid "Failed to enable hotspot: %s"
 msgstr "Error al obtener los detalles para compartir: %s"
 
-#: vala/src/ui/views/hotspot_section_view.vala:699
+#: vala/src/ui/views/hotspot_section_view.vala:725
 #, fuzzy, c-format
 msgid "Failed to disable hotspot: %s"
 msgstr "Error al obtener los detalles para compartir: %s"
@@ -1560,23 +1585,23 @@ msgstr "Error al obtener los detalles para compartir: %s"
 msgid "Loading networks…"
 msgstr "Cargando redes…"
 
-#: vala/src/ui/views/wifi_section_view.vala:216
+#: vala/src/ui/views/wifi_section_view.vala:235
 msgid "Could not read Wi-Fi password"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:218
+#: vala/src/ui/views/wifi_section_view.vala:237
 msgid "Cannot share: password is empty"
 msgstr "No se puede compartir: la contraseña está vacía"
 
-#: vala/src/ui/views/wifi_section_view.vala:310
+#: vala/src/ui/views/wifi_section_view.vala:327
 msgid "Manually add a hidden Wi-Fi network."
 msgstr "Añadir manualmente una red Wi-Fi oculta."
 
-#: vala/src/ui/views/wifi_section_view.vala:324
+#: vala/src/ui/views/wifi_section_view.vala:341
 msgid "Network name"
 msgstr "Nombre de la red"
 
-#: vala/src/ui/views/wifi_section_view.vala:376
+#: vala/src/ui/views/wifi_section_view.vala:393
 #, c-format
 msgid "Network password (min %d chars)"
 msgstr "Contraseña de la red (mín. %d caracteres)"

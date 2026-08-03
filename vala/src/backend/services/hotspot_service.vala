@@ -28,11 +28,15 @@ public class HotspotService : GLib.Object {
     private bool is_hotspot_stopping = false;
     private bool is_hotspot_starting = false;
     private bool warned_create_ap_fallback = false;
+    private bool hotspot_timeout_check_in_flight = false;
 
     public HotspotService (NetworkManagerClient core, Nl80211ApMonitor monitor) {
         this.core = core;
         this.monitor = monitor;
-        GLib.Timeout.add_seconds (60, check_hotspot_timeout);
+        GLib.Timeout.add_seconds (
+            Timeouts.HOTSPOT_IDLE_CHECK_SECONDS,
+            check_hotspot_timeout
+        );
     }
 
     private string? get_create_ap_path () {
@@ -411,11 +415,16 @@ public class HotspotService : GLib.Object {
         var client = core.nm_client;
         var config = new HotspotConfig ();
 
-        HotspotConfigStorage.load (config);
+        try {
+            yield HotspotConfigStorage.load (config, cancellable);
+        } catch (Error e) {
+            core.debug_log ("Failed to load hotspot config: " + e.message);
+        }
 
         var dev = get_wifi_device ();
         NM.DeviceWifi? target_dev = dev;
-        if (config.ap_interface != "" && config.ap_interface != "Auto") {
+        if (config.ap_interface != ""
+            && config.ap_interface != NetworkInterface.AUTO) {
             var configured_dev = client.get_device_by_iface (config.ap_interface);
             if (configured_dev is NM.DeviceWifi) {
                 target_dev = (NM.DeviceWifi) configured_dev;
@@ -516,14 +525,14 @@ public class HotspotService : GLib.Object {
         config.ap_interface = ap_interface;
         config.uplink_interface = uplink_interface;
 
-        HotspotConfigStorage.save (config);
+        yield HotspotConfigStorage.save (config, cancellable);
     }
 
     public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
         var client = core.nm_client;
 
         NM.DeviceWifi? dev = null;
-        if (ap_interface != "" && ap_interface != "Auto") {
+        if (ap_interface != "" && ap_interface != NetworkInterface.AUTO) {
             var nm_dev = client.get_device_by_iface (ap_interface);
             if (nm_dev is NM.DeviceWifi) {
                 dev = (NM.DeviceWifi) nm_dev;
@@ -540,16 +549,18 @@ public class HotspotService : GLib.Object {
 
         yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
 
-        string resolved_ap_iface = (ap_interface != "" && ap_interface != "Auto")
+        string resolved_ap_iface = (ap_interface != ""
+            && ap_interface != NetworkInterface.AUTO)
             ? ap_interface : dev.get_iface ();
-        string resolved_uplink_iface = (uplink_interface != "" && uplink_interface != "Auto")
+        string resolved_uplink_iface = (uplink_interface != ""
+            && uplink_interface != NetworkInterface.AUTO)
             ? uplink_interface : dev.get_iface ();
         if (resolved_ap_iface.has_prefix ("-")
             || !is_valid_interface_name (resolved_ap_iface)) {
             throw new IOError.INVALID_ARGUMENT (
                 "Invalid AP interface name");
         }
-        if (resolved_uplink_iface != "None"
+        if (resolved_uplink_iface != NetworkInterface.NONE
             && (resolved_uplink_iface.has_prefix ("-")
                 || !is_valid_interface_name (resolved_uplink_iface))) {
             throw new IOError.INVALID_ARGUMENT (
@@ -557,7 +568,8 @@ public class HotspotService : GLib.Object {
         }
 
         NM.Device? uplink_dev = null;
-        if (resolved_uplink_iface != "None" && resolved_uplink_iface != resolved_ap_iface) {
+        if (resolved_uplink_iface != NetworkInterface.NONE
+            && resolved_uplink_iface != resolved_ap_iface) {
             var nm_uplink = client.get_device_by_iface (resolved_uplink_iface);
             if (nm_uplink != null) {
                 uplink_dev = nm_uplink;
@@ -672,7 +684,9 @@ public class HotspotService : GLib.Object {
                 if (final_ap_iface.has_prefix ("-") || !is_valid_interface_name (final_ap_iface)) {
                     throw new IOError.INVALID_ARGUMENT ("Invalid AP interface name");
                 }
-                if (final_uplink_iface != "None" && (final_uplink_iface.has_prefix ("-") || !is_valid_interface_name (final_uplink_iface))) {
+                if (final_uplink_iface != NetworkInterface.NONE
+                    && (final_uplink_iface.has_prefix ("-")
+                        || !is_valid_interface_name (final_uplink_iface))) {
                     throw new IOError.INVALID_ARGUMENT ("Invalid uplink interface name");
                 }
 
@@ -840,7 +854,8 @@ public class HotspotService : GLib.Object {
         var config = yield get_hotspot_status (cancellable);
 
         NM.DeviceWifi? dev = null;
-        if (config.ap_interface != "" && config.ap_interface != "Auto") {
+        if (config.ap_interface != ""
+            && config.ap_interface != NetworkInterface.AUTO) {
             var nm_dev = client.get_device_by_iface (config.ap_interface);
             if (nm_dev is NM.DeviceWifi) {
                 dev = (NM.DeviceWifi) nm_dev;
@@ -986,17 +1001,34 @@ public class HotspotService : GLib.Object {
     }
 
     private bool check_hotspot_timeout () {
+        if (hotspot_timeout_check_in_flight) {
+            return true;
+        }
+
+        hotspot_timeout_check_in_flight = true;
+        check_hotspot_timeout_async.begin ((obj, res) => {
+            check_hotspot_timeout_async.end (res);
+            hotspot_timeout_check_in_flight = false;
+        });
+        return true;
+    }
+
+    private async void check_hotspot_timeout_async () {
         var dev = get_wifi_device ();
-        if (dev == null) return true;
+        if (dev == null) return;
 
         var config = new HotspotConfig ();
-        HotspotConfigStorage.load (config);
+        try {
+            yield HotspotConfigStorage.load (config);
+        } catch (Error e) {
+            core.debug_log ("Failed to load hotspot config for timeout check: " + e.message);
+        }
 
         int timeout_mins = config.timeout;
         string ap_interface = config.ap_interface;
 
         NM.DeviceWifi? target_dev = dev;
-        if (ap_interface != null && ap_interface != "" && ap_interface != "Auto") {
+        if (ap_interface != "" && ap_interface != NetworkInterface.AUTO) {
             var nm_dev = core.nm_client.get_device_by_iface (ap_interface);
             if (nm_dev is NM.DeviceWifi) target_dev = (NM.DeviceWifi) nm_dev;
         }
@@ -1023,7 +1055,7 @@ public class HotspotService : GLib.Object {
             } else {
                 if (timeout_mins <= 0) {
                     hotspot_idle_minutes = 0;
-                    return true;
+                    return;
                 }
 
                 if (target_dev != null) {
@@ -1032,40 +1064,38 @@ public class HotspotService : GLib.Object {
                         timeout_mins,
                         true);
                 }
-                return true;
+                return;
             }
         }
 
-        if (target_dev == null) return true;
+        if (target_dev == null) return;
         var active_conn = target_dev.get_active_connection ();
         if (active_conn == null) {
             hotspot_idle_minutes = 0;
-            return true;
+            return;
         }
 
         var conn = active_conn.get_connection ();
         if (conn == null) {
             hotspot_idle_minutes = 0;
-            return true;
+            return;
         }
 
         var s_wifi = conn.get_setting_wireless ();
-        if (s_wifi == null || s_wifi.mode != "ap") {
+        if (s_wifi == null || s_wifi.mode != WifiMode.AP) {
             hotspot_idle_minutes = 0;
-            return true;
+            return;
         }
 
         if (timeout_mins <= 0) {
             hotspot_idle_minutes = 0;
-            return true;
+            return;
         }
 
         begin_hotspot_client_timeout_check (
             target_dev.get_iface (),
             timeout_mins,
             false);
-
-        return true;
     }
 
     private void begin_hotspot_client_timeout_check (
