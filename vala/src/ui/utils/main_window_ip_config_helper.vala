@@ -33,22 +33,4 @@ public class MainWindowIpConfigHelper : Object {
         }
     }
 
-    public static string index_to_method (uint index, bool is_ipv4 = true) {
-        if (is_ipv4) {
-            switch (index) {
-                case 0: return "auto";
-                case 1: return "manual";
-                case 2: return "disabled";
-                default: return "auto";
-            }
-        } else {
-            switch (index) {
-                case 0: return "auto";
-                case 1: return "manual";
-                case 2: return "disabled";
-                case 3: return "ignore";
-                default: return "auto";
-            }
-        }
-    }
 }
