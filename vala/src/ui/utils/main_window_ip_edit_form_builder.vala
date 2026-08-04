@@ -49,110 +49,6 @@ namespace MainWindowIpEditFormBuilder {
         widget.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
     }
 
-    private void set_collapsible_state (
-        Gtk.Box container,
-        Gtk.Button toggle_button,
-        Gtk.Revealer content_revealer,
-        Gtk.Image toggle_icon,
-        bool expanded
-    ) {
-        content_revealer.set_reveal_child (expanded);
-        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, expanded);
-        if (expanded) {
-            container.add_css_class ("is-expanded");
-            container.remove_css_class ("is-collapsed");
-            toggle_button.set_tooltip_text (_("Collapse section"));
-        } else {
-            container.add_css_class ("is-collapsed");
-            container.remove_css_class ("is-expanded");
-            toggle_button.set_tooltip_text (_("Expand section"));
-        }
-    }
-
-    private Gtk.Box build_collapsible_section (
-        string title,
-        bool with_extra_classes,
-        string css_class,
-        out Gtk.Box content_box
-    ) {
-        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-        if (with_extra_classes) {
-            container.add_css_class (css_class);
-            container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
-        } else {
-            container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
-        }
-
-        var toggle_button = new Gtk.Button ();
-        toggle_button.set_has_frame (false);
-        toggle_button.set_halign (Gtk.Align.FILL);
-        toggle_button.set_hexpand (true);
-        if (with_extra_classes) {
-            toggle_button.add_css_class (css_class + "-toggle");
-            toggle_button.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE);
-        } else {
-            toggle_button.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE);
-        }
-
-        var toggle_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        toggle_row.set_halign (Gtk.Align.FILL);
-        toggle_row.set_hexpand (true);
-        toggle_row.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ROW);
-
-        var toggle_icon = new Gtk.Image ();
-        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, false);
-        if (with_extra_classes) {
-            toggle_icon.add_css_class (css_class + "-toggle-icon");
-            toggle_icon.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON);
-        } else {
-            toggle_icon.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON);
-        }
-        toggle_row.append (toggle_icon);
-
-        var toggle_label = new Gtk.Label (title);
-        toggle_label.set_xalign (0.0f);
-        toggle_label.set_hexpand (true);
-        if (with_extra_classes) {
-            toggle_label.add_css_class (css_class + "-toggle-label");
-            toggle_label.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL);
-        } else {
-            toggle_label.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL);
-        }
-        toggle_row.append (toggle_label);
-
-        toggle_button.set_child (toggle_row);
-        container.append (toggle_button);
-
-        content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        if (with_extra_classes) {
-            content_box.add_css_class (css_class + "-content");
-            content_box.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
-        } else {
-            content_box.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
-        }
-
-        var content_revealer = new Gtk.Revealer ();
-        content_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        content_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
-        content_revealer.set_child (content_box);
-        if (with_extra_classes) {
-            content_revealer.add_css_class (css_class + "-revealer");
-            content_revealer.add_css_class (MainWindowCssClasses.EDIT_SECTION_REVEALER);
-        } else {
-            content_revealer.add_css_class (MainWindowCssClasses.EDIT_SECTION_REVEALER);
-        }
-        container.append (content_revealer);
-
-        set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, true);
-
-        toggle_button.clicked.connect (() => {
-            bool expanded = !content_revealer.get_reveal_child ();
-            set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, expanded);
-        });
-
-        return container;
-    }
-
     private void sync_ip_section_sensitivity (
         bool is_ipv6,
         HyprNetworkManager.UI.Widgets.TrackedDropDown method_dropdown,
@@ -203,11 +99,11 @@ namespace MainWindowIpEditFormBuilder {
         var widgets = new IpSectionWidgets ();
 
         Gtk.Box section;
-        var collapsible = build_collapsible_section (
+        var collapsible = MainWindowHelpers.build_collapsible_section (
             is_ipv6 ? _("IPv6 Settings") : _("IPv4 Settings"),
-            with_extra_classes,
-            ip_class (is_ipv6, "section"),
-            out section
+            out section,
+            0,
+            with_extra_classes ? ip_class (is_ipv6, "section") : null
         );
         form.append (collapsible);
 

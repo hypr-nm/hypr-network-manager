@@ -122,4 +122,99 @@ public Gtk.Widget build_details_section (string title, out Gtk.ListBox rows_cont
 
     return section;
 }
+
+public Gtk.Box build_collapsible_section (
+    string title,
+    out Gtk.Box content_box,
+    int spacing = 0,
+    string? extra_class = null,
+    bool initially_expanded = true
+) {
+    bool has_extra = extra_class != null && extra_class != "";
+
+    var container = new Gtk.Box (Gtk.Orientation.VERTICAL, spacing);
+    container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
+    if (has_extra) {
+        container.add_css_class (extra_class);
+    }
+
+    var toggle_button = new Gtk.Button ();
+    toggle_button.set_has_frame (false);
+    toggle_button.set_halign (Gtk.Align.FILL);
+    toggle_button.set_hexpand (true);
+    toggle_button.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE);
+    if (has_extra) {
+        toggle_button.add_css_class (extra_class + "-toggle");
+    }
+
+    var toggle_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
+    toggle_row.set_halign (Gtk.Align.FILL);
+    toggle_row.set_hexpand (true);
+    toggle_row.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ROW);
+
+    var toggle_icon = new Gtk.Image ();
+    MainWindowIconResources.set_expand_indicator_icon (toggle_icon, false);
+    toggle_icon.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON);
+    if (has_extra) {
+        toggle_icon.add_css_class (extra_class + "-toggle-icon");
+    }
+    toggle_row.append (toggle_icon);
+
+    var toggle_label = new Gtk.Label (title);
+    toggle_label.set_xalign (0.0f);
+    toggle_label.set_hexpand (true);
+    toggle_label.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL);
+    if (has_extra) {
+        toggle_label.add_css_class (extra_class + "-toggle-label");
+    }
+    toggle_row.append (toggle_label);
+
+    toggle_button.set_child (toggle_row);
+    container.append (toggle_button);
+
+    content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+    content_box.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
+    if (has_extra) {
+        content_box.add_css_class (extra_class + "-content");
+    }
+
+    var content_revealer = new Gtk.Revealer ();
+    content_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
+    content_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
+    content_revealer.add_css_class (MainWindowCssClasses.EDIT_SECTION_REVEALER);
+    if (has_extra) {
+        content_revealer.add_css_class (extra_class + "-revealer");
+    }
+    content_revealer.set_child (content_box);
+    container.append (content_revealer);
+
+    set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, initially_expanded);
+
+    toggle_button.clicked.connect (() => {
+        bool expanded = !content_revealer.get_reveal_child ();
+        set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, expanded);
+    });
+
+    return container;
+}
+
+public void set_collapsible_state (
+    Gtk.Box container,
+    Gtk.Button toggle_button,
+    Gtk.Revealer content_revealer,
+    Gtk.Image toggle_icon,
+    bool expanded
+) {
+    content_revealer.set_reveal_child (expanded);
+    MainWindowIconResources.set_expand_indicator_icon (toggle_icon, expanded);
+    if (expanded) {
+        container.add_css_class ("is-expanded");
+        container.remove_css_class ("is-collapsed");
+        toggle_button.set_tooltip_text (_("Collapse section"));
+    } else {
+        container.add_css_class ("is-collapsed");
+        container.remove_css_class ("is-expanded");
+        toggle_button.set_tooltip_text (_("Expand section"));
+    }
+}
 }
