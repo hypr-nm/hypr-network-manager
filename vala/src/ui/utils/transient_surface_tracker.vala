@@ -22,7 +22,7 @@ using GtkLayerShell;
 
 namespace HyprNetworkManager.UI.Utils {
     public class TransientSurfaceTracker : Object {
-        private const int64 ACTIVE_SURFACE_GRACE_US = 300000;
+        private const int64 ACTIVE_SURFACE_GRACE_US = 600000;
         private const int64 DISMISS_INTERCEPT_GRACE_US = 4000000;
         private const int64 RECENT_SURFACE_BOUNDS_GRACE_US = 1000000;
         private const int RECENT_SURFACE_BOUNDS_MARGIN_PX = 12;
@@ -171,7 +171,7 @@ namespace HyprNetworkManager.UI.Utils {
                 }
 
                 if (matches_recent_synthetic_dismiss (window_x, window_y)) {
-                    log_info (
+                    log_debug (
                         "gui",
                         "Transient surface dismiss intercept: ignoring repeated synthetic outside click x="
                         + window_x.to_string () + ", y=" + window_y.to_string ()
