@@ -29,16 +29,15 @@ namespace HyprNetworkManager.UI.Views {
 
         private void build_ui () {
             root_widget = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_best_class (root_widget, {MainWindowCssClasses.TOOLBAR_INSET,
-                MainWindowCssClasses.PAGE_SHELL_INSET});
-            MainWindowCssClassResolver.add_best_class (root_widget, {MainWindowCssClasses.STATUS_BAR,
-                MainWindowCssClasses.TOOLBAR});
+            root_widget.add_css_class (MainWindowCssClasses.TOOLBAR_INSET);
+            root_widget.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+            root_widget.add_css_class (MainWindowCssClasses.STATUS_BAR);
+            root_widget.add_css_class (MainWindowCssClasses.TOOLBAR);
 
             status_icon = new Gtk.Image.from_icon_name ("network-wireless-offline-symbolic");
-            MainWindowCssClassResolver.add_best_class (status_icon, {MainWindowCssClasses.ICON_SIZE_16,
-                MainWindowCssClasses.ICON_SIZE});
-            MainWindowCssClassResolver.add_best_class (status_icon, {MainWindowCssClasses.STATUS_ICON,
-                MainWindowCssClasses.ICON_SIZE});
+            status_icon.add_css_class (MainWindowCssClasses.ICON_SIZE_16);
+            status_icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+            status_icon.add_css_class (MainWindowCssClasses.STATUS_ICON);
             root_widget.append (status_icon);
 
             status_label = new Gtk.Label (_("Loading networks…"));

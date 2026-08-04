@@ -234,8 +234,6 @@ public class NetworkManager : Gtk.Application {
             return;
         }
 
-        MainWindowCssClassResolver.initialize (inlined_css, css_path, force_reload);
-
         if (!load_css_from_string (inlined_css, Gtk.STYLE_PROVIDER_PRIORITY_USER)) {
             log_warn ("app", "load_theme_css: failed to apply inlined stylesheet; outcome=continuing");
         }

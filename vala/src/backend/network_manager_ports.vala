@@ -5,36 +5,56 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 using GLib;
 using HyprNetworkManager.Models;
 
 namespace HyprNetworkManager.Backend {
-    public interface INetworkManagerClient : GLib.Object {
-        public signal void network_events_changed ();
+    public interface IDeviceClient : GLib.Object {
+        public abstract async List<NetworkDevice> get_devices (
+            Cancellable? cancellable = null
+        ) throws Error;
+    }
 
+    public interface IWifiScanClient : GLib.Object {
+        public abstract async bool scan_wifi (
+            Cancellable? cancellable = null
+        ) throws Error;
+    }
+
+    public interface IEthernetProfileClient : GLib.Object {
         public abstract bool has_ethernet_profile_for_device (NetworkDevice device);
-        public abstract bool is_networking_enabled ();
+    }
+
+    public interface IForgetNetworkClient : GLib.Object {
+        public abstract async bool forget_network (
+            string profile_uuid,
+            string network_key,
+            Cancellable? cancellable = null
+        ) throws Error;
+    }
+
+    public interface INetworkEventClient : GLib.Object, IWifiScanClient {
+        public signal void network_events_changed ();
         public abstract async bool subscribe_network_events_dbus (
             Cancellable? cancellable = null
         ) throws Error;
         public abstract void unsubscribe_network_events ();
-        public abstract async List<NetworkDevice> get_devices (
+    }
+
+    public interface IRadioStateClient : GLib.Object {
+        public abstract async bool get_networking_enabled_dbus (
             Cancellable? cancellable = null
         ) throws Error;
+        public abstract async bool set_networking_enabled (
+            bool enabled,
+            Cancellable? cancellable = null
+        ) throws Error;
+    }
+
+    public interface IWifiClient : GLib.Object, IDeviceClient, IWifiScanClient, IForgetNetworkClient {
         public abstract async WifiRefreshData get_wifi_refresh_data (
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async WifiSavedProfile[] get_saved_wifi_profiles (
             Cancellable? cancellable = null
         ) throws Error;
         public abstract async NetworkIpSettings get_wifi_network_ip_settings (
@@ -46,76 +66,21 @@ namespace HyprNetworkManager.Backend {
             WifiNetworkUpdateRequest request,
             Cancellable? cancellable = null
         ) throws Error;
-        public abstract async WifiSavedProfileSettings get_saved_wifi_profile_settings (
-            WifiSavedProfile profile,
-            Cancellable? cancellable = null
-        ) throws Error;
         public abstract async string? get_wifi_password (
             string connection_uuid,
             Cancellable? cancellable = null,
             out string? read_failure
         );
-        public abstract async bool update_saved_wifi_profile_settings (
-            WifiSavedProfile profile,
-            WifiSavedProfileUpdateRequest request,
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async bool update_saved_wifi_profile_network_settings (
-            WifiSavedProfile profile,
-            WifiNetworkUpdateRequest request,
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async bool connect_ethernet_device (
-            NetworkDevice device,
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async bool disconnect_device (
-            string interface_name,
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async NetworkIpSettings get_ethernet_device_ip_settings (
-            NetworkDevice device,
-            Cancellable? cancellable = null
-        );
-        public abstract async NetworkIpSettings get_ethernet_device_configured_ip_settings (
-            NetworkDevice device,
-            Cancellable? cancellable = null
-        );
-        public abstract async bool update_ethernet_device_settings (
-            NetworkDevice device,
-            NetworkIpUpdateRequest request,
-            Cancellable? cancellable = null
-        ) throws Error;
         public abstract async bool get_wifi_enabled_dbus (
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async bool get_networking_enabled_dbus (
             Cancellable? cancellable = null
         ) throws Error;
         public abstract async bool set_wifi_enabled (
             bool enabled,
             Cancellable? cancellable = null
         ) throws Error;
-        public abstract async bool set_networking_enabled (
-            bool enabled,
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async bool toggle_wifi_dbus (
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async bool connect_saved_wifi (
-            WifiNetwork network,
-            Cancellable? cancellable = null
-        ) throws Error;
         public abstract async bool connect_wifi (
             WifiNetwork network,
             string? password,
-            bool autoconnect = true,
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async bool connect_wifi_with_password (
-            WifiNetwork network,
-            string password,
             bool autoconnect = true,
             Cancellable? cancellable = null
         ) throws Error;
@@ -129,17 +94,60 @@ namespace HyprNetworkManager.Backend {
             WifiNetwork network,
             Cancellable? cancellable = null
         ) throws Error;
-        public abstract async bool forget_network (
-            string profile_uuid,
-            string network_key,
-            Cancellable? cancellable = null
-        ) throws Error;
         public abstract async bool set_wifi_network_autoconnect (
             WifiNetwork network,
             bool enabled,
             int32 priority = 10,
             Cancellable? cancellable = null
         ) throws Error;
+    }
+
+    public interface IEthernetClient : GLib.Object, IDeviceClient, IEthernetProfileClient {
+        public abstract bool is_networking_enabled ();
+        public abstract async bool connect_ethernet_device (
+            NetworkDevice device,
+            Cancellable? cancellable = null
+        ) throws Error;
+        public abstract async bool disconnect_device (
+            string interface_name,
+            Cancellable? cancellable = null
+        ) throws Error;
+        public abstract async NetworkIpSettings get_ethernet_device_ip_settings (
+            NetworkDevice device,
+            Cancellable? cancellable = null
+        );
+        public abstract async bool update_ethernet_device_settings (
+            NetworkDevice device,
+            NetworkIpUpdateRequest request,
+            Cancellable? cancellable = null
+        ) throws Error;
+    }
+
+    public interface IProfilesClient : GLib.Object, IDeviceClient, IEthernetProfileClient, IForgetNetworkClient {
+        public abstract async NetworkIpSettings get_ethernet_device_configured_ip_settings (
+            NetworkDevice device,
+            Cancellable? cancellable = null
+        );
+        public abstract async WifiSavedProfile[] get_saved_wifi_profiles (
+            Cancellable? cancellable = null
+        ) throws Error;
+        public abstract async WifiSavedProfileSettings get_saved_wifi_profile_settings (
+            WifiSavedProfile profile,
+            Cancellable? cancellable = null
+        ) throws Error;
+        public abstract async bool update_saved_wifi_profile_settings (
+            WifiSavedProfile profile,
+            WifiSavedProfileUpdateRequest request,
+            Cancellable? cancellable = null
+        ) throws Error;
+        public abstract async bool update_saved_wifi_profile_network_settings (
+            WifiSavedProfile profile,
+            WifiNetworkUpdateRequest request,
+            Cancellable? cancellable = null
+        ) throws Error;
+    }
+
+    public interface IVpnClient : GLib.Object {
         public abstract async bool connect_vpn (
             string name,
             Cancellable? cancellable = null
@@ -168,9 +176,9 @@ namespace HyprNetworkManager.Backend {
             VpnUpdateRequest request,
             Cancellable? cancellable = null
         ) throws Error;
-        public abstract async bool scan_wifi (
-            Cancellable? cancellable = null
-        ) throws Error;
+    }
+
+    public interface IHotspotClient : GLib.Object {
         public abstract async HotspotConfig get_hotspot_status (
             Cancellable? cancellable = null
         ) throws Error;
@@ -204,9 +212,6 @@ namespace HyprNetworkManager.Backend {
         ) throws Error;
         public abstract bool has_create_ap ();
         public abstract async bool disable_hotspot_async (
-            Cancellable? cancellable = null
-        ) throws Error;
-        public abstract async string get_status_json_dbus (
             Cancellable? cancellable = null
         ) throws Error;
     }

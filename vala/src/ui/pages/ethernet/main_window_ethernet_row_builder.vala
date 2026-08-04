@@ -41,10 +41,10 @@ public class MainWindowEthernetRowBuilder {
         content.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
 
         var icon = new Gtk.Image.from_icon_name ("network-wired-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_16,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ETHERNET_ICON,
-            MainWindowCssClasses.SIGNAL_ICON});
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_16);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.ETHERNET_ICON);
+        icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON);
         content.append (icon);
 
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
@@ -93,10 +93,8 @@ public class MainWindowEthernetRowBuilder {
         }
 
         var action = new Gtk.Button.with_label (action_label);
-        MainWindowCssClassResolver.add_best_class (
-            action,
-            {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
-        );
+        action.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
+        action.add_css_class (MainWindowCssClasses.BUTTON);
         action.add_css_class (
             dev.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.set_sensitive (can_toggle);
@@ -107,18 +105,12 @@ public class MainWindowEthernetRowBuilder {
 
         var details_btn = new Gtk.Button ();
         details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-        MainWindowCssClassResolver.add_best_class (
-            details_btn,
-            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
-        );
-        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
-            MainWindowCssClasses.ROW_ICON_ACTION});
+        details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
         details_btn.set_tooltip_text (_("Details"));
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
-        MainWindowCssClassResolver.add_best_class (
-            details_icon,
-            {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
-        );
+        details_icon.add_css_class (MainWindowCssClasses.DETAILS_BUTTON_ICON);
+        details_icon.add_css_class (MainWindowCssClasses.DETAILS_OPEN_ICON);
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
             action_handler.open_details (dev);

@@ -45,13 +45,8 @@ public class MainWindowProfilesPage : Gtk.Box {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_NETWORK_DETAILS,
-            MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            this,
-            MainWindowCssClasses.PAGE_SAVED_PROFILES,
-            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
-        );
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_DETAILS);
+        this.add_css_class (MainWindowCssClasses.PAGE_SAVED_PROFILES);
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         header.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
@@ -248,29 +243,22 @@ public class MainWindowProfilesPage : Gtk.Box {
             row.set_data<WifiSavedProfile> ("profile", row_profile);
 
             var details_btn = new Gtk.Button ();
-            MainWindowCssClassResolver.add_best_class (
-                details_btn,
-                {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
-            );
-            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
-                MainWindowCssClasses.ROW_ICON_ACTION});
+        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
+        details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
             details_btn.set_valign (Gtk.Align.CENTER);
             details_btn.set_tooltip_text (_("Details"));
             var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
-            MainWindowCssClassResolver.add_best_class (
-                details_icon,
-                {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
-            );
+            details_icon.add_css_class (MainWindowCssClasses.DETAILS_BUTTON_ICON);
+            details_icon.add_css_class (MainWindowCssClasses.DETAILS_OPEN_ICON);
             details_btn.set_child (details_icon);
             details_btn.clicked.connect (() => {
                 this.open_profile (row_profile);
             });
 
             var delete_btn = new Gtk.Button.with_label (_("Delete"));
-            MainWindowCssClassResolver.add_best_class (
-                delete_btn,
-                {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
-            );
+            delete_btn.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
+            delete_btn.add_css_class (MainWindowCssClasses.BUTTON);
             delete_btn.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
             delete_btn.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
             delete_btn.set_valign (Gtk.Align.CENTER);
@@ -343,19 +331,14 @@ public class MainWindowProfilesPage : Gtk.Box {
             row.set_data<NetworkDevice> ("device", row_device);
 
             var details_btn = new Gtk.Button ();
-            MainWindowCssClassResolver.add_best_class (
-                details_btn,
-                {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
-            );
-            MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
-                MainWindowCssClasses.ROW_ICON_ACTION});
+        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
+        details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
             details_btn.set_valign (Gtk.Align.CENTER);
             details_btn.set_tooltip_text (_("Details"));
             var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
-            MainWindowCssClassResolver.add_best_class (
-                details_icon,
-                {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
-            );
+            details_icon.add_css_class (MainWindowCssClasses.DETAILS_BUTTON_ICON);
+            details_icon.add_css_class (MainWindowCssClasses.DETAILS_OPEN_ICON);
             details_btn.set_child (details_icon);
             details_btn.clicked.connect (() => {
                 this.open_ethernet_profile (row_device);

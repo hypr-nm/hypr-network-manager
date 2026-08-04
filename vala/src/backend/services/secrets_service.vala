@@ -19,10 +19,10 @@ using Constants;
 using GLib;
 
 public class SecretsService : GLib.Object {
-    private NetworkManagerClient core;
+    private NM.Client client;
 
-    public SecretsService (NetworkManagerClient core) {
-        this.core = core;
+    public SecretsService (NM.Client client) {
+        this.client = client;
     }
 
     public async string? read_password_for_connection (
@@ -97,7 +97,7 @@ public class SecretsService : GLib.Object {
         out string? read_failure
     ) {
         read_failure = null;
-        var conn = core.nm_client.get_connection_by_uuid (connection_uuid);
+        var conn = client.get_connection_by_uuid (connection_uuid);
         if (conn == null) {
             return null;
         }

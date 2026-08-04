@@ -15,18 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Constants;
 using GLib;
 using HyprNetworkManager.Backend;
 using HyprNetworkManager.UI.Interfaces;
 
 public class MainWindowProfilesController : Object {
-    private INetworkManagerClient nm;
+    private IProfilesClient nm;
     private IWindowHost host;
     private uint ui_epoch = 1;
+    private Cancellable? wifi_profiles_cancellable = null;
     private Cancellable? ethernet_profiles_cancellable = null;
     private Cancellable? wifi_settings_cancellable = null;
+    private Cancellable? wifi_update_cancellable = null;
+    private Cancellable? wifi_delete_cancellable = null;
     private Cancellable? ethernet_settings_cancellable = null;
 
+    public signal void wifi_profiles_loaded (WifiSavedProfile[] profiles);
     public signal void ethernet_profiles_loaded (NetworkDevice[] devices);
     public signal void wifi_profile_settings_loaded (
         string connection_uuid,
@@ -37,8 +42,10 @@ public class MainWindowProfilesController : Object {
         string device_name,
         NetworkIpSettings settings
     );
+    public signal void wifi_profile_update_succeeded ();
+    public signal void wifi_profile_deleted (string connection_uuid);
 
-    public MainWindowProfilesController (INetworkManagerClient nm, IWindowHost host) {
+    public MainWindowProfilesController (IProfilesClient nm, IWindowHost host) {
         this.nm = nm;
         this.host = host;
     }
@@ -48,9 +55,37 @@ public class MainWindowProfilesController : Object {
         if (ui_epoch == 0) {
             ui_epoch = 1;
         }
+        cancel_request (ref wifi_profiles_cancellable);
         cancel_request (ref ethernet_profiles_cancellable);
         cancel_request (ref wifi_settings_cancellable);
+        cancel_request (ref wifi_update_cancellable);
+        cancel_request (ref wifi_delete_cancellable);
         cancel_request (ref ethernet_settings_cancellable);
+    }
+
+    public void refresh_saved_wifi_profiles () {
+        uint epoch = ui_epoch;
+        cancel_request (ref wifi_profiles_cancellable);
+        wifi_profiles_cancellable = new Cancellable ();
+        var request = wifi_profiles_cancellable;
+
+        nm.get_saved_wifi_profiles.begin (request, (obj, res) => {
+            try {
+                var profiles = nm.get_saved_wifi_profiles.end (res);
+                if (epoch != ui_epoch || wifi_profiles_cancellable != request) {
+                    return;
+                }
+                wifi_profiles_cancellable = null;
+                wifi_profiles_loaded (profiles);
+            } catch (Error e) {
+                if (epoch != ui_epoch || wifi_profiles_cancellable != request
+                    || e is IOError.CANCELLED) {
+                    return;
+                }
+                wifi_profiles_cancellable = null;
+                host.show_error (_("Could not load saved networks: %s").printf (e.message));
+            }
+        });
     }
 
     private void cancel_request (ref Cancellable? request) {
@@ -136,6 +171,84 @@ public class MainWindowProfilesController : Object {
             }
             ethernet_settings_cancellable = null;
             ethernet_settings_loaded (device.device_path, device.name, settings);
+        });
+    }
+
+    public void apply_saved_wifi_profile_updates (
+        WifiSavedProfile profile,
+        WifiSavedProfileUpdateRequest profile_request,
+        WifiNetworkUpdateRequest network_request
+    ) {
+        uint epoch = ui_epoch;
+        cancel_request (ref wifi_update_cancellable);
+        wifi_update_cancellable = new Cancellable ();
+        var request = wifi_update_cancellable;
+
+        nm.update_saved_wifi_profile_settings.begin (profile, profile_request, request, (obj, res) => {
+            try {
+                nm.update_saved_wifi_profile_settings.end (res);
+                if (epoch != ui_epoch || wifi_update_cancellable != request) {
+                    return;
+                }
+            } catch (Error e) {
+                if (epoch != ui_epoch || wifi_update_cancellable != request
+                    || e is IOError.CANCELLED) {
+                    return;
+                }
+                wifi_update_cancellable = null;
+                host.show_edit_page_error (_("Save profile failed: %s").printf (e.message));
+                return;
+            }
+
+            nm.update_saved_wifi_profile_network_settings.begin (
+                profile,
+                network_request,
+                request,
+                (obj2, res2) => {
+                    try {
+                        nm.update_saved_wifi_profile_network_settings.end (res2);
+                        if (epoch != ui_epoch || wifi_update_cancellable != request) {
+                            return;
+                        }
+                        wifi_update_cancellable = null;
+                        wifi_profile_update_succeeded ();
+                    } catch (Error e) {
+                        if (epoch != ui_epoch || wifi_update_cancellable != request
+                            || e is IOError.CANCELLED) {
+                            return;
+                        }
+                        wifi_update_cancellable = null;
+                        host.show_edit_page_error (_("Save network settings failed: %s").printf (e.message));
+                    }
+                }
+            );
+        });
+    }
+
+    public void delete_wifi_profile (WifiSavedProfile profile) {
+        uint epoch = ui_epoch;
+        cancel_request (ref wifi_delete_cancellable);
+        wifi_delete_cancellable = new Cancellable ();
+        var request = wifi_delete_cancellable;
+        string connection_uuid = profile.saved_connection_uuid;
+        string network_key = profile.ssid + ":" + (profile.is_secured ? "secured" : WifiSecurity.OPEN);
+
+        nm.forget_network.begin (connection_uuid, network_key, request, (obj, res) => {
+            try {
+                nm.forget_network.end (res);
+                if (epoch != ui_epoch || wifi_delete_cancellable != request) {
+                    return;
+                }
+                wifi_delete_cancellable = null;
+                wifi_profile_deleted (connection_uuid);
+            } catch (Error e) {
+                if (epoch != ui_epoch || wifi_delete_cancellable != request
+                    || e is IOError.CANCELLED) {
+                    return;
+                }
+                wifi_delete_cancellable = null;
+                host.show_error (_("Could not delete saved network: %s").printf (e.message));
+            }
         });
     }
 }

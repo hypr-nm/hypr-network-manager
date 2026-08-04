@@ -22,14 +22,11 @@ public class MainWindowWifiConnectionController : Object {
     private uint[] timeout_source_ids = {};
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
-    private MainWindowWifiRefreshController refresh_controller;
 
     public MainWindowWifiConnectionController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
-        HyprNetworkManager.Models.NetworkStateContext state_context,
-            MainWindowWifiRefreshController refresh_controller) {
+        HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.host = host;
         this.state_context = state_context;
-        this.refresh_controller = refresh_controller;
     }
 
     public void on_page_leave () {
@@ -97,8 +94,9 @@ public class MainWindowWifiConnectionController : Object {
     }
 
     public void connect_wifi_with_optional_password (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
+        HyprNetworkManager.Backend.IWifiClient nm,
         WifiNetwork net,
+        WifiNetwork? fallback_network,
         string? password,
         string? hidden_ssid,
         bool autoconnect,
@@ -108,7 +106,6 @@ public class MainWindowWifiConnectionController : Object {
         uint epoch = capture_ui_epoch ();
 
         string net_key = net.network_key;
-        WifiNetwork? fallback_network = refresh_controller.active_wifi_by_device.lookup (net.device_path);
         bool can_fallback_reconnect = fallback_network != null
             && fallback_network.network_key != net_key;
 
@@ -238,7 +235,7 @@ public class MainWindowWifiConnectionController : Object {
     }
 
     public void forget_wifi_network (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
+        HyprNetworkManager.Backend.IWifiClient nm,
         WifiNetwork net
     ) {
         uint epoch = capture_ui_epoch ();
@@ -264,7 +261,7 @@ public class MainWindowWifiConnectionController : Object {
             }
 
             public void disconnect_wifi_network (
-            HyprNetworkManager.Backend.INetworkManagerClient nm,
+            HyprNetworkManager.Backend.IWifiClient nm,
             WifiNetwork net
             ) {
             uint epoch = capture_ui_epoch ();
@@ -292,7 +289,7 @@ public class MainWindowWifiConnectionController : Object {
             }
 
             public void set_wifi_network_autoconnect (
-            HyprNetworkManager.Backend.INetworkManagerClient nm,
+            HyprNetworkManager.Backend.IWifiClient nm,
             WifiNetwork net,
             bool enabled
             ) {
@@ -318,7 +315,7 @@ public class MainWindowWifiConnectionController : Object {
     }
 
     public void refresh_after_action (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
+        HyprNetworkManager.Backend.IWifiClient nm,
         bool request_wifi_scan,
         uint? active_epoch = null
     ) {

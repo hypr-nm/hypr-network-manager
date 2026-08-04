@@ -34,7 +34,7 @@ using HyprNetworkManager.Models;
 
 public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     private WindowConfigContext config_context;
-    private HyprNetworkManager.Backend.INetworkManagerClient nm;
+    private NetworkManagerClient nm;
     private HyprNetworkManager.UI.Views.StatusBarView status_bar_view;
     private Gtk.Widget status_separator;
     private HyprNetworkManager.UI.Views.WifiSectionView wifi_section;
@@ -97,7 +97,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         hotspot_controller = new MainWindowHotspotController (nm);
         refresh_coordinator = new MainWindowRefreshCoordinator (
             nm,
-            wifi_controller,
             config_context.refresh_interval_seconds,
             this
         );
@@ -221,7 +220,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
     }
 
     public void refresh_after_action (bool request_wifi_scan) {
-        refresh_coordinator.refresh_after_action (request_wifi_scan);
+        wifi_controller.refresh_after_action (request_wifi_scan);
     }
 
     public void close_window () {
@@ -239,9 +238,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             return;
         }
 
-        refresh_coordinator.refresh_switch_states (
-            wifi_section.wifi_switch
-        );
+        wifi_controller.refresh_switch_state ();
 
         if (tabs_menu != null) {
             flight_mode_controller.refresh_flight_mode_state ();
@@ -412,11 +409,9 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
         });
 
         profiles_section = new HyprNetworkManager.UI.Views.SavedProfilesView (
-            wifi_controller,
             ethernet_controller,
             profiles_controller,
             this,
-            state_context,
             content_stack,
             wifi_section.stack,
             notebook
@@ -436,7 +431,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
             this.set_popup_text_input_mode (false);
         });
 
-        vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (vpn_controller, this);
+        vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (
+            vpn_controller,
+            this,
+            state_context
+        );
 
         notebook.append_page (wifi_section.widget, build_tab_label (_("Wi-Fi")));
         notebook.append_page (ethernet_section.widget, build_tab_label (_("Ethernet")));

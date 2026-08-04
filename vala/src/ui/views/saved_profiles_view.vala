@@ -26,7 +26,6 @@ namespace HyprNetworkManager.UI.Views {
     public class SavedProfilesView : Object {
         public Gtk.Stack stack { get; private set; }
 
-        private MainWindowProfileAdapter wifi_saved_flow;
         private MainWindowProfilesPage profiles_page;
         private MainWindowProfilesDetailsPage profiles_details_page;
         private MainWindowWifiSavedEditPage wifi_saved_edit_page;
@@ -43,11 +42,9 @@ namespace HyprNetworkManager.UI.Views {
         public signal void refresh_requested ();
 
         public SavedProfilesView (
-            MainWindowWifiController wifi_controller,
             MainWindowEthernetController ethernet_controller,
             MainWindowProfilesController profiles_controller,
             IWindowHost window_host,
-            NetworkStateContext state_context,
             Gtk.Stack main_content_stack,
             Gtk.Stack main_wifi_stack,
             Gtk.Notebook main_notebook
@@ -73,15 +70,6 @@ namespace HyprNetworkManager.UI.Views {
             stack.add_named (wifi_saved_edit_page, "edit");
             stack.set_visible_child_name ("list");
 
-            wifi_saved_flow = new MainWindowProfileAdapter (
-                wifi_controller,
-                stack,
-                profiles_page,
-                wifi_saved_edit_page,
-                window_host,
-                state_context
-            );
-
             wire_profiles_page_signals ();
             wire_profiles_details_page_signals ();
             wire_profiles_edit_page_signals ();
@@ -90,6 +78,9 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void wire_profiles_controller_signals () {
+            profiles_controller.wifi_profiles_loaded.connect ((profiles) => {
+                profiles_page.set_wifi_networks (profiles);
+            });
             profiles_controller.ethernet_profiles_loaded.connect ((devices) => {
                 profiles_page.set_ethernet_profiles (devices);
             });
@@ -98,7 +89,12 @@ namespace HyprNetworkManager.UI.Views {
                     || selected_saved_wifi_profile.saved_connection_uuid != connection_uuid) {
                     return;
                 }
-                profiles_details_page.apply_wifi_ip_settings (settings);
+                if (stack.get_visible_child_name () == "edit") {
+                    wifi_saved_edit_page.apply_settings_to_edit_page (settings);
+                    wifi_saved_edit_page.sync_edit_gateway_dns_sensitivity ();
+                } else {
+                    profiles_details_page.apply_wifi_ip_settings (settings);
+                }
             });
             profiles_controller.ethernet_settings_loaded.connect ((device_path, device_name, settings) => {
                 if (selected_saved_ethernet_profile == null
@@ -107,6 +103,21 @@ namespace HyprNetworkManager.UI.Views {
                     return;
                 }
                 profiles_details_page.apply_ethernet_ip_settings (settings);
+            });
+            profiles_controller.wifi_profile_update_succeeded.connect (() => {
+                window_host.refresh_after_action (false);
+                window_host.set_popup_text_input_mode (false);
+                stack.set_visible_child_name ("list");
+                profiles_page.restore_scroll_position ();
+            });
+            profiles_controller.wifi_profile_deleted.connect ((connection_uuid) => {
+                if (selected_saved_wifi_profile != null
+                    && selected_saved_wifi_profile.saved_connection_uuid == connection_uuid) {
+                    selected_saved_wifi_profile = null;
+                }
+                stack.set_visible_child_name ("list");
+                profiles_page.restore_scroll_position ();
+                window_host.refresh_after_action (true);
             });
         }
 
@@ -133,9 +144,7 @@ namespace HyprNetworkManager.UI.Views {
             profiles_page.open_profile.connect (open_saved_wifi_profile_details);
 
             profiles_page.delete_profile.connect ((net) => {
-                if (wifi_saved_flow != null) {
-                    wifi_saved_flow.delete_profile (net);
-                }
+                profiles_controller.delete_wifi_profile (net);
             });
 
             profiles_page.open_ethernet_profile.connect (open_saved_ethernet_profile_details);
@@ -162,9 +171,9 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             profiles_details_page.delete_profile.connect (() => {
-                if (selected_saved_wifi_profile != null && wifi_saved_flow != null) {
+                if (selected_saved_wifi_profile != null) {
                     var selected_profile = selected_saved_wifi_profile;
-                    wifi_saved_flow.delete_profile (selected_profile);
+                    profiles_controller.delete_wifi_profile (selected_profile);
                     stack.set_visible_child_name ("list");
                     profiles_page.restore_scroll_position ();
                 }
@@ -173,9 +182,8 @@ namespace HyprNetworkManager.UI.Views {
 
         private void wire_profiles_edit_page_signals () {
             wifi_saved_edit_page.back.connect (() => {
-                if (wifi_saved_flow != null) {
-                    wifi_saved_flow.on_saved_edit_back ();
-                }
+                window_host.set_popup_text_input_mode (false);
+                stack.set_visible_child_name ("list");
                 profiles_page.restore_scroll_position ();
             });
 
@@ -192,9 +200,7 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void refresh_saved_networks () {
-            if (wifi_saved_flow != null) {
-                wifi_saved_flow.refresh_saved_networks ();
-            }
+            profiles_controller.refresh_saved_wifi_profiles ();
         }
 
         public void refresh_saved_profiles () {
@@ -225,9 +231,16 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void open_saved_wifi_edit (WifiSavedProfile profile) {
-            if (wifi_saved_flow != null) {
-                wifi_saved_flow.open_saved_edit (profile);
+            selected_saved_wifi_profile = profile;
+
+            string title_name = MainWindowHelpers.safe_text (profile.profile_name).strip ();
+            if (title_name == "") {
+                title_name = MainWindowHelpers.safe_text (profile.ssid).strip ();
             }
+            wifi_saved_edit_page.title_label.set_text (_("Saved Profile: %s").printf (title_name));
+            window_host.set_popup_text_input_mode (true);
+            stack.set_visible_child_name ("edit");
+            profiles_controller.load_wifi_profile_settings (profile);
         }
 
         private void open_saved_wifi_profile_details (WifiSavedProfile profile) {
@@ -257,10 +270,30 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public bool apply_saved_wifi_edit () {
-            if (wifi_saved_flow == null) {
+            if (selected_saved_wifi_profile == null) {
                 return false;
             }
-            return wifi_saved_flow.apply_saved_edit ();
+
+            wifi_saved_edit_page.show_error ("");
+
+            WifiSavedProfileUpdateRequest profile_request;
+            WifiNetworkUpdateRequest network_request;
+            string error_message;
+            if (!wifi_saved_edit_page.build_update_requests (
+                out profile_request,
+                out network_request,
+                out error_message
+            )) {
+                wifi_saved_edit_page.show_error (error_message);
+                return false;
+            }
+
+            profiles_controller.apply_saved_wifi_profile_updates (
+                selected_saved_wifi_profile,
+                profile_request,
+                network_request
+            );
+            return true;
         }
 
         public void show_edit_error (string message) {

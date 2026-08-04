@@ -20,11 +20,11 @@ using GLib;
 using HyprNetworkManager.Backend.Mappers;
 
 public class NmVpnClient : GLib.Object {
-    private NetworkManagerClient core;
+    private NM.Client client;
     private static GLib.Once<HashTable<string, string>> plugin_names_once;
 
-    public NmVpnClient (NetworkManagerClient core) {
-        this.core = core;
+    public NmVpnClient (NM.Client client) {
+        this.client = client;
     }
 
     private static unowned HashTable<string, string> get_plugin_names () {
@@ -298,7 +298,6 @@ public class NmVpnClient : GLib.Object {
     }
 
     public new async bool connect (string id, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
         NM.Connection? vpn_conn = find_vpn_connection_by_id (client, id);
 
         if (vpn_conn == null) {
@@ -310,7 +309,6 @@ public class NmVpnClient : GLib.Object {
     }
 
     public new async bool disconnect (string id, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
         foreach (var ac in client.get_active_connections ()) {
             if (is_supported_vpn_active_connection (ac)
                 && matches_connection_identity (ac.get_uuid (), ac.get_id (), id)) {
@@ -324,7 +322,6 @@ public class NmVpnClient : GLib.Object {
 
     public async List<VpnConnection> get_connections (Cancellable? cancellable = null) throws Error {
         var vpns = new List<VpnConnection> ();
-        var client = core.nm_client;
 
         foreach (var conn in client.get_connections ()) {
             if (!is_supported_vpn_profile (conn)) {
@@ -369,7 +366,6 @@ public class NmVpnClient : GLib.Object {
     }
 
     public async VpnProfileDetails get_details (string id, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
         VpnProfileDetails details;
 
         NM.Connection? vpn_conn = find_vpn_connection_by_id (client, id);
@@ -466,7 +462,6 @@ public class NmVpnClient : GLib.Object {
         VpnUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
         NM.Connection? base_vpn_conn = find_vpn_connection_by_id (client, id);
 
         if (base_vpn_conn == null) {
@@ -516,7 +511,6 @@ public class NmVpnClient : GLib.Object {
     }
 
     public async bool delete_vpn (string id, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
         foreach (var conn in client.get_connections ()) {
             if (is_supported_vpn_profile (conn)
                 && matches_connection_identity (conn.get_uuid (), conn.get_id (), id)) {
@@ -531,7 +525,6 @@ public class NmVpnClient : GLib.Object {
     }
 
     public async bool create_vpn (VpnUpdateRequest request, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
         var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
 
         string? validation_error;

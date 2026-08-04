@@ -24,8 +24,8 @@ namespace MainWindowIpEditFormBuilder {
         var label = new Gtk.Label (text);
         label.set_xalign (0.0f);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
-                MainWindowCssClasses.FORM_LABEL});
+            label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         } else {
             label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         }
@@ -41,8 +41,8 @@ namespace MainWindowIpEditFormBuilder {
         }
 
         if (extra_class != null && extra_class != "") {
-            MainWindowCssClassResolver.add_hook_and_best_class (widget, extra_class,
-                {MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            widget.add_css_class (extra_class);
+            widget.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             return;
         }
 
@@ -77,8 +77,8 @@ namespace MainWindowIpEditFormBuilder {
     ) {
         var container = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (container, css_class,
-                {MainWindowCssClasses.EDIT_COLLAPSIBLE});
+            container.add_css_class (css_class);
+            container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
         } else {
             container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
         }
@@ -88,11 +88,8 @@ namespace MainWindowIpEditFormBuilder {
         toggle_button.set_halign (Gtk.Align.FILL);
         toggle_button.set_hexpand (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                toggle_button,
-                css_class + "-toggle",
-                {MainWindowCssClasses.EDIT_SECTION_TOGGLE}
-            );
+            toggle_button.add_css_class (css_class + "-toggle");
+            toggle_button.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE);
         } else {
             toggle_button.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE);
         }
@@ -105,11 +102,8 @@ namespace MainWindowIpEditFormBuilder {
         var toggle_icon = new Gtk.Image ();
         MainWindowIconResources.set_expand_indicator_icon (toggle_icon, false);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                toggle_icon,
-                css_class + "-toggle-icon",
-                {MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON}
-            );
+            toggle_icon.add_css_class (css_class + "-toggle-icon");
+            toggle_icon.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON);
         } else {
             toggle_icon.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON);
         }
@@ -119,11 +113,8 @@ namespace MainWindowIpEditFormBuilder {
         toggle_label.set_xalign (0.0f);
         toggle_label.set_hexpand (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                toggle_label,
-                css_class + "-toggle-label",
-                {MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL}
-            );
+            toggle_label.add_css_class (css_class + "-toggle-label");
+            toggle_label.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL);
         } else {
             toggle_label.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL);
         }
@@ -134,11 +125,8 @@ namespace MainWindowIpEditFormBuilder {
 
         content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                content_box,
-                css_class + "-content",
-                {MainWindowCssClasses.EDIT_SECTION_CONTENT}
-            );
+            content_box.add_css_class (css_class + "-content");
+            content_box.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
         } else {
             content_box.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
         }
@@ -148,11 +136,8 @@ namespace MainWindowIpEditFormBuilder {
         content_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
         content_revealer.set_child (content_box);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                content_revealer,
-                css_class + "-revealer",
-                {MainWindowCssClasses.EDIT_SECTION_REVEALER}
-            );
+            content_revealer.add_css_class (css_class + "-revealer");
+            content_revealer.add_css_class (MainWindowCssClasses.EDIT_SECTION_REVEALER);
         } else {
             content_revealer.add_css_class (MainWindowCssClasses.EDIT_SECTION_REVEALER);
         }
@@ -227,11 +212,8 @@ namespace MainWindowIpEditFormBuilder {
         form.append (collapsible);
 
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                section,
-                ip_class (is_ipv6, "section"),
-                {MainWindowCssClasses.EDIT_IP_SECTION}
-            );
+            section.add_css_class (ip_class (is_ipv6, "section"));
+            section.add_css_class (MainWindowCssClasses.EDIT_IP_SECTION);
         }
 
         section.append (build_label (
@@ -254,42 +236,29 @@ namespace MainWindowIpEditFormBuilder {
         widgets.method_dropdown = create_dropdown (method_list);
         apply_control_classes (widgets.method_dropdown, with_extra_classes, null);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
-                widgets.method_dropdown,
-                {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            widgets.method_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+            widgets.method_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             if (is_ipv6) {
-                MainWindowCssClassResolver.add_hook_and_best_class (
-                    widgets.method_dropdown,
-                    ip_class (true, "method-dropdown"),
-                    {MainWindowCssClasses.EDIT_DROPDOWN}
-                );
+                widgets.method_dropdown.add_css_class (ip_class (true, "method-dropdown"));
+                widgets.method_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
             } else {
-                MainWindowCssClassResolver.add_best_class (
-                    widgets.method_dropdown,
-                    {ip_class (false, "method-dropdown"), MainWindowCssClasses.EDIT_DROPDOWN}
-                );
+                widgets.method_dropdown.add_css_class (ip_class (false, "method-dropdown"));
+                widgets.method_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
             }
         }
         section.append (widgets.method_dropdown);
 
         var manual_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                manual_fields,
-                ip_class (is_ipv6, "manual"),
-                {MainWindowCssClasses.EDIT_IP_ADVANCED}
-            );
+            manual_fields.add_css_class (ip_class (is_ipv6, "manual"));
+            manual_fields.add_css_class (MainWindowCssClasses.EDIT_IP_ADVANCED);
         }
 
         var manual_revealer = new Gtk.Revealer ();
         manual_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         manual_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            manual_revealer,
-            ip_class (is_ipv6, "manual-revealer"),
-            {MainWindowCssClasses.EDIT_IP_SUBSECTION_REVEALER}
-        );
+        manual_revealer.add_css_class (ip_class (is_ipv6, "manual-revealer"));
+        manual_revealer.add_css_class (MainWindowCssClasses.EDIT_IP_SUBSECTION_REVEALER);
         manual_revealer.set_child (manual_fields);
         section.append (manual_revealer);
 
@@ -307,10 +276,8 @@ namespace MainWindowIpEditFormBuilder {
             with_extra_classes ? ip_class (is_ipv6, "address-entry") : null
         );
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
-                widgets.address_entry,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            widgets.address_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.address_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         manual_fields.append (widgets.address_entry);
 
@@ -328,10 +295,8 @@ namespace MainWindowIpEditFormBuilder {
             with_extra_classes ? ip_class (is_ipv6, "prefix-entry") : null
         );
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
-                widgets.prefix_entry,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            widgets.prefix_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.prefix_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         manual_fields.append (widgets.prefix_entry);
 
@@ -349,30 +314,22 @@ namespace MainWindowIpEditFormBuilder {
             with_extra_classes ? ip_class (is_ipv6, "gateway-entry") : null
         );
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
-                widgets.gateway_entry,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            widgets.gateway_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.gateway_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         manual_fields.append (widgets.gateway_entry);
 
         var override_fields = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                override_fields,
-                ip_class (is_ipv6, "overrides"),
-                {MainWindowCssClasses.EDIT_IP_ADVANCED}
-            );
+            override_fields.add_css_class (ip_class (is_ipv6, "overrides"));
+            override_fields.add_css_class (MainWindowCssClasses.EDIT_IP_ADVANCED);
         }
 
         var override_revealer = new Gtk.Revealer ();
         override_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
         override_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_COMPACT_MS);
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            override_revealer,
-            ip_class (is_ipv6, "overrides-revealer"),
-            {MainWindowCssClasses.EDIT_IP_SUBSECTION_REVEALER}
-        );
+        override_revealer.add_css_class (ip_class (is_ipv6, "overrides-revealer"));
+        override_revealer.add_css_class (MainWindowCssClasses.EDIT_IP_SUBSECTION_REVEALER);
         override_revealer.set_child (override_fields);
         section.append (override_revealer);
 
@@ -386,11 +343,8 @@ namespace MainWindowIpEditFormBuilder {
         dns_mode_row.set_halign (Gtk.Align.FILL);
         dns_mode_row.set_hexpand (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                dns_mode_row,
-                ip_class (is_ipv6, "dns-mode-row"),
-                {MainWindowCssClasses.EDIT_MODE_ROW}
-            );
+            dns_mode_row.add_css_class (ip_class (is_ipv6, "dns-mode-row"));
+            dns_mode_row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
         } else {
             dns_mode_row.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
         }
@@ -401,11 +355,8 @@ namespace MainWindowIpEditFormBuilder {
         dns_mode_label.set_hexpand (true);
         dns_mode_label.set_valign (Gtk.Align.CENTER);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                dns_mode_label,
-                ip_class (is_ipv6, "dns-mode-label"),
-                {MainWindowCssClasses.EDIT_MODE_LABEL}
-            );
+            dns_mode_label.add_css_class (ip_class (is_ipv6, "dns-mode-label"));
+            dns_mode_label.add_css_class (MainWindowCssClasses.EDIT_MODE_LABEL);
         }
         dns_mode_row.append (dns_mode_label);
 
@@ -413,18 +364,10 @@ namespace MainWindowIpEditFormBuilder {
         widgets.dns_auto_switch.set_valign (Gtk.Align.CENTER);
         widgets.dns_auto_switch.set_active (true);
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
-                widgets.dns_auto_switch,
-                {MainWindowCssClasses.SWITCH, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
-            MainWindowCssClassResolver.add_best_class (
-                widgets.dns_auto_switch,
-                {MainWindowCssClasses.EDIT_MODE_SWITCH, MainWindowCssClasses.SWITCH}
-            );
-            MainWindowCssClassResolver.add_best_class (
-                widgets.dns_auto_switch,
-                {ip_class (is_ipv6, "dns-mode-switch"), MainWindowCssClasses.EDIT_MODE_SWITCH}
-            );
+            widgets.dns_auto_switch.add_css_class (MainWindowCssClasses.SWITCH);
+            widgets.dns_auto_switch.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
+            widgets.dns_auto_switch.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
+            widgets.dns_auto_switch.add_css_class (ip_class (is_ipv6, "dns-mode-switch"));
         }
         dns_mode_row.append (widgets.dns_auto_switch);
         override_fields.append (dns_mode_row);
@@ -437,10 +380,8 @@ namespace MainWindowIpEditFormBuilder {
             with_extra_classes ? ip_class (is_ipv6, "dns-entry") : null
         );
         if (with_extra_classes) {
-            MainWindowCssClassResolver.add_best_class (
-                widgets.dns_entry,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            widgets.dns_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.dns_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         override_fields.append (widgets.dns_entry);
 

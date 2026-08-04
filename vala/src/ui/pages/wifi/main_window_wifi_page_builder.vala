@@ -26,12 +26,10 @@ namespace MainWindowWifiPageBuilder {
         placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
 
         var icon = MainWindowIconResources.create_network_placeholder_icon (icon_type);
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_24,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (
-            icon,
-            {MainWindowCssClasses.WIFI_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
-        );
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_24);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.WIFI_PLACEHOLDER_ICON);
+        icon.add_css_class (MainWindowCssClasses.PLACEHOLDER_ICON);
 
         var label = new Gtk.Label (label_text);
         label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
@@ -56,14 +54,13 @@ namespace MainWindowWifiPageBuilder {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class (MainWindowCssClasses.PAGE);
-        MainWindowCssClassResolver.add_hook_and_best_class (page, MainWindowCssClasses.PAGE_WIFI,
-            {MainWindowCssClasses.PAGE});
+        page.add_css_class (MainWindowCssClasses.PAGE_WIFI);
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR_INSET,
-            MainWindowCssClasses.PAGE_SHELL_INSET});
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
-            MainWindowCssClasses.STATUS_BAR});
+        toolbar.add_css_class (MainWindowCssClasses.TOOLBAR_INSET);
+        toolbar.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        toolbar.add_css_class (MainWindowCssClasses.TOOLBAR);
+        toolbar.add_css_class (MainWindowCssClasses.STATUS_BAR);
 
         var title = new Gtk.Label (_("Wi-Fi"));
         title.set_xalign (0.0f);
@@ -77,8 +74,8 @@ namespace MainWindowWifiPageBuilder {
         add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         add_btn.add_css_class (MainWindowCssClasses.ADD_BUTTON);
         add_btn.set_valign (Gtk.Align.CENTER);
-        MainWindowCssClassResolver.add_best_class (add_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
-            MainWindowCssClasses.BUTTON});
+        add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        add_btn.add_css_class (MainWindowCssClasses.BUTTON);
         add_btn.set_tooltip_text (_("Add Hidden Network"));
         toolbar.append (add_btn);
         add_network_button = add_btn;
@@ -89,14 +86,14 @@ namespace MainWindowWifiPageBuilder {
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
         refresh_btn.set_tooltip_text (_("Refresh Wi-Fi networks"));
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
-            MainWindowCssClasses.BUTTON});
+        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         toolbar.append (refresh_btn);
         refresh_button = refresh_btn;
 
         wifi_switch = new Gtk.Switch ();
-        MainWindowCssClassResolver.add_hook_and_best_class (wifi_switch, MainWindowCssClasses.WIFI_SWITCH,
-            {MainWindowCssClasses.SWITCH});
+        wifi_switch.add_css_class (MainWindowCssClasses.WIFI_SWITCH);
+        wifi_switch.add_css_class (MainWindowCssClasses.SWITCH);
         wifi_switch.set_valign (Gtk.Align.CENTER);
         toolbar.append (wifi_switch);
 
@@ -198,8 +195,10 @@ namespace MainWindowWifiPageBuilder {
         hotspot_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
         
         var hs_icon = MainWindowIconResources.create_network_placeholder_icon (MainWindowIconResources.NetworkPlaceholderIcon.HOTSPOT_ACTIVE);
-        MainWindowCssClassResolver.add_best_class (hs_icon, {MainWindowCssClasses.ICON_SIZE_24, MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (hs_icon, {MainWindowCssClasses.WIFI_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON});
+        hs_icon.add_css_class (MainWindowCssClasses.ICON_SIZE_24);
+        hs_icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        hs_icon.add_css_class (MainWindowCssClasses.WIFI_PLACEHOLDER_ICON);
+        hs_icon.add_css_class (MainWindowCssClasses.PLACEHOLDER_ICON);
         
         var hs_label = new Gtk.Label (_("Hotspot is currently active.\nWi-Fi scanning is paused on this interface."));
         hs_label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);

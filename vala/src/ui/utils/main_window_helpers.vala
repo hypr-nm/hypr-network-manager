@@ -22,15 +22,13 @@ namespace MainWindowHelpers {
     public Gtk.Button build_back_button () {
         var back_btn = new Gtk.Button ();
         back_btn.add_css_class (MainWindowCssClasses.NAV_BACK);
-        MainWindowCssClassResolver.add_best_class (back_btn, {MainWindowCssClasses.NAV_BACK,
-            MainWindowCssClasses.BUTTON});
+        back_btn.add_css_class (MainWindowCssClasses.BUTTON);
 
         var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         var icon = new Gtk.Image.from_icon_name ("go-previous-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_14,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_hook_and_best_class (icon, MainWindowCssClasses.BACK_ICON,
-            {MainWindowCssClasses.ICON_SIZE});
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_14);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.BACK_ICON);
 
         var label = new Gtk.Label (_("Back"));
         label.add_css_class (MainWindowCssClasses.BACK_LABEL);
@@ -79,8 +77,8 @@ namespace MainWindowHelpers {
 
     public static Gtk.Widget build_details_row (string? key, string? value) {
         var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
-        MainWindowCssClassResolver.add_best_class (row, {MainWindowCssClasses.DETAILS_ITEM,
-            MainWindowCssClasses.DETAILS_ROW});
+        row.add_css_class (MainWindowCssClasses.DETAILS_ITEM);
+        row.add_css_class (MainWindowCssClasses.DETAILS_ROW);
 
         string key_text = display_text_or_na (key);
         string value_text = display_text_or_na (value);
@@ -90,8 +88,8 @@ namespace MainWindowHelpers {
         key_label.set_halign (Gtk.Align.START);
         key_label.set_valign (Gtk.Align.CENTER);
         key_label.set_hexpand (true);
-        MainWindowCssClassResolver.add_best_class (key_label, {MainWindowCssClasses.DETAILS_ITEM_KEY,
-            MainWindowCssClasses.DETAILS_KEY});
+        key_label.add_css_class (MainWindowCssClasses.DETAILS_ITEM_KEY);
+        key_label.add_css_class (MainWindowCssClasses.DETAILS_KEY);
 
         var value_label = new Gtk.Label (value_text);
         value_label.set_xalign (1.0f);
@@ -99,10 +97,8 @@ namespace MainWindowHelpers {
         value_label.set_valign (Gtk.Align.CENTER);
         value_label.set_wrap (true);
         value_label.set_max_width_chars (30);
-        MainWindowCssClassResolver.add_best_class (
-            value_label,
-            {MainWindowCssClasses.DETAILS_ITEM_VALUE, MainWindowCssClasses.DETAILS_VALUE}
-        );
+        value_label.add_css_class (MainWindowCssClasses.DETAILS_ITEM_VALUE);
+        value_label.add_css_class (MainWindowCssClasses.DETAILS_VALUE);
 
         row.append (key_label);
         row.append (value_label);

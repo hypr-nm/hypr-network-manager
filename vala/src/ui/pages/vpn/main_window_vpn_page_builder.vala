@@ -51,14 +51,13 @@ public class MainWindowVpnPageBuilder : Object {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class (MainWindowCssClasses.PAGE);
-        MainWindowCssClassResolver.add_hook_and_best_class (page, MainWindowCssClasses.PAGE_VPN,
-            {MainWindowCssClasses.PAGE});
+        page.add_css_class (MainWindowCssClasses.PAGE_VPN);
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR_INSET,
-            MainWindowCssClasses.PAGE_SHELL_INSET});
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
-            MainWindowCssClasses.STATUS_BAR});
+        toolbar.add_css_class (MainWindowCssClasses.TOOLBAR_INSET);
+        toolbar.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        toolbar.add_css_class (MainWindowCssClasses.TOOLBAR);
+        toolbar.add_css_class (MainWindowCssClasses.STATUS_BAR);
 
         var title = new Gtk.Label (_("VPN"));
         title.set_xalign (0.0f);
@@ -73,8 +72,8 @@ public class MainWindowVpnPageBuilder : Object {
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
         refresh_btn.set_tooltip_text (_("Refresh VPN profiles"));
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
-            MainWindowCssClasses.BUTTON});
+        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.clicked.connect (() => {
             refresh_requested ();
         });
@@ -89,8 +88,8 @@ public class MainWindowVpnPageBuilder : Object {
         add_btn.add_css_class (MainWindowCssClasses.ADD_BUTTON);
         add_btn.set_valign (Gtk.Align.CENTER);
         add_btn.set_tooltip_text (_("Add new VPN profile"));
-        MainWindowCssClassResolver.add_best_class (add_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
-            MainWindowCssClasses.BUTTON});
+        add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        add_btn.add_css_class (MainWindowCssClasses.BUTTON);
         add_btn.clicked.connect (() => {
             this.add_clicked ();
         });
@@ -122,12 +121,10 @@ public class MainWindowVpnPageBuilder : Object {
         vpn_placeholder.set_valign (Gtk.Align.CENTER);
         vpn_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
         var vpn_icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        MainWindowCssClassResolver.add_best_class (vpn_icon, {MainWindowCssClasses.ICON_SIZE_24,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (
-            vpn_icon,
-            {MainWindowCssClasses.VPN_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
-        );
+        vpn_icon.add_css_class (MainWindowCssClasses.ICON_SIZE_24);
+        vpn_icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        vpn_icon.add_css_class (MainWindowCssClasses.VPN_PLACEHOLDER_ICON);
+        vpn_icon.add_css_class (MainWindowCssClasses.PLACEHOLDER_ICON);
         var vpn_lbl = new Gtk.Label (_("No VPN profiles found"));
         vpn_lbl.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
         vpn_placeholder.append (vpn_icon);
@@ -168,10 +165,10 @@ public class MainWindowVpnPageBuilder : Object {
         content.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
 
         var icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_16,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.VPN_ICON,
-            MainWindowCssClasses.SIGNAL_ICON});
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_16);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.VPN_ICON);
+        icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON);
         content.append (icon);
 
         var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_INLINE);
@@ -198,10 +195,8 @@ public class MainWindowVpnPageBuilder : Object {
         content.append (info);
 
         var action = new Gtk.Button.with_label (conn.is_connected ? _("Disconnect") : _("Connect"));
-        MainWindowCssClassResolver.add_best_class (
-            action,
-            {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
-        );
+        action.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
+        action.add_css_class (MainWindowCssClasses.BUTTON);
         action.add_css_class (
             conn.is_connected ? MainWindowCssClasses.DISCONNECT_BUTTON : MainWindowCssClasses.CONNECT_BUTTON);
         action.clicked.connect (() => {
@@ -211,19 +206,13 @@ public class MainWindowVpnPageBuilder : Object {
 
         var details_btn = new Gtk.Button ();
         details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-        MainWindowCssClassResolver.add_best_class (
-            details_btn,
-            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
-        );
-        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
-            MainWindowCssClasses.ROW_ICON_ACTION});
+        details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
         details_btn.set_valign (Gtk.Align.CENTER);
         details_btn.set_tooltip_text (_("Details"));
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
-        MainWindowCssClassResolver.add_best_class (
-            details_icon,
-            {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
-        );
+        details_icon.add_css_class (MainWindowCssClasses.DETAILS_BUTTON_ICON);
+        details_icon.add_css_class (MainWindowCssClasses.DETAILS_OPEN_ICON);
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
             this.open_details (conn);
@@ -242,7 +231,7 @@ public class MainWindowVpnPageBuilder : Object {
         refresh_finished ();
     }
 
-    public void render_connections (List<VpnConnection> connections) {
+    public void render_connections (VpnConnection[] connections) {
         if (vpn_listbox == null || vpn_stack == null) {
             return;
         }
@@ -251,6 +240,6 @@ public class MainWindowVpnPageBuilder : Object {
         foreach (var conn in connections) {
             vpn_listbox.append (build_row (conn));
         }
-        vpn_stack.set_visible_child_name (connections.length () > 0 ? "list" : "empty");
+        vpn_stack.set_visible_child_name (connections.length > 0 ? "list" : "empty");
     }
 }

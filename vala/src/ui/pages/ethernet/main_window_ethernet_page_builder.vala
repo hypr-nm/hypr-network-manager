@@ -26,12 +26,10 @@ namespace MainWindowEthernetPageBuilder {
         placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
 
         var icon = MainWindowIconResources.create_network_placeholder_icon (icon_type);
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_24,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (
-            icon,
-            {MainWindowCssClasses.ETHERNET_PLACEHOLDER_ICON, MainWindowCssClasses.PLACEHOLDER_ICON}
-        );
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_24);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.ETHERNET_PLACEHOLDER_ICON);
+        icon.add_css_class (MainWindowCssClasses.PLACEHOLDER_ICON);
 
         var label = new Gtk.Label (label_text);
         label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
@@ -52,14 +50,13 @@ namespace MainWindowEthernetPageBuilder {
     ) {
         var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
         page.add_css_class (MainWindowCssClasses.PAGE);
-        MainWindowCssClassResolver.add_hook_and_best_class (page, MainWindowCssClasses.PAGE_ETHERNET,
-            {MainWindowCssClasses.PAGE});
+        page.add_css_class (MainWindowCssClasses.PAGE_ETHERNET);
 
         var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR_INSET,
-            MainWindowCssClasses.PAGE_SHELL_INSET});
-        MainWindowCssClassResolver.add_best_class (toolbar, {MainWindowCssClasses.TOOLBAR,
-            MainWindowCssClasses.STATUS_BAR});
+        toolbar.add_css_class (MainWindowCssClasses.TOOLBAR_INSET);
+        toolbar.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
+        toolbar.add_css_class (MainWindowCssClasses.TOOLBAR);
+        toolbar.add_css_class (MainWindowCssClasses.STATUS_BAR);
 
         var title = new Gtk.Label (_("Ethernet"));
         title.set_xalign (0.0f);
@@ -74,8 +71,8 @@ namespace MainWindowEthernetPageBuilder {
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
         refresh_btn.set_tooltip_text (_("Refresh Ethernet devices"));
-        MainWindowCssClassResolver.add_best_class (refresh_btn, {MainWindowCssClasses.TOOLBAR_ACTION,
-            MainWindowCssClasses.BUTTON});
+        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
+        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.clicked.connect (() => {
             controller.refresh ();
         });

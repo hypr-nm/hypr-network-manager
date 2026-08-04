@@ -19,42 +19,6 @@ using GLib;
 using Constants;
 using NM;
 
-public class WifiRefreshData : GLib.Object {
-    public WifiNetwork[] networks;
-    public NetworkDevice[] devices;
-    public bool is_hotspot_active;
-    public int num_wifi_devices;
-
-    public WifiRefreshData (WifiNetwork[] networks_in, NetworkDevice[] devices_in, bool is_hotspot_active = false, int num_wifi_devices = 0) {
-        networks = networks_in;
-        devices = devices_in;
-        this.is_hotspot_active = is_hotspot_active;
-        this.num_wifi_devices = num_wifi_devices;
-    }
-}
-
-public class WifiScanData : GLib.Object {
-    public WifiNetwork[] networks;
-    public NetworkDevice[] devices;
-    public int num_wifi_devices;
-
-    public WifiScanData (WifiNetwork[] networks_in, NetworkDevice[] devices_in, int num_wifi_devices = 0) {
-        networks = networks_in;
-        devices = devices_in;
-        this.num_wifi_devices = num_wifi_devices;
-    }
-}
-
-public class WifiBandSupport : GLib.Object {
-    public bool supports_2ghz;
-    public bool supports_5ghz;
-
-    public WifiBandSupport (bool supports_2ghz, bool supports_5ghz) {
-        this.supports_2ghz = supports_2ghz;
-        this.supports_5ghz = supports_5ghz;
-    }
-}
-
 private class NmSignalSubscription {
     public GLib.Object instance;
     public ulong handler_id;
@@ -65,8 +29,19 @@ private class NmSignalSubscription {
     }
 }
 
-public class NetworkManagerClient : GLib.Object, HyprNetworkManager.Backend.INetworkManagerClient {
-    public NM.Client nm_client;
+public class NetworkManagerClient : GLib.Object,
+    HyprNetworkManager.Backend.IDeviceClient,
+    HyprNetworkManager.Backend.IWifiScanClient,
+    HyprNetworkManager.Backend.IEthernetProfileClient,
+    HyprNetworkManager.Backend.IForgetNetworkClient,
+    HyprNetworkManager.Backend.INetworkEventClient,
+    HyprNetworkManager.Backend.IRadioStateClient,
+    HyprNetworkManager.Backend.IWifiClient,
+    HyprNetworkManager.Backend.IEthernetClient,
+    HyprNetworkManager.Backend.IProfilesClient,
+    HyprNetworkManager.Backend.IVpnClient,
+    HyprNetworkManager.Backend.IHotspotClient {
+    private NM.Client nm_client;
 
     private WifiScannerService wifi_scanner;
     private SavedProfileService saved_profiles;
@@ -85,17 +60,21 @@ public class NetworkManagerClient : GLib.Object, HyprNetworkManager.Backend.INet
             log_error ("nm-client", "Failed to initialize NM.Client: " + e.message);
             throw e;
         }
-        ap_monitor = new Nl80211ApMonitor (this);
-        secrets = new SecretsService (this);
-        hotspot = new HotspotService (this, ap_monitor);
-        wifi_scanner = new WifiScannerService (this);
-        saved_profiles = new SavedProfileService (this, secrets);
-        ethernet_client = new NmEthernetClient (this);
-        vpn_client = new NmVpnClient (this);
+        ap_monitor = new Nl80211ApMonitor ();
+        secrets = new SecretsService (nm_client);
+        hotspot = new HotspotService (nm_client, ap_monitor);
+        wifi_scanner = new WifiScannerService (nm_client);
+        saved_profiles = new SavedProfileService (nm_client, secrets);
+        ethernet_client = new NmEthernetClient (nm_client);
+        vpn_client = new NmVpnClient (nm_client);
     }
 
     internal void debug_log (string message) {
         log_debug ("nm-client", message);
+    }
+
+    public string get_version () {
+        return nm_client.get_version ();
     }
 
     private void emit_nm_change_event (string reason) {
@@ -666,5 +645,6 @@ public class NetworkManagerClient : GLib.Object, HyprNetworkManager.Backend.INet
 
     ~NetworkManagerClient () {
         unsubscribe_network_events ();
+        hotspot.shutdown ();
     }
 }

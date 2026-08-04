@@ -98,8 +98,8 @@ namespace MainWindowWifiRowBuilder {
         row.set_data<Gtk.Label> ("ssid-label", ssid_lbl);
 
         var lock_icon = MainWindowIconResources.create_secure_lock_icon ();
-        MainWindowCssClassResolver.add_best_class (lock_icon, {MainWindowCssClasses.ICON_SIZE_14,
-            MainWindowCssClasses.ICON_SIZE});
+        lock_icon.add_css_class (MainWindowCssClasses.ICON_SIZE_14);
+        lock_icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
         lock_icon.add_css_class (MainWindowCssClasses.LOCK_ICON);
         lock_icon.set_visible (net.is_secured);
         ssid_row.append (lock_icon);
@@ -187,29 +187,21 @@ namespace MainWindowWifiRowBuilder {
 
         var details_btn = new Gtk.Button ();
         details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-        MainWindowCssClassResolver.add_best_class (
-            details_btn,
-            {MainWindowCssClasses.ROW_ICON_ACTION, MainWindowCssClasses.BUTTON}
-        );
-        MainWindowCssClassResolver.add_best_class (details_btn, {MainWindowCssClasses.DETAILS_OPEN_BUTTON,
-            MainWindowCssClasses.ROW_ICON_ACTION});
+        details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
         details_btn.set_valign (Gtk.Align.CENTER);
         details_btn.set_tooltip_text (_("Details"));
         var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
-        MainWindowCssClassResolver.add_best_class (
-            details_icon,
-            {MainWindowCssClasses.DETAILS_BUTTON_ICON, MainWindowCssClasses.DETAILS_OPEN_ICON}
-        );
+        details_icon.add_css_class (MainWindowCssClasses.DETAILS_BUTTON_ICON);
+        details_icon.add_css_class (MainWindowCssClasses.DETAILS_OPEN_ICON);
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
             action_handler.open_details (net);
         });
 
         var forget = new Gtk.Button.with_label (_("Forget"));
-        MainWindowCssClassResolver.add_best_class (
-            forget,
-            {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
-        );
+        forget.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
+        forget.add_css_class (MainWindowCssClasses.BUTTON);
         forget.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         forget.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
         forget.set_valign (Gtk.Align.CENTER);
@@ -221,10 +213,8 @@ namespace MainWindowWifiRowBuilder {
         row.set_data<Gtk.Button> ("forget-button", forget);
 
         var action = new Gtk.Button ();
-        MainWindowCssClassResolver.add_best_class (
-            action,
-            {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON}
-        );
+        action.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
+        action.add_css_class (MainWindowCssClasses.BUTTON);
         action.set_valign (Gtk.Align.CENTER);
         update_action_button (action, is_connected_now, is_connecting);
 
@@ -287,51 +277,37 @@ namespace MainWindowWifiRowBuilder {
         var prompt_label = new Gtk.Label (_("Password for %s").printf (net.ssid));
         prompt_label.set_xalign (0.0f);
         prompt_label.set_hexpand (true);
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            prompt_label,
-            MainWindowCssClasses.INLINE_PASSWORD_LABEL,
-            {MainWindowCssClasses.FORM_LABEL}
-        );
+        prompt_label.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_LABEL);
+        prompt_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         prompt_label.set_visible (net.is_secured);
 
         var hidden_ssid_label = new Gtk.Label (_("SSID"));
         hidden_ssid_label.set_xalign (0.0f);
         hidden_ssid_label.set_hexpand (true);
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            hidden_ssid_label,
-            MainWindowCssClasses.INLINE_PASSWORD_LABEL,
-            {MainWindowCssClasses.FORM_LABEL}
-        );
+        hidden_ssid_label.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_LABEL);
+        hidden_ssid_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
 
         hidden_ssid_entry = new Gtk.Entry ();
         hidden_ssid_entry.set_hexpand (true);
         hidden_ssid_entry.set_placeholder_text (_("Hidden network name"));
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            hidden_ssid_entry,
-            MainWindowCssClasses.INLINE_SSID_ENTRY,
-            {MainWindowCssClasses.INLINE_PASSWORD_ENTRY, MainWindowCssClasses.PASSWORD_ENTRY}
-        );
+        hidden_ssid_entry.add_css_class (MainWindowCssClasses.INLINE_SSID_ENTRY);
+        hidden_ssid_entry.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_ENTRY);
+        hidden_ssid_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         hidden_ssid_label.set_visible (requires_hidden_ssid);
         hidden_ssid_entry.set_visible (requires_hidden_ssid);
 
         var identity_label = new Gtk.Label (_("Identity"));
         identity_label.set_xalign (0.0f);
         identity_label.set_hexpand (true);
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            identity_label,
-            MainWindowCssClasses.INLINE_PASSWORD_LABEL,
-            {MainWindowCssClasses.FORM_LABEL}
-        );
+        identity_label.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_LABEL);
+        identity_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
         identity_label.set_visible (is_enterprise);
 
         var identity_entry = new Gtk.Entry ();
         identity_entry.set_hexpand (true);
         identity_entry.set_placeholder_text (_("Username / Email"));
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            identity_entry,
-            MainWindowCssClasses.EDIT_FIELD_ENTRY,
-            {MainWindowCssClasses.EDIT_FIELD_CONTROL}
-        );
+        identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         identity_entry.set_visible (is_enterprise);
 
         prompt_entry = new Gtk.Entry ();
@@ -341,11 +317,8 @@ namespace MainWindowWifiRowBuilder {
         prompt_entry.set_placeholder_text (
             _("Wi-Fi password (min %d chars)").printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
         );
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            prompt_entry,
-            MainWindowCssClasses.INLINE_PASSWORD_ENTRY,
-            {MainWindowCssClasses.PASSWORD_ENTRY}
-        );
+        prompt_entry.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_ENTRY);
+        prompt_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         prompt_entry.set_visible (net.is_secured);
 
         if (net.is_secured) {
@@ -365,19 +338,12 @@ namespace MainWindowWifiRowBuilder {
 
         var prompt_cancel = new Gtk.Button.with_label (_("Cancel"));
         prompt_cancel.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            prompt_cancel,
-            MainWindowCssClasses.INLINE_PASSWORD_CANCEL,
-            {MainWindowCssClasses.BUTTON}
-        );
+        prompt_cancel.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_CANCEL);
 
         var prompt_connect = new Gtk.Button.with_label (_("Connect"));
         prompt_connect.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            prompt_connect,
-            MainWindowCssClasses.INLINE_PASSWORD_CONNECT,
-            {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON}
-        );
+        prompt_connect.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_CONNECT);
+        prompt_connect.add_css_class (MainWindowCssClasses.SUGGESTED_ACTION);
         prompt_connect.set_sensitive (false);
 
         var local_prompt_connect = prompt_connect;
@@ -625,10 +591,10 @@ namespace MainWindowWifiRowBuilder {
         content.add_css_class (MainWindowCssClasses.ROW_CONTENT);
 
         var signal_icon = new Gtk.Image.from_icon_name (signal_icon_name);
-        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.ICON_SIZE_16,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (signal_icon, {MainWindowCssClasses.WIFI_ICON,
-            MainWindowCssClasses.SIGNAL_ICON});
+        signal_icon.add_css_class (MainWindowCssClasses.ICON_SIZE_16);
+        signal_icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        signal_icon.add_css_class (MainWindowCssClasses.WIFI_ICON);
+        signal_icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON);
         content.append (signal_icon);
         row.set_data<Gtk.Image> ("signal-icon", signal_icon);
 

@@ -38,7 +38,8 @@ namespace HyprNetworkManager.UI.Widgets {
             header_box.append (title);
 
             var add_btn = new Gtk.Button.with_label (_("Add Peer"));
-            MainWindowCssClassResolver.add_best_class (add_btn, {MainWindowCssClasses.ROW_LINK_ACTION, MainWindowCssClasses.BUTTON});
+            add_btn.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
+            add_btn.add_css_class (MainWindowCssClasses.BUTTON);
             add_btn.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
             add_btn.set_valign (Gtk.Align.CENTER);
             add_btn.clicked.connect (() => {

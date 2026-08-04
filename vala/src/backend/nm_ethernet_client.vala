@@ -19,14 +19,13 @@ using Constants;
 using GLib;
 
 public class NmEthernetClient : GLib.Object {
-    private NetworkManagerClient core;
+    private NM.Client client;
 
-    public NmEthernetClient (NetworkManagerClient core) {
-        this.core = core;
+    public NmEthernetClient (NM.Client client) {
+        this.client = client;
     }
 
     private NM.Connection? resolve_connection (NetworkDevice device) {
-        var client = core.nm_client;
         if (device.connection_uuid != "") {
             var c = client.get_connection_by_uuid (device.connection_uuid);
             if (c != null) return c;
@@ -73,7 +72,6 @@ public class NmEthernetClient : GLib.Object {
         NetworkDevice device,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
         var conn = resolve_connection (device);
         if (conn == null) throw new IOError.NOT_FOUND ("No saved Ethernet profile found.");
 
@@ -91,7 +89,6 @@ public class NmEthernetClient : GLib.Object {
         string interface_name,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
         var dev = client.get_device_by_iface (interface_name);
         if (dev == null) {
             log_warn ("nm-ethernet-client", "Device not found for interface: " + interface_name);
@@ -113,7 +110,6 @@ public class NmEthernetClient : GLib.Object {
             NmIpConfigHelper.populate_configured_ip_settings (ip_settings, conn);
         }
 
-        var client = core.nm_client;
         var dev = client.get_device_by_path (device.device_path);
         NmIpConfigHelper.populate_runtime_ip_settings (ip_settings, dev);
         return ip_settings;

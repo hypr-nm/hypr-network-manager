@@ -20,7 +20,7 @@ public class MainWindowEthernetConnectionController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private uint[] timeout_source_ids = {};
-    private HyprNetworkManager.Backend.INetworkManagerClient nm;
+    private HyprNetworkManager.Backend.IEthernetClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
 
@@ -29,7 +29,7 @@ public class MainWindowEthernetConnectionController : Object {
     public HashTable<string, bool> pending_action;
     public HashTable<string, bool> pending_target_connected;
 
-    public MainWindowEthernetConnectionController (HyprNetworkManager.Backend.INetworkManagerClient nm,
+    public MainWindowEthernetConnectionController (HyprNetworkManager.Backend.IEthernetClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
         HyprNetworkManager.Models.NetworkStateContext state_context) {
         this.nm = nm;
@@ -115,9 +115,9 @@ public class MainWindowEthernetConnectionController : Object {
 
     public void track_pending_action (
         NetworkDevice dev,
-        bool target_connected,
-        uint epoch
+        bool target_connected
     ) {
+        uint epoch = capture_ui_epoch ();
         pending_action.insert (dev.name, true);
         pending_target_connected.insert (dev.name, target_connected);
 
@@ -158,7 +158,7 @@ public class MainWindowEthernetConnectionController : Object {
                     if (!is_ui_epoch_valid (epoch)) {
                         return;
                     }
-                    track_pending_action (dev, target_connected, epoch);
+                    track_pending_action (dev, target_connected);
                     host.refresh_after_action (false);
                 } catch (Error e) {
                     if (!is_ui_epoch_valid (epoch)) {
@@ -176,7 +176,7 @@ public class MainWindowEthernetConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                track_pending_action (dev, target_connected, epoch);
+                track_pending_action (dev, target_connected);
                 host.refresh_after_action (false);
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch)) {

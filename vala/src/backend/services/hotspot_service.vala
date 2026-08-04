@@ -20,8 +20,9 @@ using Constants;
 using HyprNetworkManager.Models;
 
 public class HotspotService : GLib.Object {
-    private NetworkManagerClient core;
+    private NM.Client nm_client;
     private Nl80211ApMonitor monitor;
+    private uint idle_check_source_id = 0;
 
     private int hotspot_idle_minutes = 0;
     private bool hotspot_client_query_pending = false;
@@ -30,13 +31,24 @@ public class HotspotService : GLib.Object {
     private bool warned_create_ap_fallback = false;
     private bool hotspot_timeout_check_in_flight = false;
 
-    public HotspotService (NetworkManagerClient core, Nl80211ApMonitor monitor) {
-        this.core = core;
+    public HotspotService (NM.Client nm_client, Nl80211ApMonitor monitor) {
+        this.nm_client = nm_client;
         this.monitor = monitor;
-        GLib.Timeout.add_seconds (
+        idle_check_source_id = GLib.Timeout.add_seconds (
             Timeouts.HOTSPOT_IDLE_CHECK_SECONDS,
             check_hotspot_timeout
         );
+    }
+
+    public void shutdown () {
+        if (idle_check_source_id != 0) {
+            Source.remove (idle_check_source_id);
+            idle_check_source_id = 0;
+        }
+    }
+
+    private void debug_log (string message) {
+        log_debug ("hotspot-service", message);
     }
 
     private string? get_create_ap_path () {
@@ -161,7 +173,7 @@ public class HotspotService : GLib.Object {
 
     private GLib.GenericArray<string> occupied_ipv4_networks () {
         var occupied = new GLib.GenericArray<string> ();
-        foreach (var device in core.nm_client.get_devices ()) {
+        foreach (var device in nm_client.get_devices ()) {
             var ip4_config = device.get_ip4_config ();
             if (ip4_config == null) {
                 continue;
@@ -305,7 +317,7 @@ public class HotspotService : GLib.Object {
             } catch (IOError.CANCELLED e) {
                 throw e;
             } catch (Error e) {
-                core.debug_log (
+                debug_log (
                     "Waiting for nl80211 AP readiness: " + e.message);
             }
 
@@ -359,7 +371,7 @@ public class HotspotService : GLib.Object {
     }
 
     private NM.DeviceWifi? get_wifi_device () {
-        return NmWifiUtils.primary_wifi_device (core.nm_client);
+        return NmWifiUtils.primary_wifi_device (nm_client);
     }
 
     private NM.ActiveConnection? find_active_nm_hotspot (
@@ -387,7 +399,7 @@ public class HotspotService : GLib.Object {
             }
         }
 
-        foreach (var active in core.nm_client.get_active_connections ()) {
+        foreach (var active in nm_client.get_active_connections ()) {
             if (active.get_state () != NM.ActiveConnectionState.ACTIVATED &&
                 active.get_state () != NM.ActiveConnectionState.ACTIVATING) {
                 continue;
@@ -412,13 +424,13 @@ public class HotspotService : GLib.Object {
     }
 
     public async HotspotConfig get_hotspot_status (Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var config = new HotspotConfig ();
 
         try {
             yield HotspotConfigStorage.load (config, cancellable);
         } catch (Error e) {
-            core.debug_log ("Failed to load hotspot config: " + e.message);
+            debug_log ("Failed to load hotspot config: " + e.message);
         }
 
         var dev = get_wifi_device ();
@@ -493,7 +505,7 @@ public class HotspotService : GLib.Object {
                         cancellable)) != 0;
                 }
             } catch (Error e) {
-                core.debug_log (
+                debug_log (
                     "Unable to read create_ap interface state through nl80211: " +
                     e.message);
             }
@@ -505,7 +517,7 @@ public class HotspotService : GLib.Object {
                     target_dev.get_iface (),
                     cancellable);
             } catch (Error e) {
-                core.debug_log (
+                debug_log (
                     "Unable to count hotspot clients through nl80211: " +
                     e.message);
             }
@@ -529,7 +541,7 @@ public class HotspotService : GLib.Object {
     }
 
     public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
 
         NM.DeviceWifi? dev = null;
         if (ap_interface != "" && ap_interface != NetworkInterface.AUTO) {
@@ -583,7 +595,7 @@ public class HotspotService : GLib.Object {
             resolved_uplink_iface,
             uplink_has_connection);
         if (has_create_ap () && !use_create_ap) {
-            core.debug_log (
+            debug_log (
                 ("create_ap uplink '%s' is not active; falling back to " +
                  "NetworkManager-managed sharing on '%s'.").printf (
                     resolved_uplink_iface,
@@ -718,7 +730,7 @@ public class HotspotService : GLib.Object {
                 var proc = launcher.spawnv (spawn_args);
                 yield proc.wait_check_async (cancellable);
 
-                core.debug_log (
+                debug_log (
                     ("Waiting for create_ap on '%s' channel %d with " +
                      "gateway %s.").printf (
                         final_ap_iface,
@@ -745,7 +757,7 @@ public class HotspotService : GLib.Object {
                             failed_pid,
                             null);
                     } catch (Error cleanup_error) {
-                        core.debug_log (
+                        debug_log (
                             "Failed to stop the unsuccessful create_ap daemon: " +
                             cleanup_error.message);
                     }
@@ -766,19 +778,19 @@ public class HotspotService : GLib.Object {
             if (!can_use_create_ap ()) {
                 warn_create_ap_fallback_once ();
             }
-            core.debug_log ("Starting native NM hotspot creation...");
+            debug_log ("Starting native NM hotspot creation...");
             var connections = client.get_connections ();
             foreach (var conn_check in connections) {
                 if (conn_check is NM.RemoteConnection &&
                     NmHotspotUtils.is_owned_connection (conn_check, ssid)) {
                     try {
-                        core.debug_log (
+                        debug_log (
                             "Deleting previous managed hotspot connection: " +
                             conn_check.get_id ());
                         yield ((NM.RemoteConnection) conn_check).delete_async (
                             cancellable);
                     } catch (Error e) {
-                        core.debug_log (
+                        debug_log (
                             "Failed to delete previous hotspot connection: " +
                             e.message);
                     }
@@ -799,7 +811,7 @@ public class HotspotService : GLib.Object {
                 }
             }
 
-            core.debug_log ("Creating new volatile connection for " + ssid);
+            debug_log ("Creating new volatile connection for " + ssid);
             var new_conn = NmHotspotUtils.create_connection (
                 ssid,
                 password,
@@ -811,22 +823,22 @@ public class HotspotService : GLib.Object {
 
             NM.RemoteConnection? remote_conn = null;
             try {
-                core.debug_log ("Adding connection...");
+                debug_log ("Adding connection...");
                 remote_conn = yield client.add_connection_async (
                     new_conn,
                     false,
                     cancellable);
-                core.debug_log ("Connection added successfully. Activating...");
+                debug_log ("Connection added successfully. Activating...");
                 try {
                     yield client.activate_connection_async (remote_conn, dev, null, cancellable);
-                    core.debug_log ("Connection activated successfully.");
+                    debug_log ("Connection activated successfully.");
                 } catch (Error act_err) {
-                    core.debug_log ("Activation reported error, polling AP state: " + act_err.message);
+                    debug_log ("Activation reported error, polling AP state: " + act_err.message);
                     if (yield monitor.wait_until_ap_active (
                             dev.get_iface (),
                             10000,
                             cancellable)) {
-                        core.debug_log ("Interface reached AP mode despite activation error; treating as success.");
+                        debug_log ("Interface reached AP mode despite activation error; treating as success.");
                     } else {
                         throw act_err;
                     }
@@ -834,12 +846,12 @@ public class HotspotService : GLib.Object {
                 hotspot_idle_minutes = 0;
                 return true;
             } catch (Error e) {
-                core.debug_log ("Failed to add/activate AP connection: " + e.message);
+                debug_log ("Failed to add/activate AP connection: " + e.message);
                 if (remote_conn != null) {
                     try {
                         yield remote_conn.delete_async (null);
                     } catch (Error cleanup_error) {
-                        core.debug_log (
+                        debug_log (
                             "Failed to clean up inactive hotspot profile: " +
                             cleanup_error.message);
                     }
@@ -850,7 +862,7 @@ public class HotspotService : GLib.Object {
     }
 
     public async bool disable_hotspot_async (Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var config = yield get_hotspot_status (cancellable);
 
         NM.DeviceWifi? dev = null;
@@ -991,7 +1003,7 @@ public class HotspotService : GLib.Object {
                         yield ((NM.RemoteConnection) conn).delete_async (
                             cancellable);
                     } catch (Error e) {
-                        core.debug_log ("Failed to delete previous hotspot connection: " + e.message);
+                        debug_log ("Failed to delete previous hotspot connection: " + e.message);
                     }
                 }
             }
@@ -1021,7 +1033,7 @@ public class HotspotService : GLib.Object {
         try {
             yield HotspotConfigStorage.load (config);
         } catch (Error e) {
-            core.debug_log ("Failed to load hotspot config for timeout check: " + e.message);
+            debug_log ("Failed to load hotspot config for timeout check: " + e.message);
         }
 
         int timeout_mins = config.timeout;
@@ -1029,7 +1041,7 @@ public class HotspotService : GLib.Object {
 
         NM.DeviceWifi? target_dev = dev;
         if (ap_interface != "" && ap_interface != NetworkInterface.AUTO) {
-            var nm_dev = core.nm_client.get_device_by_iface (ap_interface);
+            var nm_dev = nm_client.get_device_by_iface (ap_interface);
             if (nm_dev is NM.DeviceWifi) target_dev = (NM.DeviceWifi) nm_dev;
         }
 
@@ -1047,7 +1059,7 @@ public class HotspotService : GLib.Object {
                     }
                 }
             } catch (Error e) {
-                core.debug_log ("Failed to check create_ap process: " + e.message);
+                debug_log ("Failed to check create_ap process: " + e.message);
             }
 
             if (!is_running) {
@@ -1118,7 +1130,7 @@ public class HotspotService : GLib.Object {
                     station_count = monitor.query_station_count.end (res);
                 } catch (Error e) {
                     hotspot_client_query_pending = false;
-                    core.debug_log (
+                    debug_log (
                         "Skipping hotspot idle update because station query failed: " +
                         e.message);
                     return;
@@ -1132,7 +1144,7 @@ public class HotspotService : GLib.Object {
 
                 hotspot_idle_minutes++;
                 if (hotspot_idle_minutes >= timeout_mins) {
-                    core.debug_log (
+                    debug_log (
                         create_ap_mode
                             ? "Hotspot idle timeout reached, disconnecting via create_ap."
                             : "Hotspot idle timeout reached, disconnecting.");

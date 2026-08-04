@@ -63,7 +63,7 @@ int main (string[] args) {
         stdout.printf ("hypr-network-manager %s\n", APP_VERSION);
         try {
             var nm = new NetworkManagerClient ();
-            stdout.printf ("NetworkManager %s\n", nm.nm_client.get_version ());
+            stdout.printf ("NetworkManager %s\n", nm.get_version ());
         } catch (Error e) {
             stdout.printf ("NetworkManager <unavailable>\n");
         }

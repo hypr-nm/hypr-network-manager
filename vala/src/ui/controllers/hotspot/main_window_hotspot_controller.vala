@@ -30,9 +30,9 @@ public class HotspotRequest : Object {
 }
 
 public class MainWindowHotspotController : Object {
-    private HyprNetworkManager.Backend.INetworkManagerClient nm;
+    private HyprNetworkManager.Backend.IHotspotClient nm;
 
-    public MainWindowHotspotController (HyprNetworkManager.Backend.INetworkManagerClient nm) {
+    public MainWindowHotspotController (HyprNetworkManager.Backend.IHotspotClient nm) {
         this.nm = nm;
     }
 

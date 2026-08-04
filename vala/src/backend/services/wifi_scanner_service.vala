@@ -19,14 +19,13 @@ using Constants;
 using GLib;
 
 public class WifiScannerService : GLib.Object {
-    private NetworkManagerClient core;
+    private NM.Client client;
 
-    public WifiScannerService (NetworkManagerClient core) {
-        this.core = core;
+    public WifiScannerService (NM.Client client) {
+        this.client = client;
     }
 
     public async WifiScanData scan_networks (Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
         var devices = client.get_devices ();
         var connections = client.get_connections ();
 
@@ -247,7 +246,6 @@ public class WifiScannerService : GLib.Object {
     }
 
     public async bool scan (Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
         var devices = client.get_devices ();
         foreach (var dev in devices) {
             if (dev is NM.DeviceWifi) {

@@ -5,239 +5,439 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 using Constants;
 using GLib;
-using Gtk;
 using HyprNetworkManager.Backend;
 
 public class MainWindowWifiController : Object {
-    private INetworkManagerClient nm;
+    private IWifiClient nm;
     private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
-    private uint share_operation_epoch = 1;
-    private Cancellable? share_cancellable = null;
-
-    private MainWindowWifiRefreshController refresh_controller;
     private MainWindowWifiConnectionController connection_controller;
-    private MainWindowWifiHiddenNetworkController hidden_network_controller;
-    private MainWindowWifiSavedProfilesController saved_profiles_controller;
-    private MainWindowWifiSwitchController switch_controller;
-    private MainWindowWifiPasswordUIController password_ui_controller;
-    private MainWindowPasswordPromptManager prompt_manager;
     private MainWindowWifiDetailsEditController details_edit_controller;
 
-    public signal void saved_profile_update_succeeded ();
+    private bool is_disposed = false;
+    private uint ui_epoch = 1;
+    private Cancellable? refresh_cancellable = null;
+    private Cancellable? add_network_cancellable = null;
+    private Cancellable? share_cancellable = null;
+    private bool refresh_in_flight = false;
+    private bool refresh_queued = false;
+    private bool updating_wifi_switch = false;
+    private uint switch_refresh_epoch = 1;
+    private uint share_operation_epoch = 1;
+    private HashTable<string, WifiNetwork> active_wifi_by_device;
+
     public signal void refresh_started ();
     public signal void refresh_finished ();
     public signal void refresh_requested ();
-    public signal void saved_refresh_started ();
-    public signal void saved_refresh_finished ();
+    public signal void networks_loaded (
+        WifiRefreshData data,
+        string? primary_connected_ssid
+    );
+    public signal void wifi_switch_state_loaded (bool enabled);
+    public signal void hidden_network_connected ();
+    public signal void add_network_failed (string message);
+    public signal void details_loaded (
+        WifiNetwork network,
+        NetworkIpSettings settings,
+        bool is_connected
+    );
+    public signal void edit_settings_loaded (
+        WifiNetwork network,
+        NetworkIpSettings settings
+    );
+    public signal void edit_succeeded (
+        WifiNetwork network,
+        bool close_after_apply
+    );
+    public signal void edit_failed (string message);
     public signal void wifi_share_ready (string ssid, string qr_text);
 
-    public MainWindowWifiController (INetworkManagerClient nm,
+    public MainWindowWifiController (
+        IWifiClient nm,
         HyprNetworkManager.UI.Interfaces.IWindowHost host,
-        HyprNetworkManager.Models.NetworkStateContext state_context) {
+        HyprNetworkManager.Models.NetworkStateContext state_context
+    ) {
         this.nm = nm;
         this.host = host;
         this.state_context = state_context;
+        active_wifi_by_device = new HashTable<string, WifiNetwork> (str_hash, str_equal);
 
-        refresh_controller = new MainWindowWifiRefreshController (host, state_context);
-        refresh_controller.refresh_started.connect (() => {
-            refresh_started ();
+        connection_controller = new MainWindowWifiConnectionController (host, state_context);
+        details_edit_controller = new MainWindowWifiDetailsEditController (nm, host, state_context);
+        details_edit_controller.details_loaded.connect ((network, settings, connected) => {
+            details_loaded (network, settings, connected);
         });
-        refresh_controller.refresh_finished.connect (() => {
-            refresh_finished ();
+        details_edit_controller.edit_settings_loaded.connect ((network, settings) => {
+            edit_settings_loaded (network, settings);
         });
-        refresh_controller.refresh_requested.connect (() => {
-            refresh_requested ();
+        details_edit_controller.edit_succeeded.connect ((network, close_after_apply) => {
+            edit_succeeded (network, close_after_apply);
         });
-        connection_controller = new MainWindowWifiConnectionController (host, state_context, refresh_controller);
-        hidden_network_controller = new MainWindowWifiHiddenNetworkController (host, connection_controller);
-        saved_profiles_controller = new MainWindowWifiSavedProfilesController (host);
-        saved_profiles_controller.refresh_started.connect (() => {
-            saved_refresh_started ();
-        });
-        saved_profiles_controller.refresh_finished.connect (() => {
-            saved_refresh_finished ();
-        });
-        switch_controller = new MainWindowWifiSwitchController (host);
-        password_ui_controller = new MainWindowWifiPasswordUIController (host);
-        prompt_manager = new MainWindowPasswordPromptManager ();
-        details_edit_controller = new MainWindowWifiDetailsEditController (host, state_context);
-
-        saved_profiles_controller.saved_profile_update_succeeded.connect (() => {
-            saved_profile_update_succeeded ();
+        details_edit_controller.edit_failed.connect ((message) => {
+            edit_failed (message);
         });
     }
 
     public void on_page_leave () {
+        cancel_refresh ();
+        cancel_request (ref add_network_cancellable);
         cancel_share_request ();
-        refresh_controller.on_page_leave ();
+        invalidate_ui_state ();
         connection_controller.on_page_leave ();
-        hidden_network_controller.on_page_leave ();
-        saved_profiles_controller.on_page_leave ();
-        switch_controller.on_page_leave ();
         details_edit_controller.on_page_leave ();
     }
 
     public void dispose_controller () {
+        if (is_disposed) {
+            return;
+        }
+        is_disposed = true;
+        cancel_refresh ();
+        cancel_request (ref add_network_cancellable);
         cancel_share_request ();
-        refresh_controller.dispose_controller ();
+        invalidate_ui_state ();
         connection_controller.dispose_controller ();
-        hidden_network_controller.dispose_controller ();
-        saved_profiles_controller.dispose_controller ();
-        switch_controller.dispose_controller ();
         details_edit_controller.dispose_controller ();
     }
 
-    public void sync_add_network_sensitivity (
-        HyprNetworkManager.UI.Widgets.TrackedDropDown? wifi_add_security_dropdown,
-        Gtk.Entry? wifi_add_password_entry,
-        Gtk.Button? wifi_add_connect_button = null
-    ) {
-        hidden_network_controller.sync_add_network_sensitivity (
-            wifi_add_security_dropdown,
-            wifi_add_password_entry,
-            wifi_add_connect_button
-        );
+    private uint capture_ui_epoch () {
+        return ui_epoch;
     }
 
-    public void open_add_network (
-        Gtk.Stack wifi_stack,
-        Gtk.Entry wifi_add_ssid_entry,
-        HyprNetworkManager.UI.Widgets.TrackedDropDown wifi_add_security_dropdown,
-        Gtk.Entry wifi_add_password_entry
-    ) {
-        hidden_network_controller.open_add_network (
-            wifi_stack,
-            wifi_add_ssid_entry,
-            wifi_add_security_dropdown,
-            wifi_add_password_entry
-        );
+    private bool is_ui_epoch_valid (uint epoch) {
+        return !is_disposed && epoch == ui_epoch;
     }
 
-    public void apply_add_network (
-        Gtk.Stack wifi_stack,
-        Gtk.Entry wifi_add_ssid_entry,
-        HyprNetworkManager.UI.Widgets.TrackedDropDown wifi_add_security_dropdown,
-        Gtk.Entry wifi_add_password_entry
-    ) {
-        hidden_network_controller.apply_add_network (
-            nm,
-            wifi_stack,
-            wifi_add_ssid_entry,
-            wifi_add_security_dropdown,
-            wifi_add_password_entry
-        );
+    private void invalidate_ui_state () {
+        ui_epoch++;
+        if (ui_epoch == 0) {
+            ui_epoch = 1;
+        }
+        switch_refresh_epoch++;
+        if (switch_refresh_epoch == 0) {
+            switch_refresh_epoch = 1;
+        }
+        updating_wifi_switch = false;
+        active_wifi_by_device.remove_all ();
     }
 
-    public void populate_details (
-        WifiNetwork net,
-        MainWindowWifiDetailsPage page
-    ) {
-        details_edit_controller.populate_wifi_details (
-            nm,
-            net,
-            page
-        );
+    private void cancel_request (ref Cancellable? request) {
+        if (request != null) {
+            request.cancel ();
+            request = null;
+        }
     }
 
-    public void open_details (
-        ref WifiNetwork? selected_wifi_network,
-        WifiNetwork net,
-        Gtk.Stack wifi_stack
-    ) {
-        cancel_share_request ();
-        selected_wifi_network = net;
-        wifi_stack.set_visible_child_name ("details");
+    private void cancel_refresh () {
+        bool was_in_flight = refresh_in_flight;
+        cancel_request (ref refresh_cancellable);
+        refresh_in_flight = false;
+        refresh_queued = false;
+        if (was_in_flight) {
+            refresh_finished ();
+        }
     }
 
-    public void open_edit (
-        ref WifiNetwork? selected_wifi_network,
-        WifiNetwork net,
-        MainWindowWifiEditPage page,
-        Gtk.Stack wifi_stack
-    ) {
-        if (!net.saved) {
-            host.debug_log ("ERROR: net.saved is false in open_edit!");
+    public void refresh () {
+        if (refresh_in_flight) {
+            refresh_queued = true;
             return;
         }
 
-        selected_wifi_network = net;
-        details_edit_controller.open_wifi_edit (
-            nm,
-            net,
-            page,
-            wifi_stack
-        );
+        refresh_in_flight = true;
+        refresh_started ();
+        uint epoch = capture_ui_epoch ();
+        host.debug_log ("Refreshing Wi-Fi list");
+        refresh_cancellable = new Cancellable ();
+        var request = refresh_cancellable;
+
+        nm.get_wifi_refresh_data.begin (request, (obj, res) => {
+            try {
+                var data = nm.get_wifi_refresh_data.end (res);
+                if (!is_ui_epoch_valid (epoch) || refresh_cancellable != request) {
+                    return;
+                }
+
+                string? primary_connected_ssid = update_network_state (data.networks, data.devices);
+                networks_loaded (data, primary_connected_ssid);
+                host.debug_log ("Rendered %u Wi-Fi rows".printf (data.networks.length));
+            } catch (Error e) {
+                if (e is IOError.CANCELLED || !is_ui_epoch_valid (epoch)) {
+                    return;
+                }
+                host.debug_log ("Wi-Fi refresh failed: " + e.message);
+            } finally {
+                if (refresh_cancellable == request) {
+                    refresh_cancellable = null;
+                    refresh_in_flight = false;
+                    refresh_finished ();
+
+                    bool run_queued_refresh = refresh_queued && is_ui_epoch_valid (epoch);
+                    refresh_queued = false;
+                    if (run_queued_refresh) {
+                        refresh_requested ();
+                    }
+                }
+            }
+        });
     }
 
-    public bool apply_edit (
-        ref WifiNetwork? selected_wifi_network,
-        MainWindowWifiEditPage page,
-        Gtk.Stack wifi_stack,
-        MainWindowWifiDetailsPage details_page,
-        bool close_after_apply
+    private string? update_network_state (
+        WifiNetwork[] networks,
+        NetworkDevice[] devices
     ) {
-        if (selected_wifi_network == null) {
-            return false;
+        string? primary_connected_ssid = null;
+        var device_states = new HashTable<string, DeviceState> (str_hash, str_equal);
+        foreach (var device in devices) {
+            if (device.is_wifi) {
+                device_states.insert (device.device_path, device.state);
+            }
         }
 
-        var net = selected_wifi_network;
-        return details_edit_controller.apply_wifi_edit (
-            nm,
-            net,
-            page,
-            wifi_stack,
-            details_page,
-            close_after_apply
+        var current_network_keys = new HashTable<string, bool> (str_hash, str_equal);
+        var old_active = new HashTable<string, bool> (str_hash, str_equal);
+        foreach (var key in state_context.active_wifi_connections.get_keys ()) {
+            old_active.insert (key, true);
+        }
+
+        state_context.active_wifi_connections.remove_all ();
+        active_wifi_by_device.remove_all ();
+
+        foreach (var network in networks) {
+            current_network_keys.insert (network.network_key, true);
+            if (!network.connected) {
+                continue;
+            }
+
+            DeviceState? state = device_states.lookup (network.device_path);
+            if (state == null || state != DeviceState.ACTIVATED) {
+                continue;
+            }
+
+            state_context.active_wifi_connections.insert (network.network_key, true);
+            if (!old_active.contains (network.network_key)) {
+                state_context.clear_all_wifi_errors ();
+            }
+            if (!active_wifi_by_device.contains (network.device_path)) {
+                active_wifi_by_device.insert (network.device_path, network);
+            }
+            if (primary_connected_ssid == null) {
+                primary_connected_ssid = network.ssid;
+            }
+        }
+
+        var stale_error_keys = new List<string> ();
+        foreach (var key in state_context.wifi_errors.get_keys ()) {
+            if (!current_network_keys.contains (key)) {
+                stale_error_keys.append (key);
+            }
+        }
+        foreach (var key in stale_error_keys) {
+            state_context.clear_wifi_error (key);
+        }
+
+        foreach (var network in networks) {
+            reconcile_pending_connection (network, devices);
+        }
+        return primary_connected_ssid;
+    }
+
+    private void reconcile_pending_connection (
+        WifiNetwork network,
+        NetworkDevice[] devices
+    ) {
+        string network_key = network.network_key;
+        if (!state_context.pending_wifi_connect.contains (network_key)) {
+            return;
+        }
+        if (state_context.active_wifi_connections.contains (network_key)) {
+            state_context.pending_wifi_connect.remove (network_key);
+            state_context.pending_wifi_seen_connecting.remove (network_key);
+            state_context.clear_all_wifi_errors ();
+            return;
+        }
+
+        NetworkDevice? matched_device = null;
+        foreach (var device in devices) {
+            if (device.is_wifi && device.device_path == network.device_path) {
+                matched_device = device;
+                break;
+            }
+        }
+        if (matched_device == null) {
+            return;
+        }
+        if (matched_device.is_connecting) {
+            state_context.pending_wifi_seen_connecting.insert (network_key, true);
+            return;
+        }
+
+        bool activated_elsewhere = matched_device.is_connected;
+        if (activated_elsewhere || matched_device.state == DeviceState.FAILED) {
+            state_context.pending_wifi_connect.remove (network_key);
+            state_context.pending_wifi_seen_connecting.remove (network_key);
+            state_context.mark_wifi_error (network_key, _("Connection failed or interrupted."));
+            return;
+        }
+
+        bool disconnected = matched_device.state == DeviceState.UNKNOWN
+            || matched_device.state == DeviceState.UNMANAGED
+            || matched_device.state == DeviceState.UNAVAILABLE
+            || matched_device.state == DeviceState.DISCONNECTED;
+        if (state_context.pending_wifi_seen_connecting.contains (network_key) && disconnected) {
+            state_context.pending_wifi_connect.remove (network_key);
+            state_context.pending_wifi_seen_connecting.remove (network_key);
+            state_context.mark_wifi_error (network_key, _("Connection failed."));
+        }
+    }
+
+    public bool is_updating_wifi_switch () {
+        return updating_wifi_switch;
+    }
+
+    public void refresh_switch_state () {
+        uint epoch = capture_ui_epoch ();
+        uint refresh_epoch = switch_refresh_epoch + 1;
+        if (refresh_epoch == 0) {
+            refresh_epoch = 1;
+        }
+        switch_refresh_epoch = refresh_epoch;
+        updating_wifi_switch = true;
+
+        nm.get_wifi_enabled_dbus.begin (null, (obj, res) => {
+            try {
+                bool enabled = nm.get_wifi_enabled_dbus.end (res);
+                if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
+                    wifi_switch_state_loaded (enabled);
+                }
+            } catch (Error e) {
+                if (is_ui_epoch_valid (epoch) && switch_refresh_epoch == refresh_epoch) {
+                    host.debug_log ("Could not read WirelessEnabled: " + e.message);
+                }
+            } finally {
+                if (switch_refresh_epoch == refresh_epoch) {
+                    updating_wifi_switch = false;
+                }
+            }
+        });
+    }
+
+    public void set_wifi_enabled (bool enabled) {
+        if (updating_wifi_switch) {
+            return;
+        }
+        uint epoch = capture_ui_epoch ();
+
+        nm.set_wifi_enabled.begin (enabled, null, (obj, res) => {
+            try {
+                nm.set_wifi_enabled.end (res);
+                if (is_ui_epoch_valid (epoch)) {
+                    host.refresh_after_action (enabled);
+                }
+            } catch (Error e) {
+                if (!is_ui_epoch_valid (epoch)) {
+                    return;
+                }
+                host.show_error (_("Could not toggle Wi-Fi: %s").printf (e.message));
+                host.refresh_switch_states ();
+            }
+        });
+    }
+
+    public void connect_hidden_network (
+        string ssid,
+        HiddenWifiSecurityMode security_mode,
+        string password
+    ) {
+        string normalized_ssid = ssid.strip ();
+        string normalized_password = password.strip ();
+        if (normalized_ssid == "") {
+            add_network_failed (_("SSID is required."));
+            return;
+        }
+        if (!HiddenWifiSecurityModeUtils.is_password_valid_for_mode (security_mode, normalized_password)) {
+            add_network_failed (HiddenWifiSecurityModeUtils.password_requirement_hint (security_mode));
+            return;
+        }
+
+        uint epoch = capture_ui_epoch ();
+        cancel_request (ref add_network_cancellable);
+        add_network_cancellable = new Cancellable ();
+        var request = add_network_cancellable;
+
+        nm.connect_hidden_wifi.begin (
+            normalized_ssid,
+            security_mode,
+            normalized_password,
+            request,
+            (obj, res) => {
+                try {
+                    nm.connect_hidden_wifi.end (res);
+                    if (!is_ui_epoch_valid (epoch) || add_network_cancellable != request) {
+                        return;
+                    }
+                    add_network_cancellable = null;
+                    connection_controller.refresh_after_action (nm, true);
+                    hidden_network_connected ();
+                } catch (Error e) {
+                    if (!is_ui_epoch_valid (epoch) || e is IOError.CANCELLED) {
+                        return;
+                    }
+                    add_network_cancellable = null;
+                    add_network_failed (_("Add hidden network failed: %s").printf (e.message));
+                }
+            }
         );
     }
 
+    public void load_details (WifiNetwork network) {
+        cancel_share_request ();
+        details_edit_controller.load_details (network);
+    }
 
+    public bool is_connected (WifiNetwork network) {
+        return details_edit_controller.is_connected (network);
+    }
 
-    public void refresh (
-        Gtk.Stack wifi_stack,
-        Gtk.ListBox wifi_listbox,
-        Gtk.Label status_label,
-        Gtk.Image status_icon,
-        string? active_wifi_password_row_id,
-        bool has_active_wifi_password_prompt,
-        IMainWindowWifiRowProvider row_provider
+    public bool is_pending (WifiNetwork network) {
+        return details_edit_controller.is_pending (network);
+    }
+
+    public void load_edit_settings (WifiNetwork network) {
+        details_edit_controller.load_edit_settings (network);
+    }
+
+    public void apply_edit (
+        WifiNetwork network,
+        WifiNetworkUpdateRequest request,
+        bool close_after_apply,
+        bool request_wifi_scan
     ) {
-        refresh_controller.refresh_wifi (
-            nm,
-            wifi_stack,
-            wifi_listbox,
-            status_label,
-            status_icon,
-            active_wifi_password_row_id,
-            has_active_wifi_password_prompt,
-            row_provider
+        details_edit_controller.apply_edit (
+            network,
+            request,
+            close_after_apply,
+            request_wifi_scan
         );
     }
 
     public void connect_with_optional_password (
-        WifiNetwork net,
+        WifiNetwork network,
         string? password,
         string? hidden_ssid,
         bool autoconnect,
         uint pending_wifi_connect_timeout_ms,
         bool close_on_connect
     ) {
+        WifiNetwork? fallback = active_wifi_by_device.lookup (network.device_path);
         connection_controller.connect_wifi_with_optional_password (
             nm,
-            net,
+            network,
+            fallback,
             password,
             hidden_ssid,
             autoconnect,
@@ -246,116 +446,20 @@ public class MainWindowWifiController : Object {
         );
     }
 
-    public void refresh_after_action (
-        bool request_wifi_scan
-    ) {
-        connection_controller.refresh_after_action (
-            nm,
-            request_wifi_scan
-        );
+    public void refresh_after_action (bool request_wifi_scan) {
+        connection_controller.refresh_after_action (nm, request_wifi_scan);
     }
 
-    public void refresh_switch_states (
-        Gtk.Switch wifi_switch
-    ) {
-        switch_controller.refresh_switch_states (
-            nm,
-            wifi_switch
-        );
+    public void forget_wifi_network (WifiNetwork network) {
+        connection_controller.forget_wifi_network (nm, network);
     }
 
-    public void on_wifi_switch_changed (
-        Gtk.Switch wifi_switch
-    ) {
-        switch_controller.on_wifi_switch_changed (
-            nm,
-            wifi_switch
-        );
+    public void disconnect_wifi_network (WifiNetwork network) {
+        connection_controller.disconnect_wifi_network (nm, network);
     }
 
-    public void show_wifi_password_prompt (
-        Gtk.Revealer revealer,
-        Gtk.Entry entry
-    ) {
-        prompt_manager.show_prompt (revealer, entry);
-        password_ui_controller.set_popup_text_input_mode (true);
-    }
-
-    public void hide_wifi_password_prompt (
-        Gtk.Revealer revealer,
-        Gtk.Entry entry,
-        string? value
-    ) {
-        bool was_active = prompt_manager.hide_prompt (revealer, entry, value);
-        if (was_active) {
-            password_ui_controller.set_popup_text_input_mode (false);
-        }
-    }
-
-    public void hide_active_wifi_password_prompt () {
-        bool was_active = prompt_manager.hide_active_prompt ();
-        if (was_active) {
-            password_ui_controller.set_popup_text_input_mode (false);
-        }
-    }
-
-    public void forget_wifi_network (
-        WifiNetwork net
-    ) {
-        connection_controller.forget_wifi_network (
-            nm,
-            net
-        );
-    }
-
-    public void disconnect_wifi_network (
-        WifiNetwork net
-    ) {
-        connection_controller.disconnect_wifi_network (
-            nm,
-            net
-        );
-    }
-
-    public void set_wifi_network_autoconnect (
-        WifiNetwork net,
-        bool enabled
-    ) {
-        connection_controller.set_wifi_network_autoconnect (
-            nm,
-            net,
-            enabled
-        );
-    }
-
-    public void refresh_saved_wifi_profiles (
-        MainWindowProfilesPage page
-    ) {
-        saved_profiles_controller.refresh_saved_wifi_profiles (nm, page);
-    }
-
-    public void load_saved_wifi_profile_settings (
-        WifiSavedProfile profile,
-        MainWindowWifiSavedEditPage page
-    ) {
-        saved_profiles_controller.load_saved_wifi_profile_settings (
-            nm,
-            profile,
-            page
-        );
-    }
-
-    public void apply_saved_wifi_profile_updates (
-        WifiSavedProfile profile,
-        WifiSavedProfileUpdateRequest profile_request,
-        WifiNetworkUpdateRequest network_request
-    ) {
-        saved_profiles_controller.apply_saved_wifi_profile_updates (
-            nm,
-            profile,
-            profile_request,
-            network_request
-        );
+    public void set_wifi_network_autoconnect (WifiNetwork network, bool enabled) {
+        connection_controller.set_wifi_network_autoconnect (nm, network, enabled);
     }
 
     private void cancel_share_request () {
@@ -363,22 +467,19 @@ public class MainWindowWifiController : Object {
         if (share_operation_epoch == 0) {
             share_operation_epoch = 1;
         }
-        if (share_cancellable != null) {
-            share_cancellable.cancel ();
-            share_cancellable = null;
-        }
+        cancel_request (ref share_cancellable);
     }
 
-    public void open_wifi_share (WifiNetwork net) {
+    public void open_wifi_share (WifiNetwork network) {
         cancel_share_request ();
         uint epoch = share_operation_epoch;
         share_cancellable = new Cancellable ();
         var request = share_cancellable;
-        string share_uuid = net.saved_connection_uuid;
-        string share_ssid = net.ssid;
-        string share_network_key = net.network_key;
-        bool share_secured = net.is_secured;
-        bool share_hidden = net.is_hidden;
+        string share_uuid = network.saved_connection_uuid;
+        string share_ssid = network.ssid;
+        string share_network_key = network.network_key;
+        bool share_secured = network.is_secured;
+        bool share_hidden = network.is_hidden;
 
         nm.get_wifi_password.begin (share_uuid, request, (obj, res) => {
             if (epoch != share_operation_epoch || share_cancellable != request) {
@@ -390,21 +491,19 @@ public class MainWindowWifiController : Object {
             share_cancellable = null;
 
             if (share_secured && (password == null || password == "")) {
-                if (read_failure != null) {
-                    host.show_wifi_error (share_network_key, _("Could not read Wi-Fi password") + ": " + read_failure);
-                } else {
-                    host.show_wifi_error (share_network_key, _("Cannot share: password is empty"));
-                }
+                string message = read_failure != null
+                    ? _("Could not read Wi-Fi password: %s").printf (read_failure)
+                    : _("Cannot share: password is empty");
+                host.show_wifi_error (share_network_key, message);
                 return;
             }
 
-            string password_value = (password != null) ? password : "";
             string qr_text = WifiQrBuilder.build (
                 share_ssid,
-                password_value,
+                password ?? "",
                 share_secured,
-                share_hidden);
-
+                share_hidden
+            );
             wifi_share_ready (share_ssid, qr_text);
         });
     }

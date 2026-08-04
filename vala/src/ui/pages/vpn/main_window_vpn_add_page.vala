@@ -29,13 +29,9 @@ public class MainWindowVpnAddPage : Gtk.Box {
         this.set_vexpand (true);
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
-            MainWindowCssClasses.PAGE});
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            this,
-            MainWindowCssClasses.PAGE_VPN_ADD,
-            {MainWindowCssClasses.PAGE_NETWORK_ADD, MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
-        );
+        this.add_css_class (MainWindowCssClasses.PAGE_VPN_ADD);
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_ADD);
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_EDIT);
         
         var header = new Gtk.CenterBox ();
         header.set_margin_bottom (MainWindowUiMetrics.SPACING_HEADER);
@@ -61,11 +57,9 @@ public class MainWindowVpnAddPage : Gtk.Box {
         scroll.set_vexpand (true);
 
         var body = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        MainWindowCssClassResolver.add_best_class (
-            body,
-            {MainWindowCssClasses.ADD_NETWORK_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM,
-                MainWindowCssClasses.EDIT_FORM}
-        );
+        body.add_css_class (MainWindowCssClasses.ADD_NETWORK_FORM);
+        body.add_css_class (MainWindowCssClasses.EDIT_NETWORK_FORM);
+        body.add_css_class (MainWindowCssClasses.EDIT_FORM);
         body.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         var lbl = new Gtk.Label (_("Choose a VPN type:"));

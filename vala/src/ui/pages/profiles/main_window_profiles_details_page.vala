@@ -34,12 +34,7 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
-            MainWindowCssClasses.PAGE});
-        MainWindowCssClassResolver.add_best_class (
-            this,
-            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
-        );
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_DETAILS);
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
@@ -56,10 +51,9 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
         header.add_css_class (MainWindowCssClasses.DETAILS_HEADER);
 
         var icon = new Gtk.Image.from_icon_name ("avatar-default-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_28,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.DETAILS_NETWORK_ICON,
-            MainWindowCssClasses.ICON_SIZE});
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_28);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.DETAILS_NETWORK_ICON);
         header.append (icon);
 
         this.title_label = new Gtk.Label (_("Profile"));
@@ -80,11 +74,9 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
 
         this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (
-            this.edit_button,
-            {MainWindowCssClasses.EDIT_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
-        );
+        this.edit_button.add_css_class (MainWindowCssClasses.EDIT_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });
@@ -92,11 +84,9 @@ public class MainWindowProfilesDetailsPage : Gtk.Box {
 
         this.delete_button = new Gtk.Button.with_label (_("Delete"));
         this.delete_button.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (
-            this.delete_button,
-            {MainWindowCssClasses.DELETE_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
-        );
+        this.delete_button.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
+        this.delete_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
+        this.delete_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         this.delete_button.clicked.connect (() => {
             this.delete_profile ();
         });

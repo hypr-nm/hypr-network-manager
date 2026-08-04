@@ -5,38 +5,98 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 using Constants;
 using GLib;
-using Gtk;
 
-public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEditController {
+public class MainWindowWifiDetailsEditController : Object {
+    private HyprNetworkManager.Backend.IWifiClient nm;
+    private HyprNetworkManager.UI.Interfaces.IWindowHost host;
     private HyprNetworkManager.Models.NetworkStateContext state_context;
     private const uint WIFI_RECONNECT_CHECK_INTERVAL_MS = 300;
     private const uint WIFI_RECONNECT_MAX_WAIT_MS = 10000;
 
     private uint[] timeout_source_ids = {};
+    private bool is_disposed = false;
+    private uint ui_epoch = 1;
+    private Cancellable? details_request_cancellable = null;
+    private Cancellable? edit_request_cancellable = null;
     private Cancellable? action_request_cancellable = null;
 
-    public MainWindowWifiDetailsEditController (HyprNetworkManager.UI.Interfaces.IWindowHost host,
-        HyprNetworkManager.Models.NetworkStateContext state_context) {
-        base (host);
+    public signal void details_loaded (
+        WifiNetwork network,
+        NetworkIpSettings settings,
+        bool is_connected
+    );
+    public signal void edit_settings_loaded (
+        WifiNetwork network,
+        NetworkIpSettings settings
+    );
+    public signal void edit_succeeded (
+        WifiNetwork network,
+        bool close_after_apply
+    );
+    public signal void edit_failed (string message);
+
+    public MainWindowWifiDetailsEditController (
+        HyprNetworkManager.Backend.IWifiClient nm,
+        HyprNetworkManager.UI.Interfaces.IWindowHost host,
+        HyprNetworkManager.Models.NetworkStateContext state_context
+    ) {
+        this.nm = nm;
+        this.host = host;
         this.state_context = state_context;
     }
 
-    protected override void invalidate_ui_state () {
-        base.invalidate_ui_state ();
+    public void on_page_leave () {
+        invalidate_ui_state ();
+    }
+
+    public void dispose_controller () {
+        if (is_disposed) {
+            return;
+        }
+        is_disposed = true;
+        invalidate_ui_state ();
+    }
+
+    private uint capture_ui_epoch () {
+        return ui_epoch;
+    }
+
+    private bool is_ui_epoch_valid (uint epoch) {
+        return !is_disposed && epoch == ui_epoch;
+    }
+
+    private bool is_cancelled_error (Error error) {
+        return error is IOError.CANCELLED;
+    }
+
+    private void invalidate_ui_state () {
+        ui_epoch++;
+        if (ui_epoch == 0) {
+            ui_epoch = 1;
+        }
+        cancel_request (ref details_request_cancellable);
+        cancel_request (ref edit_request_cancellable);
         cancel_action_request ();
         cancel_all_timeout_sources ();
+    }
+
+    private void cancel_request (ref Cancellable? request) {
+        if (request != null) {
+            request.cancel ();
+            request = null;
+        }
+    }
+
+    private void cancel_details_request () {
+        cancel_request (ref details_request_cancellable);
+    }
+
+    private void cancel_edit_request () {
+        cancel_request (ref edit_request_cancellable);
     }
 
     private void cancel_action_request () {
@@ -47,10 +107,6 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
     }
 
     private void cancel_all_timeout_sources () {
-        if (timeout_source_ids.length == 0) {
-            return;
-        }
-
         foreach (uint source_id in timeout_source_ids) {
             Source.remove (source_id);
         }
@@ -58,17 +114,12 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
     }
 
     private void track_timeout_source (uint source_id) {
-        if (source_id == 0) {
-            return;
+        if (source_id != 0) {
+            timeout_source_ids += source_id;
         }
-        timeout_source_ids += source_id;
     }
 
     private void untrack_timeout_source (uint source_id) {
-        if (source_id == 0 || timeout_source_ids.length == 0) {
-            return;
-        }
-
         uint[] remaining = {};
         foreach (uint id in timeout_source_ids) {
             if (id != source_id) {
@@ -78,26 +129,17 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         timeout_source_ids = remaining;
     }
 
-    private bool is_wifi_device_fully_disconnected (NetworkDevice dev) {
-        if (dev.is_connected) {
-            return false;
-        }
-
-        return !dev.is_connecting;
+    private bool is_wifi_device_fully_disconnected (NetworkDevice device) {
+        return !device.is_connected && !device.is_connecting;
     }
 
     private void reconnect_after_disconnect_with_retry (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
-        WifiNetwork net,
-        bool close_after_apply,
-        Gtk.Stack wifi_stack,
-        MainWindowWifiDetailsPage details_page,
+        WifiNetwork network,
         uint epoch,
         uint waited_ms,
         Cancellable request_cancellable
     ) {
-        string net_key = net.network_key;
-
+        string network_key = network.network_key;
         if (!is_ui_epoch_valid (epoch)) {
             return;
         }
@@ -109,58 +151,50 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
 
             bool ready_to_reconnect = true;
             try {
-                var devices = nm.get_devices.end (res);
-                foreach (var dev in devices) {
-                    if (!dev.is_wifi || dev.device_path != net.device_path) {
-                        continue;
+                foreach (var device in nm.get_devices.end (res)) {
+                    if (device.is_wifi && device.device_path == network.device_path) {
+                        ready_to_reconnect = is_wifi_device_fully_disconnected (device);
+                        break;
                     }
-
-                    ready_to_reconnect = is_wifi_device_fully_disconnected (dev);
-                    break;
                 }
             } catch (Error e) {
                 if (is_cancelled_error (e)) {
                     return;
                 }
-                // Treat transient D-Bus/read errors as not-ready and retry until timeout.
                 ready_to_reconnect = false;
             }
 
             if (ready_to_reconnect) {
-                nm.connect_wifi.begin (net, null, net.autoconnect, request_cancellable, (obj2, res2) => {
-                    try {
-                        nm.connect_wifi.end (res2);
-                        if (!is_ui_epoch_valid (epoch)) {
-                            return;
+                nm.connect_wifi.begin (
+                    network,
+                    null,
+                    network.autoconnect,
+                    request_cancellable,
+                    (obj2, res2) => {
+                        try {
+                            nm.connect_wifi.end (res2);
+                            if (!is_ui_epoch_valid (epoch)) {
+                                return;
+                            }
+                            host.refresh_after_action (true);
+                        } catch (Error e) {
+                            if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
+                                return;
+                            }
+                            state_context.pending_wifi_connect.remove (network_key);
+                            state_context.pending_wifi_seen_connecting.remove (network_key);
+                            edit_failed (_("Reconnect after edit failed: %s").printf (e.message));
+                            host.refresh_after_action (false);
                         }
-                        if (close_after_apply) {
-                            populate_wifi_details (nm, net, details_page);
-                            wifi_stack.set_visible_child_name ("details");
-                            host.set_popup_text_input_mode (false);
-                        }
-                        host.refresh_after_action (true);
-                    } catch (Error e) {
-                        if (!is_ui_epoch_valid (epoch)) {
-                            return;
-                        }
-                        if (is_cancelled_error (e)) {
-                            return;
-                        }
-                        state_context.pending_wifi_connect.remove (net_key);
-                        state_context.pending_wifi_seen_connecting.remove (net_key);
-                        host.show_edit_page_error (_("Reconnect after edit failed: %s").printf (e.message));
-                        host.refresh_after_action (false);
                     }
-                });
+                );
                 return;
             }
 
             if (waited_ms >= WIFI_RECONNECT_MAX_WAIT_MS) {
-                state_context.pending_wifi_connect.remove (net_key);
-                state_context.pending_wifi_seen_connecting.remove (net_key);
-                host.show_edit_page_error (
-                    "Reconnect after edit timed out while waiting for disconnect to complete."
-                );
+                state_context.pending_wifi_connect.remove (network_key);
+                state_context.pending_wifi_seen_connecting.remove (network_key);
+                edit_failed (_("Reconnect after edit timed out while waiting for disconnect to complete."));
                 host.refresh_after_action (false);
                 return;
             }
@@ -170,11 +204,7 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
             timeout_id = Timeout.add (WIFI_RECONNECT_CHECK_INTERVAL_MS, () => {
                 untrack_timeout_source (timeout_id);
                 reconnect_after_disconnect_with_retry (
-                    nm,
-                    net,
-                    close_after_apply,
-                    wifi_stack,
-                    details_page,
+                    network,
                     epoch,
                     next_waited_ms,
                     request_cancellable
@@ -185,181 +215,98 @@ public class MainWindowWifiDetailsEditController : MainWindowAbstractDetailsEdit
         });
     }
 
-    public void populate_wifi_details (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
-        WifiNetwork net,
-        MainWindowWifiDetailsPage page
-    ) {
+    public bool is_connected (WifiNetwork network) {
+        return state_context.active_wifi_connections.contains (network.network_key);
+    }
+
+    public bool is_pending (WifiNetwork network) {
+        return state_context.pending_wifi_connect.contains (network.network_key);
+    }
+
+    public void load_details (WifiNetwork network) {
         uint epoch = capture_ui_epoch ();
         cancel_details_request ();
         details_request_cancellable = new Cancellable ();
-        var details_request = details_request_cancellable;
+        var request = details_request_cancellable;
+        bool connected = is_connected (network);
 
-        bool is_connected_now = state_context.active_wifi_connections.contains (net.network_key);
-        bool pending = state_context.pending_wifi_connect.contains (net.network_key);
-
-        page.render_details (net, is_connected_now, pending);
-        page.show_loading_ip ();
-
-        nm.get_wifi_network_ip_settings.begin (net, details_request, (obj, res) => {
-            if (!is_ui_epoch_valid (epoch)) {
+        nm.get_wifi_network_ip_settings.begin (network, request, (obj, res) => {
+            if (!is_ui_epoch_valid (epoch) || details_request_cancellable != request) {
                 return;
             }
-
-            if (page.details_title.get_text () != net.ssid) {
-                return;
-            }
-
-            NetworkIpSettings ip_settings = nm.get_wifi_network_ip_settings.end (res);
-            page.render_ip_settings (ip_settings, is_connected_now);
+            var settings = nm.get_wifi_network_ip_settings.end (res);
+            details_request_cancellable = null;
+            details_loaded (network, settings, connected);
         });
     }
 
-
-
-    public void open_wifi_edit (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
-        WifiNetwork net,
-        MainWindowWifiEditPage page,
-        Gtk.Stack wifi_stack
-    ) {
+    public void load_edit_settings (WifiNetwork network) {
         uint epoch = capture_ui_epoch ();
         cancel_edit_request ();
         edit_request_cancellable = new Cancellable ();
-        var edit_request = edit_request_cancellable;
+        var request = edit_request_cancellable;
 
-        page.setup_edit_form (net);
-
-        wifi_stack.set_visible_child_name ("edit");
-        host.set_popup_text_input_mode (true);
-
-        nm.get_wifi_network_ip_settings.begin (net, edit_request, (obj, res) => {
-            if (!is_ui_epoch_valid (epoch)) {
+        nm.get_wifi_network_ip_settings.begin (network, request, (obj, res) => {
+            if (!is_ui_epoch_valid (epoch) || edit_request_cancellable != request) {
                 return;
             }
-
-            if (page.edit_title.get_text () != _("Edit: %s").printf (net.ssid)) {
-                return;
-            }
-
-            NetworkIpSettings ip_settings = nm.get_wifi_network_ip_settings.end (res);
-
-            if (net.is_secured) {
-                page.set_password (MainWindowHelpers.safe_text (ip_settings.configured_password));
-            } else {
-                page.set_password ("");
-            }
-            page.populate_ip_settings (ip_settings);
+            var settings = nm.get_wifi_network_ip_settings.end (res);
+            edit_request_cancellable = null;
+            edit_settings_loaded (network, settings);
         });
     }
 
-    public bool apply_wifi_edit (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
-        WifiNetwork net,
-        MainWindowWifiEditPage page,
-        Gtk.Stack wifi_stack,
-        MainWindowWifiDetailsPage details_page,
-        bool close_after_apply
+    public void apply_edit (
+        WifiNetwork network,
+        WifiNetworkUpdateRequest request,
+        bool close_after_apply,
+        bool request_wifi_scan
     ) {
         uint epoch = capture_ui_epoch ();
         cancel_action_request ();
         action_request_cancellable = new Cancellable ();
         var action_request = action_request_cancellable;
-        string net_key = net.network_key;
-        string password = page.get_password ();
+        string network_key = network.network_key;
 
-        state_context.clear_wifi_error (net_key);
-        host.show_edit_page_error ("");
+        state_context.clear_wifi_error (network_key);
 
-        string? error_message = null;
-        var base_request = page.build_ip_update_request (out error_message);
-        if (base_request == null) {
-            if (error_message != null) {
-                host.show_edit_page_error (error_message);
+        nm.update_wifi_network_settings.begin (network, request, action_request, (obj, res) => {
+            try {
+                nm.update_wifi_network_settings.end (res);
+            } catch (Error e) {
+                if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
+                    return;
+                }
+                edit_failed (_("Apply failed: %s").printf (e.message));
+                return;
             }
-            return false;
-        }
 
-        var request = new WifiNetworkUpdateRequest () {
-            password = password,
-            ipv4_method = base_request.ipv4_method,
-            ipv4_address = base_request.ipv4_address,
-            ipv4_prefix = base_request.ipv4_prefix,
-            ipv4_gateway_auto = base_request.ipv4_gateway_auto,
-            ipv4_gateway = base_request.ipv4_gateway,
-            ipv4_dns_auto = base_request.ipv4_dns_auto,
-            ipv4_dns_servers = base_request.ipv4_dns_servers,
-            ipv6_method = base_request.ipv6_method,
-            ipv6_address = base_request.ipv6_address,
-            ipv6_prefix = base_request.ipv6_prefix,
-            ipv6_gateway_auto = base_request.ipv6_gateway_auto,
-            ipv6_gateway = base_request.ipv6_gateway,
-            ipv6_dns_auto = base_request.ipv6_dns_auto,
-            ipv6_dns_servers = base_request.ipv6_dns_servers
-        };
+            if (!is_ui_epoch_valid (epoch)) {
+                return;
+            }
+            edit_succeeded (network, close_after_apply);
 
-        nm.update_wifi_network_settings.begin (net, request, action_request, (obj, res) => {
+            if (!network.connected) {
+                host.refresh_after_action (request_wifi_scan);
+                return;
+            }
+
+            nm.disconnect_wifi.begin (network, action_request, (obj2, res2) => {
                 try {
-                    nm.update_wifi_network_settings.end (res);
+                    nm.disconnect_wifi.end (res2);
                 } catch (Error e) {
-                    if (!is_ui_epoch_valid (epoch)) {
+                    if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                         return;
                     }
-                    if (is_cancelled_error (e)) {
-                        return;
-                    }
-                    host.show_edit_page_error (_("Apply failed: %s").printf (e.message));
+                    edit_failed (_("Disconnect before reconnect failed: %s").printf (e.message));
                     return;
                 }
 
-                if (close_after_apply) {
-                    populate_wifi_details (nm, net, details_page);
-                    wifi_stack.set_visible_child_name ("details");
-                    host.set_popup_text_input_mode (false);
-                }
-
-                if (!net.connected) {
-                    if (!is_ui_epoch_valid (epoch)) {
-                        return;
-                    }
-                    host.refresh_after_action (base_request.ipv4_method != "disabled");
-                    return;
-                }
-
-                nm.disconnect_wifi.begin (net, action_request, (obj2, res2) => {
-                    try {
-                        nm.disconnect_wifi.end (res2);
-                    } catch (Error e) {
-                        if (!is_ui_epoch_valid (epoch)) {
-                            return;
-                        }
-                        if (is_cancelled_error (e)) {
-                            return;
-                        }
-                        host.show_edit_page_error (_("Disconnect before reconnect failed: %s").printf (e.message));
-                        return;
-                    }
-
-                    state_context.clear_all_wifi_errors ();
-                    state_context.mark_wifi_connecting (net_key);
-                    state_context.pending_wifi_seen_connecting.remove (net_key);
-
-                    reconnect_after_disconnect_with_retry (
-                        nm,
-                        net,
-                        false, // Already closed if needed
-                        wifi_stack,
-                        details_page,
-                        epoch,
-                        0,
-                        action_request
-                    );
-                });
+                state_context.clear_all_wifi_errors ();
+                state_context.mark_wifi_connecting (network_key);
+                state_context.pending_wifi_seen_connecting.remove (network_key);
+                reconnect_after_disconnect_with_retry (network, epoch, 0, action_request);
+            });
         });
-
-        if (!is_ui_epoch_valid (epoch)) {
-            return false;
-        }
-        return true;
     }
 }

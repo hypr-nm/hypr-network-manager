@@ -23,13 +23,13 @@ public class MainWindowFlightModeController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private bool updating = false;
-    private HyprNetworkManager.Backend.INetworkManagerClient nm;
+    private HyprNetworkManager.Backend.IRadioStateClient nm;
     private IWindowHost host;
 
     public signal void flight_mode_state_changed (bool is_flight_mode);
 
     public MainWindowFlightModeController (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
+        HyprNetworkManager.Backend.IRadioStateClient nm,
         IWindowHost host
     ) {
         this.nm = nm;

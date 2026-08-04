@@ -19,16 +19,16 @@ using Constants;
 using GLib;
 
 public class SavedProfileService : GLib.Object {
-    private NetworkManagerClient core;
+    private NM.Client nm_client;
     private SecretsService secrets;
 
-    public SavedProfileService (NetworkManagerClient core, SecretsService secrets) {
-        this.core = core;
+    public SavedProfileService (NM.Client nm_client, SecretsService secrets) {
+        this.nm_client = nm_client;
         this.secrets = secrets;
     }
 
     public async WifiSavedProfile[] get_saved_profiles (Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var connections = client.get_connections ();
         var devices = client.get_devices ();
 
@@ -69,7 +69,7 @@ public class SavedProfileService : GLib.Object {
         Cancellable? cancellable = null
     ) throws Error {
         var settings = new WifiSavedProfileSettings ();
-        var client = core.nm_client;
+        var client = nm_client;
 
         var conn = client.get_connection_by_uuid (profile.saved_connection_uuid);
         if (conn == null) {
@@ -155,7 +155,7 @@ public class SavedProfileService : GLib.Object {
         WifiSavedProfileUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var conn = client.get_connection_by_uuid (profile.saved_connection_uuid);
         if (conn == null) {
             throw new IOError.NOT_FOUND ("Connection not found");
@@ -275,7 +275,7 @@ public class SavedProfileService : GLib.Object {
         WifiNetworkUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var conn = client.get_connection_by_uuid (profile.saved_connection_uuid);
         if (conn == null) {
             log_warn ("saved-profile-service", "Connection not found for UUID: " + profile.saved_connection_uuid);
@@ -292,7 +292,7 @@ public class SavedProfileService : GLib.Object {
         Cancellable? cancellable = null
     ) {
         var ip_settings = new NetworkIpSettings ();
-        var client = core.nm_client;
+        var client = nm_client;
 
         NM.Connection? conn = null;
         if (connection_uuid != "") {
@@ -329,7 +329,7 @@ public class SavedProfileService : GLib.Object {
         WifiNetworkUpdateRequest request,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
         if (conn == null) {
             log_warn ("saved-profile-service", "Connection not found for UUID: " + network.saved_connection_uuid);
@@ -347,7 +347,7 @@ public class SavedProfileService : GLib.Object {
         int32 priority = 10,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
         if (conn == null) {
             log_warn ("saved-profile-service", "Connection not found for UUID: " + network.saved_connection_uuid);
@@ -367,7 +367,7 @@ public class SavedProfileService : GLib.Object {
     }
 
     public async bool connect_saved (WifiNetwork network, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
         if (conn == null) {
             log_warn ("saved-profile-service", "Connection not found for UUID: " + network.saved_connection_uuid);
@@ -414,7 +414,7 @@ public class SavedProfileService : GLib.Object {
         bool autoconnect = true,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         log_debug (
             "saved-profile-service",
             "connect_decision: ssid='%s' hidden=%s saved=%s uuid=%s password_supplied=%s"
@@ -584,7 +584,7 @@ public class SavedProfileService : GLib.Object {
         string password,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var wifi_dev = NmWifiUtils.primary_wifi_device (client);
         if (wifi_dev == null) throw new IOError.NOT_FOUND ("No Wi-Fi device found");
 
@@ -594,7 +594,7 @@ public class SavedProfileService : GLib.Object {
     }
 
     public new async bool disconnect (WifiNetwork network, Cancellable? cancellable = null) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var dev = client.get_device_by_path (network.device_path);
         if (dev == null) {
             log_warn ("saved-profile-service", "Device not found for path: " + network.device_path);
@@ -610,7 +610,7 @@ public class SavedProfileService : GLib.Object {
         string network_key,
         Cancellable? cancellable = null
     ) throws Error {
-        var client = core.nm_client;
+        var client = nm_client;
         var conn = client.get_connection_by_uuid (profile_uuid);
         if (conn == null) {
             log_warn ("saved-profile-service", "Connection not found for UUID: " + profile_uuid);

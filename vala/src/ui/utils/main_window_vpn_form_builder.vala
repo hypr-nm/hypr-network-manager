@@ -112,10 +112,8 @@ public class MainWindowVpnFormBuilder : Object {
         proto_list.append ("TCP");
         fields.ovpn_proto_dropdown = create_dropdown (proto_list);
         fields.ovpn_proto_dropdown.set_selected (default_proto_udp ? 0 : 1); // Select udp by default if default_proto_udp is true
-        MainWindowCssClassResolver.add_best_class (
-            fields.ovpn_proto_dropdown,
-            {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-        );
+        fields.ovpn_proto_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+        fields.ovpn_proto_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         server_content.append (fields.ovpn_proto_dropdown);
 
         Gtk.Box auth_content;
@@ -193,14 +191,9 @@ public class MainWindowVpnFormBuilder : Object {
         var sw = new Gtk.Switch ();
         sw.set_valign (Gtk.Align.CENTER);
         sw.set_active (default_active);
-        MainWindowCssClassResolver.add_best_class (
-            sw,
-            {MainWindowCssClasses.SWITCH, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-        );
-        MainWindowCssClassResolver.add_best_class (
-            sw,
-            {MainWindowCssClasses.EDIT_MODE_SWITCH, MainWindowCssClasses.SWITCH}
-        );
+        sw.add_css_class (MainWindowCssClasses.SWITCH);
+        sw.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
+        sw.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
         row.append (sw);
 
         target_box.append (row);

@@ -131,13 +131,9 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
         this.set_vexpand (true);
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
-            MainWindowCssClasses.PAGE});
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            this,
-            MainWindowCssClasses.PAGE_VPN_SETUP,
-            {MainWindowCssClasses.PAGE_NETWORK_ADD, MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
-        );
+        this.add_css_class (MainWindowCssClasses.PAGE_VPN_SETUP);
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_ADD);
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_EDIT);
 
         var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var back_btn = MainWindowHelpers.build_back_button ();
@@ -169,11 +165,9 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
         scroll.set_vexpand (true);
 
         var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_SECTION);
-        MainWindowCssClassResolver.add_best_class (
-            form,
-            {MainWindowCssClasses.ADD_NETWORK_FORM, MainWindowCssClasses.EDIT_NETWORK_FORM,
-                MainWindowCssClasses.EDIT_FORM}
-        );
+        form.add_css_class (MainWindowCssClasses.ADD_NETWORK_FORM);
+        form.add_css_class (MainWindowCssClasses.EDIT_NETWORK_FORM);
+        form.add_css_class (MainWindowCssClasses.EDIT_FORM);
         form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
         var name_lbl = new Gtk.Label (_("Connection Name")) { xalign = 0.0f };
@@ -235,8 +229,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
         var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
         var save_btn = new Gtk.Button.with_label (_("Create"));
         save_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
-            MainWindowCssClasses.BUTTON});
+        save_btn.add_css_class (MainWindowCssClasses.SUGGESTED_ACTION);
         save_btn.clicked.connect (() => {
             this.apply ();
         });

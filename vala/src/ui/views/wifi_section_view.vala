@@ -41,6 +41,8 @@ namespace HyprNetworkManager.UI.Views {
         private MainWindowWifiDetailsPage details_page;
         private MainWindowWifiEditPage edit_page;
         private MainWindowWifiSharePage share_page;
+        private MainWindowPasswordPromptManager password_prompt_manager;
+        private MainWindowWifiRowReconciler row_reconciler;
 
         private Gtk.Entry add_ssid_entry;
         private HyprNetworkManager.UI.Widgets.TrackedDropDown add_security_dropdown;
@@ -77,6 +79,8 @@ namespace HyprNetworkManager.UI.Views {
             this.details_page = new MainWindowWifiDetailsPage ();
             this.edit_page = new MainWindowWifiEditPage (this.window_host);
             this.share_page = new MainWindowWifiSharePage ();
+            this.password_prompt_manager = new MainWindowPasswordPromptManager ();
+            this.row_reconciler = new MainWindowWifiRowReconciler (this.window_host);
 
             controller.wifi_share_ready.connect ((ssid, qr_text) => {
                 share_page.set_share_data (ssid, qr_text);
@@ -117,6 +121,54 @@ namespace HyprNetworkManager.UI.Views {
             this.stack = local_wifi_stack;
             this.widget = page;
 
+            controller.networks_loaded.connect ((data, primary_connected_ssid) => {
+                render_networks (data, primary_connected_ssid);
+            });
+            controller.wifi_switch_state_loaded.connect ((enabled) => {
+                wifi_switch.set_active (enabled);
+            });
+            controller.hidden_network_connected.connect (() => {
+                show_add_error ("");
+                stack.set_visible_child_name ("list");
+                window_host.set_popup_text_input_mode (false);
+            });
+            controller.add_network_failed.connect ((message) => {
+                show_add_error (message);
+            });
+            controller.details_loaded.connect ((network, settings, connected) => {
+                if (selected_wifi_network == null
+                    || selected_wifi_network.network_key != network.network_key) {
+                    return;
+                }
+                details_page.render_ip_settings (settings, connected);
+            });
+            controller.edit_settings_loaded.connect ((network, settings) => {
+                if (selected_wifi_network == null
+                    || selected_wifi_network.network_key != network.network_key) {
+                    return;
+                }
+                edit_page.set_password (
+                    network.is_secured
+                        ? MainWindowHelpers.safe_text (settings.configured_password)
+                        : ""
+                );
+                edit_page.populate_ip_settings (settings);
+            });
+            controller.edit_succeeded.connect ((network, close_after_apply) => {
+                if (selected_wifi_network == null
+                    || selected_wifi_network.network_key != network.network_key) {
+                    return;
+                }
+                edit_page.show_error ("");
+                if (close_after_apply) {
+                    open_wifi_details (network);
+                    window_host.set_popup_text_input_mode (false);
+                }
+            });
+            controller.edit_failed.connect ((message) => {
+                edit_page.show_error (message);
+            });
+
             controller.refresh_started.connect (() => {
                 local_progress_controller.start ();
             });
@@ -132,12 +184,7 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             local_add_button.clicked.connect (() => {
-                controller.open_add_network (
-                    stack,
-                    add_ssid_entry,
-                    add_security_dropdown,
-                    add_password_entry
-                );
+                open_add_network ();
             });
 
             wifi_switch.notify["active"].connect (() => {
@@ -253,13 +300,8 @@ namespace HyprNetworkManager.UI.Views {
             var page = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
             page.add_css_class (MainWindowCssClasses.PAGE);
             page.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-            MainWindowCssClassResolver.add_best_class (page, {MainWindowCssClasses.PAGE_SHELL_INSET,
-                MainWindowCssClasses.PAGE});
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                page,
-                MainWindowCssClasses.PAGE_WIFI_ADD,
-                {MainWindowCssClasses.PAGE_NETWORK_EDIT, MainWindowCssClasses.PAGE}
-            );
+            page.add_css_class (MainWindowCssClasses.PAGE_WIFI_ADD);
+            page.add_css_class (MainWindowCssClasses.PAGE_NETWORK_EDIT);
 
             var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
             var back_btn = MainWindowHelpers.build_back_button ();
@@ -288,35 +330,33 @@ namespace HyprNetworkManager.UI.Views {
             page.append (this.add_error_revealer);
 
             var form = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_best_class (form, {MainWindowCssClasses.EDIT_NETWORK_FORM,
-                MainWindowCssClasses.EDIT_FORM});
+            form.add_css_class (MainWindowCssClasses.EDIT_NETWORK_FORM);
+            form.add_css_class (MainWindowCssClasses.EDIT_FORM);
             form.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
             var note = new Gtk.Label (_("Manually add a hidden Wi-Fi network."));
             note.set_xalign (0.0f);
             note.set_wrap (true);
-            MainWindowCssClassResolver.add_best_class (note, {MainWindowCssClasses.EDIT_NOTE,
-                MainWindowCssClasses.SUB_LABEL});
+            note.add_css_class (MainWindowCssClasses.EDIT_NOTE);
+            note.add_css_class (MainWindowCssClasses.SUB_LABEL);
             form.append (note);
 
             var ssid_label = new Gtk.Label (_("SSID"));
             ssid_label.set_xalign (0.0f);
-            MainWindowCssClassResolver.add_best_class (ssid_label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
-                MainWindowCssClasses.FORM_LABEL});
+            ssid_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            ssid_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             form.append (ssid_label);
 
             add_ssid_entry = new Gtk.Entry ();
             add_ssid_entry.set_placeholder_text (_("Network name"));
-            MainWindowCssClassResolver.add_best_class (
-                add_ssid_entry,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            add_ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            add_ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             form.append (add_ssid_entry);
 
             var security_label = new Gtk.Label (_("Security"));
             security_label.set_xalign (0.0f);
-            MainWindowCssClassResolver.add_best_class (security_label, {MainWindowCssClasses.EDIT_FIELD_LABEL,
-                MainWindowCssClasses.FORM_LABEL});
+            security_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            security_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             form.append (security_label);
 
             var security_list = new Gtk.StringList (null);
@@ -324,34 +364,25 @@ namespace HyprNetworkManager.UI.Views {
                 security_list.append (label);
             }
             add_security_dropdown = window_host.create_tracked_dropdown (security_list);
-            MainWindowCssClassResolver.add_best_class (
-                add_security_dropdown,
-                {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            add_security_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+            add_security_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             add_security_dropdown.set_selected (
                 HiddenWifiSecurityModeUtils.to_dropdown_index (HiddenWifiSecurityMode.WPA_PSK)
             );
 
             var save_btn = new Gtk.Button.with_label (_("Connect"));
             save_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            MainWindowCssClassResolver.add_best_class (save_btn, {MainWindowCssClasses.SUGGESTED_ACTION,
-                MainWindowCssClasses.BUTTON});
+            save_btn.add_css_class (MainWindowCssClasses.SUGGESTED_ACTION);
 
             add_security_dropdown.notify_selected.connect (() => {
-                controller.sync_add_network_sensitivity (
-                    add_security_dropdown,
-                    add_password_entry,
-                    save_btn
-                );
+                sync_add_network_sensitivity (save_btn);
             });
             form.append (add_security_dropdown);
 
             var password_label = new Gtk.Label (_("Password"));
             password_label.set_xalign (0.0f);
-            MainWindowCssClassResolver.add_best_class (
-                password_label,
-                {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL}
-            );
+            password_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             form.append (password_label);
 
             add_password_entry = new Gtk.Entry ();
@@ -360,11 +391,9 @@ namespace HyprNetworkManager.UI.Views {
             add_password_entry.set_placeholder_text (
                 _("Network password (min %d chars)").printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
             );
-            MainWindowCssClassResolver.add_best_class (
-                add_password_entry,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL,
-                    MainWindowCssClasses.PASSWORD_ENTRY}
-            );
+            add_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            add_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
+            add_password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
 
             add_password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);
             add_password_entry.set_icon_sensitive (Gtk.EntryIconPosition.SECONDARY, true);
@@ -379,11 +408,7 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             add_password_entry.changed.connect (() => {
-                controller.sync_add_network_sensitivity (
-                    add_security_dropdown,
-                    add_password_entry,
-                    save_btn
-                );
+                sync_add_network_sensitivity (save_btn);
             });
             add_password_entry.activate.connect (() => {
                 if (!save_btn.get_sensitive ()) {
@@ -393,11 +418,7 @@ namespace HyprNetworkManager.UI.Views {
             });
             form.append (add_password_entry);
 
-            controller.sync_add_network_sensitivity (
-                add_security_dropdown,
-                add_password_entry,
-                save_btn
-            );
+            sync_add_network_sensitivity (save_btn);
 
             var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
             actions.add_css_class (MainWindowCssClasses.EDIT_ACTIONS);
@@ -412,47 +433,111 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void submit_add_hidden_network () {
-            controller.apply_add_network (
-                stack,
-                add_ssid_entry,
-                add_security_dropdown,
-                add_password_entry
+            show_add_error ("");
+            controller.connect_hidden_network (
+                add_ssid_entry.get_text (),
+                HiddenWifiSecurityModeUtils.from_dropdown_index (
+                    add_security_dropdown.get_selected ()
+                ),
+                add_password_entry.get_text ()
             );
+        }
+
+        private void sync_add_network_sensitivity (Gtk.Button connect_button) {
+            HiddenWifiSecurityMode mode = HiddenWifiSecurityModeUtils.from_dropdown_index (
+                add_security_dropdown.get_selected ()
+            );
+            bool secured = HiddenWifiSecurityModeUtils.requires_password (mode);
+            add_password_entry.set_sensitive (secured);
+            if (!secured) {
+                add_password_entry.set_text ("");
+            }
+            connect_button.set_sensitive (
+                HiddenWifiSecurityModeUtils.is_password_valid_for_mode (
+                    mode,
+                    add_password_entry.get_text ()
+                )
+            );
+        }
+
+        private void open_add_network () {
+            add_ssid_entry.set_text ("");
+            add_security_dropdown.set_selected (
+                HiddenWifiSecurityModeUtils.to_dropdown_index (HiddenWifiSecurityMode.WPA_PSK)
+            );
+            add_password_entry.set_text ("");
+            show_add_error ("");
+            stack.set_visible_child_name ("add");
+            window_host.set_popup_text_input_mode (true);
         }
 
         private void populate_wifi_details (WifiNetwork net) {
-            controller.populate_details (
+            details_page.render_details (
                 net,
-                details_page
+                controller.is_connected (net),
+                controller.is_pending (net)
             );
+            details_page.show_loading_ip ();
+            controller.load_details (net);
         }
 
         private void open_wifi_details (WifiNetwork net) {
+            selected_wifi_network = net;
             populate_wifi_details (net);
-            controller.open_details (
-                ref selected_wifi_network,
-                net,
-                stack
-            );
+            stack.set_visible_child_name ("details");
         }
 
         private void open_wifi_edit (WifiNetwork net) {
-            controller.open_edit (
-                ref selected_wifi_network,
-                net,
-                edit_page,
-                stack
-            );
+            if (!net.saved) {
+                window_host.debug_log ("ERROR: net.saved is false in open_wifi_edit!");
+                return;
+            }
+            selected_wifi_network = net;
+            edit_page.setup_edit_form (net);
+            stack.set_visible_child_name ("edit");
+            window_host.set_popup_text_input_mode (true);
+            controller.load_edit_settings (net);
         }
 
         private bool apply_wifi_edit (bool close_after_apply) {
-            return controller.apply_edit (
-                ref selected_wifi_network,
-                edit_page,
-                stack,
-                details_page,
-                close_after_apply
+            if (selected_wifi_network == null) {
+                return false;
+            }
+
+            string? error_message = null;
+            var base_request = edit_page.build_ip_update_request (out error_message);
+            if (base_request == null) {
+                if (error_message != null) {
+                    edit_page.show_error (error_message);
+                }
+                return false;
+            }
+
+            var request = new WifiNetworkUpdateRequest () {
+                password = edit_page.get_password (),
+                ipv4_method = base_request.ipv4_method,
+                ipv4_address = base_request.ipv4_address,
+                ipv4_prefix = base_request.ipv4_prefix,
+                ipv4_gateway_auto = base_request.ipv4_gateway_auto,
+                ipv4_gateway = base_request.ipv4_gateway,
+                ipv4_dns_auto = base_request.ipv4_dns_auto,
+                ipv4_dns_servers = base_request.ipv4_dns_servers,
+                ipv6_method = base_request.ipv6_method,
+                ipv6_address = base_request.ipv6_address,
+                ipv6_prefix = base_request.ipv6_prefix,
+                ipv6_gateway_auto = base_request.ipv6_gateway_auto,
+                ipv6_gateway = base_request.ipv6_gateway,
+                ipv6_dns_auto = base_request.ipv6_dns_auto,
+                ipv6_dns_servers = base_request.ipv6_dns_servers
+            };
+            edit_page.show_error ("");
+            controller.apply_edit (
+                selected_wifi_network,
+                request,
+                close_after_apply,
+                base_request.ipv4_method != "disabled"
             );
+            return true;
         }
 
         private void forget_wifi_network (WifiNetwork net) {
@@ -499,29 +584,19 @@ namespace HyprNetworkManager.UI.Views {
 
         public void show_password_prompt (WifiNetwork net, Gtk.Revealer revealer, Gtk.Entry entry) {
             active_wifi_password_row_id = get_wifi_row_id (net);
-            var rev = active_wifi_password_revealer;
-            var ent = active_wifi_password_entry;
-            controller.show_wifi_password_prompt (
-                revealer,
-                entry
-            );
-            active_wifi_password_revealer = rev;
-            active_wifi_password_entry = ent;
+            password_prompt_manager.show_prompt (revealer, entry);
+            active_wifi_password_revealer = revealer;
+            active_wifi_password_entry = entry;
+            window_host.set_popup_text_input_mode (true);
         }
 
         public void hide_password_prompt (Gtk.Revealer revealer, Gtk.Entry entry, string? value) {
-            var rev = active_wifi_password_revealer;
-            var ent = active_wifi_password_entry;
-            controller.hide_wifi_password_prompt (
-                revealer,
-                entry,
-                value
-            );
-            active_wifi_password_revealer = rev;
-            active_wifi_password_entry = ent;
-
-            if (active_wifi_password_revealer == null) {
+            bool was_active = password_prompt_manager.hide_prompt (revealer, entry, value);
+            if (was_active) {
+                active_wifi_password_revealer = null;
+                active_wifi_password_entry = null;
                 active_wifi_password_row_id = null;
+                window_host.set_popup_text_input_mode (false);
             }
         }
 
@@ -572,18 +647,72 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public void perform_refresh () {
-            bool has_active_prompt_open = active_wifi_password_revealer != null
-                && active_wifi_password_revealer.get_reveal_child ();
+            controller.refresh ();
+        }
 
-            controller.refresh (
-                stack,
+        private void render_networks (
+            WifiRefreshData data,
+            string? primary_connected_ssid
+        ) {
+            bool has_active_prompt = active_wifi_password_revealer != null
+                && active_wifi_password_revealer.get_reveal_child ();
+            row_reconciler.reconcile (
                 listbox,
-                status_label,
-                status_icon,
+                data.networks,
                 active_wifi_password_row_id,
-                has_active_prompt_open,
+                has_active_prompt,
                 this
             );
+
+            string current_page = stack.get_visible_child_name ();
+            bool preserve_page = current_page == "details"
+                || current_page == "edit"
+                || current_page == "add"
+                || current_page == "share"
+                || current_page == "saved"
+                || current_page == "saved-edit"
+                || current_page == "wifi-disabled"
+                || current_page == "flight-mode";
+            if (!preserve_page) {
+                if (data.is_hotspot_active && data.num_wifi_devices <= 1) {
+                    stack.set_visible_child_name ("hotspot-active");
+                } else {
+                    stack.set_visible_child_name (data.networks.length > 0 ? "list" : "empty");
+                }
+            }
+
+            if (data.networks.length == 0) {
+                status_label.set_text (_("No Wi-Fi networks found"));
+                status_icon.set_from_icon_name ("network-wireless-offline-symbolic");
+                return;
+            }
+
+            WifiNetwork? connected = null;
+            if (primary_connected_ssid != null) {
+                foreach (var network in data.networks) {
+                    if (network.ssid == primary_connected_ssid) {
+                        connected = network;
+                        break;
+                    }
+                }
+            }
+
+            if (connected != null) {
+                status_label.set_text (
+                    _("Wi-Fi · %s (%u%%)").printf (connected.ssid, connected.signal)
+                );
+                status_icon.set_from_icon_name (
+                    WifiSignalLevels.get_icon_name (connected.signal)
+                );
+            } else if (primary_connected_ssid != null) {
+                status_label.set_text (_("Wi-Fi · %s").printf (primary_connected_ssid));
+                status_icon.set_from_icon_name ("network-wireless-signal-good-symbolic");
+            } else {
+                status_label.set_text (
+                    _("Wi-Fi available (%u networks)").printf (data.networks.length)
+                );
+                status_icon.set_from_icon_name ("network-wireless-signal-good-symbolic");
+            }
         }
 
         public void reset_view_state () {
@@ -592,6 +721,7 @@ namespace HyprNetworkManager.UI.Views {
             }
 
             hide_active_wifi_password_prompt ();
+            row_reconciler.reset ();
 
             if (listbox == null) {
                 return;
@@ -618,18 +748,17 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void on_wifi_switch_changed () {
-            controller.on_wifi_switch_changed (
-                wifi_switch
-            );
+            controller.set_wifi_enabled (wifi_switch.get_active ());
         }
 
         public void hide_active_wifi_password_prompt () {
-            var rev = active_wifi_password_revealer;
-            var ent = active_wifi_password_entry;
-            controller.hide_active_wifi_password_prompt ();
-            active_wifi_password_revealer = rev;
-            active_wifi_password_entry = ent;
+            bool was_active = password_prompt_manager.hide_active_prompt ();
+            active_wifi_password_revealer = null;
+            active_wifi_password_entry = null;
             active_wifi_password_row_id = null;
+            if (was_active) {
+                window_host.set_popup_text_input_mode (false);
+            }
         }
 
         public void show_edit_error (string message) {

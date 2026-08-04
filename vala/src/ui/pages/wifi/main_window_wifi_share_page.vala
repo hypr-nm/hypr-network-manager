@@ -31,12 +31,8 @@ public class MainWindowWifiSharePage : Gtk.Box {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            this,
-            "nm-page-wifi-share",
-            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
-        );
+        this.add_css_class ("nm-page-wifi-share");
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_DETAILS);
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);

@@ -27,66 +27,116 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.ListBox listbox { get; private set; }
 
         private MainWindowVpnController controller;
-        private HyprNetworkManager.UI.Interfaces.IWindowHost window_host;
+        private MainWindowVpnPageBuilder page_builder;
         private VpnConnection? selected_vpn = null;
         private MainWindowVpnDetailsPage details_page;
         private MainWindowVpnEditPage edit_page;
         private MainWindowVpnAddPage add_page;
         private MainWindowVpnSetupPage setup_page;
         private MainWindowVpnPeerEditPage peer_edit_page;
-        
         private string peer_edit_return_page = "list";
 
         public VpnSectionView (
             MainWindowVpnController controller,
-            HyprNetworkManager.UI.Interfaces.IWindowHost window_host
+            HyprNetworkManager.UI.Interfaces.IWindowHost window_host,
+            HyprNetworkManager.Models.NetworkStateContext state_context
         ) {
             this.controller = controller;
-            this.window_host = window_host;
-            this.details_page = new MainWindowVpnDetailsPage ();
-            this.edit_page = new MainWindowVpnEditPage (window_host);
-            this.add_page = new MainWindowVpnAddPage ();
-            this.setup_page = new MainWindowVpnSetupPage (window_host);
-            this.peer_edit_page = new MainWindowVpnPeerEditPage ();
+            details_page = new MainWindowVpnDetailsPage ();
+            edit_page = new MainWindowVpnEditPage (window_host);
+            add_page = new MainWindowVpnAddPage ();
+            setup_page = new MainWindowVpnSetupPage (window_host);
+            peer_edit_page = new MainWindowVpnPeerEditPage ();
+            page_builder = new MainWindowVpnPageBuilder (state_context);
 
             Gtk.ListBox vpn_listbox;
-            Gtk.Stack vpn_stack_local;
+            Gtk.Stack vpn_stack;
+            widget = page_builder.build_page (out vpn_listbox, out vpn_stack);
+            listbox = vpn_listbox;
+            stack = vpn_stack;
 
-            var page = controller.build_page (
-                out vpn_listbox,
-                out vpn_stack_local
-            );
+            stack.add_named (details_page, "details");
+            stack.add_named (edit_page, "edit");
+            stack.add_named (add_page, "add");
+            stack.add_named (setup_page, "setup");
+            stack.add_named (peer_edit_page, "peer_edit");
 
-            this.listbox = vpn_listbox;
-            this.stack = vpn_stack_local;
-            this.widget = page;
-
-            this.stack.add_named (details_page, "details");
-            this.stack.add_named (edit_page, "edit");
-            this.stack.add_named (add_page, "add");
-            this.stack.add_named (setup_page, "setup");
-            this.stack.add_named (peer_edit_page, "peer_edit");
-
-            wire_signals ();
+            wire_page_builder_signals ();
+            wire_controller_signals ();
+            wire_page_signals ();
         }
 
-        private void wire_signals () {
-            controller.refresh_started.connect (() => {
-                // Progress is already handled by page_builder connecting to controller
-            });
-
-            controller.details_requested.connect ((conn) => {
-                open_vpn_details (conn);
-            });
-
-            controller.add_requested.connect (() => {
+        private void wire_page_builder_signals () {
+            page_builder.refresh_requested.connect (controller.refresh);
+            page_builder.toggle_requested.connect (controller.toggle_list_connection);
+            page_builder.open_details.connect (open_vpn_details);
+            page_builder.add_clicked.connect (() => {
                 stack.set_visible_child_name ("add");
             });
+        }
 
-            add_page.back.connect (() => {
-                show_vpn_list_or_empty ();
+        private void wire_controller_signals () {
+            controller.refresh_started.connect (page_builder.begin_refresh);
+            controller.refresh_finished.connect (page_builder.finish_refresh);
+            controller.connections_loaded.connect (page_builder.render_connections);
+
+            controller.details_loaded.connect ((connection, details) => {
+                if (!is_selected (connection)) {
+                    return;
+                }
+                details_page.render_profile_fields (connection, details);
+                details_page.render_ip_settings (details, connection.is_connected);
             });
 
+            controller.edit_details_loaded.connect ((connection, details) => {
+                if (!is_selected (connection)) {
+                    return;
+                }
+                edit_page.setup_edit_form (connection, details);
+                stack.set_visible_child_name ("edit");
+            });
+
+            controller.update_succeeded.connect ((connection, close_after_apply) => {
+                if (!is_selected (connection) || !close_after_apply) {
+                    return;
+                }
+                open_vpn_details (connection);
+            });
+
+            controller.setup_succeeded.connect (() => {
+                stack.set_visible_child_name ("list");
+                controller.refresh ();
+            });
+
+            controller.toggle_succeeded.connect ((connection) => {
+                if (is_selected (connection)) {
+                    open_vpn_details (connection);
+                }
+            });
+
+            controller.delete_succeeded.connect ((connection) => {
+                if (is_selected (connection)) {
+                    selected_vpn = null;
+                }
+                show_vpn_list_or_empty ();
+                controller.refresh ();
+            });
+
+            controller.edit_failed.connect (edit_page.show_error);
+            controller.setup_failed.connect (setup_page.show_error);
+        }
+
+        private bool is_selected (VpnConnection connection) {
+            if (selected_vpn == null) {
+                return false;
+            }
+            string selected_id = selected_vpn.uuid != "" ? selected_vpn.uuid : selected_vpn.name;
+            string connection_id = connection.uuid != "" ? connection.uuid : connection.name;
+            return selected_id == connection_id;
+        }
+
+        private void wire_page_signals () {
+            add_page.back.connect (show_vpn_list_or_empty);
             add_page.type_selected.connect ((type) => {
                 setup_page.setup_type (type);
                 stack.set_visible_child_name ("setup");
@@ -95,35 +145,28 @@ namespace HyprNetworkManager.UI.Views {
             setup_page.back.connect (() => {
                 stack.set_visible_child_name ("add");
             });
-
-            setup_page.apply.connect (() => {
-                controller.apply_setup (setup_page, stack);
-            });
-            
+            setup_page.apply.connect (apply_setup);
             setup_page.edit_peer_requested.connect ((index, peer) => {
                 peer_edit_return_page = "setup";
                 peer_edit_page.set_peer (index, peer);
                 stack.set_visible_child_name ("peer_edit");
             });
 
-            details_page.back.connect (() => {
-                show_vpn_list_or_empty ();
-            });
-
+            details_page.back.connect (show_vpn_list_or_empty);
             details_page.primary_action.connect (() => {
-                if (selected_vpn == null) return;
-                var conn = selected_vpn;
-                controller.toggle_vpn_connection (conn, details_page);
+                if (selected_vpn != null) {
+                    controller.toggle_vpn_connection (selected_vpn);
+                }
             });
-
             details_page.edit.connect (() => {
-                if (selected_vpn == null) return;
-                open_vpn_edit (selected_vpn);
+                if (selected_vpn != null) {
+                    open_vpn_edit (selected_vpn);
+                }
             });
-
             details_page.delete.connect (() => {
-                if (selected_vpn == null) return;
-                controller.delete_vpn (selected_vpn);
+                if (selected_vpn != null) {
+                    controller.delete_vpn (selected_vpn);
+                }
             });
 
             edit_page.back.connect (() => {
@@ -133,21 +176,18 @@ namespace HyprNetworkManager.UI.Views {
                     show_vpn_list_or_empty ();
                 }
             });
-
             edit_page.apply.connect (() => {
-                controller.apply_edit (ref selected_vpn, edit_page, stack, details_page, true);
+                apply_edit (true);
             });
-            
             edit_page.edit_peer_requested.connect ((index, peer) => {
                 peer_edit_return_page = "edit";
                 peer_edit_page.set_peer (index, peer);
                 stack.set_visible_child_name ("peer_edit");
             });
-            
+
             peer_edit_page.back_clicked.connect (() => {
                 stack.set_visible_child_name (peer_edit_return_page);
             });
-            
             peer_edit_page.save_clicked.connect ((index, peer) => {
                 if (peer_edit_return_page == "setup" && setup_page.wg_peers_list != null) {
                     setup_page.wg_peers_list.save_peer (index, peer);
@@ -158,13 +198,41 @@ namespace HyprNetworkManager.UI.Views {
             });
         }
 
-        private void open_vpn_details (VpnConnection conn) {
-            controller.populate_details (conn, details_page);
-            controller.open_details (ref selected_vpn, conn, stack);
+        private void apply_setup () {
+            string? error_message = null;
+            var request = setup_page.build_create_request (out error_message);
+            if (request == null) {
+                setup_page.show_error (MainWindowHelpers.safe_text (error_message));
+                return;
+            }
+            controller.apply_setup (request);
         }
 
-        private void open_vpn_edit (VpnConnection conn) {
-            controller.open_edit (ref selected_vpn, conn, edit_page, stack);
+        private void apply_edit (bool close_after_apply) {
+            if (selected_vpn == null) {
+                return;
+            }
+
+            string? error_message = null;
+            var request = edit_page.build_update_request (out error_message);
+            if (request == null) {
+                edit_page.show_error (MainWindowHelpers.safe_text (error_message));
+                return;
+            }
+            controller.apply_edit (selected_vpn, request, close_after_apply);
+        }
+
+        private void open_vpn_details (VpnConnection connection) {
+            selected_vpn = connection;
+            details_page.render_details (connection, false);
+            details_page.show_loading_ip ();
+            stack.set_visible_child_name ("details");
+            controller.load_details (connection);
+        }
+
+        private void open_vpn_edit (VpnConnection connection) {
+            selected_vpn = connection;
+            controller.load_edit_details (connection);
         }
 
         private void show_vpn_list_or_empty () {
@@ -173,9 +241,8 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public void reset_view_state () {
-            if (stack != null) {
-                show_vpn_list_or_empty ();
-            }
+            page_builder.finish_refresh ();
+            show_vpn_list_or_empty ();
         }
     }
 }

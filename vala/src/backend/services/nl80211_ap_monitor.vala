@@ -24,12 +24,6 @@ public class Nl80211ApMonitor : GLib.Object {
         STATION_COUNT
     }
 
-    private NetworkManagerClient core;
-
-    public Nl80211ApMonitor (NetworkManagerClient core) {
-        this.core = core;
-    }
-
     public static async void async_sleep (uint ms) {
         Timeout.add (ms, () => {
             async_sleep.callback ();
@@ -104,7 +98,7 @@ public class Nl80211ApMonitor : GLib.Object {
             } catch (IOError.CANCELLED e) {
                 throw e;
             } catch (Error e) {
-                core.debug_log ("AP-state query failed: " + e.message);
+                log_debug ("nl80211-ap-monitor", "AP-state query failed: " + e.message);
             }
 
             yield async_sleep (step);

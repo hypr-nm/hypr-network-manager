@@ -17,12 +17,10 @@
 
 using Constants;
 using GLib;
-using Gtk;
 using HyprNetworkManager.UI.Interfaces;
 
 public class MainWindowRefreshCoordinator : Object {
-    private HyprNetworkManager.Backend.INetworkManagerClient nm;
-    private MainWindowWifiController wifi_controller;
+    private HyprNetworkManager.Backend.INetworkEventClient nm;
     private uint refresh_interval_seconds;
     private IWindowHost host;
 
@@ -33,13 +31,11 @@ public class MainWindowRefreshCoordinator : Object {
     private bool periodic_scan_failure_reported = false;
 
     public MainWindowRefreshCoordinator (
-        HyprNetworkManager.Backend.INetworkManagerClient nm,
-        MainWindowWifiController wifi_controller,
+        HyprNetworkManager.Backend.INetworkEventClient nm,
         uint refresh_interval_seconds,
         IWindowHost host
     ) {
         this.nm = nm;
-        this.wifi_controller = wifi_controller;
         this.refresh_interval_seconds = refresh_interval_seconds;
         this.host = host;
     }
@@ -81,18 +77,6 @@ public class MainWindowRefreshCoordinator : Object {
             }
             return true;
         });
-    }
-
-    public void refresh_after_action (bool request_wifi_scan) {
-        wifi_controller.refresh_after_action (
-            request_wifi_scan
-        );
-    }
-
-    public void refresh_switch_states (Gtk.Switch wifi_switch) {
-        wifi_controller.refresh_switch_states (
-            wifi_switch
-        );
     }
 
     public void stop () {

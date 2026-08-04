@@ -87,13 +87,8 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
-            MainWindowCssClasses.PAGE});
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            this,
-            MainWindowCssClasses.PAGE_ETHERNET_DETAILS,
-            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
-        );
+        this.add_css_class (MainWindowCssClasses.PAGE_ETHERNET_DETAILS);
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_DETAILS);
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
@@ -110,13 +105,11 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
         header.add_css_class (MainWindowCssClasses.DETAILS_HEADER);
 
         var icon = new Gtk.Image.from_icon_name ("network-transmit-receive-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_28,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (
-            icon,
-            {MainWindowCssClasses.DETAILS_NETWORK_ICON, MainWindowCssClasses.ETHERNET_ICON,
-                MainWindowCssClasses.SIGNAL_ICON}
-        );
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_28);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.DETAILS_NETWORK_ICON);
+        icon.add_css_class (MainWindowCssClasses.ETHERNET_ICON);
+        icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON);
         header.append (icon);
 
         this.details_title = new Gtk.Label (_("Ethernet"));
@@ -131,11 +124,9 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
 
         this.primary_button = new Gtk.Button.with_label (_("Connect"));
         this.primary_button.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (
-            this.primary_button,
-            {MainWindowCssClasses.PRIMARY_ACTION_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
-        );
+        this.primary_button.add_css_class (MainWindowCssClasses.PRIMARY_ACTION_BUTTON);
+        this.primary_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
+        this.primary_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         this.primary_button.clicked.connect (() => {
             this.primary_action ();
         });
@@ -143,11 +134,9 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
 
         this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (
-            this.edit_button,
-            {MainWindowCssClasses.EDIT_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
-        );
+        this.edit_button.add_css_class (MainWindowCssClasses.EDIT_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });

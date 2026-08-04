@@ -214,13 +214,8 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.add_css_class (MainWindowCssClasses.PAGE);
         this.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-        MainWindowCssClassResolver.add_best_class (this, {MainWindowCssClasses.PAGE_SHELL_INSET,
-            MainWindowCssClasses.PAGE});
-        MainWindowCssClassResolver.add_hook_and_best_class (
-            this,
-            MainWindowCssClasses.PAGE_VPN_DETAILS,
-            {MainWindowCssClasses.PAGE_NETWORK_DETAILS, MainWindowCssClasses.PAGE}
-        );
+        this.add_css_class (MainWindowCssClasses.PAGE_VPN_DETAILS);
+        this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_DETAILS);
 
         var nav_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_NONE);
         nav_row.add_css_class (MainWindowCssClasses.DETAILS_NAV_ROW);
@@ -237,13 +232,11 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
         header.add_css_class (MainWindowCssClasses.DETAILS_HEADER);
 
         var icon = new Gtk.Image.from_icon_name ("network-vpn-symbolic");
-        MainWindowCssClassResolver.add_best_class (icon, {MainWindowCssClasses.ICON_SIZE_28,
-            MainWindowCssClasses.ICON_SIZE});
-        MainWindowCssClassResolver.add_best_class (
-            icon,
-            {MainWindowCssClasses.DETAILS_NETWORK_ICON, MainWindowCssClasses.VPN_ICON,
-                MainWindowCssClasses.SIGNAL_ICON}
-        );
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE_28);
+        icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
+        icon.add_css_class (MainWindowCssClasses.DETAILS_NETWORK_ICON);
+        icon.add_css_class (MainWindowCssClasses.VPN_ICON);
+        icon.add_css_class (MainWindowCssClasses.SIGNAL_ICON);
         header.append (icon);
 
         this.details_title = new Gtk.Label (_("VPN"));
@@ -258,11 +251,9 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.primary_button = new Gtk.Button.with_label (_("Connect"));
         this.primary_button.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (
-            this.primary_button,
-            {MainWindowCssClasses.PRIMARY_ACTION_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
-        );
+        this.primary_button.add_css_class (MainWindowCssClasses.PRIMARY_ACTION_BUTTON);
+        this.primary_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
+        this.primary_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         this.primary_button.clicked.connect (() => {
             this.primary_action ();
         });
@@ -270,11 +261,9 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (
-            this.edit_button,
-            {MainWindowCssClasses.EDIT_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
-        );
+        this.edit_button.add_css_class (MainWindowCssClasses.EDIT_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });
@@ -282,11 +271,9 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.delete_button = new Gtk.Button.with_label (_("Delete"));
         this.delete_button.add_css_class (MainWindowCssClasses.BUTTON);
-        MainWindowCssClassResolver.add_best_class (
-            this.delete_button,
-            {MainWindowCssClasses.DELETE_BUTTON, MainWindowCssClasses.DETAILS_ACTION_BUTTON,
-                MainWindowCssClasses.ACTION_BUTTON, MainWindowCssClasses.BUTTON}
-        );
+        this.delete_button.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
+        this.delete_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
+        this.delete_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
         this.delete_button.clicked.connect (() => {
             this.delete ();
         });

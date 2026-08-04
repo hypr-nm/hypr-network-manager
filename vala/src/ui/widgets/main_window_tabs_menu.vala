@@ -53,14 +53,9 @@ namespace HyprNetworkManager.UI.Widgets {
             );
 
             var menu_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
-            MainWindowCssClassResolver.add_best_class (
-                menu_box,
-                {MainWindowCssClasses.POPOVER_LIST_INSET}
-            );
-            MainWindowCssClassResolver.add_best_class (
-                menu_box,
-                {MainWindowCssClasses.TABS_MENU_LIST, MainWindowCssClasses.LIST}
-            );
+            menu_box.add_css_class (MainWindowCssClasses.POPOVER_LIST_INSET);
+            menu_box.add_css_class (MainWindowCssClasses.TABS_MENU_LIST);
+            menu_box.add_css_class (MainWindowCssClasses.LIST);
 
             var saved_profiles_item = new Gtk.Button.with_label (_("Saved Profiles"));
             saved_profiles_item.add_css_class (MainWindowCssClasses.TABS_MENU_ITEM);
@@ -109,10 +104,8 @@ namespace HyprNetworkManager.UI.Widgets {
             menu_button.set_popover (tracked_popover);
 
             var icon = MainWindowIconResources.create_menu_more_icon ();
-            MainWindowCssClassResolver.add_best_class (
-                icon,
-                {MainWindowCssClasses.TABS_MENU_ICON, MainWindowCssClasses.TOOLBAR_ICON}
-            );
+            icon.add_css_class (MainWindowCssClasses.TABS_MENU_ICON);
+            icon.add_css_class (MainWindowCssClasses.TOOLBAR_ICON);
             menu_button.set_child (icon);
 
             this.append (menu_button);

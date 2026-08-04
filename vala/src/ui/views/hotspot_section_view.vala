@@ -67,8 +67,7 @@ namespace HyprNetworkManager.UI.Views {
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
             box.add_css_class (MainWindowCssClasses.PAGE);
             box.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
-            MainWindowCssClassResolver.add_best_class (box, {MainWindowCssClasses.PAGE_NETWORK_DETAILS,
-                MainWindowCssClasses.PAGE_SHELL_INSET, MainWindowCssClasses.PAGE});
+            box.add_css_class (MainWindowCssClasses.PAGE_NETWORK_DETAILS);
 
             // Header
             var header_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -95,7 +94,8 @@ namespace HyprNetworkManager.UI.Views {
 
             // Content Form
             var form_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_best_class (form_box, {MainWindowCssClasses.EDIT_NETWORK_FORM, MainWindowCssClasses.EDIT_FORM});
+            form_box.add_css_class (MainWindowCssClasses.EDIT_NETWORK_FORM);
+            form_box.add_css_class (MainWindowCssClasses.EDIT_FORM);
             form_box.add_css_class (MainWindowCssClasses.DETAILS_SCROLL_BODY_INSET);
 
             // --- ROW 0 (Interfaces) ---
@@ -106,7 +106,8 @@ namespace HyprNetworkManager.UI.Views {
             // AP Interface col
             var ap_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             var ap_label = new Gtk.Label (_("Wi-Fi Interface"));
-            MainWindowCssClassResolver.add_best_class (ap_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            ap_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            ap_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             ap_label.xalign = 0;
 
             this.ap_model = new Gtk.StringList (new string[] { _("Auto") });
@@ -115,7 +116,8 @@ namespace HyprNetworkManager.UI.Views {
             }
             ap_interface_dropdown = window_host.create_tracked_dropdown (this.ap_model);
             ap_interface_dropdown.hexpand = true;
-            MainWindowCssClassResolver.add_best_class (ap_interface_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            ap_interface_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+            ap_interface_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             ap_col.append (ap_label);
             ap_col.append (ap_interface_dropdown);
 
@@ -124,7 +126,8 @@ namespace HyprNetworkManager.UI.Views {
             // Timeout col
             var timeout_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             var timeout_label = new Gtk.Label (_("Turn off if inactive for"));
-            MainWindowCssClassResolver.add_best_class (timeout_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            timeout_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            timeout_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             timeout_label.xalign = 0;
 
             var timeout_model = new Gtk.StringList (new string[] {
@@ -136,7 +139,8 @@ namespace HyprNetworkManager.UI.Views {
             });
             timeout_dropdown = window_host.create_tracked_dropdown (timeout_model);
             timeout_dropdown.hexpand = true;
-            MainWindowCssClassResolver.add_best_class (timeout_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            timeout_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+            timeout_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             timeout_col.append (timeout_label);
             timeout_col.append (timeout_dropdown);
 
@@ -144,7 +148,8 @@ namespace HyprNetworkManager.UI.Views {
                 // Uplink Interface col
                 var uplink_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
                 var uplink_label = new Gtk.Label (_("Share Internet From"));
-                MainWindowCssClassResolver.add_best_class (uplink_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+                uplink_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+                uplink_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
                 uplink_label.xalign = 0;
 
                 this.uplink_model = new Gtk.StringList (new string[] { _("Auto"), _("None") });
@@ -153,7 +158,8 @@ namespace HyprNetworkManager.UI.Views {
                 }
                 uplink_interface_dropdown = window_host.create_tracked_dropdown (this.uplink_model);
                 uplink_interface_dropdown.hexpand = true;
-                MainWindowCssClassResolver.add_best_class (uplink_interface_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+                uplink_interface_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+                uplink_interface_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
                 uplink_col.append (uplink_label);
                 uplink_col.append (uplink_interface_dropdown);
                 row0_box.append (uplink_col);
@@ -171,15 +177,13 @@ namespace HyprNetworkManager.UI.Views {
             // SSID col
             var ssid_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             var ssid_label = new Gtk.Label (_("Network Name (SSID)"));
-            MainWindowCssClassResolver.add_best_class (ssid_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            ssid_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            ssid_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             ssid_label.xalign = 0;
             ssid_entry = new Gtk.Entry ();
             ssid_entry.hexpand = true;
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                ssid_entry,
-                MainWindowCssClasses.EDIT_FIELD_ENTRY,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL}
-            );
+            ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             ssid_col.append (ssid_label);
             ssid_col.append (ssid_entry);
 
@@ -187,7 +191,7 @@ namespace HyprNetworkManager.UI.Views {
             var hidden_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
 
             hidden_check = new Gtk.CheckButton.with_label (_("Hidden Network"));
-            MainWindowCssClassResolver.add_best_class (hidden_check, {MainWindowCssClasses.FORM_LABEL});
+            hidden_check.add_css_class (MainWindowCssClasses.FORM_LABEL);
             hidden_check.valign = Gtk.Align.CENTER;
             hidden_check.vexpand = false;
 
@@ -200,15 +204,15 @@ namespace HyprNetworkManager.UI.Views {
             var password_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             password_col.valign = Gtk.Align.START;
             var password_label = new Gtk.Label (_("Password"));
-            MainWindowCssClassResolver.add_best_class (password_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            password_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            password_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             password_label.xalign = 0;
             password_entry = new Gtk.Entry ();
             password_entry.hexpand = true;
-            MainWindowCssClassResolver.add_hook_and_best_class (
-                password_entry,
-                MainWindowCssClasses.EDIT_PASSWORD_ENTRY,
-                {MainWindowCssClasses.EDIT_FIELD_ENTRY, MainWindowCssClasses.EDIT_FIELD_CONTROL, MainWindowCssClasses.PASSWORD_ENTRY}
-            );
+            password_entry.add_css_class (MainWindowCssClasses.EDIT_PASSWORD_ENTRY);
+            password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
+            password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
             password_entry.visibility = false;
             password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
             password_entry.set_placeholder_text (
@@ -239,7 +243,8 @@ namespace HyprNetworkManager.UI.Views {
             // Security Mode col
             var security_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             var security_label = new Gtk.Label (_("Security"));
-            MainWindowCssClassResolver.add_best_class (security_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            security_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            security_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             security_label.xalign = 0;
 
             var sec_model = new Gtk.StringList (new string[] {
@@ -249,7 +254,8 @@ namespace HyprNetworkManager.UI.Views {
             });
             security_dropdown = window_host.create_tracked_dropdown (sec_model);
             security_dropdown.hexpand = true;
-            MainWindowCssClassResolver.add_best_class (security_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            security_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+            security_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             security_col.append (security_label);
             security_col.append (security_dropdown);
 
@@ -258,14 +264,16 @@ namespace HyprNetworkManager.UI.Views {
             // Band col
             var band_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
             var band_label = new Gtk.Label (_("Band"));
-            MainWindowCssClassResolver.add_best_class (band_label, {MainWindowCssClasses.EDIT_FIELD_LABEL, MainWindowCssClasses.FORM_LABEL});
+            band_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            band_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
             band_label.xalign = 0;
 
             this.band_model = new Gtk.StringList (new string[] { _("Auto") });
             band_dropdown = window_host.create_tracked_dropdown (this.band_model);
             rebuild_band_options (get_ap_interface_token ());
             band_dropdown.hexpand = true;
-            MainWindowCssClassResolver.add_best_class (band_dropdown, {MainWindowCssClasses.EDIT_DROPDOWN, MainWindowCssClasses.EDIT_FIELD_CONTROL});
+            band_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+            band_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             band_col.append (band_label);
             band_col.append (band_dropdown);
 
@@ -288,13 +296,13 @@ namespace HyprNetworkManager.UI.Views {
 
             // Save Button
             var action_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            MainWindowCssClassResolver.add_hook_and_best_class (action_box, MainWindowCssClasses.EDIT_WIFI_ACTIONS,
-                {MainWindowCssClasses.EDIT_ACTIONS});
+            action_box.add_css_class (MainWindowCssClasses.EDIT_WIFI_ACTIONS);
+            action_box.add_css_class (MainWindowCssClasses.EDIT_ACTIONS);
 
             save_button = new Gtk.Button.with_label (_("Save Configuration"));
             save_button.add_css_class (MainWindowCssClasses.BUTTON);
-            MainWindowCssClassResolver.add_hook_and_best_class (save_button, MainWindowCssClasses.EDIT_APPLY_BUTTON,
-                {MainWindowCssClasses.SUGGESTED_ACTION, MainWindowCssClasses.BUTTON});
+            save_button.add_css_class (MainWindowCssClasses.EDIT_APPLY_BUTTON);
+            save_button.add_css_class (MainWindowCssClasses.SUGGESTED_ACTION);
             save_button.halign = Gtk.Align.END;
             action_box.append (save_button);
             form_box.append (action_box);
@@ -378,13 +386,13 @@ namespace HyprNetworkManager.UI.Views {
                 info_label.wrap_mode = Pango.WrapMode.CHAR;
                 info_label.max_width_chars = 35;
                 info_label.justify = Gtk.Justification.CENTER;
-                MainWindowCssClassResolver.add_best_class (info_label, {MainWindowCssClasses.FORM_LABEL});
+                info_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
 
                 qr_container.append (info_label);
 
                 string connected_text = _("Connected Users: %d").printf (config.connected_clients);
                 var connected_label = new Gtk.Label (connected_text);
-                MainWindowCssClassResolver.add_best_class (connected_label, {MainWindowCssClasses.SUB_LABEL});
+                connected_label.add_css_class (MainWindowCssClasses.SUB_LABEL);
                 qr_container.append (connected_label);
             }
 
