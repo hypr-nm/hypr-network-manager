@@ -20,31 +20,54 @@ using Gtk;
 
 namespace HyprNetworkManager.UI.Interfaces {
 
-public interface IVpnFormFields : GLib.Object {
-    public abstract Gtk.Entry? gateway_entry { get; set; }
-    public abstract Gtk.Entry? user_entry { get; set; }
-    public abstract Gtk.Entry? password_entry { get; set; }
-    
-    // WireGuard
-    public abstract Gtk.Entry? wg_interface_name_entry { get; set; }
-    public abstract Gtk.Entry? wg_private_key_entry { get; set; }
-    public abstract HyprNetworkManager.UI.Widgets.DynamicPeerList? wg_peers_list { get; set; }
-    public abstract Gtk.Entry? wg_listen_port_entry { get; set; }
-    public abstract Gtk.Entry? wg_fwmark_entry { get; set; }
-    public abstract Gtk.Switch? wg_peer_routes_switch { get; set; }
+/**
+ * Concrete widget bundles for each VPN form variant.
+ *
+ * Fields are non-nullable: every field of a variant is populated whenever that
+ * variant is rendered, so readers can access them directly without null checks.
+ */
+public class WgFormFields : GLib.Object {
+    public Gtk.Entry interface_name_entry;
+    public Gtk.Entry private_key_entry;
+    public Gtk.Entry listen_port_entry;
+    public Gtk.Entry fwmark_entry;
+    public Gtk.Switch peer_routes_switch;
+    public HyprNetworkManager.UI.Widgets.DynamicPeerList peers_list;
+}
 
-    // OpenVPN
-    public abstract Gtk.Entry? ovpn_remote_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_port_entry { get; set; }
-    public abstract HyprNetworkManager.UI.Widgets.TrackedDropDown? ovpn_proto_dropdown { get; set; }
-    public abstract Gtk.Entry? ovpn_user_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_password_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_ca_cert_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_client_cert_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_private_key_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_tls_auth_key_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_cipher_entry { get; set; }
-    public abstract Gtk.Entry? ovpn_auth_entry { get; set; }
+public class OpenVpnFormFields : GLib.Object {
+    public Gtk.Entry remote_entry;
+    public Gtk.Entry port_entry;
+    public HyprNetworkManager.UI.Widgets.TrackedDropDown proto_dropdown;
+    public Gtk.Entry user_entry;
+    public Gtk.Entry password_entry;
+    public Gtk.Entry ca_cert_entry;
+    public Gtk.Entry client_cert_entry;
+    public Gtk.Entry private_key_entry;
+    public Gtk.Entry tls_auth_key_entry;
+    public Gtk.Entry cipher_entry;
+    public Gtk.Entry auth_entry;
+}
+
+public class GenericFormFields : GLib.Object {
+    public Gtk.Entry gateway_entry;
+    public Gtk.Entry user_entry;
+    public Gtk.Entry password_entry;
+}
+
+/**
+ * Collects the rendered VPN form widgets plus the IP settings surface.
+ *
+ * Exactly one variant (wg/ovpn/generic) is non-null for a given form, which is
+ * what lets the request builder branch without runtime casts or field probes.
+ */
+public class VpnFormValues : GLib.Object {
+    public string vpn_type { get; set; default = "vpn"; }
+    public IMainWindowIpEditPage ip_page { get; set; }
+
+    public WgFormFields? wg { get; set; }
+    public OpenVpnFormFields? ovpn { get; set; }
+    public GenericFormFields? generic { get; set; }
 }
 
 }

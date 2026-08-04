@@ -17,18 +17,13 @@
 
 using Constants;
 namespace HyprNetworkManager.UI.Interfaces {
-    public delegate HyprNetworkManager.UI.Widgets.TrackedDropDown TrackedDropDownFactory (
-        owned Gtk.StringList model
-    );
-
     /**
      * Interface that provides window operations back to the controllers.
+     *
+     * This surface intentionally carries no GTK types; widget construction
+     * lives on IWidgetFactory so controllers can stay view-agnostic.
      */
     public interface IWindowHost : Object {
-        public abstract HyprNetworkManager.UI.Widgets.TrackedDropDown create_tracked_dropdown (
-            owned Gtk.StringList model
-        );
-        public abstract void set_popup_text_input_mode (bool enabled);
         public abstract void show_error (string message);
         public abstract void show_wifi_error (string net_key, string message);
         public abstract void show_ethernet_error (string iface_name, string message);

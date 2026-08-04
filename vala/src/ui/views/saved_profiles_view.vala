@@ -29,7 +29,7 @@ namespace HyprNetworkManager.UI.Views {
         private MainWindowProfilesPage profiles_page;
         private MainWindowProfilesDetailsPage profiles_details_page;
         private MainWindowWifiSavedEditPage wifi_saved_edit_page;
-        private IWindowHost window_host;
+        private IUiHost window_host;
         private MainWindowEthernetController ethernet_controller;
         private MainWindowProfilesController profiles_controller;
         private Gtk.Stack main_content_stack;
@@ -44,7 +44,7 @@ namespace HyprNetworkManager.UI.Views {
         public SavedProfilesView (
             MainWindowEthernetController ethernet_controller,
             MainWindowProfilesController profiles_controller,
-            IWindowHost window_host,
+            IUiHost window_host,
             Gtk.Stack main_content_stack,
             Gtk.Stack main_wifi_stack,
             Gtk.Notebook main_notebook

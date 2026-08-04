@@ -19,37 +19,19 @@ using Constants;
 using Gtk;
 using HyprNetworkManager.UI.Interfaces;
 
-public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFields {
+public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage {
     public Gtk.Label setup_title { get; set; }
     public string vpn_type { get; private set; }
 
     public Gtk.Entry name_entry { get; set; }
-    
-    // IVpnFormFields implementation
-    public Gtk.Entry? gateway_entry { get; set; }
-    public Gtk.Entry? user_entry { get; set; }
-    public Gtk.Entry? password_entry { get; set; }
-    
-    // WireGuard specific
-    public Gtk.Entry? wg_interface_name_entry { get; set; }
-    public Gtk.Entry? wg_private_key_entry { get; set; }
-    public HyprNetworkManager.UI.Widgets.DynamicPeerList? wg_peers_list { get; set; }
-    public Gtk.Entry? wg_listen_port_entry { get; set; }
-    public Gtk.Entry? wg_fwmark_entry { get; set; }
-    public Gtk.Switch? wg_peer_routes_switch { get; set; }
 
-    // OpenVPN specific
-    public Gtk.Entry? ovpn_remote_entry { get; set; }
-    public Gtk.Entry? ovpn_port_entry { get; set; }
-    public HyprNetworkManager.UI.Widgets.TrackedDropDown? ovpn_proto_dropdown { get; set; }
-    public Gtk.Entry? ovpn_user_entry { get; set; }
-    public Gtk.Entry? ovpn_password_entry { get; set; }
-    public Gtk.Entry? ovpn_ca_cert_entry { get; set; }
-    public Gtk.Entry? ovpn_client_cert_entry { get; set; }
-    public Gtk.Entry? ovpn_private_key_entry { get; set; }
-    public Gtk.Entry? ovpn_tls_auth_key_entry { get; set; }
-    public Gtk.Entry? ovpn_cipher_entry { get; set; }
-    public Gtk.Entry? ovpn_auth_entry { get; set; }
+    private VpnFormValues form_values;
+
+    public HyprNetworkManager.UI.Widgets.DynamicPeerList? wg_peers_list {
+        get {
+            return form_values != null && form_values.wg != null ? form_values.wg.peers_list : null;
+        }
+    }
 
     // IMainWindowIpEditPage implementation
     public HyprNetworkManager.UI.Widgets.TrackedDropDown ipv4_method_dropdown { get; set; }
@@ -79,21 +61,25 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
         this.vpn_type = type;
         this.setup_title.set_text (_("Setup %s").printf (type));
         this.error_revealer.set_reveal_child (false);
-        
+
+        this.form_values = new VpnFormValues ();
+        this.form_values.vpn_type = type;
+        this.form_values.ip_page = this;
+
         // Clear type-specific fields
         MainWindowHelpers.clear_box (type_specific_box);
 
         if (this.vpn_type == "wireguard") {
-            MainWindowVpnFormBuilder.append_wg_fields (type_specific_box, this);
-            if (this.wg_peers_list != null) {
-                this.wg_peers_list.edit_peer_requested.connect ((index, peer) => {
+            MainWindowVpnFormBuilder.append_wg_fields (type_specific_box, this.form_values);
+            if (this.form_values.wg != null) {
+                this.form_values.wg.peers_list.edit_peer_requested.connect ((index, peer) => {
                     this.edit_peer_requested (index, peer);
                 });
             }
         } else if (this.vpn_type == "openvpn") {
-            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this, this.create_dropdown_func, true);
+            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this.form_values, this.create_dropdown_func, true);
         } else {
-            MainWindowVpnFormBuilder.append_generic_vpn_fields (type_specific_box, this);
+            MainWindowVpnFormBuilder.append_generic_vpn_fields (type_specific_box, this.form_values);
         }
     }
 
@@ -106,7 +92,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
             return null;
         }
 
-        var request = MainWindowVpnRequestBuilder.build (this, this.vpn_type, out error_message);
+        var request = MainWindowVpnRequestBuilder.build (this.form_values, out error_message);
         if (request == null) {
             return null;
         }
@@ -123,9 +109,9 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
         this.error_revealer.set_reveal_child (true);
     }
 
-    public MainWindowVpnSetupPage (IWindowHost window_host) {
+    public MainWindowVpnSetupPage (IWidgetFactory widget_factory) {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
-        this.create_dropdown_func = window_host.create_tracked_dropdown;
+        this.create_dropdown_func = widget_factory.create_tracked_dropdown;
 
         this.set_hexpand (true);
         this.set_vexpand (true);
@@ -192,7 +178,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
-            window_host.create_tracked_dropdown,
+            widget_factory.create_tracked_dropdown,
             true
         );
 
@@ -215,7 +201,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage, IVpnFormFi
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
-            window_host.create_tracked_dropdown,
+            widget_factory.create_tracked_dropdown,
             true
         );
 

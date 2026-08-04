@@ -24,15 +24,6 @@ public class MainWindowWifiRowReconciler : Object {
         wifi_row_order = {};
     }
 
-    private bool contains_value (string[] values, string candidate) {
-        foreach (var value in values) {
-            if (value == candidate) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void reconcile (
         Gtk.ListBox listbox,
         WifiNetwork[] networks,
@@ -83,7 +74,7 @@ public class MainWindowWifiRowReconciler : Object {
                 }
             }
             foreach (var scanned_id in scan_order) {
-                if (!contains_value (ordered_row_ids, scanned_id)) {
+                if (!(scanned_id in ordered_row_ids)) {
                     ordered_row_ids += scanned_id;
                 }
             }

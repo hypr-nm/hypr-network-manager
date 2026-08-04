@@ -72,8 +72,6 @@ public class MainWindowVpnPageBuilder : Object {
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
         refresh_btn.set_tooltip_text (_("Refresh VPN profiles"));
-        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
-        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.clicked.connect (() => {
             refresh_requested ();
         });
@@ -88,8 +86,6 @@ public class MainWindowVpnPageBuilder : Object {
         add_btn.add_css_class (MainWindowCssClasses.ADD_BUTTON);
         add_btn.set_valign (Gtk.Align.CENTER);
         add_btn.set_tooltip_text (_("Add new VPN profile"));
-        add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
-        add_btn.add_css_class (MainWindowCssClasses.BUTTON);
         add_btn.clicked.connect (() => {
             this.add_clicked ();
         });

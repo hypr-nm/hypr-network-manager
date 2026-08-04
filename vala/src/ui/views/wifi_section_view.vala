@@ -33,7 +33,7 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Button add_button { get; private set; }
 
         private MainWindowWifiController controller;
-        private IWindowHost window_host;
+        private IUiHost window_host;
         private WindowConfigContext config_context;
         private NetworkStateContext state_context;
 
@@ -63,7 +63,7 @@ namespace HyprNetworkManager.UI.Views {
 
         public WifiSectionView (
             MainWindowWifiController controller,
-            IWindowHost window_host,
+            IUiHost window_host,
             NetworkStateContext state_context,
             WindowConfigContext config_context,
             Gtk.Label status_label,

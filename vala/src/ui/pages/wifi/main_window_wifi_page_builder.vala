@@ -74,8 +74,6 @@ namespace MainWindowWifiPageBuilder {
         add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
         add_btn.add_css_class (MainWindowCssClasses.ADD_BUTTON);
         add_btn.set_valign (Gtk.Align.CENTER);
-        add_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
-        add_btn.add_css_class (MainWindowCssClasses.BUTTON);
         add_btn.set_tooltip_text (_("Add Hidden Network"));
         toolbar.append (add_btn);
         add_network_button = add_btn;
@@ -86,8 +84,6 @@ namespace MainWindowWifiPageBuilder {
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
         refresh_btn.set_tooltip_text (_("Refresh Wi-Fi networks"));
-        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
-        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         toolbar.append (refresh_btn);
         refresh_button = refresh_btn;
 

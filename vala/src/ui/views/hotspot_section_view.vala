@@ -30,7 +30,7 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Widget widget { get; private set; }
 
         private MainWindowHotspotController controller;
-        private IWindowHost window_host;
+        private IUiHost window_host;
 
         private Gtk.Switch toggle_switch;
         private Gtk.Entry ssid_entry;
@@ -60,7 +60,7 @@ namespace HyprNetworkManager.UI.Views {
         private bool fetch_status_queued = false;
         private Cancellable? fetch_status_cancellable = null;
 
-        public HotspotSectionView (MainWindowHotspotController controller, IWindowHost host) {
+        public HotspotSectionView (MainWindowHotspotController controller, IUiHost host) {
             this.controller = controller;
             this.window_host = host;
 

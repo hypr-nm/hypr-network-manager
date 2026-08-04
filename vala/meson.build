@@ -63,6 +63,7 @@ executable(
     'src/models/window_config_context.vala',
     'src/models/network_state_context.vala',
     'src/ui/interfaces/window_host.vala',
+    'src/ui/interfaces/widget_factory.vala',
     'src/ui/interfaces/vpn_form_fields.vala',
     'src/ui/utils/main_window_dismiss_handler.vala',
     'src/ui/utils/main_window_layer_shell_configurator.vala',

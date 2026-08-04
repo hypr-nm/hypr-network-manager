@@ -421,80 +421,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         return section;
     }
 
-    private void set_collapsible_state (
-        Gtk.Box container,
-        Gtk.Button toggle_button,
-        Gtk.Revealer content_revealer,
-        Gtk.Image toggle_icon,
-        bool expanded
-    ) {
-        content_revealer.set_reveal_child (expanded);
-        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, expanded);
-        if (expanded) {
-            container.add_css_class ("is-expanded");
-            container.remove_css_class ("is-collapsed");
-            toggle_button.set_tooltip_text (_("Collapse section"));
-        } else {
-            container.add_css_class ("is-collapsed");
-            container.remove_css_class ("is-expanded");
-            toggle_button.set_tooltip_text (_("Expand section"));
-        }
-    }
-
-    private Gtk.Box build_collapsible_section (
-        string title,
-        out Gtk.Box content_box,
-        bool expanded = true
-    ) {
-        var container = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-        container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
-
-        var toggle_button = new Gtk.Button ();
-        toggle_button.set_has_frame (false);
-        toggle_button.set_halign (Gtk.Align.FILL);
-        toggle_button.set_hexpand (true);
-        toggle_button.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE);
-
-        var toggle_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-        toggle_row.set_halign (Gtk.Align.FILL);
-        toggle_row.set_hexpand (true);
-        toggle_row.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ROW);
-
-        var toggle_icon = new Gtk.Image ();
-        MainWindowIconResources.set_expand_indicator_icon (toggle_icon, false);
-        toggle_icon.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_ICON);
-        toggle_row.append (toggle_icon);
-
-        var toggle_label = new Gtk.Label (title);
-        toggle_label.set_xalign (0.0f);
-        toggle_label.set_hexpand (true);
-        toggle_label.add_css_class (MainWindowCssClasses.EDIT_SECTION_TOGGLE_LABEL);
-        toggle_row.append (toggle_label);
-
-        toggle_button.set_child (toggle_row);
-        container.append (toggle_button);
-
-        content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
-        content_box.add_css_class (MainWindowCssClasses.EDIT_SECTION_CONTENT);
-
-        var content_revealer = new Gtk.Revealer ();
-        content_revealer.set_transition_type (Gtk.RevealerTransitionType.SLIDE_DOWN);
-        content_revealer.set_transition_duration (MainWindowUiMetrics.TRANSITION_REVEALER_MS);
-        content_revealer.set_child (content_box);
-        content_revealer.add_css_class (MainWindowCssClasses.EDIT_SECTION_REVEALER);
-        container.append (content_revealer);
-
-        set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, expanded);
-
-        toggle_button.clicked.connect (() => {
-            bool current_expanded = !content_revealer.get_reveal_child ();
-            set_collapsible_state (container, toggle_button, content_revealer, toggle_icon, current_expanded);
-        });
-
-        return container;
-    }
-
-    public MainWindowWifiSavedEditPage (IWindowHost window_host) {
+    public MainWindowWifiSavedEditPage (IWidgetFactory widget_factory) {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
@@ -582,7 +509,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         security_modes.append (_("Enhanced Open (OWE)"));
         security_modes.append (_("WEP"));
         security_modes.append (_("WPA/WPA2 Enterprise (802.1X)"));
-        this.security_mode_dropdown = window_host.create_tracked_dropdown (security_modes);
+        this.security_mode_dropdown = widget_factory.create_tracked_dropdown (security_modes);
         this.security_mode_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
         this.security_mode_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         profile_content.append (this.security_mode_dropdown);
@@ -696,7 +623,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         eap_methods.append (_("TLS"));
         eap_methods.append (_("TTLS"));
         eap_methods.append (_("PWD"));
-        this.eap_method_dropdown = window_host.create_tracked_dropdown (eap_methods);
+        this.eap_method_dropdown = widget_factory.create_tracked_dropdown (eap_methods);
         this.eap_method_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
         this.eap_method_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.eap_method_dropdown.set_visible (false);
@@ -712,7 +639,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         phase2_auths.append (_("GTC"));
         phase2_auths.append (_("PAP"));
         phase2_auths.append (_("CHAP"));
-        this.phase2_auth_dropdown = window_host.create_tracked_dropdown (phase2_auths);
+        this.phase2_auth_dropdown = widget_factory.create_tracked_dropdown (phase2_auths);
         this.phase2_auth_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
         this.phase2_auth_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.phase2_auth_dropdown.set_visible (false);
@@ -741,7 +668,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         form.append (access_section);
 
         Gtk.Box auth_content;
-        var auth_section = build_collapsible_section (_("Authentication"), out auth_content, false);
+        var auth_section = MainWindowHelpers.build_collapsible_section (_("Authentication"), out auth_content, 0, null, false);
 
         auth_content.append (this.eap_method_label);
         auth_content.append (this.eap_method_dropdown);
@@ -804,7 +731,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
-            window_host.create_tracked_dropdown,
+            widget_factory.create_tracked_dropdown,
             true
         );
 
@@ -827,7 +754,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
-            window_host.create_tracked_dropdown,
+            widget_factory.create_tracked_dropdown,
             true
         );
 

@@ -29,7 +29,7 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Button refresh_button { get; private set; }
 
         private MainWindowEthernetController controller;
-        private IWindowHost window_host;
+        private IUiHost window_host;
         private MainWindowEthernetDetailsPage details_page;
         private MainWindowEthernetEditPage edit_page;
         private NetworkDevice? selected_device = null;
@@ -37,7 +37,7 @@ namespace HyprNetworkManager.UI.Views {
 
         public EthernetSectionView (
             MainWindowEthernetController controller,
-            IWindowHost window_host
+            IUiHost window_host
         ) {
             this.controller = controller;
             this.window_host = window_host;

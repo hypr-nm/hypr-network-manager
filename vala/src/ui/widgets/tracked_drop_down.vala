@@ -132,14 +132,14 @@ namespace HyprNetworkManager.UI.Widgets {
             return _selected;
         }
 
-        private void populate_listbox () {
-            for (Gtk.ListBoxRow? row = (Gtk.ListBoxRow?) listbox.get_first_child ();
-                 row != null;
-                 row = (Gtk.ListBoxRow?) listbox.get_first_child ()) {
-                listbox.remove (row);
-            }
+    private void populate_listbox () {
+        for (Gtk.ListBoxRow? row = (Gtk.ListBoxRow?) listbox.get_first_child ();
+             row != null;
+             row = (Gtk.ListBoxRow?) listbox.get_first_child ()) {
+            listbox.remove (row);
+        }
 
-            for (uint i = 0; i < model.get_n_items (); i++) {
+        for (uint i = 0; i < model.get_n_items (); i++) {
                 var item = (Gtk.StringObject) model.get_item (i);
                 var row = new Gtk.ListBoxRow ();
 

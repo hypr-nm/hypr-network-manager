@@ -32,7 +32,7 @@ using HyprNetworkManager.UI.Utils;
 using HyprNetworkManager.UI.Widgets;
 using HyprNetworkManager.Models;
 
-public class MainWindow : Gtk.ApplicationWindow, IWindowHost {
+public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IUiHost {
     private WindowConfigContext config_context;
     private NetworkManagerClient nm;
     private HyprNetworkManager.UI.Views.StatusBarView status_bar_view;

@@ -38,14 +38,14 @@ namespace HyprNetworkManager.UI.Views {
 
         public VpnSectionView (
             MainWindowVpnController controller,
-            HyprNetworkManager.UI.Interfaces.IWindowHost window_host,
+            HyprNetworkManager.UI.Interfaces.IWidgetFactory widget_factory,
             HyprNetworkManager.Models.NetworkStateContext state_context
         ) {
             this.controller = controller;
             details_page = new MainWindowVpnDetailsPage ();
-            edit_page = new MainWindowVpnEditPage (window_host);
+            edit_page = new MainWindowVpnEditPage (widget_factory);
             add_page = new MainWindowVpnAddPage ();
-            setup_page = new MainWindowVpnSetupPage (window_host);
+            setup_page = new MainWindowVpnSetupPage (widget_factory);
             peer_edit_page = new MainWindowVpnPeerEditPage ();
             page_builder = new MainWindowVpnPageBuilder (state_context);
 

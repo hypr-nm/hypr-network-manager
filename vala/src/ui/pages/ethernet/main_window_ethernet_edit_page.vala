@@ -73,7 +73,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.error_revealer.set_reveal_child (true);
     }
 
-    public MainWindowEthernetEditPage (IWindowHost window_host) {
+    public MainWindowEthernetEditPage (IWidgetFactory widget_factory) {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
 
         this.add_css_class (MainWindowCssClasses.PAGE);
@@ -124,7 +124,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v4_gw,
             out v4_dns_auto,
             out v4_dns,
-            window_host.create_tracked_dropdown,
+            widget_factory.create_tracked_dropdown,
             true
         );
 
@@ -147,7 +147,7 @@ public class MainWindowEthernetEditPage : Gtk.Box, IMainWindowIpEditPage {
             out v6_gw,
             out v6_dns_auto,
             out v6_dns,
-            window_host.create_tracked_dropdown,
+            widget_factory.create_tracked_dropdown,
             true
         );
 

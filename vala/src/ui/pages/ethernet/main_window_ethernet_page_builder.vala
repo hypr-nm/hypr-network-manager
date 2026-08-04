@@ -71,8 +71,6 @@ namespace MainWindowEthernetPageBuilder {
         refresh_btn.add_css_class (MainWindowCssClasses.REFRESH_BUTTON);
         refresh_btn.set_valign (Gtk.Align.CENTER);
         refresh_btn.set_tooltip_text (_("Refresh Ethernet devices"));
-        refresh_btn.add_css_class (MainWindowCssClasses.TOOLBAR_ACTION);
-        refresh_btn.add_css_class (MainWindowCssClasses.BUTTON);
         refresh_btn.clicked.connect (() => {
             controller.refresh ();
         });
