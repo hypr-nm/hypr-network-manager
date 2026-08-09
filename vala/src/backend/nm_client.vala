@@ -50,6 +50,7 @@ public class NetworkManagerClient : GLib.Object,
     private Nl80211ApMonitor ap_monitor;
     private NmEthernetClient ethernet_client;
     private NmVpnClient vpn_client;
+    private bool hotspot_initialized = false;
     private bool nm_signals_active = false;
     private GLib.List<NmSignalSubscription> nm_signal_subscriptions;
 
@@ -63,6 +64,7 @@ public class NetworkManagerClient : GLib.Object,
         ap_monitor = new Nl80211ApMonitor ();
         secrets = new SecretsService (nm_client);
         hotspot = new HotspotService (nm_client, ap_monitor);
+        hotspot_initialized = true;
         wifi_scanner = new WifiScannerService (nm_client);
         saved_profiles = new SavedProfileService (nm_client, secrets);
         ethernet_client = new NmEthernetClient (nm_client);
@@ -644,6 +646,8 @@ public class NetworkManagerClient : GLib.Object,
 
     ~NetworkManagerClient () {
         unsubscribe_network_events ();
-        hotspot.shutdown ();
+        if (hotspot_initialized) {
+            hotspot.shutdown ();
+        }
     }
 }
