@@ -46,7 +46,6 @@ executable(
     config_file,
     app_resources,
     'src/logging.vala',
-    'src/cli_invocation.vala',
     'src/constants.vala',
     'src/models/config.vala',
     'src/models/hotspot_config.vala',

@@ -43,8 +43,8 @@ int main (string[] args) {
         {"status", 0, 0, OptionArg.NONE, ref status, _("Print JSON status for waybar/eww"), null},
         {"toggle-wifi", 0, 0, OptionArg.NONE, ref toggle_wifi, _("Toggle Wi-Fi and exit"), null},
         {"debug", 0, 0, OptionArg.NONE, ref debug_enabled, _("Override log level to debug"), null},
-        {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, _("Run as a background daemon"), null},
-        {"quit", 'q', 0, OptionArg.NONE, ref quit_mode, _("Quit the running daemon"), null},
+        {"daemon", 0, 0, OptionArg.NONE, ref daemon_mode, _("Run without showing the window initially"), null},
+        {"quit", 'q', 0, OptionArg.NONE, ref quit_mode, _("Quit the running application"), null},
         {"version", 'v', 0, OptionArg.NONE, ref version_mode, _("Print version information"), null},
         {null}
     };
@@ -176,66 +176,14 @@ int main (string[] args) {
             msg.set_body (builder.end ());
 
             conn.send_message_with_reply_sync (msg, DBusSendMessageFlags.NONE, -1);
-            log_info ("cli", "Sent quit signal to daemon");
-            stdout.printf ("Terminating daemon.\n");
+            log_info ("cli", "Sent quit signal to running application");
+            stdout.printf ("Terminating running application.\n");
         } catch (Error e) {
             log_error ("cli", "Failed to send quit signal: " + e.message);
             stdout.printf ("Failed to send quit signal: %s\n", e.message);
             return 1;
         }
         return 0;
-    }
-
-    if (!daemon_mode && !status && !toggle_wifi && !quit_mode) {
-        bool daemon_running = false;
-        try {
-            var conn = Bus.get_sync (BusType.SESSION);
-            var msg = new DBusMessage.method_call ("org.freedesktop.DBus", "/org/freedesktop/DBus",
-                "org.freedesktop.DBus", "NameHasOwner");
-            msg.set_body (new Variant ("(s)", "yeab212.hypr-network-manager"));
-            var reply = conn.send_message_with_reply_sync (msg, DBusSendMessageFlags.NONE, -1);
-            reply.get_body ().get ("(b)", out daemon_running);
-        } catch (Error e) {
-            log_warn ("cli", "daemon ownership check failed; assuming daemon is not running error=" + e.message);
-        }
-
-        if (!daemon_running) {
-            log_info ("cli", "daemon not running, spawning background instance.");
-            try {
-                string[] spawn_args = CliInvocation.build_daemon_args (
-                    args[0],
-                    debug_enabled,
-                    config_path
-                );
-                Process.spawn_async (null, spawn_args, null,
-                    SpawnFlags.SEARCH_PATH | SpawnFlags.STDOUT_TO_DEV_NULL | SpawnFlags.STDERR_TO_DEV_NULL, null, null);
-
-                var loop = new MainLoop ();
-                uint watch_id = Bus.watch_name (BusType.SESSION, "yeab212.hypr-network-manager",
-                    BusNameWatcherFlags.NONE,
-                    (conn, name, owner) => {
-                        if (owner != null && owner != "") {
-                            log_info ("cli", "Daemon grabbed DBus name dynamically!");
-                            loop.quit ();
-                        }
-                    },
-                    (conn, name) => {
-                        // ignore completely
-                    });
-
-                // Fail-safe to avoid blocking indefinitely if the daemon fails to start
-                Timeout.add (NM_DAEMON_TIMEOUT_MS, () => {
-                    log_warn ("cli", "Timeout waiting for daemon to acquire DBus name");
-                    loop.quit ();
-                    return false;
-                });
-
-                loop.run ();
-                Bus.unwatch_name (watch_id);
-            } catch (Error e) {
-                log_error ("cli", "Failed to spawn daemon: " + e.message);
-            }
-        }
     }
 
     var app = new NetworkManager (config, daemon_mode);

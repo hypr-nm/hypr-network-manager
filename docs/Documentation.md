@@ -575,6 +575,22 @@ Add a custom module in Waybar:
 }
 ```
 
+Keep `on-click` as a plain `hypr-network-manager` invocation. The first invocation
+stays resident, and later clicks activate the existing application instead of
+creating another instance.
+
+If you want the application ready before the first click, start it once from your
+Hyprland configuration:
+
+```conf
+exec-once = hypr-network-manager --daemon
+```
+
+`--daemon` starts the resident application without showing its window initially;
+it should not be added to the Waybar click command. A plain terminal invocation
+stays attached to that terminal and streams logs until it is stopped with `Ctrl+C`
+or `hypr-network-manager --quit`.
+
 ### Hyprland Integration
 
 For blur on this app's layer-shell surface namespace, add this rule:

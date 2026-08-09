@@ -274,7 +274,7 @@ public class NetworkManager : Gtk.Application {
 
     protected override void startup () {
         base.startup ();
-        // Always hold the process so it becomes a resident daemon automatically
+        // Keep the primary process resident after its window is hidden.
         this.hold ();
 
         var quit_action = new SimpleAction ("quit", null);
@@ -331,7 +331,7 @@ public class NetworkManager : Gtk.Application {
         window.close_request.connect (() => {
             hide_dismiss_overlay ();
 
-            // We are always a daemon, just conceal the window when dismissed
+            // Conceal the window without terminating the resident application.
             window.visible = false;
             return true;
         });
