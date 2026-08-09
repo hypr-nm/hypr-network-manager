@@ -41,6 +41,26 @@ namespace NmWifiUtils {
         return GLib.Variant.is_object_path (path);
     }
 
+    public string? resolve_specific_object (NM.Device dev, string ap_path) {
+        if (!is_valid_specific_object (ap_path)) {
+            return null;
+        }
+        var wifi = dev as NM.DeviceWifi;
+        if (wifi == null) {
+            return ap_path;
+        }
+        foreach (var ap in wifi.get_access_points ()) {
+            if (((NM.Object) ap).get_path () == ap_path) {
+                return ap_path;
+            }
+        }
+        // The captured AP is no longer in the device's scan list (e.g. it went
+        // offline while another AP for the same SSID remains). Returning null
+        // lets NetworkManager pick a currently-visible compatible AP instead of
+        // failing with "access point ... was not in the scan list".
+        return null;
+    }
+
     public string resolve_saved_ssid (NM.Connection conn, NM.SettingWireless s_wireless) {
         string ssid = bytes_to_ssid (s_wireless.ssid).strip ();
         if (ssid != "") {
@@ -140,6 +160,30 @@ namespace NmWifiUtils {
             autoconnect = resolve_autoconnect (conn),
             device_path = wifi_device_path
         };
+    }
+
+    public string connection_key_mgmt (NM.Connection conn) {
+        var s_sec = conn.get_setting_wireless_security ();
+        if (s_sec == null) {
+            return "";
+        }
+        return s_sec.key_mgmt != null ? s_sec.key_mgmt.strip ().ascii_down () : "";
+    }
+
+    public bool enable_manual_multi_connect (NM.Connection conn) {
+        var s_conn = conn.get_setting_connection ();
+        if (s_conn == null) {
+            return false;
+        }
+
+        NM.ConnectionMultiConnect current = s_conn.get_multi_connect ();
+        if (current == NM.ConnectionMultiConnect.MANUAL_MULTIPLE
+            || current == NM.ConnectionMultiConnect.MULTIPLE) {
+            return false;
+        }
+
+        s_conn.multi_connect = (int) NM.ConnectionMultiConnect.MANUAL_MULTIPLE;
+        return true;
     }
 
     public string infer_security_mode (NM.SettingWirelessSecurity? s_sec) {

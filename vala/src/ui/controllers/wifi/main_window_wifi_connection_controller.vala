@@ -111,8 +111,11 @@ public class MainWindowWifiConnectionController : Object {
 
         state_context.clear_all_wifi_errors ();
 
-        if (!state_context.active_wifi_connections.contains (net_key)) {
-            state_context.mark_wifi_connecting (net_key);
+        // A logical network can already be active on another radio while this
+        // selected candidate is still connecting. Track the selected radio,
+        // not the row-wide active key.
+        if (!net.connected) {
+            state_context.mark_wifi_connecting (net_key, net.device_path);
             state_context.pending_wifi_seen_connecting.remove (net_key);
         }
 
@@ -138,7 +141,12 @@ public class MainWindowWifiConnectionController : Object {
                 is_hidden = net.is_hidden,
                 saved = false,
                 autoconnect = autoconnect,
+                device_name = net.device_name,
                 device_path = net.device_path,
+                device_is_connected = net.device_is_connected,
+                device_is_connecting = net.device_is_connecting,
+                device_is_available = net.device_is_available,
+                device_connection = net.device_connection,
                 ap_path = net.ap_path,
                 bssid = net.bssid,
                 frequency_mhz = net.frequency_mhz,
@@ -175,8 +183,7 @@ public class MainWindowWifiConnectionController : Object {
                     }
 
                     if (state_context.pending_wifi_connect.contains (pending_ssid)) {
-                        state_context.pending_wifi_connect.remove (pending_ssid);
-                        state_context.pending_wifi_seen_connecting.remove (pending_ssid);
+                        state_context.clear_wifi_connecting (pending_ssid);
                         state_context.mark_wifi_error (pending_ssid, "Connection timed out.");
                         host.refresh_all ();
                     }
@@ -187,14 +194,13 @@ public class MainWindowWifiConnectionController : Object {
                 if (!is_ui_epoch_valid (epoch)) {
                     return;
                 }
-                state_context.pending_wifi_connect.remove (net_key);
-                state_context.pending_wifi_seen_connecting.remove (net_key);
+                state_context.clear_wifi_connecting (net_key);
                 string connect_error_message = e.message;
 
                 if (can_fallback_reconnect) {
                     string fallback_key = fallback_network.network_key;
                     host.show_wifi_error (net_key, _("Connect failed: %s").printf (connect_error_message));
-                    state_context.mark_wifi_connecting (fallback_key);
+                    state_context.mark_wifi_connecting (fallback_key, fallback_network.device_path);
                     state_context.pending_wifi_seen_connecting.remove (fallback_key);
 
                     nm.connect_wifi.begin (
@@ -214,8 +220,7 @@ public class MainWindowWifiConnectionController : Object {
                             if (!is_ui_epoch_valid (epoch)) {
                                 return;
                             }
-                            state_context.pending_wifi_connect.remove (fallback_key);
-                            state_context.pending_wifi_seen_connecting.remove (fallback_key);
+                            state_context.clear_wifi_connecting (fallback_key);
                             host.show_wifi_error (
                                 fallback_key,
                                 _("Connect failed: %s. Reconnect to previous network failed: %s")
@@ -267,8 +272,7 @@ public class MainWindowWifiConnectionController : Object {
             uint epoch = capture_ui_epoch ();
             string wifi_key = net.network_key;
 
-            state_context.pending_wifi_connect.remove (wifi_key);
-            state_context.pending_wifi_seen_connecting.remove (wifi_key);
+            state_context.clear_wifi_connecting (wifi_key);
             state_context.clear_wifi_error (wifi_key);
 
             nm.disconnect_wifi.begin (net, null, (obj, res) => {

@@ -24,13 +24,24 @@ public class WifiNetwork : Object {
     public bool is_hidden { get; construct set; default = false; }
     public bool saved { get; construct set; }
     public bool autoconnect { get; construct set; }
+    public string device_name { get; construct set; default = ""; }
     public string device_path { get; construct set; }
+    public bool device_is_connected { get; construct set; default = false; }
+    public bool device_is_connecting { get; construct set; default = false; }
+    public bool device_is_available { get; construct set; default = true; }
+    public string device_connection { get; construct set; default = ""; }
     public string ap_path { get; construct set; }
     public string bssid { get; construct set; }
     public uint32 frequency_mhz { get; construct set; }
     public uint32 max_bitrate_kbps { get; construct set; }
     public WifiNetworkMode mode { get; construct set; }
     public WifiSecurityCapabilities security { get; construct set; }
+    public WifiNetwork[] radio_candidates = {};
+
+    private const string SECURITY_KEY_WPA = "wpa";
+    private const string SECURITY_KEY_SAE = "sae";
+    private const string SECURITY_KEY_EAP = "eap";
+    private const string SECURITY_KEY_SECURED = "secured";
 
     public bool is_secured {
         get { return security != null && security.is_secured; }
@@ -38,7 +49,36 @@ public class WifiNetwork : Object {
 
     public string network_key {
         owned get {
-            return ssid + ":" + (is_secured ? "secured" : WifiSecurity.OPEN);
+            return ssid + ":" + security_key_component ();
         }
+    }
+
+    public WifiNetwork? candidate_for_device (string requested_device_path) {
+        foreach (var candidate in radio_candidates) {
+            if (candidate.device_path == requested_device_path) {
+                return candidate;
+            }
+        }
+
+        if (device_path == requested_device_path) {
+            return this;
+        }
+        return null;
+    }
+
+    private string security_key_component () {
+        if (security == null || !security.is_secured) {
+            return WifiSecurity.OPEN;
+        }
+        if (security.is_enterprise) {
+            return SECURITY_KEY_EAP;
+        }
+        if (security.supports_psk) {
+            return SECURITY_KEY_WPA;
+        }
+        if (security.supports_sae) {
+            return SECURITY_KEY_SAE;
+        }
+        return SECURITY_KEY_SECURED;
     }
 }

@@ -590,6 +590,12 @@ namespace HyprNetworkManager.UI.Views {
             window_host.set_popup_text_input_mode (true);
         }
 
+        public HyprNetworkManager.UI.Widgets.TrackedDropDown create_radio_dropdown (
+            owned Gtk.StringList model
+        ) {
+            return window_host.create_tracked_dropdown ((owned) model);
+        }
+
         public void hide_password_prompt (Gtk.Revealer revealer, Gtk.Entry entry, string? value) {
             bool was_active = password_prompt_manager.hide_prompt (revealer, entry, value);
             if (was_active) {
@@ -638,7 +644,8 @@ namespace HyprNetworkManager.UI.Views {
                 config_context.show_frequency,
                 config_context.show_band,
                 config_context.show_bssid,
-                resolve_wifi_row_icon_name (net)
+                resolve_wifi_row_icon_name (net),
+                this
             );
         }
 

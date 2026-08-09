@@ -116,10 +116,90 @@ private static void test_network_key_stability () {
             supports_sae = true
         }
     };
+    var wpa3_only = new WifiNetwork () {
+        ssid = "Example",
+        security = new WifiSecurityCapabilities () {
+            is_secured = true,
+            supports_sae = true
+        }
+    };
+    var enterprise = new WifiNetwork () {
+        ssid = "Example",
+        security = new WifiSecurityCapabilities () {
+            is_secured = true,
+            is_enterprise = true
+        }
+    };
 
     assert (open.network_key == "Example:open");
-    assert (psk.network_key == "Example:secured");
+    assert (psk.network_key == "Example:wpa");
+    assert (wpa3_only.network_key == "Example:sae");
+    assert (enterprise.network_key == "Example:eap");
     assert (transition.network_key == psk.network_key);
+}
+
+private static void test_wifi_radio_candidate_lookup () {
+    var radio_one = new WifiNetwork () {
+        ssid = "Example",
+        device_name = "wlan0",
+        device_path = "/devices/wlan0",
+        ap_path = "/aps/one",
+        security = new WifiSecurityCapabilities ()
+    };
+    var radio_two = new WifiNetwork () {
+        ssid = "Example",
+        device_name = "wlan1",
+        device_path = "/devices/wlan1",
+        ap_path = "/aps/two",
+        security = new WifiSecurityCapabilities ()
+    };
+    var grouped = new WifiNetwork () {
+        ssid = "Example",
+        device_name = radio_one.device_name,
+        device_path = radio_one.device_path,
+        ap_path = radio_one.ap_path,
+        security = radio_one.security,
+        radio_candidates = { radio_one, radio_two }
+    };
+
+    assert (grouped.candidate_for_device ("/devices/wlan0") == radio_one);
+    assert (grouped.candidate_for_device ("/devices/wlan1") == radio_two);
+    assert (grouped.candidate_for_device ("/devices/missing") == null);
+}
+
+private static void test_pending_wifi_device_tracking () {
+    var state = new HyprNetworkManager.Models.NetworkStateContext ();
+    // A network may already be active on one radio while a connection to the
+    // same logical network is pending on another.
+    state.active_wifi_connections.insert ("Example:open", true);
+    state.mark_wifi_connecting ("Example:open", "/devices/wlan1");
+
+    assert (state.active_wifi_connections.contains ("Example:open"));
+    assert (state.pending_wifi_connect.contains ("Example:open"));
+    assert (state.pending_wifi_device_paths.lookup ("Example:open") == "/devices/wlan1");
+
+    state.clear_wifi_connecting ("Example:open");
+    assert (!state.pending_wifi_connect.contains ("Example:open"));
+    assert (!state.pending_wifi_device_paths.contains ("Example:open"));
+}
+
+private static void test_manual_multi_connect_transition () {
+    var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
+    var setting = new NM.SettingConnection ();
+    conn.add_setting (setting);
+
+    assert (setting.get_multi_connect () == NM.ConnectionMultiConnect.DEFAULT);
+    assert (NmWifiUtils.enable_manual_multi_connect (conn));
+    assert (setting.get_multi_connect () == NM.ConnectionMultiConnect.MANUAL_MULTIPLE);
+    assert (!NmWifiUtils.enable_manual_multi_connect (conn));
+
+    setting.multi_connect = (int) NM.ConnectionMultiConnect.MULTIPLE;
+    assert (!NmWifiUtils.enable_manual_multi_connect (conn));
+    assert (setting.get_multi_connect () == NM.ConnectionMultiConnect.MULTIPLE);
+
+    setting.multi_connect = (int) NM.ConnectionMultiConnect.SINGLE;
+    assert (NmWifiUtils.enable_manual_multi_connect (conn));
+    assert (setting.get_multi_connect () == NM.ConnectionMultiConnect.MANUAL_MULTIPLE);
 }
 
 private static int main (string[] args) {
@@ -130,5 +210,8 @@ private static int main (string[] args) {
     Test.add_func ("/nm-boundary/wifi-security", test_wifi_security_capabilities);
     Test.add_func ("/nm-boundary/wifi-mode", test_wifi_mode_mapping);
     Test.add_func ("/nm-boundary/network-key", test_network_key_stability);
+    Test.add_func ("/nm-boundary/wifi-radio-candidate", test_wifi_radio_candidate_lookup);
+    Test.add_func ("/nm-boundary/pending-wifi-device", test_pending_wifi_device_tracking);
+    Test.add_func ("/nm-boundary/manual-multi-connect", test_manual_multi_connect_transition);
     return Test.run ();
 }

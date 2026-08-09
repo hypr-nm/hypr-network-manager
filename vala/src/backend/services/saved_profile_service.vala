@@ -32,24 +32,43 @@ public class SavedProfileService : GLib.Object {
         var connections = client.get_connections ();
         var devices = client.get_devices ();
 
-        string wifi_device_path = "";
-        string active_uuid = "";
+        string default_wifi_device_path = "";
+        var active_uuid_to_device = new HashTable<string, string> (str_hash, str_equal);
         foreach (var dev in devices) {
             if (dev is NM.DeviceWifi == false) {
                 continue;
             }
-
-            wifi_device_path = ((NM.Object)dev).get_path ();
+            if (default_wifi_device_path == "") {
+                default_wifi_device_path = ((NM.Object)dev).get_path ();
+            }
             var ac = dev.get_active_connection ();
             if (ac != null) {
-                active_uuid = ac.get_uuid ();
+                string active_uuid = ac.get_uuid ();
+                if (active_uuid != null && active_uuid != "") {
+                    active_uuid_to_device.insert (active_uuid, ((NM.Object)dev).get_path ());
+                }
             }
-            break;
         }
 
         var out_list = new List<WifiSavedProfile> ();
         foreach (var conn in connections) {
-            var profile = NmWifiUtils.build_saved_profile (conn, wifi_device_path, active_uuid);
+            string conn_uuid = conn.get_uuid ();
+            string uuid = conn_uuid != null ? conn_uuid.strip () : "";
+
+            string profile_device_path;
+            string active_uuid_for_profile;
+            if (uuid != "" && active_uuid_to_device.contains (uuid)) {
+                active_uuid_for_profile = uuid;
+                profile_device_path = active_uuid_to_device.get (uuid);
+            } else {
+                active_uuid_for_profile = "";
+                profile_device_path = default_wifi_device_path;
+            }
+
+            var profile = NmWifiUtils.build_saved_profile (
+                conn,
+                profile_device_path,
+                active_uuid_for_profile);
             if (profile != null) {
                 out_list.append (profile);
             }
@@ -366,6 +385,52 @@ public class SavedProfileService : GLib.Object {
         return true;
     }
 
+    private bool is_profile_active_on_other_wifi_device (
+        NM.Connection connection,
+        NM.Device target_device
+    ) {
+        string connection_uuid = connection.get_uuid ();
+        if (connection_uuid == null || connection_uuid.strip () == "") {
+            return false;
+        }
+
+        string target_path = ((NM.Object) target_device).get_path ();
+        foreach (var device in nm_client.get_devices ()) {
+            if (device is NM.DeviceWifi == false
+                || ((NM.Object) device).get_path () == target_path) {
+                continue;
+            }
+
+            var active = device.get_active_connection ();
+            if (active != null && active.get_uuid () == connection_uuid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool enable_manual_multi_connect_for_parallel_activation (
+        NM.Connection connection,
+        NM.Device target_device
+    ) {
+        if (!is_profile_active_on_other_wifi_device (connection, target_device)) {
+            return false;
+        }
+
+        if (!NmWifiUtils.enable_manual_multi_connect (connection)) {
+            return false;
+        }
+
+        // The user explicitly selected another radio. MANUAL_MULTIPLE permits
+        // this activation without making NetworkManager autoconnect the same
+        // profile on every compatible radio.
+        log_info (
+            "saved-profile-service",
+            "Enabled manual multi-connect for an explicit parallel Wi-Fi activation"
+        );
+        return true;
+    }
+
     public async bool connect_saved (WifiNetwork network, Cancellable? cancellable = null) throws Error {
         var client = nm_client;
         var conn = client.get_connection_by_uuid (network.saved_connection_uuid);
@@ -380,7 +445,12 @@ public class SavedProfileService : GLib.Object {
             throw new IOError.NOT_FOUND ("Device not found");
         }
 
-        string? specific_object = NmWifiUtils.is_valid_specific_object (network.ap_path) ? network.ap_path : null;
+        bool multi_connect_changed = enable_manual_multi_connect_for_parallel_activation (conn, dev);
+        if (multi_connect_changed && conn is NM.RemoteConnection) {
+            yield ((NM.RemoteConnection) conn).commit_changes_async (true, cancellable);
+        }
+
+        string? specific_object = NmWifiUtils.resolve_specific_object (dev, network.ap_path);
         yield client.activate_connection_async (conn, dev, specific_object, cancellable);
         return true;
     }
@@ -437,6 +507,7 @@ public class SavedProfileService : GLib.Object {
             var existing_conn = client.get_connection_by_uuid (network.saved_connection_uuid);
             if (existing_conn != null) {
                 apply_connection_autoconnect (existing_conn, network.ssid, autoconnect);
+                enable_manual_multi_connect_for_parallel_activation (existing_conn, dev);
                 if (password != null && password != "") {
                     var s_sec = existing_conn.get_setting_wireless_security ();
                     if (s_sec != null && s_sec.key_mgmt == WifiKeyMgmt.WPA_EAP) {
@@ -467,8 +538,7 @@ public class SavedProfileService : GLib.Object {
                 if (existing_conn is NM.RemoteConnection) {
                     yield ((NM.RemoteConnection)existing_conn).commit_changes_async (true, cancellable);
                 }
-                string? specific_object = (NmWifiUtils.is_valid_specific_object (network.ap_path)
-                 ? network.ap_path : null);
+                string? specific_object = NmWifiUtils.resolve_specific_object (dev, network.ap_path);
                 yield client.activate_connection_async (existing_conn, dev, specific_object, cancellable);
                 log_info (
                     "saved-profile-service",
@@ -525,7 +595,7 @@ public class SavedProfileService : GLib.Object {
             }
         }
 
-        string? specific_object = network.is_hidden ? null : network.ap_path;
+        string? specific_object = network.is_hidden ? null : NmWifiUtils.resolve_specific_object (dev, network.ap_path);
 
         if (network.is_hidden && specific_object == null) {
             // For hidden networks, we must build a full connection manually
@@ -546,6 +616,25 @@ public class SavedProfileService : GLib.Object {
                 }
             }
             partial = NmWifiUtils.create_hidden_wifi_connection (network.ssid, password, mode);
+        }
+
+        if (!network.is_hidden && specific_object == null) {
+            // The captured AP left the scan list. Make sure the partial
+            // connection carries the SSID so NetworkManager can select a
+            // currently-visible compatible AP instead of failing for a missing
+            // AP path.
+            if (partial == null) {
+                partial = (NM.SimpleConnection) NM.SimpleConnection.@new ();
+            }
+            var s_wifi = partial.get_setting_wireless ();
+            if (s_wifi == null) {
+                s_wifi = new NM.SettingWireless ();
+                partial.add_setting (s_wifi);
+            }
+            if (s_wifi.ssid == null) {
+                uint8[] ssid_arr = network.ssid.data;
+                s_wifi.ssid = new Bytes (ssid_arr);
+            }
         }
 
         if (partial != null || !autoconnect) {

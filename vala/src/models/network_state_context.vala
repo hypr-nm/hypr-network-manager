@@ -24,6 +24,7 @@ namespace HyprNetworkManager.Models {
     public class NetworkStateContext : Object {
         public HashTable<string, bool> pending_wifi_connect { get; private set; }
         public HashTable<string, bool> pending_wifi_seen_connecting { get; private set; }
+        public HashTable<string, string> pending_wifi_device_paths { get; private set; }
         public HashTable<string, bool> active_wifi_connections { get; private set; }
         public HashTable<string, string> wifi_errors { get; private set; }
         public HashTable<string, string> ethernet_errors { get; private set; }
@@ -32,15 +33,21 @@ namespace HyprNetworkManager.Models {
         public NetworkStateContext () {
             pending_wifi_connect = new HashTable<string, bool> (str_hash, str_equal);
             pending_wifi_seen_connecting = new HashTable<string, bool> (str_hash, str_equal);
+            pending_wifi_device_paths = new HashTable<string, string> (str_hash, str_equal);
             active_wifi_connections = new HashTable<string, bool> (str_hash, str_equal);
             wifi_errors = new HashTable<string, string> (str_hash, str_equal);
             ethernet_errors = new HashTable<string, string> (str_hash, str_equal);
             vpn_errors = new HashTable<string, string> (str_hash, str_equal);
         }
 
-        public void mark_wifi_connecting (string ssid_or_key) {
+        public void mark_wifi_connecting (string ssid_or_key, string device_path = "") {
             wifi_errors.remove (ssid_or_key);
             pending_wifi_connect.insert (ssid_or_key, true);
+            if (device_path != "") {
+                pending_wifi_device_paths.insert (ssid_or_key, device_path);
+            } else {
+                pending_wifi_device_paths.remove (ssid_or_key);
+            }
         }
 
         public void mark_wifi_error (string ssid_or_key, string error) {
@@ -78,6 +85,7 @@ namespace HyprNetworkManager.Models {
         public void clear_wifi_connecting (string ssid_or_key) {
             pending_wifi_connect.remove (ssid_or_key);
             pending_wifi_seen_connecting.remove (ssid_or_key);
+            pending_wifi_device_paths.remove (ssid_or_key);
         }
 
         public bool is_wifi_connecting (string ssid_or_key) {

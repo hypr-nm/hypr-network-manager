@@ -181,8 +181,7 @@ public class MainWindowWifiDetailsEditController : Object {
                             if (!is_ui_epoch_valid (epoch) || is_cancelled_error (e)) {
                                 return;
                             }
-                            state_context.pending_wifi_connect.remove (network_key);
-                            state_context.pending_wifi_seen_connecting.remove (network_key);
+                            state_context.clear_wifi_connecting (network_key);
                             edit_failed (_("Reconnect after edit failed: %s").printf (e.message));
                             host.refresh_after_action (false);
                         }
@@ -192,8 +191,7 @@ public class MainWindowWifiDetailsEditController : Object {
             }
 
             if (waited_ms >= WIFI_RECONNECT_MAX_WAIT_MS) {
-                state_context.pending_wifi_connect.remove (network_key);
-                state_context.pending_wifi_seen_connecting.remove (network_key);
+                state_context.clear_wifi_connecting (network_key);
                 edit_failed (_("Reconnect after edit timed out while waiting for disconnect to complete."));
                 host.refresh_after_action (false);
                 return;
@@ -303,7 +301,7 @@ public class MainWindowWifiDetailsEditController : Object {
                 }
 
                 state_context.clear_all_wifi_errors ();
-                state_context.mark_wifi_connecting (network_key);
+                state_context.mark_wifi_connecting (network_key, network.device_path);
                 state_context.pending_wifi_seen_connecting.remove (network_key);
                 reconnect_after_disconnect_with_retry (network, epoch, 0, action_request);
             });

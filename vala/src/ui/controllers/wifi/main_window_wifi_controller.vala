@@ -209,24 +209,33 @@ public class MainWindowWifiController : Object {
 
         foreach (var network in networks) {
             current_network_keys.insert (network.network_key, true);
-            if (!network.connected) {
-                continue;
+            bool found_active_for_network = false;
+
+            if (network.radio_candidates.length == 0) {
+                DeviceState? state = device_states.lookup (network.device_path);
+                if (network.connected && state != null && state == DeviceState.ACTIVATED) {
+                    found_active_for_network = true;
+                    active_wifi_by_device.insert (network.device_path, network);
+                }
+            } else {
+                foreach (var candidate in network.radio_candidates) {
+                    DeviceState? state = device_states.lookup (candidate.device_path);
+                    if (!candidate.connected || state == null || state != DeviceState.ACTIVATED) {
+                        continue;
+                    }
+                    found_active_for_network = true;
+                    active_wifi_by_device.insert (candidate.device_path, candidate);
+                }
             }
 
-            DeviceState? state = device_states.lookup (network.device_path);
-            if (state == null || state != DeviceState.ACTIVATED) {
-                continue;
-            }
-
-            state_context.active_wifi_connections.insert (network.network_key, true);
-            if (!old_active.contains (network.network_key)) {
-                state_context.clear_all_wifi_errors ();
-            }
-            if (!active_wifi_by_device.contains (network.device_path)) {
-                active_wifi_by_device.insert (network.device_path, network);
-            }
-            if (primary_connected_ssid == null) {
-                primary_connected_ssid = network.ssid;
+            if (found_active_for_network) {
+                state_context.active_wifi_connections.insert (network.network_key, true);
+                if (!old_active.contains (network.network_key)) {
+                    state_context.clear_all_wifi_errors ();
+                }
+                if (primary_connected_ssid == null) {
+                    primary_connected_ssid = network.ssid;
+                }
             }
         }
 
@@ -254,21 +263,27 @@ public class MainWindowWifiController : Object {
         if (!state_context.pending_wifi_connect.contains (network_key)) {
             return;
         }
-        if (state_context.active_wifi_connections.contains (network_key)) {
-            state_context.pending_wifi_connect.remove (network_key);
-            state_context.pending_wifi_seen_connecting.remove (network_key);
-            state_context.clear_all_wifi_errors ();
-            return;
-        }
+        string? pending_device_path = state_context.pending_wifi_device_paths.lookup (network_key);
+        string target_device_path = pending_device_path != null && pending_device_path != ""
+            ? pending_device_path
+            : network.device_path;
+        var target_candidate = network.candidate_for_device (target_device_path);
 
         NetworkDevice? matched_device = null;
         foreach (var device in devices) {
-            if (device.is_wifi && device.device_path == network.device_path) {
+            if (device.is_wifi && device.device_path == target_device_path) {
                 matched_device = device;
                 break;
             }
         }
         if (matched_device == null) {
+            return;
+        }
+        if (target_candidate != null
+            && target_candidate.connected
+            && matched_device.state == DeviceState.ACTIVATED) {
+            state_context.clear_wifi_connecting (network_key);
+            state_context.clear_all_wifi_errors ();
             return;
         }
         if (matched_device.is_connecting) {
@@ -278,8 +293,7 @@ public class MainWindowWifiController : Object {
 
         bool activated_elsewhere = matched_device.is_connected;
         if (activated_elsewhere || matched_device.state == DeviceState.FAILED) {
-            state_context.pending_wifi_connect.remove (network_key);
-            state_context.pending_wifi_seen_connecting.remove (network_key);
+            state_context.clear_wifi_connecting (network_key);
             state_context.mark_wifi_error (network_key, _("Connection failed or interrupted."));
             return;
         }
@@ -289,8 +303,7 @@ public class MainWindowWifiController : Object {
             || matched_device.state == DeviceState.UNAVAILABLE
             || matched_device.state == DeviceState.DISCONNECTED;
         if (state_context.pending_wifi_seen_connecting.contains (network_key) && disconnected) {
-            state_context.pending_wifi_connect.remove (network_key);
-            state_context.pending_wifi_seen_connecting.remove (network_key);
+            state_context.clear_wifi_connecting (network_key);
             state_context.mark_wifi_error (network_key, _("Connection failed."));
         }
     }

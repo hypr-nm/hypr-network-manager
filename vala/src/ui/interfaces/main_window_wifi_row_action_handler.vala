@@ -19,6 +19,9 @@ using Constants;
 using Gtk;
 
 public interface IMainWindowWifiRowActionHandler : Object {
+    public abstract HyprNetworkManager.UI.Widgets.TrackedDropDown create_radio_dropdown (
+        owned Gtk.StringList model
+    );
     public abstract void open_details (WifiNetwork net);
     public abstract void forget_saved_network (WifiNetwork net);
     public abstract void disconnect_network (WifiNetwork net);

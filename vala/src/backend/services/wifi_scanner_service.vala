@@ -18,6 +18,10 @@
 using Constants;
 using GLib;
 
+private class WifiNetworkCandidateGroup : GLib.Object {
+    public List<WifiNetwork> candidates = new List<WifiNetwork> ();
+}
+
 public class WifiScannerService : GLib.Object {
     private NM.Client client;
 
@@ -25,22 +29,93 @@ public class WifiScannerService : GLib.Object {
         this.client = client;
     }
 
+    private static int candidate_preference_rank (WifiNetwork candidate) {
+        if (candidate.connected) {
+            return 0;
+        }
+        if (candidate.device_is_available
+            && !candidate.device_is_connecting
+            && !candidate.device_is_connected) {
+            return 1;
+        }
+        if (candidate.device_is_available && !candidate.device_is_connecting) {
+            return 2;
+        }
+        if (candidate.device_is_connecting) {
+            return 3;
+        }
+        return 4;
+    }
+
+    private static int compare_candidates (WifiNetwork a, WifiNetwork b) {
+        int rank_cmp = candidate_preference_rank (a) - candidate_preference_rank (b);
+        if (rank_cmp != 0) {
+            return rank_cmp;
+        }
+        if (a.saved != b.saved) {
+            return a.saved ? -1 : 1;
+        }
+        if (a.signal != b.signal) {
+            return (int) b.signal - (int) a.signal;
+        }
+
+        string device_a = a.device_name != null ? a.device_name : "";
+        string device_b = b.device_name != null ? b.device_name : "";
+        int device_cmp = device_a.collate (device_b);
+        if (device_cmp != 0) {
+            return device_cmp;
+        }
+        string bssid_a = a.bssid != null ? a.bssid : "";
+        string bssid_b = b.bssid != null ? b.bssid : "";
+        return bssid_a.collate (bssid_b);
+    }
+
+    private static WifiNetwork build_group_network (WifiNetworkCandidateGroup group) {
+        group.candidates.sort (compare_candidates);
+
+        var candidates = new WifiNetwork[group.candidates.length ()];
+        int index = 0;
+        foreach (var candidate in group.candidates) {
+            candidates[index++] = candidate;
+        }
+
+        var display = candidates[0];
+        return new WifiNetwork () {
+            ssid = display.ssid,
+            saved_connection_uuid = display.saved_connection_uuid,
+            signal = display.signal,
+            connected = display.connected,
+            is_hidden = display.is_hidden,
+            saved = display.saved,
+            autoconnect = display.autoconnect,
+            device_name = display.device_name,
+            device_path = display.device_path,
+            device_is_connected = display.device_is_connected,
+            device_is_connecting = display.device_is_connecting,
+            device_is_available = display.device_is_available,
+            device_connection = display.device_connection,
+            ap_path = display.ap_path,
+            bssid = display.bssid,
+            frequency_mhz = display.frequency_mhz,
+            max_bitrate_kbps = display.max_bitrate_kbps,
+            mode = display.mode,
+            security = display.security,
+            radio_candidates = candidates
+        };
+    }
+
     public async WifiScanData scan_networks (Cancellable? cancellable = null) throws Error {
         var devices = client.get_devices ();
         var connections = client.get_connections ();
 
-        var networks_map = new HashTable<string, WifiNetwork> (str_hash, str_equal);
+        var per_device_networks = new HashTable<string, WifiNetwork> (str_hash, str_equal);
         var devices_out = new List<NetworkDevice> ();
-        string primary_wifi_device_path = "";
 
         foreach (var dev in devices) {
             if (dev is NM.DeviceWifi == false) continue;
 
             var wifidev = (NM.DeviceWifi) dev;
             var active_ap = wifidev.get_active_access_point ();
-            if (primary_wifi_device_path == "") {
-                primary_wifi_device_path = ((NM.Object)dev).get_path ();
-            }
 
             var d = HyprNetworkManager.Backend.Mappers.DeviceMapper.map_device (dev);
             devices_out.append (d);
@@ -74,25 +149,43 @@ public class WifiScannerService : GLib.Object {
                 string saved_uuid = "";
                 bool autoconnect = true;
 
-                var valid_conns = ap.filter_connections (connections);
-                if (valid_conns != null && valid_conns.length > 0) {
-                    foreach (var candidate in valid_conns) {
-                        var conn = (NM.Connection) candidate;
-                        try {
-                            if (!wifidev.connection_compatible (conn)) {
-                                continue;
-                            }
-                        } catch (GLib.Error compat_err) {
+                var caps = HyprNetworkManager.Backend.Mappers.WifiSecurityMapper.map_capabilities (
+                    ap.get_flags (),
+                    ap.get_wpa_flags (),
+                    ap.get_rsn_flags ()
+                );
+
+                // Bind the first profile valid for this AP, mirroring nmtui
+                // (nm_device_connection_valid + nm_access_point_connection_valid).
+                // We walk the connection list ourselves rather than calling
+                // ap.filter_connections() because libnm documents its transfer
+                // annotation as unreliable for language bindings.
+                foreach (var candidate in connections) {
+                    try {
+                        if (!wifidev.connection_compatible (candidate)) {
                             continue;
                         }
-                        saved = true;
-                        saved_uuid = conn.get_uuid ();
-                        var s_conn = conn.get_setting_connection ();
-                        if (s_conn != null) {
-                            autoconnect = s_conn.autoconnect;
-                        }
-                        break;
+                    } catch (GLib.Error compat_err) {
+                        continue;
                     }
+                    if (!ap.connection_valid (candidate)) {
+                        continue;
+                    }
+                    // Guard: libnm deliberately lets a WPA2-PSK profile activate
+                    // against a WPA3-SAE-only AP, but that times out on many
+                    // radios. Skip just that one lenient case; everything else
+                    // is already decided by ap.connection_valid() above.
+                    if (caps.supports_sae && !caps.supports_psk
+                        && NmWifiUtils.connection_key_mgmt (candidate) == WifiKeyMgmt.WPA_PSK) {
+                        continue;
+                    }
+                    saved = true;
+                    saved_uuid = candidate.get_uuid ();
+                    var s_conn = candidate.get_setting_connection ();
+                    if (s_conn != null) {
+                        autoconnect = s_conn.autoconnect;
+                    }
+                    break;
                 }
 
                 bool connected = (active_ap != null && active_ap.get_path () == ap.get_path ());
@@ -105,48 +198,52 @@ public class WifiScannerService : GLib.Object {
                     is_hidden = is_hidden,
                     saved = saved,
                     autoconnect = autoconnect,
+                    device_name = d.name,
                     device_path = ((NM.Object)dev).get_path (),
+                    device_is_connected = d.is_connected,
+                    device_is_connecting = d.is_connecting,
+                    device_is_available = d.is_available,
+                    device_connection = d.connection,
                     ap_path = ((NM.Object)ap).get_path (),
                     bssid = ap.get_bssid (),
                     frequency_mhz = ap.get_frequency (),
                     max_bitrate_kbps = ap.get_max_bitrate (),
                     mode = HyprNetworkManager.Backend.Mappers.WifiSecurityMapper.map_mode (ap.get_mode ()),
-                    security = HyprNetworkManager.Backend.Mappers.WifiSecurityMapper.map_capabilities (
-                        ap.get_flags (),
-                        ap.get_wpa_flags (),
-                        ap.get_rsn_flags ()
-                    )
+                    security = caps
                 };
 
                 string network_key = net.network_key;
+                string per_device_key = network_key + "\x1f" + net.device_path;
 
-                // Deduplicate by network_key, keeping the best signal but prioritizing saved networks
-                if (!networks_map.contains (network_key)) {
-                    networks_map.insert (network_key, net);
-                } else {
-                    var existing = networks_map.get (network_key);
-                    if (net.connected) {
-                        networks_map.insert (network_key, net);
-                    } else if (!existing.connected) {
-                        if (net.saved && !existing.saved) {
-                            networks_map.insert (network_key, net);
-                        } else if (net.saved == existing.saved && net.signal > existing.signal) {
-                            networks_map.insert (network_key, net);
-                        }
-                    }
+                // Keep the best AP for this network on each radio. Cross-radio
+                // candidates are retained for the row's explicit radio picker.
+                if (!per_device_networks.contains (per_device_key)
+                    || compare_candidates (net, per_device_networks.get (per_device_key)) < 0) {
+                    per_device_networks.insert (per_device_key, net);
                 }
             }
         }
 
-        string primary_active_uuid = "";
-        if (primary_wifi_device_path != "") {
-            var primary_wifi_device = client.get_device_by_path (primary_wifi_device_path);
-            if (primary_wifi_device != null) {
-                var ac = primary_wifi_device.get_active_connection ();
-                if (ac != null) {
-                    primary_active_uuid = ac.get_uuid ();
-                }
+        var candidate_groups = new HashTable<string, WifiNetworkCandidateGroup> (str_hash, str_equal);
+        var candidate_iter = HashTableIter<string, WifiNetwork> (per_device_networks);
+        string candidate_key;
+        WifiNetwork candidate;
+        while (candidate_iter.next (out candidate_key, out candidate)) {
+            string network_key = candidate.network_key;
+            var group = candidate_groups.lookup (network_key);
+            if (group == null) {
+                group = new WifiNetworkCandidateGroup ();
+                candidate_groups.insert (network_key, group);
             }
+            group.candidates.append (candidate);
+        }
+
+        var networks_map = new HashTable<string, WifiNetwork> (str_hash, str_equal);
+        var group_iter = HashTableIter<string, WifiNetworkCandidateGroup> (candidate_groups);
+        string group_key;
+        WifiNetworkCandidateGroup group;
+        while (group_iter.next (out group_key, out group)) {
+            networks_map.insert (group_key, build_group_network (group));
         }
 
         // collapse entries that point to the same BSSID so hidden placeholders
@@ -247,11 +344,35 @@ public class WifiScannerService : GLib.Object {
 
     public async bool scan (Cancellable? cancellable = null) throws Error {
         var devices = client.get_devices ();
+        uint wifi_devices = 0;
+        uint successful_scans = 0;
+        string last_error_message = "";
+
         foreach (var dev in devices) {
-            if (dev is NM.DeviceWifi) {
-                yield ((NM.DeviceWifi) dev).request_scan_async (cancellable);
-                return true;
+            if (dev is NM.DeviceWifi == false) {
+                continue;
             }
+            wifi_devices++;
+            try {
+                yield ((NM.DeviceWifi) dev).request_scan_async (cancellable);
+                successful_scans++;
+            } catch (GLib.Error scan_err) {
+                if (scan_err is IOError.CANCELLED
+                    || (cancellable != null && cancellable.is_cancelled ())) {
+                    throw scan_err;
+                }
+                last_error_message = scan_err.message;
+                log_debug ("wifi-scanner-service",
+                    "request_scan_async failed on %s: %s"
+                        .printf (((NM.Object) dev).get_path (), scan_err.message));
+            }
+        }
+
+        if (wifi_devices > 0 && successful_scans == 0) {
+            throw new IOError.FAILED (
+                last_error_message != ""
+                    ? "Wi-Fi scan failed on all devices: " + last_error_message
+                    : "Wi-Fi scan failed on all devices");
         }
         return true;
     }

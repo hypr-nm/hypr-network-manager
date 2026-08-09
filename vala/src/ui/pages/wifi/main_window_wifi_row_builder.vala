@@ -20,6 +20,131 @@ using GLib;
 using Gtk;
 
 namespace MainWindowWifiRowBuilder {
+    private const string SELECTED_WIFI_DEVICE_PATH = "selected-wifi-device-path";
+    private const string RADIO_DROPDOWN = "radio-dropdown";
+    private const string RADIO_DROPDOWN_MODEL = "radio-dropdown-model";
+    private const string PASSWORD_PROMPT_REVEALER = "password-prompt-revealer";
+    private const string PASSWORD_PROMPT_ENTRY = "password-prompt-entry";
+    private const string UPDATING_RADIO_DROPDOWN = "updating-radio-dropdown";
+    private const string UPDATING_AUTOCONNECT = "updating-auto-connect";
+    private const string WIFI_IS_CONNECTING = "wifi-is-connecting";
+
+    private bool is_selectable_candidate (WifiNetwork candidate) {
+        return candidate.device_is_available;
+    }
+
+    private WifiNetwork? selectable_candidate_at (WifiNetwork network, uint requested_index) {
+        uint index = 0;
+        if (network.radio_candidates.length == 0) {
+            return requested_index == 0 && is_selectable_candidate (network) ? network : null;
+        }
+
+        foreach (var candidate in network.radio_candidates) {
+            if (!is_selectable_candidate (candidate)) {
+                continue;
+            }
+            if (index == requested_index) {
+                return candidate;
+            }
+            index++;
+        }
+        return null;
+    }
+
+    private WifiNetwork selected_candidate (Gtk.ListBoxRow row, WifiNetwork network) {
+        string? selected_device_path = (string?) row.get_data<string> (SELECTED_WIFI_DEVICE_PATH);
+        if (selected_device_path != null && selected_device_path != "") {
+            var selected = network.candidate_for_device (selected_device_path);
+            if (selected != null && is_selectable_candidate (selected)) {
+                return selected;
+            }
+        }
+
+        var preferred = selectable_candidate_at (network, 0);
+        return preferred != null ? preferred : network;
+    }
+
+    private bool candidate_has_saved_profile (WifiNetwork candidate) {
+        return candidate.saved && candidate.saved_connection_uuid.strip () != "";
+    }
+
+    private void close_password_prompt_for_saved_candidate (
+        WifiNetwork candidate,
+        Gtk.Revealer prompt_revealer,
+        Gtk.Entry prompt_entry,
+        IMainWindowWifiRowActionHandler action_handler
+    ) {
+        if (candidate_has_saved_profile (candidate)
+            && prompt_revealer.get_reveal_child ()) {
+            action_handler.hide_password_prompt (prompt_revealer, prompt_entry, null);
+        }
+    }
+
+    private string candidate_label (WifiNetwork candidate) {
+        string device_label = candidate.device_name.strip () != ""
+            ? candidate.device_name.strip ()
+            : _("Wi-Fi device");
+        string state_label;
+        if (candidate.connected) {
+            state_label = _("Connected here");
+        } else if (candidate.device_is_connecting) {
+            state_label = _("Connecting");
+        } else if (candidate.device_is_connected) {
+            string connection = candidate.device_connection.strip ();
+            state_label = connection != "" ? connection : _("Connected");
+        } else {
+            state_label = _("Available");
+        }
+        return _("%s · %s · %u%%").printf (device_label, state_label, candidate.signal);
+    }
+
+    private void sync_radio_dropdown (
+        Gtk.ListBoxRow row,
+        WifiNetwork network,
+        HyprNetworkManager.UI.Widgets.TrackedDropDown dropdown,
+        Gtk.StringList model
+    ) {
+        string? previous_device_path = (string?) row.get_data<string> (SELECTED_WIFI_DEVICE_PATH);
+        string[] labels = {};
+        uint selected_index = 0;
+        uint index = 0;
+        bool found_previous = false;
+
+        if (network.radio_candidates.length == 0) {
+            if (is_selectable_candidate (network)) {
+                labels += candidate_label (network);
+            }
+        } else {
+            foreach (var candidate in network.radio_candidates) {
+                if (!is_selectable_candidate (candidate)) {
+                    continue;
+                }
+                labels += candidate_label (candidate);
+                if (previous_device_path != null
+                    && candidate.device_path == previous_device_path) {
+                    selected_index = index;
+                    found_previous = true;
+                }
+                index++;
+            }
+        }
+
+        row.set_data<bool> (UPDATING_RADIO_DROPDOWN, true);
+        model.splice (0, model.get_n_items (), labels);
+        if (labels.length > 0) {
+            dropdown.set_selected (found_previous ? selected_index : 0);
+            var selected = selectable_candidate_at (
+                network,
+                found_previous ? selected_index : 0
+            );
+            if (selected != null) {
+                row.set_data<string> (SELECTED_WIFI_DEVICE_PATH, selected.device_path.dup ());
+            }
+        }
+        dropdown.set_visible (labels.length > 1);
+        row.set_data<bool> (UPDATING_RADIO_DROPDOWN, false);
+    }
+
     private void collapse_row (Gtk.ListBoxRow row) {
         var revealer = row.get_data<Gtk.Revealer> ("actions-revealer");
         if (revealer != null) {
@@ -196,7 +321,11 @@ namespace MainWindowWifiRowBuilder {
         details_icon.add_css_class (MainWindowCssClasses.DETAILS_OPEN_ICON);
         details_btn.set_child (details_icon);
         details_btn.clicked.connect (() => {
-            action_handler.open_details (net);
+            var latest_net = row.get_data<WifiNetwork> ("wifi-network");
+            if (latest_net == null) {
+                latest_net = net;
+            }
+            action_handler.open_details (selected_candidate (row, latest_net));
         });
 
         var forget = new Gtk.Button.with_label (_("Forget"));
@@ -206,17 +335,67 @@ namespace MainWindowWifiRowBuilder {
         forget.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
         forget.set_valign (Gtk.Align.CENTER);
         forget.clicked.connect (() => {
-            action_handler.forget_saved_network (net);
+            // Read the latest network from the row so a Forget issued after a
+            // refresh targets the currently-bound connection UUID instead of the
+            // (possibly already deleted) network captured when the row was built.
+            var latest_net = row.get_data<WifiNetwork> ("wifi-network");
+            if (latest_net == null) {
+                latest_net = net;
+            }
+            action_handler.forget_saved_network (selected_candidate (row, latest_net));
         });
         forget.set_visible (has_resolvable_saved_profile);
         action_buttons.append (forget);
         row.set_data<Gtk.Button> ("forget-button", forget);
 
+        var radio_model = new Gtk.StringList (null);
+        var retained_radio_model = radio_model;
+        var radio_dropdown = action_handler.create_radio_dropdown ((owned) radio_model);
+        radio_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+        sync_radio_dropdown (row, net, radio_dropdown, retained_radio_model);
+        action_buttons.prepend (radio_dropdown);
+        row.set_data<HyprNetworkManager.UI.Widgets.TrackedDropDown> (
+            RADIO_DROPDOWN,
+            radio_dropdown
+        );
+        row.set_data<Gtk.StringList> (RADIO_DROPDOWN_MODEL, retained_radio_model);
+
         var action = new Gtk.Button ();
         action.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
         action.add_css_class (MainWindowCssClasses.BUTTON);
         action.set_valign (Gtk.Align.CENTER);
-        update_action_button (action, is_connected_now, is_connecting);
+        var initial_target = selected_candidate (row, net);
+        update_action_button (action, initial_target, is_connecting);
+
+        radio_dropdown.notify_selected.connect (() => {
+            if (row.get_data<bool> (UPDATING_RADIO_DROPDOWN)) {
+                return;
+            }
+
+            var latest_network = row.get_data<WifiNetwork> ("wifi-network");
+            if (latest_network == null) {
+                latest_network = net;
+            }
+            var selected = selectable_candidate_at (latest_network, radio_dropdown.get_selected ());
+            if (selected == null) {
+                return;
+            }
+            row.set_data<string> (SELECTED_WIFI_DEVICE_PATH, selected.device_path.dup ());
+            close_password_prompt_for_saved_candidate (
+                selected,
+                prompt_revealer,
+                prompt_entry,
+                action_handler
+            );
+            sync_selected_candidate_controls (
+                row,
+                latest_network,
+                action,
+                auto_connect,
+                forget,
+                row.get_data<bool> (WIFI_IS_CONNECTING)
+            );
+        });
 
         action.clicked.connect (() => {
             bool current_connected = action.has_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
@@ -224,14 +403,19 @@ namespace MainWindowWifiRowBuilder {
 
             if (current_connecting) return;
 
+            var latest_network = row.get_data<WifiNetwork> ("wifi-network");
+            if (latest_network == null) {
+                latest_network = net;
+            }
+            var latest_net = selected_candidate (row, latest_network);
+
             if (current_connected) {
-                action_handler.disconnect_network (net);
+                action_handler.disconnect_network (latest_net);
                 return;
             }
 
-            var latest_net = row.get_data<WifiNetwork> ("wifi-network");
-
-            if ((latest_net.is_secured && !latest_net.saved) || latest_net.is_hidden) {
+            if (!candidate_has_saved_profile (latest_net)
+                && (latest_net.is_secured || latest_net.is_hidden)) {
                 action_handler.show_password_prompt (latest_net, prompt_revealer, prompt_entry);
                 if (latest_net.is_hidden) {
                     hidden_ssid_entry.grab_focus ();
@@ -250,10 +434,31 @@ namespace MainWindowWifiRowBuilder {
         return action_buttons;
     }
 
-    private void update_action_button (Gtk.Button action, bool is_connected_now, bool is_connecting) {
-        string action_label = is_connecting ? _("Connecting…") : (is_connected_now ? _("Disconnect") : _("Connect"));
+    private void update_action_button (
+        Gtk.Button action,
+        WifiNetwork target,
+        bool is_connecting
+    ) {
+        bool is_connected_now = target.connected;
+        bool replaces_connection = !is_connected_now && target.device_is_connected;
+        string action_label = is_connecting
+            ? _("Connecting…")
+            : (is_connected_now ? _("Disconnect") : _("Connect"));
         action.set_label (action_label);
-        action.set_sensitive (!is_connecting);
+        action.set_sensitive (
+            !is_connecting
+            && is_selectable_candidate (target)
+            && !target.device_is_connecting
+        );
+
+        if (replaces_connection) {
+            string connection = target.device_connection.strip ();
+            action.set_tooltip_text (connection != ""
+                ? _("This will disconnect %s on %s.").printf (connection, target.device_name)
+                : _("This will replace the current connection on %s.").printf (target.device_name));
+        } else {
+            action.set_tooltip_text (null);
+        }
 
         if (is_connected_now && !is_connecting) {
             action.add_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
@@ -264,11 +469,30 @@ namespace MainWindowWifiRowBuilder {
         }
     }
 
+    private void sync_selected_candidate_controls (
+        Gtk.ListBoxRow row,
+        WifiNetwork network,
+        Gtk.Button action,
+        Gtk.CheckButton auto_connect,
+        Gtk.Button forget,
+        bool is_connecting
+    ) {
+        var target = selected_candidate (row, network);
+        row.set_data<bool> (UPDATING_AUTOCONNECT, true);
+        auto_connect.set_active (target.autoconnect);
+        row.set_data<bool> (UPDATING_AUTOCONNECT, false);
+        auto_connect.set_sensitive (!is_connecting);
+
+        forget.set_visible (candidate_has_saved_profile (target));
+        update_action_button (action, target, is_connecting);
+    }
+
     private Gtk.Revealer build_password_prompt (
         WifiNetwork net,
         bool requires_hidden_ssid,
         IMainWindowWifiRowActionHandler action_handler,
         Gtk.CheckButton auto_connect,
+        Gtk.ListBoxRow row,
         out Gtk.Entry prompt_entry,
         out Gtk.Entry hidden_ssid_entry
     ) {
@@ -438,10 +662,15 @@ namespace MainWindowWifiRowBuilder {
                 payload = local_prompt_entry.get_text ();
             }
 
+            var latest_network = row.get_data<WifiNetwork> ("wifi-network");
+            if (latest_network == null) {
+                latest_network = net;
+            }
+            var connect_target = selected_candidate (row, latest_network);
             action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, payload);
             action_handler.connect_network (
-                net,
-                net.is_secured ? payload : null,
+                connect_target,
+                connect_target.is_secured ? payload : null,
                 requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null,
                 auto_connect.get_active ()
             );
@@ -462,10 +691,15 @@ namespace MainWindowWifiRowBuilder {
                 payload = local_prompt_entry.get_text ();
             }
 
+            var latest_network = row.get_data<WifiNetwork> ("wifi-network");
+            if (latest_network == null) {
+                latest_network = net;
+            }
+            var connect_target = selected_candidate (row, latest_network);
             action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry, payload);
             action_handler.connect_network (
-                net,
-                net.is_secured ? payload : null,
+                connect_target,
+                connect_target.is_secured ? payload : null,
                 requires_hidden_ssid ? local_hidden_ssid_entry.get_text ().strip () : null,
                 auto_connect.get_active ()
             );
@@ -487,8 +721,13 @@ namespace MainWindowWifiRowBuilder {
 
             action_handler.hide_password_prompt (local_prompt_revealer, local_prompt_entry,
                 local_prompt_entry.get_text ());
+            var latest_network = row.get_data<WifiNetwork> ("wifi-network");
+            if (latest_network == null) {
+                latest_network = net;
+            }
+            var connect_target = selected_candidate (row, latest_network);
             action_handler.connect_network (
-                net,
+                connect_target,
                 null,
                 local_hidden_ssid_entry.get_text ().strip (),
                 auto_connect.get_active ()
@@ -508,9 +747,11 @@ namespace MainWindowWifiRowBuilder {
         bool show_frequency,
         bool show_band,
         bool show_bssid,
-        string signal_icon_name
+        string signal_icon_name,
+        IMainWindowWifiRowActionHandler action_handler
     ) {
         row.set_data<WifiNetwork> ("wifi-network", net);
+        row.set_data<bool> (WIFI_IS_CONNECTING, is_connecting);
 
         if (is_connected_now) {
             row.add_css_class (MainWindowCssClasses.CONNECTED);
@@ -545,21 +786,35 @@ namespace MainWindowWifiRowBuilder {
             update_sub_label_style (sub, error_message);
         }
 
+        var radio_dropdown = row.get_data<HyprNetworkManager.UI.Widgets.TrackedDropDown> (RADIO_DROPDOWN);
+        var radio_model = row.get_data<Gtk.StringList> (RADIO_DROPDOWN_MODEL);
+        if (radio_dropdown != null && radio_model != null) {
+            sync_radio_dropdown (row, net, radio_dropdown, radio_model);
+        }
+
+        var prompt_revealer = row.get_data<Gtk.Revealer> (PASSWORD_PROMPT_REVEALER);
+        var prompt_entry = row.get_data<Gtk.Entry> (PASSWORD_PROMPT_ENTRY);
+        if (prompt_revealer != null && prompt_entry != null) {
+            close_password_prompt_for_saved_candidate (
+                selected_candidate (row, net),
+                prompt_revealer,
+                prompt_entry,
+                action_handler
+            );
+        }
+
         var auto_connect = row.get_data<Gtk.CheckButton> ("auto-connect-check");
-        if (auto_connect != null) {
-            auto_connect.set_active (net.autoconnect);
-            auto_connect.set_sensitive (!is_connecting);
-        }
-
         var forget = row.get_data<Gtk.Button> ("forget-button");
-        if (forget != null) {
-            bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
-            forget.set_visible (has_resolvable_saved_profile);
-        }
-
         var action = row.get_data<Gtk.Button> ("action-button");
-        if (action != null) {
-            update_action_button (action, is_connected_now, is_connecting);
+        if (auto_connect != null && forget != null && action != null) {
+            sync_selected_candidate_controls (
+                row,
+                net,
+                action,
+                auto_connect,
+                forget,
+                is_connecting
+            );
         }
     }
 
@@ -576,12 +831,13 @@ namespace MainWindowWifiRowBuilder {
     ) {
         var row = new Gtk.ListBoxRow ();
         row.set_data<WifiNetwork> ("wifi-network", net);
+        row.set_data<bool> (WIFI_IS_CONNECTING, is_connecting);
         row.add_css_class (MainWindowCssClasses.WIFI_ROW);
         if (is_connected_now) {
             row.add_css_class (MainWindowCssClasses.CONNECTED);
         }
 
-        bool has_resolvable_saved_profile = net.saved && net.saved_connection_uuid.strip () != "";
+        bool has_resolvable_saved_profile = candidate_has_saved_profile (net);
         bool requires_hidden_ssid = net.is_hidden;
 
         var row_root = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_NONE);
@@ -627,11 +883,14 @@ namespace MainWindowWifiRowBuilder {
         auto_connect.set_hexpand (true);
         auto_connect.set_halign (Gtk.Align.START);
         auto_connect.toggled.connect (() => {
+            if (row.get_data<bool> (UPDATING_AUTOCONNECT)) {
+                return;
+            }
             var latest_net = row.get_data<WifiNetwork> ("wifi-network");
-            bool latest_has_resolvable_saved_profile = latest_net.saved &&
-                latest_net.saved_connection_uuid.strip () != "";
+            var target = selected_candidate (row, latest_net);
+            bool latest_has_resolvable_saved_profile = candidate_has_saved_profile (target);
             if (latest_has_resolvable_saved_profile) {
-                action_handler.set_auto_connect (latest_net, auto_connect.get_active ());
+                action_handler.set_auto_connect (target, auto_connect.get_active ());
             }
         });
         actions_panel.append (auto_connect);
@@ -644,9 +903,12 @@ namespace MainWindowWifiRowBuilder {
             requires_hidden_ssid,
             action_handler,
             auto_connect,
+            row,
             out prompt_entry,
             out hidden_ssid_entry
         );
+        row.set_data<Gtk.Revealer> (PASSWORD_PROMPT_REVEALER, prompt_revealer);
+        row.set_data<Gtk.Entry> (PASSWORD_PROMPT_ENTRY, prompt_entry);
 
         var action_buttons = build_action_buttons (
             net,
