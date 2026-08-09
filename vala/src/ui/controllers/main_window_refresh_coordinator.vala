@@ -27,8 +27,11 @@ public class MainWindowRefreshCoordinator : Object {
     private uint periodic_refresh_source_id = 0;
     private uint signal_refresh_source_id = 0;
     private ulong nm_events_changed_handler_id = 0;
+    private Cancellable? subscription_cancellable = null;
     private bool nm_events_subscription_enabled = false;
     private bool periodic_scan_failure_reported = false;
+    private bool started = false;
+    private uint lifecycle_epoch = 1;
 
     public MainWindowRefreshCoordinator (
         HyprNetworkManager.Backend.INetworkEventClient nm,
@@ -41,12 +44,16 @@ public class MainWindowRefreshCoordinator : Object {
     }
 
     public void start () {
+        if (started) {
+            return;
+        }
+        started = true;
+
         configure_nm_signal_refresh ();
 
         // start() is invoked both from the window constructor and again on
-        // ::map, with no intervening stop(). Drop any previously armed periodic
-        // source first so we never orphan one (which would run the Wi-Fi scan
-        // twice per interval and leave stop() able to remove only the latest).
+        // ::map. The started guard makes that idempotent; this cleanup remains
+        // defensive in case a source was externally removed or replaced.
         if (periodic_refresh_source_id != 0) {
             Source.remove (periodic_refresh_source_id);
             periodic_refresh_source_id = 0;
@@ -80,6 +87,25 @@ public class MainWindowRefreshCoordinator : Object {
     }
 
     public void stop () {
+        if (!started
+            && periodic_refresh_source_id == 0
+            && signal_refresh_source_id == 0
+            && nm_events_changed_handler_id == 0
+            && subscription_cancellable == null) {
+            return;
+        }
+
+        started = false;
+        lifecycle_epoch++;
+        if (lifecycle_epoch == 0) {
+            lifecycle_epoch = 1;
+        }
+
+        if (subscription_cancellable != null) {
+            subscription_cancellable.cancel ();
+            subscription_cancellable = null;
+        }
+
         if (signal_refresh_source_id != 0) {
             Source.remove (signal_refresh_source_id);
             signal_refresh_source_id = 0;
@@ -100,36 +126,74 @@ public class MainWindowRefreshCoordinator : Object {
     }
 
     private void schedule_signal_refresh () {
-        if (signal_refresh_source_id != 0) {
+        if (!started || signal_refresh_source_id != 0) {
             return;
         }
 
         signal_refresh_source_id = Timeout.add (200, () => {
             signal_refresh_source_id = 0;
-            host.refresh_all ();
+            if (started) {
+                host.refresh_all ();
+            }
             return false;
         });
     }
 
     private void configure_nm_signal_refresh () {
-        nm.subscribe_network_events_dbus.begin (null, (obj, res) => {
+        if (!started
+            || nm_events_changed_handler_id != 0
+            || subscription_cancellable != null) {
+            return;
+        }
+
+        uint epoch = lifecycle_epoch;
+        var request = new Cancellable ();
+        subscription_cancellable = request;
+
+        nm.subscribe_network_events_dbus.begin (request, (obj, res) => {
+            bool subscription_enabled;
             try {
-                nm_events_subscription_enabled = nm.subscribe_network_events_dbus.end (res);
+                subscription_enabled = nm.subscribe_network_events_dbus.end (res);
             } catch (Error e) {
+                if (subscription_cancellable == request) {
+                    subscription_cancellable = null;
+                }
+                if (e is IOError.CANCELLED
+                    || request.is_cancelled ()
+                    || !started
+                    || epoch != lifecycle_epoch) {
+                    return;
+                }
                 nm_events_subscription_enabled = false;
                 host.debug_log ("nm_events_subscribe: failed error=" + e.message + "; outcome=polling fallback");
                 log_warn ("gui", "nm_events_subscribe: failed; outcome=polling fallback enabled");
                 return;
             }
+
+            if (subscription_cancellable == request) {
+                subscription_cancellable = null;
+            }
+            if (request.is_cancelled ()
+                || !started
+                || epoch != lifecycle_epoch) {
+                if (!started && subscription_enabled) {
+                    nm.unsubscribe_network_events ();
+                }
+                return;
+            }
+
+            nm_events_subscription_enabled = subscription_enabled;
             if (!nm_events_subscription_enabled) {
                 host.debug_log ("nm_events_subscribe: unavailable; outcome=polling fallback");
                 log_warn ("gui", "nm_events_subscribe: unavailable; outcome=polling fallback enabled");
                 return;
             }
 
-            nm_events_changed_handler_id = nm.network_events_changed.connect (() => {
-                schedule_signal_refresh ();
-            });
+            if (nm_events_changed_handler_id == 0) {
+                nm_events_changed_handler_id = nm.network_events_changed.connect (() => {
+                    schedule_signal_refresh ();
+                });
+            }
 
             log_info ("gui", "nm_events_subscribe: enabled signal-driven refresh");
         });
