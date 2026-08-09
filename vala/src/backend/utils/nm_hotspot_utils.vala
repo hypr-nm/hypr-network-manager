@@ -21,6 +21,11 @@ using GLib;
 namespace NmHotspotUtils {
     public const string CONNECTION_ID_PREFIX = "hypr-network-manager hotspot: ";
 
+    private struct NetworkMask {
+        public uint32 network;
+        public uint32 mask;
+    }
+
     private bool parse_ipv4 (string address, out uint32 value) {
         value = 0;
         string[] octets = address.split (".");
@@ -75,10 +80,25 @@ namespace NmHotspotUtils {
         return (first & mask) == (second & mask);
     }
 
-    private bool gateway_is_available (
-        string gateway,
+    private uint32 pack_ipv4 (uint o1, uint o2, uint o3, uint o4) {
+        return ((uint32) o1 << 24)
+            | ((uint32) o2 << 16)
+            | ((uint32) o3 << 8)
+            | (uint32) o4;
+    }
+
+    private string format_ipv4 (uint32 value) {
+        return "%u.%u.%u.%u".printf (
+            (value >> 24) & 0xFFu,
+            (value >> 16) & 0xFFu,
+            (value >> 8) & 0xFFu,
+            value & 0xFFu);
+    }
+
+    private GLib.Array<NetworkMask> parse_occupied_networks (
         GLib.GenericArray<string> occupied_networks
     ) {
+        var parsed = new GLib.Array<NetworkMask> ();
         for (uint i = 0; i < occupied_networks.length; i++) {
             string[] parts = occupied_networks[i].split ("/");
             if (parts.length != 2) {
@@ -91,11 +111,30 @@ namespace NmHotspotUtils {
                 || prefix > 32) {
                 continue;
             }
-            if (ipv4_networks_overlap (
-                    gateway,
-                    24,
-                    parts[0],
-                    (uint) prefix)) {
+
+            uint32 address = 0;
+            if (!parse_ipv4 (parts[0], out address)) {
+                continue;
+            }
+
+            uint32 mask = prefix_mask ((uint) prefix);
+            NetworkMask nm = { address & mask, mask };
+            parsed.append_val (nm);
+        }
+        return parsed;
+    }
+
+    private bool subnet_is_free (
+        uint32 candidate,
+        GLib.Array<NetworkMask> occupied
+    ) {
+        const uint32 candidate_mask = 0xFFFFFF00u;
+        for (uint i = 0; i < occupied.length; i++) {
+            NetworkMask net = occupied.index (i);
+            uint32 common = (candidate_mask < net.mask)
+                ? candidate_mask
+                : net.mask;
+            if ((candidate & common) == (net.network & common)) {
                 return false;
             }
         }
@@ -107,30 +146,32 @@ namespace NmHotspotUtils {
     ) {
         // Preserve create_ap's historical default when it is free, then walk
         // the rest of RFC1918 space in deterministic /24 increments.
+        var parsed = parse_occupied_networks (occupied_networks);
+
         for (int third = 12; third <= 254; third++) {
-            string candidate = "192.168.%d.1".printf (third);
-            if (gateway_is_available (candidate, occupied_networks)) {
-                return candidate;
+            uint32 candidate = pack_ipv4 (192, 168, third, 1);
+            if (subnet_is_free (candidate, parsed)) {
+                return format_ipv4 (candidate);
             }
         }
         for (int third = 0; third < 12; third++) {
-            string candidate = "192.168.%d.1".printf (third);
-            if (gateway_is_available (candidate, occupied_networks)) {
-                return candidate;
+            uint32 candidate = pack_ipv4 (192, 168, third, 1);
+            if (subnet_is_free (candidate, parsed)) {
+                return format_ipv4 (candidate);
             }
         }
         for (int second = 16; second <= 31; second++) {
             for (int third = 0; third <= 254; third++) {
-                string candidate = "172.%d.%d.1".printf (second, third);
-                if (gateway_is_available (candidate, occupied_networks)) {
-                    return candidate;
+                uint32 candidate = pack_ipv4 (172, second, third, 1);
+                if (subnet_is_free (candidate, parsed)) {
+                    return format_ipv4 (candidate);
                 }
             }
         }
         for (int third = 0; third <= 254; third++) {
-            string candidate = "10.42.%d.1".printf (third);
-            if (gateway_is_available (candidate, occupied_networks)) {
-                return candidate;
+            uint32 candidate = pack_ipv4 (10, 42, third, 1);
+            if (subnet_is_free (candidate, parsed)) {
+                return format_ipv4 (candidate);
             }
         }
         return "";
