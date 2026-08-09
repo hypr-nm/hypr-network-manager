@@ -81,7 +81,7 @@ public class Nl80211ApMonitor : GLib.Object {
 
     public async bool wait_until_ap_active (
         string iface,
-        uint timeout_ms = 10000,
+        uint timeout_ms = Timeouts.AP_ACTIVATION_TIMEOUT_MS,
         Cancellable? cancellable = null
     ) throws Error {
         if (iface == "") {
@@ -89,7 +89,7 @@ public class Nl80211ApMonitor : GLib.Object {
         }
 
         uint elapsed = 0;
-        const uint step = 500;
+        const uint step = Timeouts.AP_MONITOR_POLL_INTERVAL_MS;
         while (elapsed < timeout_ms) {
             try {
                 if ((yield query_active (iface, cancellable)) != 0) {

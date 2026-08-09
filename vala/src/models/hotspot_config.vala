@@ -19,6 +19,19 @@
 
 using Constants;
 namespace HyprNetworkManager.Models {
+    namespace HotspotTimeoutPolicy {
+        public bool threshold_reached (int idle_minutes, int timeout_minutes) {
+            return timeout_minutes > 0 && idle_minutes >= timeout_minutes;
+        }
+
+        public int idle_minutes_after_shutdown (
+            bool succeeded,
+            int timeout_minutes
+        ) {
+            return succeeded ? 0 : timeout_minutes;
+        }
+    }
+
     public class HotspotConfig : GLib.Object {
         public string ssid { get; set; }
         public string password { get; set; }

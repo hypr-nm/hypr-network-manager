@@ -872,6 +872,11 @@ namespace HyprNetworkManager.UI.Views {
                     && !request_cancellable.is_cancelled ()) {
                     warning ("Failed to fetch hotspot status: " + e.message);
                     is_updating = false;
+                    // A toggle transition locks the switch until this refresh.
+                    // If status lookup fails after the transition succeeded,
+                    // restore controls from the last known switch state rather
+                    // than leaving the switch permanently insensitive.
+                    update_sensitivity (toggle_switch.active);
                 }
             } finally {
                 if (fetch_status_cancellable == request_cancellable) {

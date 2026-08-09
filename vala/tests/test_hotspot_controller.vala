@@ -105,12 +105,26 @@ private static void test_validation_uses_backend_capability () {
     assert (controller.validation_message (request) == null);
 }
 
+private static void test_timeout_shutdown_retry_policy () {
+    assert (!HotspotTimeoutPolicy.threshold_reached (4, 5));
+    assert (HotspotTimeoutPolicy.threshold_reached (5, 5));
+    assert (HotspotTimeoutPolicy.threshold_reached (6, 5));
+    assert (!HotspotTimeoutPolicy.threshold_reached (1, 0));
+
+    assert (HotspotTimeoutPolicy.idle_minutes_after_shutdown (true, 5) == 0);
+    assert (HotspotTimeoutPolicy.idle_minutes_after_shutdown (false, 5) == 5);
+}
+
 public static int main (string[] args) {
     Test.init (ref args);
     Test.add_func ("/hotspot-controller/request-mapping", test_request_mapping);
     Test.add_func (
         "/hotspot-controller/backend-capability-validation",
         test_validation_uses_backend_capability
+    );
+    Test.add_func (
+        "/hotspot-controller/timeout-shutdown-retry-policy",
+        test_timeout_shutdown_retry_policy
     );
     return Test.run ();
 }

@@ -291,7 +291,7 @@ public class HotspotService : GLib.Object {
         Cancellable? cancellable
     ) throws Error {
         int stable_polls = 0;
-        for (int attempt = 0; attempt < 30; attempt++) {
+        for (int attempt = 0; attempt < Timeouts.CREATE_AP_MAX_ATTEMPTS; attempt++) {
             if (cancellable != null && cancellable.is_cancelled ()) {
                 throw new IOError.CANCELLED (
                     "Hotspot startup was cancelled");
@@ -316,7 +316,7 @@ public class HotspotService : GLib.Object {
 
             if (daemon_alive && ready && ap_active) {
                 stable_polls++;
-                if (stable_polls >= 4) {
+                if (stable_polls >= Timeouts.CREATE_AP_STABLE_POLLS) {
                     return;
                 }
             } else {
@@ -328,7 +328,7 @@ public class HotspotService : GLib.Object {
                 && create_ap_log_reports_failure (log_file)) {
                 break;
             }
-            yield Nl80211ApMonitor.async_sleep (500);
+            yield Nl80211ApMonitor.async_sleep (Timeouts.AP_MONITOR_POLL_INTERVAL_MS);
         }
 
         string detail = create_ap_log_summary (log_file);
@@ -791,7 +791,7 @@ public class HotspotService : GLib.Object {
             }
 
             // Wait a moment for NM to process the deletion
-            yield Nl80211ApMonitor.async_sleep (500);
+            yield Nl80211ApMonitor.async_sleep (Timeouts.AP_MONITOR_POLL_INTERVAL_MS);
 
             int channel = 0;
             var active_ap = dev.get_active_access_point ();
@@ -829,7 +829,7 @@ public class HotspotService : GLib.Object {
                     debug_log ("Activation reported error, polling AP state: " + act_err.message);
                     if (yield monitor.wait_until_ap_active (
                             dev.get_iface (),
-                            10000,
+                            Timeouts.AP_ACTIVATION_TIMEOUT_MS,
                             cancellable)) {
                         debug_log ("Interface reached AP mode despite activation error; treating as success.");
                     } else {
@@ -976,7 +976,7 @@ public class HotspotService : GLib.Object {
                             if (poll_stdout == null || poll_stdout.strip () == "") {
                                 break;
                             }
-                            yield Nl80211ApMonitor.async_sleep (500);
+                            yield Nl80211ApMonitor.async_sleep (Timeouts.AP_MONITOR_POLL_INTERVAL_MS);
                         }
                         is_hotspot_stopping = false;
                     }
@@ -1064,7 +1064,7 @@ public class HotspotService : GLib.Object {
                 }
 
                 if (target_dev != null) {
-                    begin_hotspot_client_timeout_check (
+                    yield check_hotspot_client_timeout (
                         target_dev.get_iface (),
                         timeout_mins,
                         true);
@@ -1097,13 +1097,13 @@ public class HotspotService : GLib.Object {
             return;
         }
 
-        begin_hotspot_client_timeout_check (
+        yield check_hotspot_client_timeout (
             target_dev.get_iface (),
             timeout_mins,
             false);
     }
 
-    private void begin_hotspot_client_timeout_check (
+    private async void check_hotspot_client_timeout (
         string iface,
         int timeout_mins,
         bool create_ap_mode
@@ -1113,38 +1113,53 @@ public class HotspotService : GLib.Object {
         }
 
         hotspot_client_query_pending = true;
-        monitor.query_station_count.begin (
-            iface,
-            null,
-            (obj, res) => {
-                int station_count;
+        int station_count;
+        try {
+            station_count = yield monitor.query_station_count (iface, null);
+        } catch (Error e) {
+            debug_log (
+                "Skipping hotspot idle update because station query failed: " +
+                e.message);
+            hotspot_client_query_pending = false;
+            return;
+        }
+        hotspot_client_query_pending = false;
 
-                try {
-                    station_count = monitor.query_station_count.end (res);
-                } catch (Error e) {
-                    hotspot_client_query_pending = false;
-                    debug_log (
-                        "Skipping hotspot idle update because station query failed: " +
-                        e.message);
-                    return;
-                }
+        if (station_count > 0) {
+            hotspot_idle_minutes = 0;
+            return;
+        }
 
-                hotspot_client_query_pending = false;
-                if (station_count > 0) {
-                    hotspot_idle_minutes = 0;
-                    return;
-                }
+        hotspot_idle_minutes++;
+        if (!HotspotTimeoutPolicy.threshold_reached (
+                hotspot_idle_minutes,
+                timeout_mins)) {
+            return;
+        }
 
-                hotspot_idle_minutes++;
-                if (hotspot_idle_minutes >= timeout_mins) {
-                    debug_log (
-                        create_ap_mode
-                            ? "Hotspot idle timeout reached, disconnecting via create_ap."
-                            : "Hotspot idle timeout reached, disconnecting.");
-                    disable_hotspot_async.begin (null);
-                    hotspot_idle_minutes = 0;
-                }
-            });
+        debug_log (
+            create_ap_mode
+                ? "Hotspot idle timeout reached, disconnecting via create_ap."
+                : "Hotspot idle timeout reached, disconnecting.");
+        try {
+            yield disable_hotspot_async (null);
+            hotspot_idle_minutes = HotspotTimeoutPolicy.idle_minutes_after_shutdown (
+                true,
+                timeout_mins
+            );
+        } catch (Error e) {
+            // Keep the counter at the threshold so the next periodic check
+            // retries instead of silently treating a failed shutdown as done.
+            hotspot_idle_minutes = HotspotTimeoutPolicy.idle_minutes_after_shutdown (
+                false,
+                timeout_mins
+            );
+            debug_log ("Hotspot idle-timeout shutdown failed: " + e.message);
+            log_warn (
+                "hotspot-service",
+                "Hotspot idle-timeout shutdown failed; outcome=retrying on next check"
+            );
+        }
     }
 
     private static bool is_valid_interface_name (string name) {
