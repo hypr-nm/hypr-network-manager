@@ -230,7 +230,7 @@ namespace HyprNetworkManager.UI.Utils {
             });
         }
 
-        public void apply_keyboard_mode () {
+        private void apply_keyboard_mode () {
             if (!layer_shell_active) {
                 return;
             }

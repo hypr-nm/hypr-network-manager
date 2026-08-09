@@ -130,10 +130,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         log_debug ("gui", message);
     }
 
-    public void set_popup_text_input_mode (bool enabled) {
-        transient_surface_tracker.apply_keyboard_mode ();
-    }
-
     public HyprNetworkManager.UI.Widgets.TrackedDropDown create_tracked_dropdown (
         owned Gtk.StringList model
     ) {
@@ -291,8 +287,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         global_error_label.set_text (message);
         global_error_revealer.set_reveal_child (true);
 
-        // Auto-hide after 5 seconds
-        Timeout.add (5000, () => {
+        Timeout.add (Timeouts.ERROR_HIDE_DELAY_MS, () => {
             if (global_error_label.get_text () == message) {
                 global_error_revealer.set_reveal_child (false);
             }
@@ -399,10 +394,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         wifi_section.go_to_hotspot_requested.connect (() => {
             hotspot_section.perform_refresh ();
             content_stack.set_visible_child_name ("hotspot");
-            this.set_popup_text_input_mode (true);
-        });
-        wifi_section.refresh_switch_states_requested.connect (() => {
-            refresh_switch_states ();
         });
         wifi_section.wifi_switch.notify["active"].connect (() => {
             update_refresh_button_availability ();
@@ -428,7 +419,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         hotspot_section = new HyprNetworkManager.UI.Views.HotspotSectionView (hotspot_controller, this);
         hotspot_section.back.connect (() => {
             content_stack.set_visible_child_name ("main");
-            this.set_popup_text_input_mode (false);
         });
 
         vpn_section = new HyprNetworkManager.UI.Views.VpnSectionView (
@@ -509,7 +499,6 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         tabs_menu.hotspot_clicked.connect (() => {
             hotspot_section.perform_refresh ();
             content_stack.set_visible_child_name ("hotspot");
-            this.set_popup_text_input_mode (true);
         });
         tabs_menu.flight_mode_clicked.connect (on_flight_mode_clicked);
         tabs_menu.popover_mapped.connect (refresh_switch_states);

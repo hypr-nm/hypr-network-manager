@@ -31,7 +31,6 @@ namespace HyprNetworkManager.UI.Interfaces {
         public abstract HyprNetworkManager.UI.Widgets.TrackedDropDown create_tracked_dropdown (
             owned Gtk.StringList model
         );
-        public abstract void set_popup_text_input_mode (bool enabled);
     }
 
     /**
