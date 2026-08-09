@@ -638,7 +638,9 @@ namespace HyprNetworkManager.UI.Views {
 
             is_dirty = true;
 
-            save_button.sensitive = controller.is_valid (build_current_request ());
+            bool valid = controller.is_valid (build_current_request ());
+            save_button.sensitive = valid;
+            toggle_switch.sensitive = valid;
         }
 
         private void on_toggle_switch_changed () {
@@ -674,6 +676,7 @@ namespace HyprNetworkManager.UI.Views {
 
             if (is_active) {
                 save_button.sensitive = false;
+                toggle_switch.sensitive = true;
             } else {
                 validate_inputs ();
             }
@@ -717,8 +720,8 @@ namespace HyprNetworkManager.UI.Views {
                 is_updating = true;
                 toggle_switch.active = false;
                 is_updating = false;
+                update_sensitivity (false);
             }
-            toggle_switch.sensitive = true;
             perform_refresh ();
         }
 
@@ -734,8 +737,8 @@ namespace HyprNetworkManager.UI.Views {
                 is_updating = true;
                 toggle_switch.active = true;
                 is_updating = false;
+                update_sensitivity (true);
             }
-            toggle_switch.sensitive = true;
             perform_refresh ();
         }
 
@@ -858,7 +861,9 @@ namespace HyprNetworkManager.UI.Views {
                 is_updating = false;
 
                 update_sensitivity (active_or_starting);
-                toggle_switch.sensitive = !config.is_starting;
+                if (config.is_starting) {
+                    toggle_switch.sensitive = false;
+                }
 
                 update_qr_code (config);
             } catch (Error e) {
