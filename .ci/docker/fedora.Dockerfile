@@ -12,7 +12,7 @@ RUN dnf -y update && \
       wayland-devel wayland-protocols-devel \
       gtk4-devel gobject-introspection-devel gtk-doc \
       json-glib-devel libsecret-devel NetworkManager-libnm-devel libnl3-devel \
-            ca-certificates && \
+      util-linux ca-certificates && \
         dnf -y install \
             "gtk4-layer-shell-${GTK4_LAYER_SHELL_VERSION}*" \
             "gtk4-layer-shell-devel-${GTK4_LAYER_SHELL_VERSION}*" && \

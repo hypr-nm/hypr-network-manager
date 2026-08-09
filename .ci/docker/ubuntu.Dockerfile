@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     libwayland-dev wayland-protocols \
     libgtk-4-dev gobject-introspection libgirepository1.0-dev gtk-doc-tools \
     libjson-glib-dev libsecret-1-dev network-manager libnm-dev libnl-3-dev libnl-genl-3-dev \
-    git ca-certificates && \
+    util-linux git ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Build gtk4-layer-shell once
