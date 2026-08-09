@@ -88,11 +88,11 @@ msgid "Override log level to debug"
 msgstr ""
 
 #: vala/src/main.vala:46
-msgid "Run as a background daemon"
+msgid "Run without showing the window initially"
 msgstr ""
 
 #: vala/src/main.vala:47
-msgid "Quit the running daemon"
+msgid "Quit the running application"
 msgstr ""
 
 #: vala/src/main.vala:48
