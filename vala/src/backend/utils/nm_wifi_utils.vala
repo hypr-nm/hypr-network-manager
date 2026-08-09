@@ -132,17 +132,13 @@ namespace NmWifiUtils {
         };
     }
 
-    public WifiSavedProfile? build_saved_profile (
-        NM.Connection conn,
-        string wifi_device_path,
-        string active_uuid
-    ) {
+    public WifiSavedProfile? build_saved_profile (NM.Connection conn) {
         var s_wireless = conn.get_setting_wireless ();
         if (s_wireless == null) {
             return null;
         }
 
-        string uuid = conn.get_uuid ().strip ();
+        string uuid = conn.get_uuid () != null ? conn.get_uuid ().strip () : "";
         if (uuid == "") {
             return null;
         }
@@ -153,12 +149,7 @@ namespace NmWifiUtils {
         return new WifiSavedProfile () {
             profile_name = profile_name,
             ssid = ssid,
-            saved_connection_uuid = uuid,
-            connected = active_uuid != "" && active_uuid == uuid,
-            is_secured = conn.get_setting_wireless_security () != null,
-            is_hidden = s_wireless.hidden,
-            autoconnect = resolve_autoconnect (conn),
-            device_path = wifi_device_path
+            saved_connection_uuid = uuid
         };
     }
 
@@ -168,6 +159,93 @@ namespace NmWifiUtils {
             return "";
         }
         return s_sec.key_mgmt != null ? s_sec.key_mgmt.strip ().ascii_down () : "";
+    }
+
+    private bool connection_has_exact_interface (
+        NM.Connection connection,
+        string device_iface
+    ) {
+        var setting = connection.get_setting_connection ();
+        string bound_iface = setting != null && setting.interface_name != null
+            ? setting.interface_name.strip ()
+            : "";
+        return bound_iface != "" && bound_iface == device_iface;
+    }
+
+    private bool connection_has_exact_bssid (
+        NM.Connection connection,
+        string ap_bssid
+    ) {
+        var setting = connection.get_setting_wireless ();
+        string bound_bssid = setting != null && setting.bssid != null
+            ? setting.bssid.strip ().ascii_down ()
+            : "";
+        string normalized_ap_bssid = ap_bssid.strip ().ascii_down ();
+        return bound_bssid != ""
+            && normalized_ap_bssid != ""
+            && bound_bssid == normalized_ap_bssid;
+    }
+
+    private int32 connection_autoconnect_priority (NM.Connection connection) {
+        var setting = connection.get_setting_connection ();
+        return setting != null ? setting.autoconnect_priority : 0;
+    }
+
+    /**
+     * Orders two profiles that are already valid for the same access point.
+     * A negative result means @first should be preferred.
+     */
+    public int compare_profile_preference (
+        NM.Connection first,
+        NM.Connection second,
+        string active_uuid,
+        string device_iface,
+        string ap_bssid
+    ) {
+        string first_uuid = first.get_uuid () != null ? first.get_uuid ().strip () : "";
+        string second_uuid = second.get_uuid () != null ? second.get_uuid ().strip () : "";
+        string normalized_active_uuid = active_uuid.strip ();
+
+        bool first_is_active = normalized_active_uuid != ""
+            && first_uuid == normalized_active_uuid;
+        bool second_is_active = normalized_active_uuid != ""
+            && second_uuid == normalized_active_uuid;
+        if (first_is_active != second_is_active) {
+            return first_is_active ? -1 : 1;
+        }
+
+        bool first_matches_interface = connection_has_exact_interface (first, device_iface);
+        bool second_matches_interface = connection_has_exact_interface (second, device_iface);
+        if (first_matches_interface != second_matches_interface) {
+            return first_matches_interface ? -1 : 1;
+        }
+
+        bool first_matches_bssid = connection_has_exact_bssid (first, ap_bssid);
+        bool second_matches_bssid = connection_has_exact_bssid (second, ap_bssid);
+        if (first_matches_bssid != second_matches_bssid) {
+            return first_matches_bssid ? -1 : 1;
+        }
+
+        int32 first_priority = connection_autoconnect_priority (first);
+        int32 second_priority = connection_autoconnect_priority (second);
+        if (first_priority != second_priority) {
+            return first_priority > second_priority ? -1 : 1;
+        }
+
+        return first_uuid.collate (second_uuid);
+    }
+
+    public bool should_populate_runtime_ip (
+        bool candidate_connected,
+        string requested_uuid,
+        string active_uuid
+    ) {
+        if (!candidate_connected) {
+            return false;
+        }
+
+        string requested = requested_uuid.strip ();
+        return requested == "" || requested == active_uuid.strip ();
     }
 
     public bool enable_manual_multi_connect (NM.Connection conn) {

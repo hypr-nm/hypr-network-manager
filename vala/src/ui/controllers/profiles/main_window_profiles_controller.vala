@@ -231,9 +231,8 @@ public class MainWindowProfilesController : Object {
         wifi_delete_cancellable = new Cancellable ();
         var request = wifi_delete_cancellable;
         string connection_uuid = profile.saved_connection_uuid;
-        string network_key = profile.ssid + ":" + (profile.is_secured ? "secured" : WifiSecurity.OPEN);
 
-        nm.forget_network.begin (connection_uuid, network_key, request, (obj, res) => {
+        nm.forget_network.begin (connection_uuid, request, (obj, res) => {
             try {
                 nm.forget_network.end (res);
                 if (epoch != ui_epoch || wifi_delete_cancellable != request) {

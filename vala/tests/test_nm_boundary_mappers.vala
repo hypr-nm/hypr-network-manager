@@ -202,6 +202,126 @@ private static void test_manual_multi_connect_transition () {
     assert (setting.get_multi_connect () == NM.ConnectionMultiConnect.MANUAL_MULTIPLE);
 }
 
+private static void test_saved_profile_contains_only_persistent_metadata () {
+    const string uuid = "00000000-0000-0000-0000-000000000001";
+    var connection = (NM.SimpleConnection) NM.SimpleConnection.@new ();
+    var connection_setting = new NM.SettingConnection () {
+        id = "Office profile",
+        uuid = uuid,
+        type = NM.SettingWireless.SETTING_NAME,
+        autoconnect = false
+    };
+    connection.add_setting (connection_setting);
+
+    uint8[] ssid = "Office Wi-Fi".data;
+    var wireless_setting = new NM.SettingWireless () {
+        ssid = new Bytes (ssid),
+        hidden = true
+    };
+    connection.add_setting (wireless_setting);
+
+    var profile = NmWifiUtils.build_saved_profile (connection);
+    assert (profile != null);
+    assert (profile.profile_name == "Office profile");
+    assert (profile.ssid == "Office Wi-Fi");
+    assert (profile.saved_connection_uuid == uuid);
+}
+
+private static NM.Connection build_preference_test_profile (
+    string uuid,
+    string interface_name = "",
+    string bssid = "",
+    int32 autoconnect_priority = 0
+) {
+    var connection = (NM.SimpleConnection) NM.SimpleConnection.@new ();
+    var connection_setting = new NM.SettingConnection ();
+    connection_setting.id = uuid;
+    connection_setting.uuid = uuid;
+    connection_setting.type = NM.SettingWireless.SETTING_NAME;
+    connection_setting.interface_name = interface_name;
+    connection_setting.autoconnect_priority = autoconnect_priority;
+    connection.add_setting (connection_setting);
+
+    var wireless_setting = new NM.SettingWireless ();
+    wireless_setting.bssid = bssid;
+    connection.add_setting (wireless_setting);
+    return connection;
+}
+
+private static void test_wifi_profile_preference () {
+    const string active_uuid = "00000000-0000-0000-0000-000000000001";
+    const string interface_uuid = "00000000-0000-0000-0000-000000000002";
+    const string bssid_uuid = "00000000-0000-0000-0000-000000000003";
+    const string priority_uuid = "00000000-0000-0000-0000-000000000004";
+
+    var active = build_preference_test_profile (active_uuid);
+    var interface_bound = build_preference_test_profile (interface_uuid, "wlan1");
+    var bssid_bound = build_preference_test_profile (
+        bssid_uuid,
+        "",
+        "AA:BB:CC:DD:EE:FF"
+    );
+    var high_priority = build_preference_test_profile (priority_uuid, "", "", 50);
+
+    assert (NmWifiUtils.compare_profile_preference (
+        active,
+        interface_bound,
+        active_uuid,
+        "wlan1",
+        "aa:bb:cc:dd:ee:ff"
+    ) < 0);
+    assert (NmWifiUtils.compare_profile_preference (
+        interface_bound,
+        bssid_bound,
+        "",
+        "wlan1",
+        "aa:bb:cc:dd:ee:ff"
+    ) < 0);
+    assert (NmWifiUtils.compare_profile_preference (
+        bssid_bound,
+        high_priority,
+        "",
+        "wlan0",
+        "aa:bb:cc:dd:ee:ff"
+    ) < 0);
+    assert (NmWifiUtils.compare_profile_preference (
+        high_priority,
+        active,
+        "",
+        "wlan0",
+        ""
+    ) < 0);
+    assert (NmWifiUtils.compare_profile_preference (
+        active,
+        bssid_bound,
+        "",
+        "wlan0",
+        ""
+    ) < 0);
+}
+
+private static void test_runtime_ip_identity () {
+    const string requested_uuid = "00000000-0000-0000-0000-000000000001";
+    const string other_uuid = "00000000-0000-0000-0000-000000000002";
+
+    assert (!NmWifiUtils.should_populate_runtime_ip (
+        false,
+        requested_uuid,
+        requested_uuid
+    ));
+    assert (NmWifiUtils.should_populate_runtime_ip (
+        true,
+        requested_uuid,
+        requested_uuid
+    ));
+    assert (!NmWifiUtils.should_populate_runtime_ip (
+        true,
+        requested_uuid,
+        other_uuid
+    ));
+    assert (NmWifiUtils.should_populate_runtime_ip (true, "", other_uuid));
+}
+
 private static int main (string[] args) {
     Test.init (ref args);
     Test.add_func ("/nm-boundary/device-state", test_device_state_mapping);
@@ -213,5 +333,11 @@ private static int main (string[] args) {
     Test.add_func ("/nm-boundary/wifi-radio-candidate", test_wifi_radio_candidate_lookup);
     Test.add_func ("/nm-boundary/pending-wifi-device", test_pending_wifi_device_tracking);
     Test.add_func ("/nm-boundary/manual-multi-connect", test_manual_multi_connect_transition);
+    Test.add_func (
+        "/nm-boundary/saved-profile-persistent-metadata",
+        test_saved_profile_contains_only_persistent_metadata
+    );
+    Test.add_func ("/nm-boundary/wifi-profile-preference", test_wifi_profile_preference);
+    Test.add_func ("/nm-boundary/runtime-ip-identity", test_runtime_ip_identity);
     return Test.run ();
 }

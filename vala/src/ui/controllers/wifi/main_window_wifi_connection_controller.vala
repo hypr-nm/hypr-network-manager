@@ -249,7 +249,7 @@ public class MainWindowWifiConnectionController : Object {
 
         state_context.clear_wifi_error (network_key);
 
-        nm.forget_network.begin (profile_uuid, network_key, null, (obj, res) => {
+        nm.forget_network.begin (profile_uuid, null, (obj, res) => {
             try {
                 nm.forget_network.end (res);
                 if (!is_ui_epoch_valid (epoch)) {

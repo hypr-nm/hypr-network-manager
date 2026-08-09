@@ -116,6 +116,14 @@ public class WifiScannerService : GLib.Object {
 
             var wifidev = (NM.DeviceWifi) dev;
             var active_ap = wifidev.get_active_access_point ();
+            var active_connection = dev.get_active_connection ();
+            string active_uuid = active_connection != null
+                && active_connection.get_uuid () != null
+                ? active_connection.get_uuid ().strip ()
+                : "";
+            string device_iface = dev.get_iface () != null
+                ? dev.get_iface ().strip ()
+                : "";
 
             var d = HyprNetworkManager.Backend.Mappers.DeviceMapper.map_device (dev);
             devices_out.append (d);
@@ -145,9 +153,11 @@ public class WifiScannerService : GLib.Object {
                     }
                 }
 
-                                bool saved = false;
+                bool saved = false;
                 string saved_uuid = "";
                 bool autoconnect = true;
+                NM.Connection? preferred_profile = null;
+                string ap_bssid = ap.get_bssid () != null ? ap.get_bssid () : "";
 
                 var caps = HyprNetworkManager.Backend.Mappers.WifiSecurityMapper.map_capabilities (
                     ap.get_flags (),
@@ -155,11 +165,9 @@ public class WifiScannerService : GLib.Object {
                     ap.get_rsn_flags ()
                 );
 
-                // Bind the first profile valid for this AP, mirroring nmtui
-                // (nm_device_connection_valid + nm_access_point_connection_valid).
-                // We walk the connection list ourselves rather than calling
-                // ap.filter_connections() because libnm documents its transfer
-                // annotation as unreliable for language bindings.
+                // Collect profiles valid for both this radio and AP, then choose
+                // deterministically. The active profile wins, followed by exact
+                // interface/BSSID bindings, autoconnect priority, and UUID.
                 foreach (var candidate in connections) {
                     try {
                         if (!wifidev.connection_compatible (candidate)) {
@@ -179,13 +187,25 @@ public class WifiScannerService : GLib.Object {
                         && NmWifiUtils.connection_key_mgmt (candidate) == WifiKeyMgmt.WPA_PSK) {
                         continue;
                     }
+                    if (preferred_profile == null
+                        || NmWifiUtils.compare_profile_preference (
+                            candidate,
+                            preferred_profile,
+                            active_uuid,
+                            device_iface,
+                            ap_bssid
+                        ) < 0) {
+                        preferred_profile = candidate;
+                    }
+                }
+
+                if (preferred_profile != null) {
                     saved = true;
-                    saved_uuid = candidate.get_uuid ();
-                    var s_conn = candidate.get_setting_connection ();
+                    saved_uuid = preferred_profile.get_uuid ();
+                    var s_conn = preferred_profile.get_setting_connection ();
                     if (s_conn != null) {
                         autoconnect = s_conn.autoconnect;
                     }
-                    break;
                 }
 
                 bool connected = (active_ap != null && active_ap.get_path () == ap.get_path ());

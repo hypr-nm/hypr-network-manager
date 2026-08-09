@@ -30,45 +30,10 @@ public class SavedProfileService : GLib.Object {
     public async WifiSavedProfile[] get_saved_profiles (Cancellable? cancellable = null) throws Error {
         var client = nm_client;
         var connections = client.get_connections ();
-        var devices = client.get_devices ();
-
-        string default_wifi_device_path = "";
-        var active_uuid_to_device = new HashTable<string, string> (str_hash, str_equal);
-        foreach (var dev in devices) {
-            if (dev is NM.DeviceWifi == false) {
-                continue;
-            }
-            if (default_wifi_device_path == "") {
-                default_wifi_device_path = ((NM.Object)dev).get_path ();
-            }
-            var ac = dev.get_active_connection ();
-            if (ac != null) {
-                string active_uuid = ac.get_uuid ();
-                if (active_uuid != null && active_uuid != "") {
-                    active_uuid_to_device.insert (active_uuid, ((NM.Object)dev).get_path ());
-                }
-            }
-        }
 
         var out_list = new List<WifiSavedProfile> ();
         foreach (var conn in connections) {
-            string conn_uuid = conn.get_uuid ();
-            string uuid = conn_uuid != null ? conn_uuid.strip () : "";
-
-            string profile_device_path;
-            string active_uuid_for_profile;
-            if (uuid != "" && active_uuid_to_device.contains (uuid)) {
-                active_uuid_for_profile = uuid;
-                profile_device_path = active_uuid_to_device.get (uuid);
-            } else {
-                active_uuid_for_profile = "";
-                profile_device_path = default_wifi_device_path;
-            }
-
-            var profile = NmWifiUtils.build_saved_profile (
-                conn,
-                profile_device_path,
-                active_uuid_for_profile);
+            var profile = NmWifiUtils.build_saved_profile (conn);
             if (profile != null) {
                 out_list.append (profile);
             }
@@ -127,9 +92,8 @@ public class SavedProfileService : GLib.Object {
             settings.user_private_key_password = s_8021x.get_private_key_password () != null ? s_8021x.get_private_key_password () : "";
         }
 
-        var ip_settings = yield get_ip_settings_by_connection_uuid_and_device_path (
+        var ip_settings = yield get_configured_ip_settings_by_connection_uuid (
             profile.saved_connection_uuid,
-            profile.device_path,
             cancellable
         );
         settings.configured_password = ip_settings.configured_password;
@@ -305,9 +269,8 @@ public class SavedProfileService : GLib.Object {
         return true;
     }
 
-    public async NetworkIpSettings get_ip_settings_by_connection_uuid_and_device_path (
+    private async NetworkIpSettings get_configured_ip_settings_by_connection_uuid (
         string connection_uuid,
-        string device_path,
         Cancellable? cancellable = null
     ) {
         var ip_settings = new NetworkIpSettings ();
@@ -326,9 +289,6 @@ public class SavedProfileService : GLib.Object {
 
             NmIpConfigHelper.populate_configured_ip_settings (ip_settings, conn);
         }
-
-        var dev = client.get_device_by_path (device_path);
-        NmIpConfigHelper.populate_runtime_ip_settings (ip_settings, dev);
         return ip_settings;
     }
 
@@ -336,11 +296,31 @@ public class SavedProfileService : GLib.Object {
         WifiNetwork network,
         Cancellable? cancellable = null
     ) {
-        return yield get_ip_settings_by_connection_uuid_and_device_path (
+        var ip_settings = yield get_configured_ip_settings_by_connection_uuid (
             network.saved_connection_uuid,
-            network.device_path,
             cancellable
         );
+
+        if (!network.connected) {
+            return ip_settings;
+        }
+
+        var dev = nm_client.get_device_by_path (network.device_path);
+        string active_uuid = "";
+        if (dev != null) {
+            var active_connection = dev.get_active_connection ();
+            if (active_connection != null && active_connection.get_uuid () != null) {
+                active_uuid = active_connection.get_uuid ().strip ();
+            }
+        }
+
+        if (dev != null && NmWifiUtils.should_populate_runtime_ip (
+                network.connected,
+                network.saved_connection_uuid,
+                active_uuid)) {
+            NmIpConfigHelper.populate_runtime_ip_settings (ip_settings, dev);
+        }
+        return ip_settings;
     }
 
     public async bool update_network_settings (
@@ -696,7 +676,6 @@ public class SavedProfileService : GLib.Object {
 
     public async bool forget_network (
         string profile_uuid,
-        string network_key,
         Cancellable? cancellable = null
     ) throws Error {
         var client = nm_client;

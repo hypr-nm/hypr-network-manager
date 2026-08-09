@@ -399,10 +399,9 @@ public class NetworkManagerClient : GLib.Object,
 
     public async bool forget_network (
         string profile_uuid,
-        string network_key,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield saved_profiles.forget_network (profile_uuid, network_key, cancellable);
+        return yield saved_profiles.forget_network (profile_uuid, cancellable);
     }
 
     public async bool set_wifi_network_autoconnect (

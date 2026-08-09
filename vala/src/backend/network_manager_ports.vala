@@ -30,7 +30,6 @@ namespace HyprNetworkManager.Backend {
     public interface IForgetNetworkClient : GLib.Object {
         public abstract async bool forget_network (
             string profile_uuid,
-            string network_key,
             Cancellable? cancellable = null
         ) throws Error;
     }
