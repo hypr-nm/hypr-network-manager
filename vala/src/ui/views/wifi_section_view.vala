@@ -56,7 +56,6 @@ namespace HyprNetworkManager.UI.Views {
 
         public signal void refresh_requested ();
         public signal void go_to_hotspot_requested ();
-        public signal void refresh_switch_states_requested ();
 
         private Gtk.Label status_label;
         private Gtk.Image status_icon;
@@ -130,7 +129,6 @@ namespace HyprNetworkManager.UI.Views {
             controller.hidden_network_connected.connect (() => {
                 show_add_error ("");
                 stack.set_visible_child_name ("list");
-                window_host.set_popup_text_input_mode (false);
             });
             controller.add_network_failed.connect ((message) => {
                 show_add_error (message);
@@ -162,7 +160,6 @@ namespace HyprNetworkManager.UI.Views {
                 edit_page.show_error ("");
                 if (close_after_apply) {
                     open_wifi_details (network);
-                    window_host.set_popup_text_input_mode (false);
                 }
             });
             controller.edit_failed.connect ((message) => {
@@ -228,7 +225,6 @@ namespace HyprNetworkManager.UI.Views {
 
         private void wire_details_page_signals () {
             details_page.back.connect (() => {
-                window_host.set_popup_text_input_mode (false);
                 stack.set_visible_child_name ("list");
             });
 
@@ -279,7 +275,6 @@ namespace HyprNetworkManager.UI.Views {
 
         private void wire_edit_page_signals () {
             edit_page.back.connect (() => {
-                window_host.set_popup_text_input_mode (false);
                 if (selected_wifi_network != null) {
                     open_wifi_details (selected_wifi_network);
                 } else {
@@ -306,7 +301,6 @@ namespace HyprNetworkManager.UI.Views {
             var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
             var back_btn = MainWindowHelpers.build_back_button ();
             back_btn.clicked.connect (() => {
-                window_host.set_popup_text_input_mode (false);
                 stack.set_visible_child_name ("list");
             });
             header.append (back_btn);
@@ -468,7 +462,6 @@ namespace HyprNetworkManager.UI.Views {
             add_password_entry.set_text ("");
             show_add_error ("");
             stack.set_visible_child_name ("add");
-            window_host.set_popup_text_input_mode (true);
         }
 
         private void populate_wifi_details (WifiNetwork net) {
@@ -495,7 +488,6 @@ namespace HyprNetworkManager.UI.Views {
             selected_wifi_network = net;
             edit_page.setup_edit_form (net);
             stack.set_visible_child_name ("edit");
-            window_host.set_popup_text_input_mode (true);
             controller.load_edit_settings (net);
         }
 
@@ -587,7 +579,6 @@ namespace HyprNetworkManager.UI.Views {
             password_prompt_manager.show_prompt (revealer, entry);
             active_wifi_password_revealer = revealer;
             active_wifi_password_entry = entry;
-            window_host.set_popup_text_input_mode (true);
         }
 
         public HyprNetworkManager.UI.Widgets.TrackedDropDown create_radio_dropdown (
@@ -602,7 +593,6 @@ namespace HyprNetworkManager.UI.Views {
                 active_wifi_password_revealer = null;
                 active_wifi_password_entry = null;
                 active_wifi_password_row_id = null;
-                window_host.set_popup_text_input_mode (false);
             }
         }
 
@@ -759,13 +749,10 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public void hide_active_wifi_password_prompt () {
-            bool was_active = password_prompt_manager.hide_active_prompt ();
+            password_prompt_manager.hide_active_prompt ();
             active_wifi_password_revealer = null;
             active_wifi_password_entry = null;
             active_wifi_password_row_id = null;
-            if (was_active) {
-                window_host.set_popup_text_input_mode (false);
-            }
         }
 
         public void show_edit_error (string message) {

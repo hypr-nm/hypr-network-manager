@@ -28,6 +28,13 @@ namespace MainWindowWifiRowBuilder {
     private const string UPDATING_RADIO_DROPDOWN = "updating-radio-dropdown";
     private const string UPDATING_AUTOCONNECT = "updating-auto-connect";
     private const string WIFI_IS_CONNECTING = "wifi-is-connecting";
+    private const string WIFI_ACTION_STATE = "wifi-action-state";
+
+    private enum WifiActionState {
+        CONNECT,
+        CONNECTING,
+        DISCONNECT
+    }
 
     private bool is_selectable_candidate (WifiNetwork candidate) {
         return candidate.device_is_available;
@@ -398,10 +405,8 @@ namespace MainWindowWifiRowBuilder {
         });
 
         action.clicked.connect (() => {
-            bool current_connected = action.has_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
-            bool current_connecting = action.get_label ().has_prefix ("Connecting");
-
-            if (current_connecting) return;
+            var current_state = (WifiActionState) action.get_data<int> (WIFI_ACTION_STATE);
+            if (current_state == WifiActionState.CONNECTING) return;
 
             var latest_network = row.get_data<WifiNetwork> ("wifi-network");
             if (latest_network == null) {
@@ -409,7 +414,7 @@ namespace MainWindowWifiRowBuilder {
             }
             var latest_net = selected_candidate (row, latest_network);
 
-            if (current_connected) {
+            if (current_state == WifiActionState.DISCONNECT) {
                 action_handler.disconnect_network (latest_net);
                 return;
             }
@@ -441,12 +446,27 @@ namespace MainWindowWifiRowBuilder {
     ) {
         bool is_connected_now = target.connected;
         bool replaces_connection = !is_connected_now && target.device_is_connected;
-        string action_label = is_connecting
-            ? _("Connecting…")
-            : (is_connected_now ? _("Disconnect") : _("Connect"));
+        WifiActionState state = is_connecting
+            ? WifiActionState.CONNECTING
+            : (is_connected_now ? WifiActionState.DISCONNECT : WifiActionState.CONNECT);
+        action.set_data<int> (WIFI_ACTION_STATE, (int) state);
+
+        string action_label;
+        switch (state) {
+        case WifiActionState.CONNECTING:
+            action_label = _("Connecting…");
+            break;
+        case WifiActionState.DISCONNECT:
+            action_label = _("Disconnect");
+            break;
+        case WifiActionState.CONNECT:
+        default:
+            action_label = _("Connect");
+            break;
+        }
         action.set_label (action_label);
         action.set_sensitive (
-            !is_connecting
+            state != WifiActionState.CONNECTING
             && is_selectable_candidate (target)
             && !target.device_is_connecting
         );
@@ -460,7 +480,7 @@ namespace MainWindowWifiRowBuilder {
             action.set_tooltip_text (null);
         }
 
-        if (is_connected_now && !is_connecting) {
+        if (state == WifiActionState.DISCONNECT) {
             action.add_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
             action.remove_css_class (MainWindowCssClasses.CONNECT_BUTTON);
         } else {

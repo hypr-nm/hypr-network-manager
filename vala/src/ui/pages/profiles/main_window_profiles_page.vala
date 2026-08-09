@@ -23,7 +23,6 @@ public class MainWindowProfilesPage : Gtk.Box {
     public Gtk.ListBox ethernet_saved_listbox { get; set; }
 
     public signal void back ();
-    public signal void refresh ();
     public signal void open_profile (WifiSavedProfile profile);
     public signal void delete_profile (WifiSavedProfile profile);
     public signal void open_ethernet_profile (NetworkDevice device);

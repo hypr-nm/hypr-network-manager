@@ -80,7 +80,6 @@ namespace HyprNetworkManager.UI.Views {
         private void wire_page_signals () {
             details_page.back.connect (() => {
                 selected_device = null;
-                window_host.set_popup_text_input_mode (false);
                 stack.set_visible_child_name ("list");
             });
             details_page.primary_action.connect (() => {
@@ -96,7 +95,6 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             edit_page.back.connect (() => {
-                window_host.set_popup_text_input_mode (false);
                 if (profile_edit_mode) {
                     profile_edit_mode = false;
                     selected_device = null;
@@ -156,7 +154,6 @@ namespace HyprNetworkManager.UI.Views {
                 }
 
                 selected_device = null;
-                window_host.set_popup_text_input_mode (false);
             }
 
             stack.set_visible_child_name (devices.length > 0 ? "list" : "empty");
@@ -185,7 +182,6 @@ namespace HyprNetworkManager.UI.Views {
             selected_device = device;
             edit_page.setup_edit_form (device);
             stack.set_visible_child_name ("edit");
-            window_host.set_popup_text_input_mode (true);
             controller.load_edit_settings (device);
         }
 
@@ -208,7 +204,6 @@ namespace HyprNetworkManager.UI.Views {
             if (!is_selected (device)) {
                 return;
             }
-            window_host.set_popup_text_input_mode (false);
             if (was_profile_edit) {
                 profile_edit_mode = false;
                 selected_device = null;

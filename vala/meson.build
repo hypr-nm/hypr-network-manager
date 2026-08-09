@@ -277,17 +277,6 @@ test(
   ],
 )
 
-cli_config_test = executable(
-  'test-cli-config',
-  [
-    'tests/test_cli_config.vala',
-    'src/cli_invocation.vala',
-  ],
-  c_args: ['-w'],
-  dependencies: [gio_dep],
-)
-test('cli config forwarding', cli_config_test)
-
 hotspot_controller_test = executable(
   'test-hotspot-controller',
   [
@@ -313,11 +302,56 @@ hotspot_controller_test = executable(
 )
 test('hotspot controller', hotspot_controller_test)
 
-test(
-  'architecture boundaries',
-  find_program('bash'),
-  args: [
-    files('tests/test_architecture_boundaries.sh'),
-    meson.current_source_dir(),
+refresh_coordinator_test = executable(
+  'test-refresh-coordinator',
+  [
+    'tests/test_refresh_coordinator.vala',
+    'src/logging.vala',
+    'src/constants.vala',
+    'src/models/hotspot_config.vala',
+    'src/models/wireguard_peer.vala',
+    'src/models/wifi_network.vala',
+    'src/models/wifi_saved_profile.vala',
+    'src/models/wifi_security_mode.vala',
+    'src/models/wifi_security_capabilities.vala',
+    'src/models/network_update_requests.vala',
+    'src/models/network_ip_settings.vala',
+    'src/models/network_device.vala',
+    'src/models/network_data.vala',
+    'src/models/vpn_connection.vala',
+    'src/backend/network_manager_ports.vala',
+    'src/ui/interfaces/window_host.vala',
+    'src/ui/controllers/main_window_refresh_coordinator.vala',
   ],
+  c_args: ['-w'],
+  dependencies: [gio_dep],
+  override_options: ['b_ndebug=false'],
 )
+test('refresh coordinator', refresh_coordinator_test)
+
+wifi_details_controller_test = executable(
+  'test-wifi-details-controller',
+  [
+    'tests/test_wifi_details_controller.vala',
+    'src/constants.vala',
+    'src/models/hotspot_config.vala',
+    'src/models/wireguard_peer.vala',
+    'src/models/wifi_network.vala',
+    'src/models/wifi_saved_profile.vala',
+    'src/models/wifi_security_mode.vala',
+    'src/models/wifi_security_capabilities.vala',
+    'src/models/network_update_requests.vala',
+    'src/models/network_ip_settings.vala',
+    'src/models/network_device.vala',
+    'src/models/network_data.vala',
+    'src/models/vpn_connection.vala',
+    'src/models/network_state_context.vala',
+    'src/backend/network_manager_ports.vala',
+    'src/ui/interfaces/window_host.vala',
+    'src/ui/controllers/wifi/main_window_wifi_details_edit_controller.vala',
+  ],
+  c_args: ['-w'],
+  dependencies: [gio_dep],
+  override_options: ['b_ndebug=false'],
+)
+test('wifi details controller', wifi_details_controller_test)

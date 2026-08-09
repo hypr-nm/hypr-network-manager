@@ -106,7 +106,6 @@ namespace HyprNetworkManager.UI.Views {
             });
             profiles_controller.wifi_profile_update_succeeded.connect (() => {
                 window_host.refresh_after_action (false);
-                window_host.set_popup_text_input_mode (false);
                 stack.set_visible_child_name ("list");
                 profiles_page.restore_scroll_position ();
             });
@@ -126,7 +125,6 @@ namespace HyprNetworkManager.UI.Views {
                 main_content_stack.set_visible_child_name ("profiles");
                 stack.set_visible_child_name ("list");
                 profiles_page.restore_scroll_position ();
-                window_host.set_popup_text_input_mode (false);
             });
         }
 
@@ -134,11 +132,6 @@ namespace HyprNetworkManager.UI.Views {
             profiles_page.back.connect (() => {
                 main_content_stack.set_visible_child_name ("main");
                 main_wifi_stack.set_visible_child_name ("list");
-                window_host.set_popup_text_input_mode (false);
-            });
-
-            profiles_page.refresh.connect (() => {
-                refresh_saved_profiles ();
             });
 
             profiles_page.open_profile.connect (open_saved_wifi_profile_details);
@@ -182,7 +175,6 @@ namespace HyprNetworkManager.UI.Views {
 
         private void wire_profiles_edit_page_signals () {
             wifi_saved_edit_page.back.connect (() => {
-                window_host.set_popup_text_input_mode (false);
                 stack.set_visible_child_name ("list");
                 profiles_page.restore_scroll_position ();
             });
@@ -238,7 +230,6 @@ namespace HyprNetworkManager.UI.Views {
                 title_name = MainWindowHelpers.safe_text (profile.ssid).strip ();
             }
             wifi_saved_edit_page.title_label.set_text (_("Saved Profile: %s").printf (title_name));
-            window_host.set_popup_text_input_mode (true);
             stack.set_visible_child_name ("edit");
             profiles_controller.load_wifi_profile_settings (profile);
         }

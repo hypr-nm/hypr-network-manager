@@ -214,7 +214,7 @@ public class MainWindowWifiDetailsEditController : Object {
     }
 
     public bool is_connected (WifiNetwork network) {
-        return state_context.active_wifi_connections.contains (network.network_key);
+        return network.connected;
     }
 
     public bool is_pending (WifiNetwork network) {
