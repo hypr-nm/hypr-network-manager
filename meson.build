@@ -31,7 +31,7 @@ endif
 
 create_ap_dir = get_option('libexecdir') / 'hypr-network-manager'
 install_data(
-  'scripts/create_ap/create_ap',
+  'scripts/hypr-create-ap/hypr-create-ap',
   install_dir: create_ap_dir,
   install_mode: 'rwxr-xr-x',
 )
@@ -40,8 +40,8 @@ polkit_actions_dir = get_option('datadir') / 'polkit-1' / 'actions'
 polkit_rules_dir = get_option('datadir') / 'polkit-1' / 'rules.d'
 
 conf_data_polkit = configuration_data()
-conf_data_polkit.set('CREATE_AP_PATH', get_option('prefix') / get_option('libexecdir') / 'hypr-network-manager' / 'create_ap')
-conf_data_polkit.set('CREATE_AP_DEV_PATH', meson.current_source_dir() / 'scripts' / 'create_ap' / 'create_ap')
+conf_data_polkit.set('CREATE_AP_PATH', get_option('prefix') / get_option('libexecdir') / 'hypr-network-manager' / 'hypr-create-ap')
+conf_data_polkit.set('CREATE_AP_DEV_PATH', meson.current_source_dir() / 'scripts' / 'hypr-create-ap' / 'hypr-create-ap')
 
 install_data(
   'packaging/polkit/20-hypr-network-manager-create-ap.rules',

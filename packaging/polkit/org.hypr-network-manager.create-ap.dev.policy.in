@@ -4,9 +4,9 @@
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
 <!--
-  Dev-tree variant of the create_ap policy. This is generated at meson
+  Dev-tree variant of the hypr-create-ap policy. This is generated at meson
   configure-time with @CREATE_AP_DEV_PATH@ pointing at the uninstalled
-  vendored script under scripts/create_ap/. It lets developers run the
+  vendored script under scripts/hypr-create-ap/. It lets developers run the
   freshly-built binary straight out of the source tree.
 
   SECURITY: polkit/pkexec does NOT verify that the annotated exec.path is

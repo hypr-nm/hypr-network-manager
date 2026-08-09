@@ -59,6 +59,7 @@ usage() {
     echo "  --freq-band <GHz>       Set frequency band. Valid inputs: 2.4, 5 (default: Use 5GHz if the interface supports it)"
     echo "  --driver                Choose your WiFi adapter driver (default: nl80211)"
     echo "  --no-virt               Do not create virtual interface"
+    echo "  --virt-name <name>      Name for the virtual AP interface (default: ap0, ap1, ...)"
     echo "  --no-haveged            Do not run 'haveged' automatically when needed"
     echo "  --fix-unmanaged         If NetworkManager shows your interface as unmanaged after you"
     echo "                          close create_ap, then use this option to switch your interface"
@@ -141,14 +142,14 @@ get_avail_fd() {
 }
 
 # lock file for the mutex counter
-COUNTER_LOCK_FILE=/tmp/create_ap.$$.lock
+COUNTER_LOCK_FILE=/tmp/hypr-create-ap.$$.lock
 
 cleanup_lock() {
     rm -f $COUNTER_LOCK_FILE
 }
 
 init_lock() {
-    local LOCK_FILE=/tmp/create_ap.all.lock
+    local LOCK_FILE=/tmp/hypr-create-ap.all.lock
 
     # we initialize only once
     [[ $LOCK_FD -ne 0 ]] && return 0
@@ -705,6 +706,7 @@ DAEMON_PIDFILE=
 DAEMON_LOGFILE=/dev/null
 READY_FILE=
 PASSPHRASE_FILE=
+VIRT_NAME=
 DNS_LOGFILE=
 NO_HAVEGED=0
 USE_PSK=0
@@ -912,7 +914,7 @@ clean_exit() {
 list_running_conf() {
     local x
     mutex_lock
-    for x in /tmp/create_ap.*; do
+    for x in /tmp/hypr-create-ap.*; do
         if [[ -f $x/pid && -f $x/wifi_iface && -d /proc/$(cat $x/pid) ]]; then
             echo $x
         fi
@@ -1016,7 +1018,7 @@ has_running_instance() {
     local PID x
 
     mutex_lock
-    for x in /tmp/create_ap.*; do
+    for x in /tmp/hypr-create-ap.*; do
         if [[ -f $x/pid ]]; then
             PID=$(cat $x/pid)
             if [[ -d /proc/$PID ]]; then
@@ -1153,7 +1155,7 @@ for ((i=0; i<$#; i++)); do
     fi
 done
 
-GETOPT_ARGS=$(getopt -o hc:w:g:de:nm: -l "help","hidden","hostapd-debug:","hostapd-timestamps","redirect-to-localhost","mac-filter","mac-filter-accept:","isolate-clients","ieee80211n","ieee80211ac","ieee80211ax","ht_capab:","vht_capab:","driver:","no-virt","fix-unmanaged","country:","freq-band:","mac:","dhcp-dns:","daemon","pidfile:","logfile:","ready-file:","passphrase-file:","dns-logfile:","stop:","list","list-running","list-clients:","version","psk","no-haveged","no-dns","no-dnsmasq","mkconfig:","config:","dhcp-hosts:" -n "$PROGNAME" -- "$@")
+GETOPT_ARGS=$(getopt -o hc:w:g:de:nm: -l "help","hidden","hostapd-debug:","hostapd-timestamps","redirect-to-localhost","mac-filter","mac-filter-accept:","isolate-clients","ieee80211n","ieee80211ac","ieee80211ax","ht_capab:","vht_capab:","driver:","no-virt","virt-name:","fix-unmanaged","country:","freq-band:","mac:","dhcp-dns:","daemon","pidfile:","logfile:","ready-file:","passphrase-file:","dns-logfile:","stop:","list","list-running","list-clients:","version","psk","no-haveged","no-dns","no-dnsmasq","mkconfig:","config:","dhcp-hosts:" -n "$PROGNAME" -- "$@")
 [[ $? -ne 0 ]] && exit 1
 eval set -- "$GETOPT_ARGS"
 
@@ -1301,6 +1303,11 @@ while :; do
         --passphrase-file)
             shift
             PASSPHRASE_FILE="$1"
+            shift
+            ;;
+        --virt-name)
+            shift
+            VIRT_NAME="$1"
             shift
             ;;
         --dns-logfile)
@@ -1675,7 +1682,7 @@ fi
 
 mutex_lock
 trap "cleanup" EXIT
-CONFDIR=$(mktemp -d /tmp/create_ap.${WIFI_IFACE}.conf.XXXXXXXX)
+CONFDIR=$(mktemp -d /tmp/hypr-create-ap.${WIFI_IFACE}.conf.XXXXXXXX)
 echo "Config dir: $CONFDIR"
 echo "PID: $$"
 echo $$ > $CONFDIR/pid
@@ -1685,7 +1692,7 @@ echo $$ > $CONFDIR/pid
 chmod 755 $CONFDIR
 chmod 444 $CONFDIR/pid
 
-COMMON_CONFDIR=/tmp/create_ap.common.conf
+COMMON_CONFDIR=/tmp/hypr-create-ap.common.conf
 mkdir -p $COMMON_CONFDIR || die "Failed to create common config directory $COMMON_CONFDIR"
 
 if [[ "$SHARE_METHOD" == "nat" ]]; then
@@ -1712,7 +1719,17 @@ if [[ $USE_IWCONFIG -eq 0 ]]; then
 fi
 
 if [[ $NO_VIRT -eq 0 ]]; then
-    VWIFI_IFACE=$(alloc_new_iface ap)
+    if [[ -n "$VIRT_NAME" ]]; then
+        if [[ ! "$VIRT_NAME" =~ ^[A-Za-z0-9_-]+$ || ${#VIRT_NAME} -gt 15 ]]; then
+            die "Invalid --virt-name '$VIRT_NAME': use up to 15 letters, digits, '_' or '-'"
+        fi
+        if is_interface "$VIRT_NAME"; then
+            die "Interface '$VIRT_NAME' already exists; choose a different --virt-name"
+        fi
+        VWIFI_IFACE="$VIRT_NAME"
+    else
+        VWIFI_IFACE=$(alloc_new_iface ap)
+    fi
 
     # in NetworkManager 0.9.9 and above we can set the interface as unmanaged without
     # the need of MAC address, so we set it before we create the virtual interface.

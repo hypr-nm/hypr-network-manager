@@ -4,11 +4,11 @@
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
 <!--
-  This policy authorizes pkexec to launch the vendored create_ap helper shipped
-  inside hypr-network-manager (installed to @CREATE_AP_PATH@). Without it pkexec
-  falls back to default auth_admin, which prompts for an administrator password
-  on every invocation — and create_ap is potentially called several times per
-  hotspot enable/disable cycle.
+  This policy authorizes pkexec to launch the vendored hypr-create-ap helper
+  shipped inside hypr-network-manager (installed to @CREATE_AP_PATH@). Without it
+  pkexec falls back to default auth_admin, which prompts for an administrator
+  password on every invocation — and the helper is potentially called several
+  times per hotspot enable/disable cycle.
 -->
 
 <policyconfig>

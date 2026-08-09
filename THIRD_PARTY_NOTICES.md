@@ -31,15 +31,16 @@ SOFTWARE.
 
 ## create_ap script
 
-- **Source Files:** `scripts/create_ap/create_ap`, `scripts/create_ap/LICENSE`
+- **Source Files:** `scripts/hypr-create-ap/hypr-create-ap`, `scripts/hypr-create-ap/LICENSE`
 - **Copyright:** Copyright (c) 2013, oblique; Copyright (c) 2023, lakinduaksh
 - **Upstream Project:** linux-wifi-hotspot
 - **Website:** <https://github.com/lakinduakh/linux-wifi-hotspot>
 - **Communities:** original author `@oblique` (<https://github.com/oblique>); maintained by lakinduakash
 - **License:** BSD-2-Clause
 
-The `create_ap` script is included with modification. The full license text is preserved in
-`scripts/create_ap/LICENSE`.
+The upstream `create_ap` script is included with modification and shipped under the
+name `hypr-create-ap`. The full license text is preserved in
+`scripts/hypr-create-ap/LICENSE`.
 
 ### License Text
 

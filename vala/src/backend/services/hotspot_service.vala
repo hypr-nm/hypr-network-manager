@@ -61,35 +61,28 @@ public class HotspotService : GLib.Object {
             && FileUtils.test (dev, FileTest.EXISTS | FileTest.IS_EXECUTABLE)) {
             return dev;
         }
-        return GLib.Environment.find_program_in_path ("create_ap");
+        return GLib.Environment.find_program_in_path ("hypr-create-ap");
     }
 
     private bool create_ap_deps_available () {
-        foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip" }) {
+        foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip", "iptables" }) {
             if (GLib.Environment.find_program_in_path (tool) == null) {
                 return false;
             }
         }
-        if (GLib.Environment.find_program_in_path ("iptables") == null) {
-            return false;
-        }
         return true;
     }
 
-    private bool can_use_create_ap () {
-        return get_create_ap_path () != null && create_ap_deps_available ();
-    }
-
     public bool has_create_ap () {
-        return can_use_create_ap ();
-    }
+        return get_create_ap_path () != null && create_ap_deps_available ();
 
+    }
     private void warn_create_ap_fallback_once () {
         if (warned_create_ap_fallback) return;
         warned_create_ap_fallback = true;
         var missing = new GLib.GenericArray<string> ();
         if (get_create_ap_path () == null) {
-            missing.add ("create_ap");
+            missing.add ("hypr-create-ap");
         }
         foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip", "iptables" }) {
             if (GLib.Environment.find_program_in_path (tool) == null) {
@@ -602,7 +595,7 @@ public class HotspotService : GLib.Object {
                     resolved_ap_iface));
         }
         if (use_create_ap) {
-            string create_ap_bin = get_create_ap_path () ?? "create_ap";
+            string create_ap_bin = get_create_ap_path () ?? "hypr-create-ap";
             string pidfile = create_ap_runtime_path (
                 resolved_ap_iface,
                 "pid");
@@ -775,7 +768,7 @@ public class HotspotService : GLib.Object {
                 throw new IOError.NOT_SUPPORTED (
                     "Selected Wi-Fi device does not support NetworkManager AP mode");
             }
-            if (!can_use_create_ap ()) {
+            if (!has_create_ap ()) {
                 warn_create_ap_fallback_once ();
             }
             debug_log ("Starting native NM hotspot creation...");
@@ -954,10 +947,10 @@ public class HotspotService : GLib.Object {
         }
 
         if (has_create_ap ()) {
-            string create_ap_bin = get_create_ap_path () ?? "create_ap";
+            string create_ap_bin = get_create_ap_path () ?? "hypr-create-ap";
             if (dev != null) {
                 try {
-                    string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + dev.get_iface () };
+                    string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*hypr-create-ap.*" + dev.get_iface () };
                     var proc = new GLib.Subprocess.newv (pgrep_argv, GLib.SubprocessFlags.STDOUT_PIPE);
                     string? stdout_content;
                     yield proc.communicate_utf8_async (null, cancellable, out stdout_content, null);
@@ -1049,7 +1042,7 @@ public class HotspotService : GLib.Object {
             bool is_running = false;
             try {
                 if (target_dev != null) {
-                    string[] argv = { "pgrep", "-P", "1", "-f", "bash.*create_ap.*" + target_dev.get_iface () };
+                    string[] argv = { "pgrep", "-P", "1", "-f", "bash.*hypr-create-ap.*" + target_dev.get_iface () };
                     int exit_status;
                     string stdout_content;
                     if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {

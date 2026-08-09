@@ -12,8 +12,8 @@ conf_data = configuration_data()
 conf_data.set_quoted('GETTEXT_PACKAGE', meson.project_name())
 conf_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 conf_data.set_quoted('VERSION', meson.project_version())
-conf_data.set_quoted('CREATE_AP_PATH', get_option('prefix') / get_option('libexecdir') / 'hypr-network-manager' / 'create_ap')
-conf_data.set_quoted('CREATE_AP_DEV_PATH', meson.project_source_root() / 'scripts' / 'create_ap' / 'create_ap')
+conf_data.set_quoted('CREATE_AP_PATH', get_option('prefix') / get_option('libexecdir') / 'hypr-network-manager' / 'hypr-create-ap')
+conf_data.set_quoted('CREATE_AP_DEV_PATH', meson.project_source_root() / 'scripts' / 'hypr-create-ap' / 'hypr-create-ap')
 
 config_file = configure_file(
   input: 'src/config.vala.in',
@@ -215,7 +215,7 @@ test(
   find_program('bash'),
   args: [
     files('tests/test_create_ap_script.sh'),
-    meson.project_source_root() / 'scripts' / 'create_ap' / 'create_ap',
+    meson.project_source_root() / 'scripts' / 'hypr-create-ap' / 'hypr-create-ap',
   ],
 )
 
