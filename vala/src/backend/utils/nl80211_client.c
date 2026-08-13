@@ -51,6 +51,16 @@ struct nm_nl80211_band_query_state {
     int supports_5ghz;
 };
 
+struct nm_nl80211_channel_query_state {
+    struct nm_nl80211_receive_state receive;
+    int saw_bands;
+    int requested_band;
+    uint32_t preferred_frequency_mhz;
+    uint32_t selected_frequency_mhz;
+    uint32_t selected_channel;
+    uint32_t selection_rank;
+};
+
 struct nm_nl80211_interface_record {
     uint32_t ifindex;
     uint32_t wiphy;
@@ -88,6 +98,37 @@ nm_nl80211_frequency_band (uint32_t frequency_mhz)
     return NM_NL80211_BAND_NONE;
 }
 
+uint32_t
+nm_nl80211_frequency_channel (uint32_t frequency_mhz)
+{
+    if (frequency_mhz == 2484U) {
+        return 14U;
+    }
+    if (frequency_mhz >= 2412U && frequency_mhz < 2484U &&
+        (frequency_mhz - 2407U) % 5U == 0U) {
+        return (frequency_mhz - 2407U) / 5U;
+    }
+    if (frequency_mhz >= 4910U && frequency_mhz <= 4980U &&
+        (frequency_mhz - 4000U) % 5U == 0U) {
+        return (frequency_mhz - 4000U) / 5U;
+    }
+    if (frequency_mhz >= 5000U && frequency_mhz < 5925U &&
+        (frequency_mhz - 5000U) % 5U == 0U) {
+        return (frequency_mhz - 5000U) / 5U;
+    }
+    return 0U;
+}
+
+static int
+frequency_is_ap_safe (struct nlattr **attributes)
+{
+    return attributes[NL80211_FREQUENCY_ATTR_FREQ] != NULL &&
+           attributes[NL80211_FREQUENCY_ATTR_DISABLED] == NULL &&
+           attributes[NL80211_FREQUENCY_ATTR_NO_IR] == NULL &&
+           attributes[NL80211_FREQUENCY_ATTR_RADAR] == NULL &&
+           attributes[NL80211_FREQUENCY_ATTR_NO_20MHZ] == NULL;
+}
+
 static void
 record_usable_frequency (uint32_t frequency_mhz,
                          int *supports_2ghz,
@@ -121,6 +162,8 @@ nm_nl80211_parse_band_support_message (struct nl_msg *message,
         [NL80211_FREQUENCY_ATTR_FREQ] = { .type = NLA_U32 },
         [NL80211_FREQUENCY_ATTR_DISABLED] = { .type = NLA_FLAG },
         [NL80211_FREQUENCY_ATTR_NO_IR] = { .type = NLA_FLAG },
+        [NL80211_FREQUENCY_ATTR_RADAR] = { .type = NLA_FLAG },
+        [NL80211_FREQUENCY_ATTR_NO_20MHZ] = { .type = NLA_FLAG },
     };
     struct nlmsghdr *nl_header;
     struct nlattr *top_level[NL80211_ATTR_MAX + 1] = { 0 };
@@ -179,9 +222,7 @@ nm_nl80211_parse_band_support_message (struct nl_msg *message,
                 return -1;
             }
 
-            if (frequency_attributes[NL80211_FREQUENCY_ATTR_FREQ] == NULL ||
-                frequency_attributes[NL80211_FREQUENCY_ATTR_DISABLED] != NULL ||
-                frequency_attributes[NL80211_FREQUENCY_ATTR_NO_IR] != NULL) {
+            if (!frequency_is_ap_safe (frequency_attributes)) {
                 continue;
             }
 
@@ -189,6 +230,126 @@ nm_nl80211_parse_band_support_message (struct nl_msg *message,
                 nla_get_u32 (frequency_attributes[NL80211_FREQUENCY_ATTR_FREQ]),
                 supports_2ghz,
                 supports_5ghz);
+        }
+    }
+
+    return 0;
+}
+
+static uint32_t
+channel_selection_rank (int band,
+                        uint32_t frequency_mhz,
+                        uint32_t channel,
+                        uint32_t preferred_frequency_mhz)
+{
+    if (preferred_frequency_mhz != 0U &&
+        frequency_mhz == preferred_frequency_mhz) {
+        return 0U;
+    }
+    if ((band == NM_NL80211_BAND_2GHZ && channel == 6U) ||
+        (band == NM_NL80211_BAND_5GHZ && channel == 36U)) {
+        return 1U;
+    }
+    return 100U + channel;
+}
+
+int
+nm_nl80211_parse_ap_channel_message (struct nl_msg *message,
+                                     int requested_band,
+                                     uint32_t preferred_frequency_mhz,
+                                     uint32_t *selected_frequency_mhz,
+                                     uint32_t *selected_channel,
+                                     uint32_t *selection_rank)
+{
+    static const struct nla_policy frequency_policy[NL80211_FREQUENCY_ATTR_MAX + 1] = {
+        [NL80211_FREQUENCY_ATTR_FREQ] = { .type = NLA_U32 },
+        [NL80211_FREQUENCY_ATTR_DISABLED] = { .type = NLA_FLAG },
+        [NL80211_FREQUENCY_ATTR_NO_IR] = { .type = NLA_FLAG },
+        [NL80211_FREQUENCY_ATTR_RADAR] = { .type = NLA_FLAG },
+        [NL80211_FREQUENCY_ATTR_NO_20MHZ] = { .type = NLA_FLAG },
+    };
+    struct nlmsghdr *nl_header;
+    struct nlattr *top_level[NL80211_ATTR_MAX + 1] = { 0 };
+    struct nlattr *band;
+    int band_remaining;
+
+    if (message == NULL || selected_frequency_mhz == NULL ||
+        selected_channel == NULL || selection_rank == NULL ||
+        (requested_band != NM_NL80211_BAND_2GHZ &&
+         requested_band != NM_NL80211_BAND_5GHZ)) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    nl_header = nlmsg_hdr (message);
+    if (nl_header == NULL || !genlmsg_valid_hdr (nl_header, 0)) {
+        errno = EBADMSG;
+        return -1;
+    }
+    if (genlmsg_parse (nl_header, 0, top_level, NL80211_ATTR_MAX, NULL) < 0) {
+        errno = EBADMSG;
+        return -1;
+    }
+    if (top_level[NL80211_ATTR_WIPHY_BANDS] == NULL) {
+        return 1;
+    }
+
+    nla_for_each_nested (band,
+                         top_level[NL80211_ATTR_WIPHY_BANDS],
+                         band_remaining) {
+        struct nlattr *band_attributes[NL80211_BAND_ATTR_MAX + 1] = { 0 };
+        struct nlattr *frequency;
+        int frequency_remaining;
+
+        if (nla_parse_nested (band_attributes,
+                              NL80211_BAND_ATTR_MAX,
+                              band,
+                              NULL) < 0) {
+            errno = EBADMSG;
+            return -1;
+        }
+        if (band_attributes[NL80211_BAND_ATTR_FREQS] == NULL) {
+            continue;
+        }
+
+        nla_for_each_nested (frequency,
+                             band_attributes[NL80211_BAND_ATTR_FREQS],
+                             frequency_remaining) {
+            struct nlattr *attributes[NL80211_FREQUENCY_ATTR_MAX + 1] = { 0 };
+            uint32_t frequency_mhz;
+            uint32_t channel;
+            uint32_t rank;
+
+            if (nla_parse_nested (attributes,
+                                  NL80211_FREQUENCY_ATTR_MAX,
+                                  frequency,
+                                  frequency_policy) < 0) {
+                errno = EBADMSG;
+                return -1;
+            }
+            if (!frequency_is_ap_safe (attributes)) {
+                continue;
+            }
+
+            frequency_mhz = nla_get_u32 (
+                attributes[NL80211_FREQUENCY_ATTR_FREQ]);
+            if (nm_nl80211_frequency_band (frequency_mhz) != requested_band) {
+                continue;
+            }
+            channel = nm_nl80211_frequency_channel (frequency_mhz);
+            if (channel == 0U) {
+                continue;
+            }
+            rank = channel_selection_rank (
+                requested_band,
+                frequency_mhz,
+                channel,
+                preferred_frequency_mhz);
+            if (rank < *selection_rank) {
+                *selection_rank = rank;
+                *selected_frequency_mhz = frequency_mhz;
+                *selected_channel = channel;
+            }
         }
     }
 
@@ -404,6 +565,30 @@ valid_message_callback (struct nl_msg *message, void *user_data)
 }
 
 static int
+channel_message_callback (struct nl_msg *message, void *user_data)
+{
+    struct nm_nl80211_channel_query_state *state = user_data;
+    int result;
+
+    result = nm_nl80211_parse_ap_channel_message (
+        message,
+        state->requested_band,
+        state->preferred_frequency_mhz,
+        &state->selected_frequency_mhz,
+        &state->selected_channel,
+        &state->selection_rank);
+    if (result < 0) {
+        state->receive.error = -EBADMSG;
+        state->receive.pending = 0;
+        return NL_STOP;
+    }
+    if (result == 0) {
+        state->saw_bands = 1;
+    }
+    return NL_OK;
+}
+
+static int
 acknowledgement_callback (struct nl_msg *message, void *user_data)
 {
     struct nm_nl80211_receive_state *state = user_data;
@@ -570,6 +755,135 @@ nm_nl80211_band_support_by_iface (const char *ifname,
         *supports_2ghz = state.supports_2ghz != 0;
         *supports_5ghz = state.supports_5ghz != 0;
         result = 0;
+    }
+
+cleanup:
+    if (request != NULL) {
+        nlmsg_free (request);
+    }
+    if (callbacks != NULL) {
+        nl_cb_put (callbacks);
+    }
+    if (socket != NULL) {
+        nl_socket_free (socket);
+    }
+    return result;
+}
+
+int
+nm_nl80211_ap_channel_by_iface (const char *ifname,
+                                int requested_band,
+                                uint32_t preferred_frequency_mhz,
+                                uint32_t *selected_frequency_mhz,
+                                uint32_t *selected_channel)
+{
+    struct nm_nl80211_channel_query_state state = {
+        .receive = {
+            .pending = 1,
+            .error = 0,
+        },
+        .saw_bands = 0,
+        .requested_band = requested_band,
+        .preferred_frequency_mhz = preferred_frequency_mhz,
+        .selected_frequency_mhz = 0U,
+        .selected_channel = 0U,
+        .selection_rank = UINT32_MAX,
+    };
+    struct nl_sock *socket = NULL;
+    struct nl_cb *callbacks = NULL;
+    struct nl_msg *request = NULL;
+    unsigned int interface_index;
+    int family_id;
+    int result = -1;
+
+    if (selected_frequency_mhz == NULL || selected_channel == NULL ||
+        (requested_band != NM_NL80211_BAND_2GHZ &&
+         requested_band != NM_NL80211_BAND_5GHZ)) {
+        errno = EINVAL;
+        return -1;
+    }
+    *selected_frequency_mhz = 0U;
+    *selected_channel = 0U;
+
+    if (ifname == NULL || ifname[0] == '\0') {
+        errno = EINVAL;
+        return -1;
+    }
+    interface_index = if_nametoindex (ifname);
+    if (interface_index == 0U) {
+        return -1;
+    }
+
+    socket = nl_socket_alloc ();
+    callbacks = nl_cb_alloc (NL_CB_DEFAULT);
+    request = nlmsg_alloc ();
+    if (socket == NULL || callbacks == NULL || request == NULL) {
+        errno = ENOMEM;
+        goto cleanup;
+    }
+    if (genl_connect (socket) < 0 ||
+        nl_socket_set_buffer_size (socket,
+                                   NM_NL80211_SOCKET_BUFFER_SIZE,
+                                   NM_NL80211_SOCKET_BUFFER_SIZE) < 0 ||
+        configure_receive_timeout (socket) < 0) {
+        goto cleanup;
+    }
+    family_id = genl_ctrl_resolve (socket, "nl80211");
+    if (family_id < 0) {
+        goto cleanup;
+    }
+    if (genlmsg_put (request,
+                     NL_AUTO_PORT,
+                     NL_AUTO_SEQ,
+                     family_id,
+                     0,
+                     NLM_F_REQUEST | NLM_F_ACK,
+                     NL80211_CMD_GET_WIPHY,
+                     0) == NULL ||
+        nla_put_u32 (request,
+                     NL80211_ATTR_IFINDEX,
+                     (uint32_t) interface_index) < 0) {
+        goto cleanup;
+    }
+    if (nl_cb_set (callbacks,
+                   NL_CB_VALID,
+                   NL_CB_CUSTOM,
+                   channel_message_callback,
+                   &state) < 0 ||
+        nl_cb_set (callbacks,
+                   NL_CB_ACK,
+                   NL_CB_CUSTOM,
+                   acknowledgement_callback,
+                   &state.receive) < 0 ||
+        nl_cb_set (callbacks,
+                   NL_CB_FINISH,
+                   NL_CB_CUSTOM,
+                   finish_callback,
+                   &state.receive) < 0 ||
+        nl_cb_err (callbacks,
+                   NL_CB_CUSTOM,
+                   error_callback,
+                   &state.receive) < 0) {
+        goto cleanup;
+    }
+    if (nl_send_auto_complete (socket, request) < 0) {
+        goto cleanup;
+    }
+    while (state.receive.pending != 0) {
+        int receive_result = nl_recvmsgs (socket, callbacks);
+
+        if (receive_result < 0) {
+            state.receive.error = receive_result;
+            break;
+        }
+    }
+    if (state.receive.error == 0 && state.saw_bands != 0 &&
+        state.selected_channel != 0U) {
+        *selected_frequency_mhz = state.selected_frequency_mhz;
+        *selected_channel = state.selected_channel;
+        result = 0;
+    } else if (state.receive.error == 0) {
+        errno = ENODATA;
     }
 
 cleanup:

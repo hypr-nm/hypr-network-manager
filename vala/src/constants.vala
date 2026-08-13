@@ -126,6 +126,12 @@ namespace Constants {
         public const string READY = "ready";
     }
 
+    namespace HotspotRuntimeFile {
+        public const string PID = "pid";
+        public const string READY = "ready";
+        public const string PASSPHRASE = "passphrase";
+    }
+
     namespace HotspotSecurityIndex {
         public const uint SAE = 0;
         public const uint WPA_PSK = 1;
@@ -202,23 +208,11 @@ namespace Constants {
         public const string CRITICAL = "critical";
     }
 
-    public class WifiFreq {
-        public const uint32 BAND_2GHZ_MIN = 2412;
-        public const uint32 BAND_2GHZ_MAX = 2484;
-        public const uint32 BAND_5GHZ_MIN = 5000;
-        public const uint32 CHANNEL_14 = 2484;
-        public const uint32 CHANNEL_STEP = 5;
-    }
-
-    public class WifiChannel {
-        public const int DEFAULT_2GHZ = 6;
-        public const int DEFAULT_5GHZ = 36;
-        public const int CHANNEL_14 = 14;
-    }
-
     public class DropdownIndex {
         public const uint AUTO = 0;
         public const uint NONE = 1;
+        public const uint FIRST_AP_INTERFACE = 1;
+        public const uint FIRST_UPLINK_INTERFACE = 2;
     }
 
     public class IpMethodIndex {
@@ -235,6 +229,8 @@ namespace Constants {
         public const int CREATE_AP_STABLE_POLLS = 4;
         public const uint AP_MONITOR_POLL_INTERVAL_MS = 500;
         public const uint AP_ACTIVATION_TIMEOUT_MS = 10000;
+        public const int HOTSPOT_SHUTDOWN_MAX_POLLS = 20;
+        public const uint HOTSPOT_SHUTDOWN_POLL_INTERVAL_MS = 250;
         public const uint ERROR_HIDE_DELAY_MS = 5000;
         public const uint DEFAULT_SCAN_INTERVAL_SECONDS = 30;
         public const uint PENDING_WIFI_CONNECT_TIMEOUT_MS = 45000;

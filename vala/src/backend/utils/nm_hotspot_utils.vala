@@ -231,7 +231,7 @@ namespace NmHotspotUtils {
         }
         argv.add ("-c"); argv.add (channel.to_string ());
 
-        if (uplink_interface == "None") {
+        if (uplink_interface == NetworkInterface.NONE) {
             argv.add ("-m");
             argv.add ("none");
             argv.add ("--");
@@ -251,7 +251,7 @@ namespace NmHotspotUtils {
         bool uplink_is_active
     ) {
         return create_ap_available
-            && (uplink_interface == "None"
+            && (uplink_interface == NetworkInterface.NONE
                 || uplink_is_active);
     }
 
@@ -290,7 +290,7 @@ namespace NmHotspotUtils {
             && s_con.id != null
             && s_con.id.has_prefix (CONNECTION_ID_PREFIX)
             && s_wifi != null
-            && s_wifi.mode == "ap";
+            && s_wifi.mode == WifiMode.AP;
     }
 
     public bool is_legacy_managed_connection (
@@ -306,7 +306,7 @@ namespace NmHotspotUtils {
             && s_con.id == configured_ssid
             && !s_con.autoconnect
             && s_wifi != null
-            && s_wifi.mode == "ap"
+            && s_wifi.mode == WifiMode.AP
             && s_ip4 != null
             && s_ip4.get_method () == NM.SettingIP4Config.METHOD_SHARED;
     }
@@ -341,7 +341,7 @@ namespace NmHotspotUtils {
         var s_wifi = new NM.SettingWireless ();
         uint8[] ssid_data = ssid.data;
         s_wifi.ssid = new Bytes (ssid_data);
-        s_wifi.mode = "ap";
+        s_wifi.mode = WifiMode.AP;
         s_wifi.hidden = is_hidden;
         s_wifi.cloned_mac_address = "preserve";
         if (band != "") {
@@ -349,10 +349,6 @@ namespace NmHotspotUtils {
         }
         if (channel > 0) {
             s_wifi.channel = channel;
-        } else if (band == WifiBand.BAND_5GHZ) {
-            s_wifi.channel = WifiChannel.DEFAULT_5GHZ;
-        } else if (band == WifiBand.BAND_2GHZ) {
-            s_wifi.channel = WifiChannel.DEFAULT_2GHZ;
         }
         conn.add_setting (s_wifi);
 

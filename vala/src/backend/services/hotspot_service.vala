@@ -20,6 +20,9 @@ using Constants;
 using HyprNetworkManager.Models;
 
 public class HotspotService : GLib.Object {
+    private const string CREATE_AP_PROGRAM = "hypr-create-ap";
+    private const string INIT_PROCESS_PID = "1";
+
     private NM.Client nm_client;
     private Nl80211ApMonitor monitor;
     private uint idle_check_source_id = 0;
@@ -60,32 +63,105 @@ public class HotspotService : GLib.Object {
             && FileUtils.test (dev, FileTest.EXISTS | FileTest.IS_EXECUTABLE)) {
             return dev;
         }
-        return GLib.Environment.find_program_in_path ("hypr-create-ap");
+        return GLib.Environment.find_program_in_path (CREATE_AP_PROGRAM);
     }
 
-    private bool create_ap_deps_available () {
-        foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip", "iptables" }) {
-            if (GLib.Environment.find_program_in_path (tool) == null) {
-                return false;
-            }
+    private string create_ap_process_pattern (string iface) {
+        return "bash.*%s.*%s".printf (
+            Regex.escape_string (CREATE_AP_PROGRAM),
+            Regex.escape_string (iface));
+    }
+
+    private async uint32 select_regulatory_channel (
+        string iface,
+        string band,
+        uint32 preferred_frequency_mhz,
+        Cancellable? cancellable
+    ) throws Error {
+        Nl80211.Band requested_band;
+        if (band == WifiBand.BAND_2GHZ) {
+            requested_band = Nl80211.Band.GHZ_2;
+        } else if (band == WifiBand.BAND_5GHZ) {
+            requested_band = Nl80211.Band.GHZ_5;
+        } else {
+            throw new IOError.INVALID_ARGUMENT (
+                "A concrete Wi-Fi band is required for channel selection");
         }
-        return true;
+
+        int result = -1;
+        uint32 selected_frequency_mhz = 0;
+        uint32 selected_channel = 0;
+        SourceFunc resume = select_regulatory_channel.callback;
+        MainContext caller_context = MainContext.ref_thread_default ();
+
+        new Thread<void*> ("nl80211-channel-query", () => {
+            try {
+                result = Nl80211.ap_channel_by_iface (
+                    iface,
+                    requested_band,
+                    preferred_frequency_mhz,
+                    out selected_frequency_mhz,
+                    out selected_channel);
+            } finally {
+                caller_context.invoke ((owned) resume);
+            }
+            return null;
+        });
+
+        yield;
+
+        if (cancellable != null && cancellable.is_cancelled ()) {
+            throw new IOError.CANCELLED (
+                "Hotspot channel selection was cancelled");
+        }
+        if (result != 0 || selected_channel == 0) {
+            throw new IOError.NOT_SUPPORTED (
+                ("No non-DFS %s hotspot channel is available on '%s' " +
+                 "under the current wireless regulatory settings.").printf (
+                    band == WifiBand.BAND_5GHZ ? "5 GHz" : "2.4 GHz",
+                    iface));
+        }
+
+        log_info (
+            "hotspot-service",
+            ("Regulatory channel selection for '%s': band=%s, " +
+             "channel=%u, frequency=%u MHz%s.").printf (
+                iface,
+                band == WifiBand.BAND_5GHZ ? "5 GHz" : "2.4 GHz",
+                selected_channel,
+                selected_frequency_mhz,
+                preferred_frequency_mhz != 0
+                    && selected_frequency_mhz == preferred_frequency_mhz
+                    ? ", reusing active station channel"
+                    : ""));
+        return selected_channel;
     }
 
-    public bool has_create_ap () {
-        return get_create_ap_path () != null && create_ap_deps_available ();
-
-    }
-    private string create_ap_unavailable_reason () {
+    private GLib.GenericArray<string> missing_create_ap_requirements () {
         var missing = new GLib.GenericArray<string> ();
         if (get_create_ap_path () == null) {
-            missing.add ("hypr-create-ap");
+            missing.add (CREATE_AP_PROGRAM);
         }
-        foreach (string tool in new string[] { "hostapd", "dnsmasq", "iw", "ip", "iptables" }) {
+        foreach (string tool in new string[] {
+                "hostapd",
+                "dnsmasq",
+                "iw",
+                "ip",
+                "iptables"
+            }) {
             if (GLib.Environment.find_program_in_path (tool) == null) {
                 missing.add (tool);
             }
         }
+        return missing;
+    }
+
+    public bool has_create_ap () {
+        return missing_create_ap_requirements ().length == 0;
+    }
+
+    private string create_ap_unavailable_reason () {
+        var missing = missing_create_ap_requirements ();
         if (missing.length == 0) {
             return "its runtime requirements were not satisfied";
         }
@@ -241,7 +317,7 @@ public class HotspotService : GLib.Object {
         } catch (Error e) {
             return false;
         }
-        return contents.strip () == "ready";
+        return contents.strip () == HotspotMarker.READY;
     }
 
     private string create_ap_log_summary (string log_file) {
@@ -254,7 +330,9 @@ public class HotspotService : GLib.Object {
 
         string[] lines = contents.split ("\n");
         var selected = new GLib.GenericArray<string> ();
-        int first = int.max (0, lines.length - 8);
+        int first = int.max (
+            0,
+            lines.length - Misc.CREATE_AP_LOG_TAIL_LINES);
         for (int i = first; i < lines.length; i++) {
             string line = lines[i].strip ();
             if (line != "") {
@@ -542,10 +620,10 @@ public class HotspotService : GLib.Object {
             try {
                 string pidfile = create_ap_runtime_path (
                     target_dev.get_iface (),
-                    "pid");
+                    HotspotRuntimeFile.PID);
                 string ready_file = create_ap_runtime_path (
                     target_dev.get_iface (),
-                    "ready");
+                    HotspotRuntimeFile.READY);
                 bool tracked_runtime =
                     FileUtils.test (pidfile, FileTest.EXISTS)
                     || FileUtils.test (ready_file, FileTest.EXISTS);
@@ -673,18 +751,79 @@ public class HotspotService : GLib.Object {
                     resolved_uplink_iface));
         }
         if (use_create_ap) {
-            string create_ap_bin = get_create_ap_path () ?? "hypr-create-ap";
+            string create_ap_bin = get_create_ap_path () ?? CREATE_AP_PROGRAM;
             string pidfile = create_ap_runtime_path (
                 resolved_ap_iface,
-                "pid");
+                HotspotRuntimeFile.PID);
             string ready_file = create_ap_runtime_path (
                 resolved_ap_iface,
-                "ready");
+                HotspotRuntimeFile.READY);
             string passphrase_file = create_ap_runtime_path (
                 resolved_ap_iface,
-                "passphrase");
+                HotspotRuntimeFile.PASSPHRASE);
             string log_file = create_ap_log_path (resolved_ap_iface);
 
+            string resolved_band = band;
+            var active_ap = dev.get_active_access_point ();
+            uint32 active_frequency_mhz = 0;
+            Nl80211.Band active_band = Nl80211.Band.NONE;
+            if (active_ap != null) {
+                active_frequency_mhz = active_ap.get_frequency ();
+                active_band = Nl80211.frequency_band (
+                    active_frequency_mhz);
+                if (resolved_band == "") {
+                    if (active_band == Nl80211.Band.GHZ_2) {
+                        resolved_band = WifiBand.BAND_2GHZ;
+                    } else if (active_band == Nl80211.Band.GHZ_5) {
+                        resolved_band = WifiBand.BAND_5GHZ;
+                    }
+                }
+                if ((resolved_band == WifiBand.BAND_2GHZ
+                        && active_band == Nl80211.Band.GHZ_5)
+                    || (resolved_band == WifiBand.BAND_5GHZ
+                        && active_band == Nl80211.Band.GHZ_2)) {
+                    throw new IOError.INVALID_ARGUMENT (
+                        ("Selected hotspot band does not match the active " +
+                         "Wi-Fi channel on '%s'.").printf (
+                            resolved_ap_iface));
+                }
+            }
+
+            bool active_band_matches =
+                (resolved_band == WifiBand.BAND_2GHZ
+                    && active_band == Nl80211.Band.GHZ_2)
+                || (resolved_band == WifiBand.BAND_5GHZ
+                    && active_band == Nl80211.Band.GHZ_5);
+            uint32 preferred_frequency_mhz = active_band_matches
+                ? active_frequency_mhz
+                : 0;
+            uint32 channel;
+            if (resolved_band == "") {
+                // Auto favors 2.4 GHz for reach and compatibility, then uses
+                // 5 GHz if the current regulatory result offers no safe
+                // 2.4 GHz AP channel.
+                resolved_band = WifiBand.BAND_2GHZ;
+                try {
+                    channel = yield select_regulatory_channel (
+                        resolved_ap_iface,
+                        resolved_band,
+                        0,
+                        cancellable);
+                } catch (IOError.NOT_SUPPORTED e) {
+                    resolved_band = WifiBand.BAND_5GHZ;
+                    channel = yield select_regulatory_channel (
+                        resolved_ap_iface,
+                        resolved_band,
+                        0,
+                        cancellable);
+                }
+            } else {
+                channel = yield select_regulatory_channel (
+                    resolved_ap_iface,
+                    resolved_band,
+                    preferred_frequency_mhz,
+                    cancellable);
+            }
             // Stop a previous app-owned instance on this radio before
             // preparing its deterministic runtime files.
             try {
@@ -696,58 +835,23 @@ public class HotspotService : GLib.Object {
                         create_ap_bin,
                         previous_pid,
                         cancellable);
-                    for (int i = 0; i < 20; i++) {
+                    for (int i = 0;
+                         i < Timeouts.HOTSPOT_SHUTDOWN_MAX_POLLS;
+                         i++) {
                         string ignored_pid;
                         if (!read_live_create_ap_pid (
                                 pidfile,
                                 out ignored_pid)) {
                             break;
                         }
-                        yield Nl80211ApMonitor.async_sleep (250);
+                        yield Nl80211ApMonitor.async_sleep (
+                            Timeouts.HOTSPOT_SHUTDOWN_POLL_INTERVAL_MS);
                     }
                 }
             } catch (Error e) {
                 throw new IOError.FAILED (
                     "Failed to stop the previous managed hotspot: " +
                     e.message);
-            }
-
-            string resolved_band = band;
-            var active_ap = dev.get_active_access_point ();
-
-            int channel = 0;
-            if (active_ap != null) {
-                uint32 freq = active_ap.get_frequency ();
-                bool is_2_4 = (freq >= WifiFreq.BAND_2GHZ_MIN && freq <= WifiFreq.BAND_2GHZ_MAX);
-                bool is_5 = (freq >= WifiFreq.BAND_5GHZ_MIN);
-                if (resolved_band == "") {
-                    if (is_2_4) {
-                        resolved_band = WifiBand.BAND_2GHZ;
-                    } else if (is_5) {
-                        resolved_band = WifiBand.BAND_5GHZ;
-                    }
-                }
-                if ((resolved_band == WifiBand.BAND_2GHZ && is_5)
-                    || (resolved_band == WifiBand.BAND_5GHZ && is_2_4)) {
-                    throw new IOError.INVALID_ARGUMENT (
-                        ("Selected hotspot band does not match the active " +
-                         "Wi-Fi channel on '%s'.").printf (
-                            resolved_ap_iface));
-                }
-                if (resolved_band == WifiBand.BAND_2GHZ && is_2_4) {
-                    channel = (int) ((freq == WifiFreq.CHANNEL_14) ? WifiChannel.CHANNEL_14 : ((int)freq - (int)WifiFreq.BAND_2GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP + 1);
-                } else if (resolved_band == WifiBand.BAND_5GHZ && is_5) {
-                    channel = (int) (((int)freq - (int)WifiFreq.BAND_5GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP);
-                }
-            }
-
-            if (channel == 0) {
-                if (resolved_band == WifiBand.BAND_5GHZ) {
-                    channel = WifiChannel.DEFAULT_5GHZ;
-                } else {
-                    resolved_band = (resolved_band == WifiBand.BAND_5GHZ) ? WifiBand.BAND_5GHZ : WifiBand.BAND_2GHZ;
-                    channel = WifiChannel.DEFAULT_2GHZ;
-                }
             }
 
             string gateway = choose_create_ap_gateway ();
@@ -785,7 +889,7 @@ public class HotspotService : GLib.Object {
                     security,
                     resolved_band,
                     is_hidden,
-                    channel,
+                    (int) channel,
                     final_ap_iface,
                     final_uplink_iface,
                     ssid);
@@ -802,7 +906,7 @@ public class HotspotService : GLib.Object {
                 yield proc.wait_check_async (cancellable);
 
                 debug_log (
-                    ("Waiting for create_ap on '%s' channel %d with " +
+                    ("Waiting for create_ap on '%s' channel %u with " +
                      "gateway %s.").printf (
                         final_ap_iface,
                         channel,
@@ -852,6 +956,49 @@ public class HotspotService : GLib.Object {
                     "Selected Wi-Fi device does not support NetworkManager AP mode");
             }
             debug_log ("Starting native NM hotspot creation...");
+
+            string resolved_nm_band = band;
+            uint32 active_frequency_mhz = 0;
+            Nl80211.Band active_band = Nl80211.Band.NONE;
+            var active_ap = dev.get_active_access_point ();
+            if (active_ap != null) {
+                active_frequency_mhz = active_ap.get_frequency ();
+                active_band = Nl80211.frequency_band (
+                    active_frequency_mhz);
+                if (resolved_nm_band == "") {
+                    if (active_band == Nl80211.Band.GHZ_2) {
+                        resolved_nm_band = WifiBand.BAND_2GHZ;
+                    } else if (active_band == Nl80211.Band.GHZ_5) {
+                        resolved_nm_band = WifiBand.BAND_5GHZ;
+                    }
+                }
+            }
+
+            uint32 channel = 0;
+            if (resolved_nm_band != "") {
+                bool active_band_matches =
+                    (resolved_nm_band == WifiBand.BAND_2GHZ
+                        && active_band == Nl80211.Band.GHZ_2)
+                    || (resolved_nm_band == WifiBand.BAND_5GHZ
+                        && active_band == Nl80211.Band.GHZ_5);
+                try {
+                    channel = yield select_regulatory_channel (
+                        resolved_ap_iface,
+                        resolved_nm_band,
+                        active_band_matches ? active_frequency_mhz : 0,
+                        cancellable);
+                } catch (IOError.CANCELLED e) {
+                    throw e;
+                } catch (Error e) {
+                    // NetworkManager and the kernel still enforce the current
+                    // regulatory result. Leaving channel 0 delegates legal
+                    // automatic selection instead of reviving a fixed default.
+                    debug_log (
+                        "Regulatory channel query failed; delegating channel " +
+                        "selection to NetworkManager: " + e.message);
+                }
+            }
+
             var connections = client.get_connections ();
             foreach (var conn_check in connections) {
                 if (conn_check is NM.RemoteConnection &&
@@ -873,23 +1020,12 @@ public class HotspotService : GLib.Object {
             // Wait a moment for NM to process the deletion
             yield Nl80211ApMonitor.async_sleep (Timeouts.AP_MONITOR_POLL_INTERVAL_MS);
 
-            int channel = 0;
-            var active_ap = dev.get_active_access_point ();
-            if (active_ap != null) {
-                uint32 freq = active_ap.get_frequency ();
-                if (band == WifiBand.BAND_2GHZ && freq >= WifiFreq.BAND_2GHZ_MIN && freq <= WifiFreq.BAND_2GHZ_MAX) {
-                    channel = (int) ((freq == WifiFreq.CHANNEL_14) ? WifiChannel.CHANNEL_14 : ((int)freq - (int)WifiFreq.BAND_2GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP + 1);
-                } else if (band == WifiBand.BAND_5GHZ && freq >= WifiFreq.BAND_5GHZ_MIN) {
-                    channel = (int) (((int)freq - (int)WifiFreq.BAND_5GHZ_MIN) / (int)WifiFreq.CHANNEL_STEP);
-                }
-            }
-
             debug_log ("Creating new volatile connection for " + ssid);
             var new_conn = NmHotspotUtils.create_connection (
                 ssid,
                 password,
                 security,
-                band,
+                resolved_nm_band,
                 is_hidden,
                 dev.get_iface (),
                 channel);
@@ -989,13 +1125,13 @@ public class HotspotService : GLib.Object {
         if (available_create_ap != null && dev != null) {
             string pidfile = create_ap_runtime_path (
                 dev.get_iface (),
-                "pid");
+                HotspotRuntimeFile.PID);
             string ready_file = create_ap_runtime_path (
                 dev.get_iface (),
-                "ready");
+                HotspotRuntimeFile.READY);
             string passphrase_file = create_ap_runtime_path (
                 dev.get_iface (),
-                "passphrase");
+                HotspotRuntimeFile.PASSPHRASE);
             string managed_pid;
             if (read_live_create_ap_pid (
                     pidfile,
@@ -1006,14 +1142,17 @@ public class HotspotService : GLib.Object {
                         available_create_ap,
                         managed_pid,
                         cancellable);
-                    for (int i = 0; i < 20; i++) {
+                    for (int i = 0;
+                         i < Timeouts.HOTSPOT_SHUTDOWN_MAX_POLLS;
+                         i++) {
                         string ignored_pid;
                         if (!read_live_create_ap_pid (
                                 pidfile,
                                 out ignored_pid)) {
                             break;
                         }
-                        yield Nl80211ApMonitor.async_sleep (250);
+                        yield Nl80211ApMonitor.async_sleep (
+                            Timeouts.HOTSPOT_SHUTDOWN_POLL_INTERVAL_MS);
                     }
                     remove_runtime_file (passphrase_file);
                     remove_runtime_file (ready_file);
@@ -1031,10 +1170,16 @@ public class HotspotService : GLib.Object {
         }
 
         if (has_create_ap ()) {
-            string create_ap_bin = get_create_ap_path () ?? "hypr-create-ap";
+            string create_ap_bin = get_create_ap_path () ?? CREATE_AP_PROGRAM;
             if (dev != null) {
                 try {
-                    string[] pgrep_argv = { "pgrep", "-P", "1", "-f", "bash.*hypr-create-ap.*" + dev.get_iface () };
+                    string[] pgrep_argv = {
+                        "pgrep",
+                        "-P",
+                        INIT_PROCESS_PID,
+                        "-f",
+                        create_ap_process_pattern (dev.get_iface ())
+                    };
                     var proc = new GLib.Subprocess.newv (pgrep_argv, GLib.SubprocessFlags.STDOUT_PIPE);
                     string? stdout_content;
                     yield proc.communicate_utf8_async (null, cancellable, out stdout_content, null);
@@ -1045,14 +1190,16 @@ public class HotspotService : GLib.Object {
                         string[] pids = stdout_content.strip().split("\n");
                         foreach (string pid in pids) {
                             if (pid.strip() == "") continue;
-                            string[] argv = { "pkexec", create_ap_bin, "--stop", pid.strip() };
-                            var launcher = new GLib.SubprocessLauncher (GLib.SubprocessFlags.NONE);
-                            var stop_proc = launcher.spawnv (argv);
-                            yield stop_proc.wait_async (cancellable);
+                            yield stop_create_ap_pid (
+                                create_ap_bin,
+                                pid.strip (),
+                                cancellable);
                         }
 
                         // Poll until all create_ap processes fully exit to prevent UI flashing
-                        for (int i = 0; i < 20; i++) {
+                        for (int i = 0;
+                             i < Timeouts.HOTSPOT_SHUTDOWN_MAX_POLLS;
+                             i++) {
                             var poll_proc = new GLib.Subprocess.newv (pgrep_argv, GLib.SubprocessFlags.STDOUT_PIPE);
                             string? poll_stdout;
                             yield poll_proc.communicate_utf8_async (null, cancellable, out poll_stdout, null);
@@ -1125,7 +1272,13 @@ public class HotspotService : GLib.Object {
             bool is_running = false;
             try {
                 if (target_dev != null) {
-                    string[] argv = { "pgrep", "-P", "1", "-f", "bash.*hypr-create-ap.*" + target_dev.get_iface () };
+                    string[] argv = {
+                        "pgrep",
+                        "-P",
+                        INIT_PROCESS_PID,
+                        "-f",
+                        create_ap_process_pattern (target_dev.get_iface ())
+                    };
                     int exit_status;
                     string stdout_content;
                     if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {

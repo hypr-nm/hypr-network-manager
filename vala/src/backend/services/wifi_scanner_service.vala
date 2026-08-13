@@ -61,7 +61,7 @@ public class WifiScannerService : GLib.Object {
             }
 
             var wireless = connection.get_setting_wireless ();
-            if (wireless == null || wireless.mode != "ap") {
+            if (wireless == null || wireless.mode != WifiMode.AP) {
                 continue;
             }
             string ssid = NmWifiUtils.bytes_to_ssid (wireless.ssid);

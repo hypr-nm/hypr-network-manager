@@ -35,6 +35,9 @@ enum nm_nl80211_band {
 /* Classify a center frequency without conflating 6 GHz with 5 GHz. */
 int nm_nl80211_frequency_band (uint32_t frequency_mhz);
 
+/* Convert a supported 2.4/5 GHz center frequency to its channel number. */
+uint32_t nm_nl80211_frequency_channel (uint32_t frequency_mhz);
+
 /*
  * Parse band support from one nl80211 generic-netlink wiphy message.
  * Returns 0 when bands were parsed, 1 when the message had no band
@@ -43,6 +46,19 @@ int nm_nl80211_frequency_band (uint32_t frequency_mhz);
 int nm_nl80211_parse_band_support_message (struct nl_msg *message,
                                            int *supports_2ghz,
                                            int *supports_5ghz);
+
+/*
+ * Accumulate the best AP-safe channel from one wiphy message. Frequencies
+ * forbidden by the kernel's current regulatory result, requiring DFS, or
+ * unable to carry a 20 MHz channel are ignored. `selection_rank` must be
+ * initialized to UINT32_MAX before parsing the first split-wiphy message.
+ */
+int nm_nl80211_parse_ap_channel_message (struct nl_msg *message,
+                                         int requested_band,
+                                         uint32_t preferred_frequency_mhz,
+                                         uint32_t *selected_frequency_mhz,
+                                         uint32_t *selected_channel,
+                                         uint32_t *selection_rank);
 
 /*
  * Parse one nl80211 interface response. Returns 0 for a complete record,
@@ -66,6 +82,19 @@ int nm_nl80211_parse_station_message (struct nl_msg *message);
 int nm_nl80211_band_support_by_iface (const char *ifname,
                                       int *supports_2ghz,
                                       int *supports_5ghz);
+
+/*
+ * Select a channel on `ifname` that AP mode may legally initiate on under the
+ * kernel's current per-radio regulatory result. A legal preferred frequency
+ * (normally an associated station's frequency) wins; otherwise a stable,
+ * non-DFS channel in `requested_band` is selected. Returns -1 when the query
+ * fails or no suitable channel exists.
+ */
+int nm_nl80211_ap_channel_by_iface (const char *ifname,
+                                    int requested_band,
+                                    uint32_t preferred_frequency_mhz,
+                                    uint32_t *selected_frequency_mhz,
+                                    uint32_t *selected_channel);
 
 /*
  * Report whether the radio owning `ifname` currently has an AP interface.

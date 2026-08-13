@@ -529,7 +529,9 @@ namespace HyprNetworkManager.UI.Views {
             if (token == "" || token == NetworkInterface.AUTO) {
                 return Constants.DropdownIndex.AUTO;
             }
-            for (uint i = 1; i < this.ap_model.get_n_items (); i++) {
+            for (uint i = DropdownIndex.FIRST_AP_INTERFACE;
+                 i < this.ap_model.get_n_items ();
+                 i++) {
                 if (this.ap_model.get_string (i) == token) {
                     return i;
                 }
@@ -647,7 +649,9 @@ namespace HyprNetworkManager.UI.Views {
             if (token == NetworkInterface.NONE) {
                 return Constants.DropdownIndex.NONE;
             }
-            for (uint i = 2; i < this.uplink_model.get_n_items (); i++) {
+            for (uint i = DropdownIndex.FIRST_UPLINK_INTERFACE;
+                 i < this.uplink_model.get_n_items ();
+                 i++) {
                 if (this.uplink_model.get_string (i) == token) {
                     return i;
                 }

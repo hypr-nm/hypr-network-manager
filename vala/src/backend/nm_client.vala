@@ -499,7 +499,10 @@ public class NetworkManagerClient : GLib.Object,
     }
 
     public async WifiBandSupport get_wifi_band_support_async (string iface, Cancellable? cancellable = null) throws Error {
-        var resolved_iface = (iface != "" && iface != "Auto") ? iface : primary_wifi_iface ();
+        var resolved_iface = (iface != ""
+            && iface != NetworkInterface.AUTO)
+            ? iface
+            : primary_wifi_iface ();
         var fallback = fallback_wifi_band_support (resolved_iface);
 
         log_debug ("nm-client",

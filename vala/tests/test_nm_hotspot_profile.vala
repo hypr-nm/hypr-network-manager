@@ -82,6 +82,21 @@ private static void test_open_auto_profile () {
     assert (conn.get_setting_wireless_security () == null);
 }
 
+private static void test_band_does_not_force_a_fixed_channel () {
+    var conn = NmHotspotUtils.create_connection (
+        "Automatic legal channel",
+        null,
+        WifiKeyMgmt.NONE,
+        WifiBand.BAND_5GHZ,
+        false,
+        "wlan-test");
+
+    var s_wifi = conn.get_setting_wireless ();
+    assert (s_wifi != null);
+    assert (s_wifi.band == WifiBand.BAND_5GHZ);
+    assert (s_wifi.channel == 0);
+}
+
 private static void test_hotspot_access_point_matching () {
     assert (NmHotspotUtils.access_point_matches_hotspot (
         "Managed AP",
@@ -260,6 +275,9 @@ private static int main (string[] args) {
     Test.init (ref args);
     Test.add_func ("/nm-hotspot/profile/wpa", test_wpa_profile);
     Test.add_func ("/nm-hotspot/profile/open-auto", test_open_auto_profile);
+    Test.add_func (
+        "/nm-hotspot/profile/band-with-automatic-channel",
+        test_band_does_not_force_a_fixed_channel);
     Test.add_func (
         "/nm-hotspot/access-point-matching",
         test_hotspot_access_point_matching);
