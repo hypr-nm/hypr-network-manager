@@ -17,21 +17,22 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
    * [CLI Options](#cli-options)
 6. [Integration](#integration)
 
-  * [Palette Engine Integration](#palette-engine-integration)
+* [Palette Engine Integration](#palette-engine-integration)
 
-  * [Waybar Integration](#waybar-integration)
-  * [Hyprland Integration](#hyprland-integration)
-7. [Development](#development)
-8. [Component Details](#component-details)
+* [Waybar Integration](#waybar-integration)
+* [Hyprland Integration](#hyprland-integration)
+
+1. [Development](#development)
+2. [Component Details](#component-details)
 
    * [Wi-Fi Tab](#wi-fi-tab)
    * [Ethernet Tab](#ethernet-tab)
    * [VPN Tab](#vpn-tab)
    * [NetworkManager D-Bus Client](#networkmanager-d-bus-client)
    * [GUI & Layer-Shell](#gui--layer-shell)
-9. [Security](#security)
-10. [Troubleshooting](#troubleshooting)
-11. [Release and Support Policies](#release-and-support-policies)
+3. [Security](#security)
+4. [Troubleshooting](#troubleshooting)
+5. [Release and Support Policies](#release-and-support-policies)
 
 ---
 
@@ -104,7 +105,9 @@ Alternatively, the interactive prompt can be skipped by defining the `INSTALL_SC
 ```bash
 INSTALL_SCOPE=system bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
 ```
-or 
+
+or
+
 ```bash
 INSTALL_SCOPE=user bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/hypr-network-manager/master/setup.sh)
 ```
@@ -114,26 +117,23 @@ INSTALL_SCOPE=user bash <(curl -sSfL https://raw.githubusercontent.com/hypr-nm/h
 ### Dependencies
 
 #### Build
+
 * `meson`, `ninja`, `vala`, `pkg-config`
-* `gtk4` (`gtk4-layer-shell`), `json-glib`, `libsecret`, `libnm` (>= 1.0)
+* `gtk4` (>= 4.12), `gtk4-layer-shell`, `json-glib`, `libsecret`, `libnm` (>= 1.16)
 * `libnl-3` and `libnl-genl-3`
 
 #### Runtime
+
 * `gtk4`, `gtk4-layer-shell`, `json-glib`, `libsecret`, `networkmanager`, `libnl-3`, `libnl-genl-3`
 * `polkit` (allows passwordless hotspot operations for `wheel`/`sudo` users)
 
 #### Optional Runtime (Wi-Fi Hotspot Internet Sharing)
+
 To enable internet sharing via the vendored `create_ap` script, the following are required:
+
 * `hostapd`, `dnsmasq`, `iptables`, `iproute2`, `iw`, `util-linux`
 
-> **Note:** `iw` is required internally by the vendored `create_ap` script. The
-> application itself uses libnl for hotspot detection and client counts. If
-> these optional tools are missing, the app falls back to NetworkManager's
-> managed hotspot. The fallback uses NetworkManager's current default route
-> for sharing; it cannot honor a specifically selected uplink interface.
-> When `create_ap` is used, the app selects an unused private `/24`, keeps
-> credentials out of process arguments, and records the latest daemon output
-> in `$XDG_STATE_HOME/hypr-network-manager/create-ap-<interface>.log`.
+If these optional tools are not present, hotspot functionality falls back to NetworkManager's built-in hotspot manager.
 
 The install script auto-installs dependencies when supported package managers are available.
 
@@ -148,6 +148,7 @@ cd hypr-network-manager
 ```
 
 The script prompts for the install level for the binary and defaults:
+
 1. **System**: `/usr/local` and `/etc/xdg/hypr-network-manager`
 2. **User**: `~/.local` and `~/.config/hypr-network-manager`
 
@@ -156,7 +157,9 @@ The prompt can be bypassed by defining the `INSTALL_SCOPE` environment variable 
 ```bash
 INSTALL_SCOPE=system ./scripts/install.sh
 ```
-or 
+
+or
+
 ```bash
 INSTALL_SCOPE=user ./scripts/install.sh
 ```
@@ -206,7 +209,6 @@ The app reads `config.json` from this precedence order:
 | window_height | int (> 0) | 680 | Popup window height in pixels. |
 | layer_shell_layer | string | overlay | Layer-shell layer. Supported values: `overlay`, `top`, `bottom`, `background`. |
 | log_level | string | info | Minimum emitted log severity. Supported values: `debug`, `info`, `warn`, `error`. |
-| load_core_styles | bool | true | Whether to load bundled internal CSS for structure and base component visuals. |
 | position | string | top-right | Position preset used for placement anchors. Supported values: `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top`, `right`, `bottom`, `left`. Invalid values fallback to top-right. |
 | layer_shell_margin_top | int | 8 | Top margin in pixels. |
 | layer_shell_margin_right | int | 8 | Right margin in pixels. |
@@ -233,184 +235,430 @@ Keys not listed above are ignored by the current app runtime.
 
 ## Theming
 
-Themes are CSS-based and hot-swappable.
+Themes are CSS files that adjust the app's colors, shapes, spacing, typography, and interaction states. The app always provides the layout and technical widget styling needed for its controls to work correctly. A theme changes the documented variables below instead of rebuilding those styles.
 
-Note: All guides provided bellow regarding theming are just a recommended patterns to get started, not a strict requirements. Themes can be structured in any way as long as the root `base.css` is present and valid.
+### Where themes are loaded from
 
-### Base CSS Load Order
+The app looks for `base.css` in this order:
 
-1. `~/.config/hypr-network-manager/themes/base.css` (user-local)
-2. `/etc/xdg/hypr-network-manager/themes/base.css` (system-wide fallback)
+1. `~/.config/hypr-network-manager/themes/base.css`
+2. `/etc/xdg/hypr-network-manager/themes/base.css`
 
-### Recommended Theme Architecture
+If neither file exists, the app uses its embedded Default theme, so the interface remains fully styled. When you provide a custom theme, `base.css` is its only required entry point. You may keep everything in that file or split the theme into smaller files. The bundled themes use this optional structure:
 
-The application handles styling in two layers:
+* `themes/<name>/base.css` — imports the other files
+* `themes/<name>/tokens.css` — colors and other shared values
+* `themes/<name>/overrides.css` — component-specific changes
 
-1. **Core Styles (Internal):** Layout structure and base component visuals. These are bundled into the binary.
-2. **Theme Styles (External):** Color tokens and specific overrides located in the themes directory.
+### Creating a theme
 
-#### Toggling Core Styles
-Core styles can be toggled via `config.json`:
-
-```json
-{
-  "load_core_styles": true
-}
-```
-
-* **`true` (Default):** The app pre-loads structural and component CSS. Only color variables and minor tweaks need to be provided.
-* **`false`:** Internal styles are not applied. Useful for complete control over layout, geometry, and visual design.
-
-#### Bundled Theme Structure
-Keeping `load_core_styles: true` is recommended for most setups. Bundled themes follow this organized layout:
-
-* `themes/<name>/base.css`
-* `themes/<name>/tokens.css`
-* `themes/<name>/overrides.css`
-
-### Compact Theme Workflow
-
-1. Create a theme directory in `~/.config/hypr-network-manager/themes/` (for example `custom-theme/`).
-2. Keep the root `base.css` small. The `@import` system works relative to the file.
-3. Ideal `custom-theme/base.css` structure:
+1. Create `~/.config/hypr-network-manager/themes/base.css`. For a small theme, you can put all your token changes directly in this file.
+2. For a larger theme, create a subdirectory such as `~/.config/hypr-network-manager/themes/custom-theme/`.
+3. Make the top-level `base.css` select that theme:
 
 ```css
-/* Map tokens (static or generated colors) */
-@import url("tokens.css");
+@import url("custom-theme/base.css");
+```
 
-/* Apply custom tweaks */
+1. Inside `custom-theme/base.css`, import any files you want to keep separate:
+
+```css
+@import url("tokens.css");
 @import url("overrides.css");
 ```
 
-4. Add targeted component changes in `custom-theme/overrides.css`.
+1. Put the documented variables from this guide in `tokens.css`, `overrides.css`, or directly in either `base.css`. Each import path is resolved relative to the file containing it.
 
-### Supported theming classes
+### Customizing the interface
 
-The application assigns these CSS classes in the UI runtime, split into three categories based on their purpose: Structural/Layout, Generic, and Specific functional classes.
+Most changes need only a CSS variable, also called a token. Set a token on `:root` to change every matching component:
 
-#### Structural and Layout Classes
+```css
+:root {
+  --nm-button-radius: 6px;
+  --nm-field-background: #1e1e2e;
+  --nm-row-content-padding: 8px 10px;
+}
+```
 
-These classes dictate the physical geometry, containers, positioning, padding, and scaffolding of the UI.
+To limit a change, place the token on one of the documented classes. This example makes only the VPN page more compact:
 
-<details>
-<summary>View Structural and Layout Classes</summary>
+```css
+.nm-page-vpn {
+  --nm-field-min-height: 26px;
+  --nm-row-content-padding: 6px 8px;
+}
+```
 
-| Class | Where it applies |
+The documented tokens and classes are the supported theming interface. Classes not listed here are used internally and may change between releases. Avoid selectors that reach into a control's internal parts, such as `button > label` or `list > row:last-child`; the app already applies token values to those parts.
+
+#### Available scopes
+
+Use these classes only when a token should affect a particular page or kind of component. Prefix the class name with a dot when writing CSS—for example, `.nm-button`.
+
+| Class | Selects |
 | --- | --- |
-| nm-window | Main app window |
-| nm-root | Root container for the popup content |
-| nm-status-bar | Top status/header row |
-| nm-notebook | Main tab notebook |
-| nm-page | Shared page container class |
-| nm-page-shell-inset | Main layout margin inset for page grids |
-| nm-page-wifi | Wi-Fi page container |
-| nm-page-network-details | Shared details page container |
-| nm-page-network-edit | Shared edit page container |
-| nm-page-saved-profiles | Saved networks page container |
-| nm-page-ethernet | Ethernet page container |
-| nm-page-vpn | VPN page container |
-| nm-toolbar | Page toolbar row |
-| nm-separator | Horizontal dividers (1px min-height logic) |
-| nm-scroll | Scrolled container |
-| nm-scroll-body-inset | Details/Form interior vertical grid container |
-| nm-list | ListBox containers for Wi-Fi/Ethernet/VPN lists |
-| nm-empty-state | Empty-state placeholder containers |
-| nm-content-stack | Stacks that switch list vs empty-state views |
-| nm-wifi-row | Wi-Fi list rows |
-| nm-device-row | Ethernet and VPN rows |
-| nm-row-root | Wi-Fi row vertical container |
-| nm-row-content | Wi-Fi row horizontal content container |
-| nm-row-info | Wi-Fi row text/info container |
-| nm-row-actions | Row actions revealing container |
-| nm-row-action-buttons | Horizontal strip of buttons (forget/disconnect) |
-| nm-inline-password | Inline Wi-Fi password prompt container |
-| nm-inline-password-actions | Inline password action row |
-| nm-details-nav-row | Details page top navigation row |
-| nm-details-header | Details page icon/title header block |
-| nm-details-action-row | Details page action buttons row |
-| nm-details-section | Details section wrapper (basic/advanced) |
-| nm-details-rows | Details rows container |
-| nm-details-item | Vertical details item wrapper |
-| nm-dropdown-panel | Tracked dropdown popover panel |
-| nm-dropdown-list | Tracked dropdown internal ListBox |
-| nm-dropdown-row | Tracked dropdown ListBoxRow items |
-| nm-popover-list-inset | Box wrapper for popover list menus |
-| blank-window | Dismiss overlay window |
-| blank-window-surface | Click-capture surface inside dismiss overlay |
+| `nm-page` | Every app page. |
+| `nm-page-wifi` | The main Wi-Fi page. |
+| `nm-page-ethernet` | The main Ethernet page. |
+| `nm-page-vpn` | The main VPN page. |
+| `nm-page-saved-profiles` | The saved-profiles page. |
+| `nm-button` | Push buttons and icon buttons. |
+| `nm-toolbar-action` | Compact toolbar buttons such as Add and Refresh. |
+| `nm-input` | Text, search, password, and inline input fields. |
+| `nm-select` | Dropdown/select controls. |
+| `nm-switch` | On/off switch controls. |
+| `nm-checkbox` | Checkbox controls and their labels. |
+| `nm-row` | Main network and profile rows. |
+| `nm-data-list` | Grouped lists of information. |
+| `nm-data-row` | One record inside a grouped information list. |
+| `nm-section` | A titled group on a details or edit page. |
 
-</details>
+#### Action button scopes
 
-#### Generic Classes
+Action buttons also have classes describing where they appear and what they do. A button can match more than one class—for example, a Connect button on a details page matches both `nm-details-action` and `nm-action-connect`.
 
-These classes represent base components or reusable elements without a specific designated functional outcome attached to them. They primarily set shared visuals before specific contextual rules take over.
-
-<details>
-<summary>View Generic Classes</summary>
-
-| Class | Where it applies |
+| Class | Selects |
 | --- | --- |
-| nm-button | Shared button base class |
-| nm-action-button | Generic generic action button (forget, edit, details, etc) |
-| nm-toolbar-action | Generic toolbar button class |
-| nm-details-action-button | Buttons inside the details action row |
-| row-link-action | Text-style row action role class (connect/disconnect/forget) |
-| row-icon-action | Icon-only row action role class (details/open buttons) |
-| nm-form-label | Generic form labels |
-| nm-sub-label | Secondary row subtitle text |
-| nm-details-key | Key label class used in details rows |
-| nm-details-value | Value label class used in details rows |
-| nm-edit-field-entry | General text entries inside edits (IPv4/6, DNS) |
-| nm-edit-dropdown | General dropdown boxes inside edits (methods) |
-| nm-edit-dropdown-trigger | Dropdown open/trigger button |
-| nm-dropdown-open | State class added to dropdowns when popover is open |
-| nm-password-entry | Password entry base styling |
-| nm-placeholder-icon | Empty-state icons |
-| nm-placeholder-label | Empty-state labels |
-| nm-status-icon | Header icon |
-| nm-status-label | Header status text |
-| nm-signal-icon | Per-row signal/device icon |
-| nm-row-expand-icon | Chevron toggle on list elements |
-| nm-inline-password-label | Inline password prompt label |
-| nm-inline-password-entry | Inline password input |
-| nm-inline-password-revealer | Inline prompt revealer widget |
+| `nm-action` | Every action button, such as Connect, Edit, or Delete. |
+| `nm-row-action` | Text actions shown inside a network or profile row. |
+| `nm-row-icon-action` | Compact icon actions shown inside a row. |
+| `nm-details-action` | Actions shown on details pages. |
+| `nm-action-primary` | The main action on a page. |
+| `nm-action-connect` | Connect actions. |
+| `nm-action-disconnect` | Disconnect actions. |
+| `nm-action-destructive` | Destructive actions such as Forget or Delete. |
 
-</details>
+#### Action component tokens
 
-#### Specific Functional Classes
+Use these tokens to change action colors and borders. "Resting" means the button is visible but is not currently being hovered.
 
-These classes target specific behaviors, states, and distinct functional outcomes. They are built to be layered over generic/structural classes.
+| Token | Affects | Property |
+| --- | --- | --- |
+| `--nm-action-color` | Any `nm-action` at rest | Text/icon color |
+| `--nm-action-hover-color` | Any `nm-action` on hover | Text/icon color |
+| `--nm-action-border-color` | Any `nm-action` at rest | Border color |
+| `--nm-action-hover-background` | Any `nm-action` on hover | Background |
+| `--nm-connect-action-color` | Connect actions at rest | Text/icon color |
+| `--nm-connect-action-hover-color` | Connect actions on hover | Text/icon color |
+| `--nm-connect-action-border-color` | Connect actions at rest | Border color |
+| `--nm-connect-action-hover-background` | Connect actions on hover | Background |
+| `--nm-danger-action-color` | Disconnect and destructive actions at rest | Text/icon color |
+| `--nm-danger-action-hover-color` | Disconnect and destructive actions on hover | Text/icon color |
+| `--nm-danger-action-border-color` | Disconnect and destructive actions at rest | Border color |
+| `--nm-danger-action-hover-background` | Disconnect and destructive actions on hover | Background |
+| `--nm-row-action-color` | Text actions inside rows at rest | Text/icon color |
+| `--nm-row-action-hover-color` | Text actions inside rows on hover | Text/icon color |
+| `--nm-row-action-background` | Text actions inside rows at rest | Background |
+| `--nm-row-action-hover-background` | Text actions inside rows on hover | Background |
+| `--nm-details-action-color` | Details-page actions at rest | Text/icon color |
+| `--nm-details-action-hover-color` | Details-page actions on hover | Text/icon color |
+| `--nm-details-action-border-color` | Details-page actions at rest | Border color |
+| `--nm-details-action-hover-background` | Details-page actions on hover | Background |
+| `--nm-details-danger-hover-color` | Destructive details-page actions on hover | Text/icon color |
+| `--nm-details-danger-hover-border-color` | Destructive details-page actions on hover | Border color |
+| `--nm-details-danger-hover-background` | Destructive details-page actions on hover | Background |
+| `--nm-row-icon-action-color` | Icon actions inside rows at rest | Text/icon color |
+| `--nm-row-icon-action-hover-color` | Icon actions inside rows on hover | Text/icon color |
+| `--nm-row-icon-action-hover-background` | Icon actions inside rows on hover | Background |
+| `--nm-row-icon-action-hover-border-color` | Icon actions inside rows on hover | Border color |
 
-<details>
-<summary>View Specific Functional Classes</summary>
+##### Examples
 
-| Class | Where it applies |
-| --- | --- |
-| nm-toggle-label | "Networking" label near the global switch |
-| nm-switch | Global/network switches |
-| nm-tab-label | Tab label widgets |
-| nm-tabs-menu-button | Dropdown expand button in tabs header |
-| nm-tabs-menu-popover | Popover for overflowing tabs/saved networks |
-| nm-refresh-button | Refresh button |
-| nm-add-button | Add network button |
-| nm-section-title | Section title labels |
-| nm-connected-indicator | State class for active/connected rows |
-| nm-signal-icon-secured | Secured Wi-Fi icon variant class |
-| nm-ssid-label | Primary row title text |
-| nm-primary-action-button | Primary action button in details page |
-| nm-forget-button | "Forget" action button |
-| nm-delete-button | "Delete" action button |
-| nm-edit-button | "Edit" action button |
-| nm-details-button | "Details" action button |
-| nm-connect-button | Connect action button |
-| nm-disconnect-button | Disconnect action button |
-| nm-nav-back | Lightweight back navigation button |
-| nm-details-network-title | Network title on details/edit pages |
-| nm-details-group-title | Group label for sections like BASIC/ADVANCED |
-| nm-edit-section-toggle | Advanced network sections expander button |
-| nm-inline-password-cancel | Inline cancel button |
-| nm-inline-password-connect | Inline connect button |
+Global row action customization:
 
-</details>
+```css
+:root {
+  --nm-row-action-color: #89b4fa;
+  --nm-row-action-hover-color: #b4d0fb;
+}
+```
+
+Scoped page customization (only VPN rows change; Wi-Fi/Ethernet stay unchanged):
+
+```css
+.nm-page-vpn {
+  --nm-row-action-color: #a6e3a1;
+  --nm-row-action-hover-color: #c6f0c2;
+}
+```
+
+Destructive details hover customization:
+
+```css
+:root {
+  --nm-details-danger-hover-color: #f38ba8;
+  --nm-details-danger-hover-background: alpha(#f38ba8, .16);
+}
+```
+
+#### Component appearance tokens
+
+The remaining tokens control component shape, spacing, typography, surfaces, and interaction states. Set them globally on `:root`, or place them on one of the scopes above when the change should be more specific. Use familiar CSS-style values such as `#89b4fa`, `6px`, `6px 10px`, or a shadow expression.
+
+##### Button tokens
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-button-color` | Visual | Resting text/icon foreground |
+| `--nm-button-background` | Visual | Resting surface |
+| `--nm-button-border-color` | Visual | Resting border |
+| `--nm-button-hover-color` | Visual | Hover text/icon foreground |
+| `--nm-button-hover-background` | Visual | Hover surface |
+| `--nm-button-hover-border-color` | Visual | Hover border |
+| `--nm-button-disabled-color` | Visual | Disabled text/icon foreground |
+| `--nm-button-disabled-background` | Visual | Disabled surface |
+| `--nm-button-disabled-border-color` | Visual | Disabled border |
+| `--nm-button-disabled-opacity` | Visual | Disabled component opacity |
+| `--nm-button-radius` | Geometry | Shape |
+| `--nm-button-border-width` | Geometry | Border width |
+| `--nm-button-min-height` | Geometry | Minimum height |
+| `--nm-button-padding` | Geometry | Content inset |
+| `--nm-button-shadow` | Visual | Resting shadow |
+| `--nm-button-font-size` | Typography | Label size |
+| `--nm-button-font-weight` | Typography | Label weight |
+| `--nm-button-letter-spacing` | Typography | Label tracking |
+
+The action tokens above control action colors and borders. These general button tokens control shape, spacing, shadow, and typography.
+
+Toolbar actions such as **Add network** and **Refresh** use a compact, flat context rather than the generic pill surface:
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-toolbar-action-color` | Visual | Resting foreground |
+| `--nm-toolbar-action-background` | Visual | Resting surface |
+| `--nm-toolbar-action-border-color` | Visual | Resting border |
+| `--nm-toolbar-action-hover-color` | Visual | Hover foreground |
+| `--nm-toolbar-action-hover-background` | Visual | Hover surface |
+| `--nm-toolbar-action-hover-border-color` | Visual | Hover border |
+| `--nm-toolbar-action-disabled-color` | Visual | Disabled foreground |
+| `--nm-toolbar-action-disabled-background` | Visual | Disabled surface |
+| `--nm-toolbar-action-disabled-border-color` | Visual | Disabled border |
+| `--nm-toolbar-action-radius` | Geometry | Toolbar button shape |
+| `--nm-toolbar-action-min-height` | Geometry | Minimum height |
+| `--nm-toolbar-action-padding` | Geometry | Content inset |
+
+##### Field tokens (shared by `nm-input` and `nm-select`)
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-field-color` | Visual | Resting input/select foreground |
+| `--nm-field-background` | Visual | Resting surface |
+| `--nm-field-border-color` | Visual | Resting border |
+| `--nm-field-focus-border-color` | Visual | Input focus or select open/focus border |
+| `--nm-field-focus-background` | Visual | Focus/open surface |
+| `--nm-field-disabled-color` | Visual | Disabled foreground |
+| `--nm-field-disabled-opacity` | Visual | Disabled component opacity |
+| `--nm-field-radius` | Geometry | Input/select shape |
+| `--nm-field-border-width` | Geometry | Outer border width |
+| `--nm-field-min-height` | Geometry | Minimum control height |
+| `--nm-field-padding` | Geometry | Content inset |
+| `--nm-field-shadow` | Visual | Resting shadow |
+| `--nm-field-focus-shadow` | Visual | Focus/open ring or shadow |
+
+Inputs and selects share these tokens. The app applies them to the visible parts of each control, including a select's trigger and popover.
+
+##### Switch tokens
+
+These tokens style the switch track and the movable thumb. "Active" means the switch is on.
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-switch-background` | Visual | Resting track background |
+| `--nm-switch-border-color` | Visual | Resting track border |
+| `--nm-switch-hover-background` | Visual | Track background on hover |
+| `--nm-switch-hover-border-color` | Visual | Track border on hover |
+| `--nm-switch-active-background` | Visual | Active track background |
+| `--nm-switch-active-border-color` | Visual | Active track border |
+| `--nm-switch-active-hover-background` | Visual | Active track background on hover |
+| `--nm-switch-active-hover-border-color` | Visual | Active track border on hover |
+| `--nm-switch-thumb-color` | Visual | Resting thumb color |
+| `--nm-switch-active-thumb-color` | Visual | Active thumb color |
+| `--nm-switch-disabled-background` | Visual | Disabled track background |
+| `--nm-switch-disabled-border-color` | Visual | Disabled track border |
+| `--nm-switch-disabled-thumb-color` | Visual | Disabled thumb color |
+| `--nm-switch-active-disabled-background` | Visual | Disabled active track background |
+| `--nm-switch-active-disabled-border-color` | Visual | Disabled active track border |
+| `--nm-switch-active-disabled-thumb-color` | Visual | Disabled active thumb color |
+| `--nm-switch-disabled-opacity` | Visual | Disabled switch opacity |
+| `--nm-switch-radius` | Geometry | Track shape |
+| `--nm-switch-border-width` | Geometry | Track border width |
+| `--nm-switch-min-width` | Geometry | Minimum track width |
+| `--nm-switch-min-height` | Geometry | Minimum track height |
+| `--nm-switch-padding` | Geometry | Space inside the track |
+| `--nm-switch-shadow` | Visual | Resting track shadow |
+| `--nm-switch-hover-shadow` | Visual | Track shadow on hover |
+| `--nm-switch-focus-shadow` | Visual | Keyboard-focus ring or shadow |
+| `--nm-switch-thumb-size` | Geometry | Thumb width and height |
+| `--nm-switch-thumb-radius` | Geometry | Thumb shape |
+| `--nm-switch-thumb-shadow` | Visual | Thumb shadow |
+
+##### Checkbox tokens
+
+Checkbox tokens cover the label, box, checkmark, interaction states, sizing, and typography.
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-checkbox-color` | Visual | Resting label color |
+| `--nm-checkbox-hover-color` | Visual | Label color on hover |
+| `--nm-checkbox-checked-color` | Visual | Checked label color |
+| `--nm-checkbox-checked-hover-color` | Visual | Checked label color on hover |
+| `--nm-checkbox-background` | Visual | Resting box background |
+| `--nm-checkbox-border-color` | Visual | Resting box border |
+| `--nm-checkbox-hover-background` | Visual | Box background on hover |
+| `--nm-checkbox-hover-border-color` | Visual | Box border on hover |
+| `--nm-checkbox-checked-background` | Visual | Checked box background |
+| `--nm-checkbox-checked-border-color` | Visual | Checked box border |
+| `--nm-checkbox-checkmark-color` | Visual | Checkmark color |
+| `--nm-checkbox-checked-hover-background` | Visual | Checked box background on hover |
+| `--nm-checkbox-checked-hover-border-color` | Visual | Checked box border on hover |
+| `--nm-checkbox-checked-hover-checkmark-color` | Visual | Checkmark color on hover |
+| `--nm-checkbox-disabled-color` | Visual | Disabled label color |
+| `--nm-checkbox-disabled-background` | Visual | Disabled box background |
+| `--nm-checkbox-disabled-border-color` | Visual | Disabled box border |
+| `--nm-checkbox-disabled-checkmark-color` | Visual | Disabled checkmark color |
+| `--nm-checkbox-checked-disabled-background` | Visual | Disabled checked box background |
+| `--nm-checkbox-checked-disabled-border-color` | Visual | Disabled checked box border |
+| `--nm-checkbox-checked-disabled-checkmark-color` | Visual | Disabled checked checkmark color |
+| `--nm-checkbox-disabled-opacity` | Visual | Disabled checkbox opacity |
+| `--nm-checkbox-radius` | Geometry | Box shape |
+| `--nm-checkbox-border-width` | Geometry | Box border width |
+| `--nm-checkbox-box-size` | Geometry | Box width and height |
+| `--nm-checkbox-min-height` | Geometry | Minimum height of the full control |
+| `--nm-checkbox-padding` | Geometry | Outer content inset |
+| `--nm-checkbox-label-gap` | Geometry | Space between box and label |
+| `--nm-checkbox-shadow` | Visual | Resting box shadow |
+| `--nm-checkbox-hover-shadow` | Visual | Box shadow on hover |
+| `--nm-checkbox-focus-shadow` | Visual | Keyboard-focus ring or shadow |
+| `--nm-checkbox-font-size` | Typography | Label size |
+| `--nm-checkbox-font-weight` | Typography | Label weight |
+| `--nm-checkbox-letter-spacing` | Typography | Label tracking |
+
+##### Primary row tokens
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-row-background` | Visual | Resting surface |
+| `--nm-row-hover-background` | Visual | Hover surface |
+| `--nm-row-connected-background` | Visual | Connected surface |
+| `--nm-row-border-color` | Visual | Resting border |
+| `--nm-row-hover-border-color` | Visual | Hover border |
+| `--nm-row-connected-border-color` | Visual | Connected border |
+| `--nm-row-radius` | Geometry | Shape |
+| `--nm-row-border-width` | Geometry | Border width |
+| `--nm-row-shadow` | Visual | Resting shadow |
+| `--nm-row-outer-margin` | Geometry | Row separation/page inset |
+| `--nm-row-content-padding` | Geometry | Main content inset |
+| `--nm-row-actions-padding` | Geometry | Expanded action-strip inset |
+
+##### Data list / row tokens
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-data-list-background` | Visual | Grouped-list surface |
+| `--nm-data-list-border-color` | Visual | Grouped-list outer border |
+| `--nm-data-list-radius` | Geometry | Grouped-list shape |
+| `--nm-data-list-shadow` | Visual | Grouped-list shadow |
+| `--nm-data-row-background` | Visual | Record resting surface |
+| `--nm-data-row-hover-background` | Visual | Record hover surface |
+| `--nm-data-row-divider-color` | Visual | Divider between records |
+| `--nm-data-row-padding` | Geometry | Record content inset |
+
+##### Section tokens
+
+| Token | Category | Affects |
+| --- | --- | --- |
+| `--nm-section-background` | Visual | Section surface |
+| `--nm-section-border-color` | Visual | Section border |
+| `--nm-section-border-width` | Geometry | Section border width |
+| `--nm-section-radius` | Geometry | Section shape |
+| `--nm-section-shadow` | Visual | Section shadow |
+| `--nm-section-padding` | Geometry | Section content inset |
+
+Setting `--nm-section-padding` gives details sections and expandable edit sections the same inset.
+
+##### Appearance examples
+
+Flat, square controls:
+
+```css
+:root {
+  --nm-button-radius: 0;
+  --nm-field-radius: 0;
+  --nm-row-radius: 0;
+  --nm-data-list-radius: 0;
+  --nm-section-radius: 0;
+}
+```
+
+Rounded buttons and selects:
+
+```css
+:root {
+  --nm-button-radius: 999px;
+}
+
+.nm-select {
+  --nm-field-radius: 999px;
+}
+```
+
+Square switches and checkboxes with stronger hover feedback:
+
+```css
+:root {
+  --nm-switch-radius: 3px;
+  --nm-switch-thumb-radius: 2px;
+  --nm-switch-hover-border-color: #89b4fa;
+  --nm-checkbox-radius: 2px;
+  --nm-checkbox-hover-border-color: #89b4fa;
+  --nm-checkbox-checked-background: #89b4fa;
+}
+```
+
+Card-like rows and sections:
+
+```css
+:root {
+  --nm-row-radius: 14px;
+  --nm-row-shadow: 0 4px 14px alpha(#000000, .18);
+  --nm-section-background: var(--surface_soft);
+  --nm-section-border-width: 1px;
+  --nm-section-border-color: var(--line);
+  --nm-section-radius: 14px;
+  --nm-section-shadow: 0 4px 16px alpha(#000000, .12);
+}
+```
+
+Compact density scoped to the VPN page only:
+
+```css
+.nm-page-vpn {
+  --nm-button-min-height: 24px;
+  --nm-field-min-height: 26px;
+  --nm-field-padding: 4px 8px;
+  --nm-row-content-padding: 6px 8px;
+  --nm-data-row-padding: 7px 10px;
+}
+```
+
+Select-only specialization via a scoped field token:
+
+```css
+.nm-select {
+  --nm-field-radius: 999px;
+}
+```
+
+Input-only specialization without affecting selects:
+
+```css
+.nm-input {
+  --nm-field-background: var(--surface_soft);
+  --nm-field-border-color: var(--line_strong);
+  --nm-field-radius: 2px;
+}
+```
 
 ---
 
@@ -439,7 +687,7 @@ hypr-network-manager
 
 Bundled themes use standard CSS variables under the `:root` pseudo-class. This allows for easy integration with dynamic palette generation tools like Matugen, Pywal, or similar.
 
-To integrate generated palettes, you should import your generated colors into your theme's `tokens.css` (or `base.css`), while ensuring that the **derived variables** (like `--text`, `--hover_soft`, etc.) and typography settings remain intact.
+To integrate generated palettes, you should import your generated colors into your theme's `tokens.css` (or `base.css`). Ensure that the **derived variables** (like `--text`, `--hover_soft`, etc.) and typography settings remain intact.
 
 1. Generate a palette file as `~/.config/hypr-network-manager/themes/colors.css`.
 2. Create `~/.config/hypr-network-manager/themes/custom-theme/tokens.css` that imports the colors and defines the derived variables.
@@ -478,7 +726,7 @@ To integrate generated palettes, you should import your generated colors into yo
 }
 ```
 
-2. Add the template to the Matugen configuration (`~/.config/matugen/config.toml`):
+1. Add the template to the Matugen configuration (`~/.config/matugen/config.toml`):
 
 ```toml
 [templates.hypr-network-manager]
@@ -486,7 +734,7 @@ input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/hypr-network-manager/themes/colors.css'
 ```
 
-3. In the theme directory, import the generated `colors.css` into your `tokens.css` and keep the derived variables:
+1. In the theme directory, import the generated `colors.css` into your `tokens.css` and keep the derived variables:
 
 ```css
 /* ~/.config/hypr-network-manager/themes/custom-theme/tokens.css */
@@ -518,7 +766,7 @@ output_path = '~/.config/hypr-network-manager/themes/colors.css'
 
 #### Generic Engine Example
 
-For engines with non-Material naming (e.g. `color1`, `color2`), create a similar `tokens.css` mapping those colors to the required base variables:
+For engines with non-Material naming, create a similar `tokens.css` mapping those colors to the required base variables:
 
 ```css
 /* ~/.config/hypr-network-manager/themes/custom-theme/tokens.css */
@@ -560,7 +808,6 @@ For engines with non-Material naming (e.g. `color1`, `color2`), create a similar
 }
 ```
 
-Tip: Keep the derived token names stable. This ensures the bundled component layers remain intact and fully functional.
 ### Waybar Integration
 
 Add a custom module in Waybar:
@@ -586,10 +833,7 @@ Hyprland configuration:
 exec-once = hypr-network-manager --daemon
 ```
 
-`--daemon` starts the resident application without showing its window initially;
-it should not be added to the Waybar click command. A plain terminal invocation
-stays attached to that terminal and streams logs until it is stopped with `Ctrl+C`
-or `hypr-network-manager --quit`.
+`--daemon` starts the resident application without showing its window initially. It should not be added to the Waybar click command.
 
 ### Hyprland Integration
 
@@ -641,42 +885,11 @@ For run/build convenience during development:
 
 ---
 
-## Component Details
-
-### Wi-Fi Tab
-
-* Live AP scanning via NetworkManager D-Bus
-* Connect to saved or new networks
-* Forget saved profiles
-* Password prompt integrated
-* Per-network details page with structured Basic and Advanced sections
-* Per-network edit page for credential updates and profile actions
-
-### Ethernet Tab
-
-* Displays wired devices
-* Supports disconnecting connections
-* Detailed ethernet profile configuration
-
-### VPN Tab
-
-* Lists all profiles
-* Connect / Disconnect actions supported
-
-### GUI & Layer-Shell
-
-* Layer-shell used for proper Wayland popup placement
-* Window dimensions, anchors, and margins configurable
-
----
-
 ## Security
 
-* Network configuration is performed through NetworkManager over D-Bus
-* Hotspot bands, AP-mode state, and connected-client counts are read directly
-  from the kernel through nl80211; the Vala backend does not parse `iw` output
-* Hotspot passwords are stored in Secret Service when available, with a
-  private per-user state file as the fallback
+* Network configuration and management is performed through NetworkManager over D-Bus
+* Information related with Hotspot are read directly from the kernel through `nl80211`.
+* Hotspot passwords are stored in Secret Service when available.
 
 ---
 
