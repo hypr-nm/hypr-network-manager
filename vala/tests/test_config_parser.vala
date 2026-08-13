@@ -41,7 +41,6 @@ private static void test_load_default_config () {
     assert (!config.show_bssid);
     assert (!config.show_frequency);
     assert (config.show_band);
-    assert (config.load_core_styles);
 }
 
 private static int main (string[] args) {

@@ -9,5 +9,7 @@
   <gresource prefix="/yeab212/hypr-network-manager/styles">
     <file alias="structure.css">styles/structure.css</file>
     <file alias="core-components.css">styles/core-components.css</file>
+    <file alias="default-theme-tokens.css">tokens.css</file>
+    <file alias="default-theme-overrides.css">overrides.css</file>
   </gresource>
 </gresources>

@@ -158,8 +158,8 @@ public class NetworkManager : Gtk.Application {
                     || import_target == "core-components.css"
                     || import_target.has_suffix ("/core-components.css");
 
-                if (is_core && config.load_core_styles) {
-                    debug_log ("inline_css_imports: ignoring core import %s because load_core_styles is true".printf (
+                if (is_core) {
+                    debug_log ("inline_css_imports: ignoring core import %s because core styles are loaded by the application".printf (
                         import_target));
                     return false;
                 }
@@ -212,21 +212,26 @@ public class NetworkManager : Gtk.Application {
 
     private void load_theme_css (bool force_reload = false) {
         string? css_path = resolve_base_css_path ();
-        if (css_path == null) {
-            debug_log ("load_theme_css: no stylesheet found in local/system/bundled paths; outcome=skipping");
-            return;
-        }
 
         var master_builder = new StringBuilder ();
 
-        if (config.load_core_styles) {
-            master_builder.append (inline_css_imports (
-                "resource:///yeab212/hypr-network-manager/styles/structure.css"));
-            master_builder.append (inline_css_imports (
-                "resource:///yeab212/hypr-network-manager/styles/core-components.css"));
-        }
+        master_builder.append (inline_css_imports (
+            "resource:///yeab212/hypr-network-manager/styles/structure.css"));
+        master_builder.append (inline_css_imports (
+            "resource:///yeab212/hypr-network-manager/styles/core-components.css"));
+        master_builder.append (inline_css_imports (
+            "resource:///yeab212/hypr-network-manager/styles/default-theme-tokens.css"));
+        master_builder.append (inline_css_imports (
+            "resource:///yeab212/hypr-network-manager/styles/default-theme-overrides.css"));
 
-        master_builder.append (inline_css_imports (css_path));
+        if (css_path != null) {
+            master_builder.append (inline_css_imports (css_path));
+        } else {
+            log_info (
+                "app",
+                "load_theme_css: no external stylesheet found; using embedded default theme"
+            );
+        }
 
         string inlined_css = master_builder.str;
         if (inlined_css == "") {

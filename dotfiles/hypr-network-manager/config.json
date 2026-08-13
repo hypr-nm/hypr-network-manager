@@ -11,7 +11,6 @@
   "layer_shell_margin_bottom": 8,
   "layer_shell_margin_left": 8,
   "log_level": "info",
-  "load_core_styles": true,
 
   "scan_interval": 20,
   "pending_wifi_connect_timeout_ms": 15000,

@@ -24,7 +24,10 @@ config_file = configure_file(
 app_resources = gnome.compile_resources(
   'hypr_network_manager_resources',
   'resources/hypr-network-manager.gresource.xml',
-  source_dir: 'resources',
+  source_dir: [
+    'resources',
+    meson.project_source_root() / 'dotfiles' / 'hypr-network-manager' / 'themes' / 'default',
+  ],
   c_name: 'hypr_network_manager_resources'
 )
 
@@ -276,6 +279,18 @@ test(
     meson.project_source_root() / 'dotfiles' / 'hypr-network-manager' / 'config.json',
   ],
 )
+
+css_fallback_test = executable(
+  'test-css-fallback',
+  [
+    'tests/test_css_fallback.vala',
+    app_resources,
+  ],
+  c_args: ['-w'],
+  dependencies: [gtk_dep, gio_dep],
+  install: false,
+)
+test('CSS fallback', css_fallback_test)
 
 hotspot_controller_test = executable(
   'test-hotspot-controller',

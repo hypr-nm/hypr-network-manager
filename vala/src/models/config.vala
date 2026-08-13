@@ -39,7 +39,6 @@ public class AppConfig : Object {
     public bool show_bssid = false;
     public bool show_frequency = true;
     public bool show_band = false;
-    public bool load_core_styles = true;
 
     private static string describe_json_node_type (Json.Node? node) {
         if (node == null) {
@@ -481,16 +480,8 @@ public class AppConfig : Object {
         if (show_band != null) {
             this.show_band = show_band;
         }
-
-        bool? load_core_styles = extract_json_bool (
-            obj,
-            "load_core_styles",
-            path
-        );
-        if (load_core_styles != null) {
-            this.load_core_styles = load_core_styles;
-        }
     }
+
     private void apply_config_fields (
         Json.Object obj,
         string path
@@ -512,7 +503,6 @@ public class AppConfig : Object {
         known_keys.add ("show_bssid");
         known_keys.add ("show_frequency");
         known_keys.add ("show_band");
-        known_keys.add ("load_core_styles");
 
         foreach (unowned string key in obj.get_members ()) {
             bool is_known = false;
