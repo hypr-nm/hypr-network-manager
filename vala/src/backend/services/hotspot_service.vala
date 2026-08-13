@@ -28,7 +28,6 @@ public class HotspotService : GLib.Object {
     private bool hotspot_client_query_pending = false;
     private bool is_hotspot_stopping = false;
     private bool is_hotspot_starting = false;
-    private bool warned_create_ap_fallback = false;
     private bool hotspot_timeout_check_in_flight = false;
 
     public HotspotService (NM.Client nm_client, Nl80211ApMonitor monitor) {
@@ -77,9 +76,7 @@ public class HotspotService : GLib.Object {
         return get_create_ap_path () != null && create_ap_deps_available ();
 
     }
-    private void warn_create_ap_fallback_once () {
-        if (warned_create_ap_fallback) return;
-        warned_create_ap_fallback = true;
+    private string create_ap_unavailable_reason () {
         var missing = new GLib.GenericArray<string> ();
         if (get_create_ap_path () == null) {
             missing.add ("hypr-create-ap");
@@ -89,10 +86,11 @@ public class HotspotService : GLib.Object {
                 missing.add (tool);
             }
         }
-        string list = string.joinv (", ", (string[]) missing.data);
-        warning (
-            "create_ap runtime dependencies missing (%s); falling back to the native NetworkManager hotspot, which shares the system default route instead of a selected uplink.",
-            list);
+        if (missing.length == 0) {
+            return "its runtime requirements were not satisfied";
+        }
+        return "required executable(s) are missing: "
+            + string.joinv (", ", (string[]) missing.data);
     }
 
     private string create_ap_runtime_dir () throws Error {
@@ -367,6 +365,77 @@ public class HotspotService : GLib.Object {
         return NmWifiUtils.primary_wifi_device (nm_client);
     }
 
+    private string activated_uplink_interface (
+        NM.ActiveConnection? active,
+        string excluded_interface = ""
+    ) {
+        if (active == null
+            || active.get_state () != NM.ActiveConnectionState.ACTIVATED) {
+            return "";
+        }
+
+        var connection = active.get_connection ();
+        if (connection != null) {
+            var wireless = connection.get_setting_wireless ();
+            if (wireless != null && wireless.mode == WifiMode.AP) {
+                return "";
+            }
+        }
+
+        foreach (var device in active.get_devices ()) {
+            string iface = device.get_iface () != null
+                ? device.get_iface ().strip ()
+                : "";
+            if (iface != ""
+                && iface != excluded_interface
+                && is_valid_interface_name (iface)) {
+                return iface;
+            }
+        }
+        return "";
+    }
+
+    private string resolve_auto_uplink (string ap_interface) {
+        string primary_interface = activated_uplink_interface (
+            nm_client.get_primary_connection ());
+        string[] default_route_interfaces = {};
+        string[] active_interfaces = {};
+
+        foreach (var active in nm_client.get_active_connections ()) {
+            string default_iface = activated_uplink_interface (active);
+            if (default_iface != ""
+                && (active.get_default () || active.get_default6 ())) {
+                default_route_interfaces += default_iface;
+            }
+
+            string active_iface = activated_uplink_interface (
+                active,
+                ap_interface);
+            if (active_iface != "") {
+                active_interfaces += active_iface;
+            }
+        }
+
+        return NmHotspotUtils.choose_auto_uplink (
+            ap_interface,
+            primary_interface,
+            default_route_interfaces,
+            active_interfaces);
+    }
+
+    private bool interface_has_active_connection (string iface) {
+        if (iface == NetworkInterface.NONE) {
+            return false;
+        }
+        var device = nm_client.get_device_by_iface (iface);
+        if (device == null) {
+            return false;
+        }
+        var active = device.get_active_connection ();
+        return active != null
+            && active.get_state () == NM.ActiveConnectionState.ACTIVATED;
+    }
+
     private NM.ActiveConnection? find_active_nm_hotspot (
         NM.DeviceWifi? preferred_dev,
         string configured_ssid,
@@ -557,9 +626,11 @@ public class HotspotService : GLib.Object {
         string resolved_ap_iface = (ap_interface != ""
             && ap_interface != NetworkInterface.AUTO)
             ? ap_interface : dev.get_iface ();
-        string resolved_uplink_iface = (uplink_interface != ""
-            && uplink_interface != NetworkInterface.AUTO)
-            ? uplink_interface : dev.get_iface ();
+        bool automatic_uplink = uplink_interface == ""
+            || uplink_interface == NetworkInterface.AUTO;
+        string resolved_uplink_iface = automatic_uplink
+            ? resolve_auto_uplink (resolved_ap_iface)
+            : uplink_interface;
         if (resolved_ap_iface.has_prefix ("-")
             || !is_valid_interface_name (resolved_ap_iface)) {
             throw new IOError.INVALID_ARGUMENT (
@@ -572,27 +643,34 @@ public class HotspotService : GLib.Object {
                 "Invalid uplink interface name");
         }
 
-        NM.Device? uplink_dev = null;
-        if (resolved_uplink_iface != NetworkInterface.NONE
-            && resolved_uplink_iface != resolved_ap_iface) {
-            var nm_uplink = client.get_device_by_iface (resolved_uplink_iface);
-            if (nm_uplink != null) {
-                uplink_dev = nm_uplink;
-            }
+        bool uplink_has_connection = interface_has_active_connection (
+            resolved_uplink_iface);
+        if (automatic_uplink) {
+            log_info (
+                "hotspot-service",
+                resolved_uplink_iface == NetworkInterface.NONE
+                    ? "Automatic hotspot uplink found no active interface; creating the hotspot without an Internet uplink."
+                    : "Automatic hotspot uplink selected active interface '%s'.".printf (
+                        resolved_uplink_iface));
         }
-        bool uplink_has_connection = (uplink_dev != null)
-            ? (uplink_dev.get_active_connection () != null)
-            : (dev.get_active_connection () != null);
+        bool create_ap_available = has_create_ap ();
         bool use_create_ap = NmHotspotUtils.should_use_create_ap (
-            has_create_ap (),
+            create_ap_available,
             resolved_uplink_iface,
             uplink_has_connection);
-        if (has_create_ap () && !use_create_ap) {
-            debug_log (
-                ("create_ap uplink '%s' is not active; falling back to " +
-                 "NetworkManager-managed sharing on '%s'.").printf (
-                    resolved_uplink_iface,
-                    resolved_ap_iface));
+        if (!use_create_ap) {
+            string fallback_reason = !create_ap_available
+                ? create_ap_unavailable_reason ()
+                : "selected uplink '%s' has no active connection".printf (
+                    resolved_uplink_iface);
+            log_warn (
+                "hotspot-service",
+                ("Hotspot creation is falling back to NetworkManager; " +
+                 "create_ap was not selected because %s. " +
+                 "AP interface='%s', uplink interface='%s'.").printf (
+                    fallback_reason,
+                    resolved_ap_iface,
+                    resolved_uplink_iface));
         }
         if (use_create_ap) {
             string create_ap_bin = get_create_ap_path () ?? "hypr-create-ap";
@@ -740,6 +818,11 @@ public class HotspotService : GLib.Object {
                 is_hotspot_starting = false;
                 return true;
             } catch (Error e) {
+                log_error (
+                    "hotspot-service",
+                    "create_ap hotspot creation failed on interface '%s': %s".printf (
+                        resolved_ap_iface,
+                        e.message));
                 string failed_pid;
                 if (read_live_create_ap_pid (
                         pidfile,
@@ -767,9 +850,6 @@ public class HotspotService : GLib.Object {
             if ((dev.get_capabilities () & NM.DeviceWifiCapabilities.AP) == 0) {
                 throw new IOError.NOT_SUPPORTED (
                     "Selected Wi-Fi device does not support NetworkManager AP mode");
-            }
-            if (!has_create_ap ()) {
-                warn_create_ap_fallback_once ();
             }
             debug_log ("Starting native NM hotspot creation...");
             var connections = client.get_connections ();
@@ -839,7 +919,11 @@ public class HotspotService : GLib.Object {
                 hotspot_idle_minutes = 0;
                 return true;
             } catch (Error e) {
-                debug_log ("Failed to add/activate AP connection: " + e.message);
+                log_error (
+                    "hotspot-service",
+                    "NetworkManager fallback hotspot creation failed on interface '%s': %s".printf (
+                        resolved_ap_iface,
+                        e.message));
                 if (remote_conn != null) {
                     try {
                         yield remote_conn.delete_async (null);
@@ -986,7 +1070,6 @@ public class HotspotService : GLib.Object {
                 }
             }
         } else {
-            warn_create_ap_fallback_once ();
             if (config.connection_uuid != "") {
                 var conn = client.get_connection_by_uuid (config.connection_uuid);
                 if (conn != null &&

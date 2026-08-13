@@ -171,6 +171,36 @@ private static void test_backend_selection () {
         true));
 }
 
+private static void test_auto_uplink_selection () {
+    assert (NmHotspotUtils.choose_auto_uplink (
+        "wlan1",
+        "eth0",
+        { "wlan0" },
+        { "usb0" }) == "eth0");
+    // A connected station interface may also host the AP when the radio and
+    // create_ap support concurrent station/AP operation.
+    assert (NmHotspotUtils.choose_auto_uplink (
+        "wlan1",
+        "wlan1",
+        {},
+        {}) == "wlan1");
+    assert (NmHotspotUtils.choose_auto_uplink (
+        "wlan1",
+        "",
+        { "wlan0" },
+        { "eth0" }) == "wlan0");
+    assert (NmHotspotUtils.choose_auto_uplink (
+        "wlan1",
+        "",
+        {},
+        { "wlan1", "eth0" }) == "eth0");
+    assert (NmHotspotUtils.choose_auto_uplink (
+        "wlan1",
+        "",
+        {},
+        { "wlan1" }) == NetworkInterface.NONE);
+}
+
 private static void test_gateway_selection () {
     var occupied = new GLib.GenericArray<string> ();
 
@@ -239,6 +269,9 @@ private static int main (string[] args) {
     Test.add_func (
         "/nm-hotspot/backend-selection",
         test_backend_selection);
+    Test.add_func (
+        "/nm-hotspot/auto-uplink-selection",
+        test_auto_uplink_selection);
     Test.add_func (
         "/nm-hotspot/gateway-selection",
         test_gateway_selection);

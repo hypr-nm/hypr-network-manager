@@ -255,6 +255,34 @@ namespace NmHotspotUtils {
                 || uplink_is_active);
     }
 
+    public string choose_auto_uplink (
+        string ap_interface,
+        string primary_interface,
+        string[] default_route_interfaces,
+        string[] active_interfaces
+    ) {
+        string primary = primary_interface.strip ();
+        if (primary != "") {
+            return primary;
+        }
+
+        foreach (string candidate in default_route_interfaces) {
+            string iface = candidate.strip ();
+            if (iface != "") {
+                return iface;
+            }
+        }
+
+        foreach (string candidate in active_interfaces) {
+            string iface = candidate.strip ();
+            if (iface != "" && iface != ap_interface) {
+                return iface;
+            }
+        }
+
+        return NetworkInterface.NONE;
+    }
+
     public bool is_managed_connection (NM.Connection conn) {
         var s_con = conn.get_setting_connection ();
         var s_wifi = conn.get_setting_wireless ();
