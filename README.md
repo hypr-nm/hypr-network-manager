@@ -66,8 +66,8 @@ Upcoming features include:
 ## Security
 
 * Network configuration is performed through NetworkManager over D-Bus
-* Hotspot bands, AP-mode state, and connected-client counts are read directly
-  from the kernel through nl80211
+* Hotspot bands, regulatory-safe channels, AP-mode state, and connected-client
+  counts are read directly from the kernel through nl80211
 * Credentials are passed securely using NetworkManager APIs
 
 ---
