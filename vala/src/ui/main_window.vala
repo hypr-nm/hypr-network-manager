@@ -63,6 +63,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
     private Gtk.Revealer global_error_revealer;
     private bool flight_mode_active = false;
     private MainWindowTabsMenu? tabs_menu;
+    private bool lifecycle_owners_initialized = false;
+    private bool lifecycle_owners_disposed = false;
 
     public MainWindow (
         Gtk.Application app,
@@ -100,6 +102,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
             config_context.refresh_interval_seconds,
             this
         );
+        lifecycle_owners_initialized = true;
 
         layer_shell_active = MainWindowLayerShellConfigurator.configure (this, config_context);
         if (!layer_shell_active) {
@@ -520,6 +523,15 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
     }
 
     private void dispose_lifecycle_owners () {
+        // A throwing constructor can finalize this object before the
+        // controllers below have been assigned. Teardown can also be reached
+        // more than once while GTK releases the window, so keep it safe and
+        // idempotent in both cases.
+        if (!lifecycle_owners_initialized || lifecycle_owners_disposed) {
+            return;
+        }
+        lifecycle_owners_disposed = true;
+
         refresh_coordinator.stop ();
         wifi_controller.dispose_controller ();
         ethernet_controller.dispose_controller ();
