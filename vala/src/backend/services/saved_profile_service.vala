@@ -651,11 +651,28 @@ public class SavedProfileService : GLib.Object {
         string ssid,
         HiddenWifiSecurityMode security_mode,
         string password,
+        string device_path,
         Cancellable? cancellable = null
     ) throws Error {
         var client = nm_client;
-        var wifi_dev = NmWifiUtils.primary_wifi_device (client);
-        if (wifi_dev == null) throw new IOError.NOT_FOUND ("No Wi-Fi device found");
+        string selected_device_path = device_path.strip ();
+        if (selected_device_path == "") {
+            throw new IOError.INVALID_ARGUMENT ("No Wi-Fi device selected");
+        }
+
+        var selected_device = client.get_device_by_path (selected_device_path);
+        if (selected_device == null) {
+            throw new IOError.NOT_FOUND ("Selected Wi-Fi device not found");
+        }
+        if (selected_device is NM.DeviceWifi == false) {
+            throw new IOError.INVALID_ARGUMENT ("Selected device is not a Wi-Fi device");
+        }
+
+        var wifi_dev = (NM.DeviceWifi) selected_device;
+        if (wifi_dev.get_state () == NM.DeviceState.UNMANAGED
+            || wifi_dev.get_state () == NM.DeviceState.UNAVAILABLE) {
+            throw new IOError.NOT_CONNECTED ("Selected Wi-Fi device is unavailable");
+        }
 
         var conn = NmWifiUtils.create_hidden_wifi_connection (ssid, password, security_mode);
         yield client.add_and_activate_connection_async (conn, wifi_dev, null, cancellable);

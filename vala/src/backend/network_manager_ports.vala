@@ -87,6 +87,7 @@ namespace HyprNetworkManager.Backend {
             string ssid,
             HiddenWifiSecurityMode security_mode,
             string password,
+            string device_path,
             Cancellable? cancellable = null
         ) throws Error;
         public abstract async bool disconnect_wifi (

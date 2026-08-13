@@ -364,12 +364,18 @@ public class MainWindowWifiController : Object {
     public void connect_hidden_network (
         string ssid,
         HiddenWifiSecurityMode security_mode,
-        string password
+        string password,
+        string device_path
     ) {
         string normalized_ssid = ssid.strip ();
         string normalized_password = password.strip ();
+        string selected_device_path = device_path.strip ();
         if (normalized_ssid == "") {
             add_network_failed (_("SSID is required."));
+            return;
+        }
+        if (selected_device_path == "") {
+            add_network_failed (_("Select a Wi-Fi radio."));
             return;
         }
         if (!HiddenWifiSecurityModeUtils.is_password_valid_for_mode (security_mode, normalized_password)) {
@@ -386,6 +392,7 @@ public class MainWindowWifiController : Object {
             normalized_ssid,
             security_mode,
             normalized_password,
+            selected_device_path,
             request,
             (obj, res) => {
                 try {

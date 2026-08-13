@@ -348,6 +348,7 @@ wifi_details_controller_test = executable(
   'test-wifi-details-controller',
   [
     'tests/test_wifi_details_controller.vala',
+    'src/logging.vala',
     'src/constants.vala',
     'src/models/hotspot_config.vala',
     'src/models/wireguard_peer.vala',
@@ -363,6 +364,9 @@ wifi_details_controller_test = executable(
     'src/models/network_state_context.vala',
     'src/backend/network_manager_ports.vala',
     'src/ui/interfaces/window_host.vala',
+    'src/ui/utils/wifi_qr_builder.vala',
+    'src/ui/controllers/wifi/main_window_wifi_connection_controller.vala',
+    'src/ui/controllers/wifi/main_window_wifi_controller.vala',
     'src/ui/controllers/wifi/main_window_wifi_details_edit_controller.vala',
   ],
   c_args: ['-w'],

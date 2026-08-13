@@ -45,8 +45,15 @@ namespace HyprNetworkManager.UI.Views {
         private MainWindowWifiRowReconciler row_reconciler;
 
         private Gtk.Entry add_ssid_entry;
+        private Gtk.Label add_radio_field_label;
+        private Gtk.StringList add_radio_model;
+        private HyprNetworkManager.UI.Widgets.TrackedDropDown add_radio_dropdown;
+        private NetworkDevice[] add_radio_devices = {};
+        private string add_selected_device_path = "";
+        private bool updating_add_radio_dropdown = false;
         private HyprNetworkManager.UI.Widgets.TrackedDropDown add_security_dropdown;
         private Gtk.Entry add_password_entry;
+        private Gtk.Button add_connect_button;
         private Gtk.Label add_error_label;
         private Gtk.Revealer add_error_revealer;
 
@@ -335,6 +342,33 @@ namespace HyprNetworkManager.UI.Views {
             note.add_css_class (MainWindowCssClasses.SUB_LABEL);
             form.append (note);
 
+            this.add_radio_field_label = new Gtk.Label (_("Wi-Fi radio"));
+            this.add_radio_field_label.set_xalign (0.0f);
+            this.add_radio_field_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
+            this.add_radio_field_label.add_css_class (MainWindowCssClasses.FORM_LABEL);
+            form.append (this.add_radio_field_label);
+
+            this.add_radio_model = new Gtk.StringList (null);
+            this.add_radio_model.append (_("No Wi-Fi radios available"));
+            this.add_radio_dropdown = window_host.create_tracked_dropdown (this.add_radio_model);
+            this.add_radio_dropdown.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN);
+            this.add_radio_dropdown.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
+            this.add_radio_dropdown.set_sensitive (false);
+            this.add_radio_dropdown.notify_selected.connect (() => {
+                if (updating_add_radio_dropdown) {
+                    return;
+                }
+
+                uint selected = add_radio_dropdown.get_selected ();
+                if (selected >= add_radio_devices.length) {
+                    add_selected_device_path = "";
+                } else {
+                    add_selected_device_path = add_radio_devices[selected].device_path;
+                }
+                sync_add_network_sensitivity (add_connect_button);
+            });
+            form.append (this.add_radio_dropdown);
+
             var ssid_label = new Gtk.Label (_("SSID"));
             ssid_label.set_xalign (0.0f);
             ssid_label.add_css_class (MainWindowCssClasses.EDIT_FIELD_LABEL);
@@ -365,12 +399,12 @@ namespace HyprNetworkManager.UI.Views {
                 HiddenWifiSecurityModeUtils.to_dropdown_index (HiddenWifiSecurityMode.WPA_PSK)
             );
 
-            var save_btn = new Gtk.Button.with_label (_("Connect"));
-            save_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            save_btn.add_css_class (MainWindowCssClasses.SUGGESTED_ACTION);
+            this.add_connect_button = new Gtk.Button.with_label (_("Connect"));
+            this.add_connect_button.add_css_class (MainWindowCssClasses.BUTTON);
+            this.add_connect_button.add_css_class (MainWindowCssClasses.SUGGESTED_ACTION);
 
             add_security_dropdown.notify_selected.connect (() => {
-                sync_add_network_sensitivity (save_btn);
+                sync_add_network_sensitivity (add_connect_button);
             });
             form.append (add_security_dropdown);
 
@@ -404,23 +438,23 @@ namespace HyprNetworkManager.UI.Views {
             });
 
             add_password_entry.changed.connect (() => {
-                sync_add_network_sensitivity (save_btn);
+                sync_add_network_sensitivity (add_connect_button);
             });
             add_password_entry.activate.connect (() => {
-                if (!save_btn.get_sensitive ()) {
+                if (!add_connect_button.get_sensitive ()) {
                     return;
                 }
                 submit_add_hidden_network ();
             });
             form.append (add_password_entry);
 
-            sync_add_network_sensitivity (save_btn);
+            sync_add_network_sensitivity (add_connect_button);
 
             var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
             actions.add_css_class (MainWindowCssClasses.EDIT_ACTIONS);
 
-            save_btn.clicked.connect (submit_add_hidden_network);
-            actions.append (save_btn);
+            add_connect_button.clicked.connect (submit_add_hidden_network);
+            actions.append (add_connect_button);
 
             form.append (actions);
 
@@ -430,12 +464,17 @@ namespace HyprNetworkManager.UI.Views {
 
         private void submit_add_hidden_network () {
             show_add_error ("");
+            if (add_selected_device_path == "") {
+                show_add_error (_("Select a Wi-Fi radio."));
+                return;
+            }
             controller.connect_hidden_network (
                 add_ssid_entry.get_text (),
                 HiddenWifiSecurityModeUtils.from_dropdown_index (
                     add_security_dropdown.get_selected ()
                 ),
-                add_password_entry.get_text ()
+                add_password_entry.get_text (),
+                add_selected_device_path
             );
         }
 
@@ -449,7 +488,9 @@ namespace HyprNetworkManager.UI.Views {
                 add_password_entry.set_text ("");
             }
             connect_button.set_sensitive (
-                HiddenWifiSecurityModeUtils.is_password_valid_for_mode (
+                add_selected_device_path != ""
+                && add_radio_devices.length > 0
+                && HiddenWifiSecurityModeUtils.is_password_valid_for_mode (
                     mode,
                     add_password_entry.get_text ()
                 )
@@ -464,6 +505,75 @@ namespace HyprNetworkManager.UI.Views {
             add_password_entry.set_text ("");
             show_add_error ("");
             stack.set_visible_child_name ("add");
+            // Device registration can change while the application remains open.
+            // Re-query on entry instead of relying solely on the most recent list
+            // refresh; sync_add_radio_devices() preserves a still-valid choice.
+            refresh_requested ();
+        }
+
+        private string add_radio_label (NetworkDevice device) {
+            string device_name = device.name.strip () != ""
+                ? device.name.strip ()
+                : _("Wi-Fi device");
+            string connection_name = device.connection.strip ();
+            string state = device.is_connected && connection_name != ""
+                ? connection_name
+                : HyprNetworkManager.UI.Formatters.NetworkDeviceFormatter.get_state_label (
+                    device.state
+                );
+            return _("%s · %s").printf (device_name, state);
+        }
+
+        private void sync_add_radio_devices (NetworkDevice[] devices) {
+            NetworkDevice[] selectable_devices = {};
+            string[] labels = {};
+            uint selected_index = 0;
+            uint first_disconnected_index = 0;
+            bool found_previous = false;
+            bool found_disconnected = false;
+
+            foreach (var device in devices) {
+                if (!device.is_wifi || !device.is_available || device.device_path.strip () == "") {
+                    continue;
+                }
+
+                uint index = selectable_devices.length;
+                selectable_devices += device;
+                labels += add_radio_label (device);
+
+                if (device.device_path == add_selected_device_path) {
+                    selected_index = index;
+                    found_previous = true;
+                }
+                if (!found_disconnected
+                    && device.state == DeviceState.DISCONNECTED) {
+                    first_disconnected_index = index;
+                    found_disconnected = true;
+                }
+            }
+
+            updating_add_radio_dropdown = true;
+            add_radio_devices = selectable_devices;
+            if (labels.length == 0) {
+                string[] empty_label = { _("No Wi-Fi radios available") };
+                add_radio_model.splice (0, add_radio_model.get_n_items (), empty_label);
+                add_radio_dropdown.set_selected (0);
+                add_radio_dropdown.set_sensitive (false);
+                add_selected_device_path = "";
+            } else {
+                if (!found_previous && found_disconnected) {
+                    selected_index = first_disconnected_index;
+                }
+                add_radio_model.splice (0, add_radio_model.get_n_items (), labels);
+                add_radio_dropdown.set_selected (selected_index);
+                add_radio_dropdown.set_sensitive (true);
+                add_selected_device_path = selectable_devices[selected_index].device_path;
+            }
+            bool show_radio_selector = selectable_devices.length != 1;
+            add_radio_field_label.set_visible (show_radio_selector);
+            add_radio_dropdown.set_visible (show_radio_selector);
+            updating_add_radio_dropdown = false;
+            sync_add_network_sensitivity (add_connect_button);
         }
 
         private void populate_wifi_details (WifiNetwork net) {
@@ -653,6 +763,8 @@ namespace HyprNetworkManager.UI.Views {
             WifiRefreshData data,
             string? primary_connected_ssid
         ) {
+            sync_add_radio_devices (data.devices);
+
             bool has_active_prompt = active_wifi_password_revealer != null
                 && active_wifi_password_revealer.get_reveal_child ();
             row_reconciler.reconcile (

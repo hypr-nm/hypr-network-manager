@@ -390,9 +390,16 @@ public class NetworkManagerClient : GLib.Object,
         string ssid,
         HiddenWifiSecurityMode security_mode,
         string password,
+        string device_path,
         Cancellable? cancellable = null
     ) throws Error {
-        return yield saved_profiles.connect_hidden_network (ssid, security_mode, password, cancellable);
+        return yield saved_profiles.connect_hidden_network (
+            ssid,
+            security_mode,
+            password,
+            device_path,
+            cancellable
+        );
     }
 
     public async bool disconnect_wifi (WifiNetwork network, Cancellable? cancellable = null) throws Error {

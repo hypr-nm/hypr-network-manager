@@ -10,6 +10,11 @@ private class FakeWifiClient : Object,
     IWifiScanClient,
     IForgetNetworkClient,
     IWifiClient {
+    public uint hidden_connect_calls = 0;
+    public string hidden_connect_ssid = "";
+    public string hidden_connect_password = "";
+    public string hidden_connect_device_path = "";
+
     public async List<NetworkDevice> get_devices (
         Cancellable? cancellable = null
     ) throws Error {
@@ -83,8 +88,13 @@ private class FakeWifiClient : Object,
         string ssid,
         HiddenWifiSecurityMode security_mode,
         string password,
+        string device_path,
         Cancellable? cancellable = null
     ) throws Error {
+        hidden_connect_calls++;
+        hidden_connect_ssid = ssid;
+        hidden_connect_password = password;
+        hidden_connect_device_path = device_path;
         return true;
     }
 
@@ -152,11 +162,84 @@ private static void test_connection_state_is_candidate_specific () {
     controller.dispose_controller ();
 }
 
+private static void test_hidden_connect_uses_selected_radio () {
+    var client = new FakeWifiClient ();
+    var controller = new MainWindowWifiController (
+        client,
+        new WifiDetailsTestHost (),
+        new NetworkStateContext ()
+    );
+    var loop = new MainLoop ();
+    uint timeout_id = 0;
+    bool timed_out = false;
+
+    controller.hidden_network_connected.connect (() => {
+        if (timeout_id != 0) {
+            Source.remove (timeout_id);
+            timeout_id = 0;
+        }
+        loop.quit ();
+    });
+    timeout_id = Timeout.add (1000, () => {
+        timeout_id = 0;
+        timed_out = true;
+        loop.quit ();
+        return Source.REMOVE;
+    });
+
+    controller.connect_hidden_network (
+        " Hidden network ",
+        HiddenWifiSecurityMode.WPA_PSK,
+        "password",
+        "/devices/wlan2"
+    );
+    loop.run ();
+
+    assert (!timed_out);
+    assert (client.hidden_connect_calls == 1);
+    assert (client.hidden_connect_ssid == "Hidden network");
+    assert (client.hidden_connect_password == "password");
+    assert (client.hidden_connect_device_path == "/devices/wlan2");
+    controller.dispose_controller ();
+}
+
+private static void test_hidden_connect_requires_selected_radio () {
+    var client = new FakeWifiClient ();
+    var controller = new MainWindowWifiController (
+        client,
+        new WifiDetailsTestHost (),
+        new NetworkStateContext ()
+    );
+    string failure = "";
+
+    controller.add_network_failed.connect ((message) => {
+        failure = message;
+    });
+    controller.connect_hidden_network (
+        "Hidden network",
+        HiddenWifiSecurityMode.WPA_PSK,
+        "password",
+        ""
+    );
+
+    assert (client.hidden_connect_calls == 0);
+    assert (failure != "");
+    controller.dispose_controller ();
+}
+
 public static int main (string[] args) {
     Test.init (ref args);
     Test.add_func (
         "/wifi-details/candidate-specific-connection-state",
         test_connection_state_is_candidate_specific
+    );
+    Test.add_func (
+        "/wifi-hidden-connect/uses-selected-radio",
+        test_hidden_connect_uses_selected_radio
+    );
+    Test.add_func (
+        "/wifi-hidden-connect/requires-selected-radio",
+        test_hidden_connect_requires_selected_radio
     );
     return Test.run ();
 }
