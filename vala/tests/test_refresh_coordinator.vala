@@ -1,12 +1,18 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
 using GLib;
+using Constants;
 using HyprNetworkManager.Backend;
 using HyprNetworkManager.UI.Interfaces;
+
+private const uint TEST_LONG_REFRESH_INTERVAL_SECONDS = 3600;
+private const uint TEST_ASYNC_SETTLE_MS = 10;
+private const uint TEST_TIMER_MARGIN_MS = 50;
 
 private class FakeNetworkEventClient : Object, IWifiScanClient, INetworkEventClient {
     public uint subscribe_calls = 0;
     public uint unsubscribe_calls = 0;
+    public uint scan_calls = 0;
     public bool delay_subscription = false;
 
     private async void wait_for_idle () {
@@ -32,6 +38,7 @@ private class FakeNetworkEventClient : Object, IWifiScanClient, INetworkEventCli
     }
 
     public async bool scan_wifi (Cancellable? cancellable = null) throws Error {
+        scan_calls++;
         return true;
     }
 
@@ -72,22 +79,27 @@ private static void run_main_loop_for (uint milliseconds) {
 private static void test_start_is_idempotent () {
     var client = new FakeNetworkEventClient ();
     var host = new FakeWindowHost ();
-    var coordinator = new MainWindowRefreshCoordinator (client, 3600, host);
+    var coordinator = new MainWindowRefreshCoordinator (
+        client,
+        TEST_LONG_REFRESH_INTERVAL_SECONDS,
+        host);
 
     coordinator.start ();
     coordinator.start ();
-    run_main_loop_for (10);
+    run_main_loop_for (TEST_ASYNC_SETTLE_MS);
 
     assert (client.subscribe_calls == 1);
 
     client.emit_network_change ();
     client.emit_network_change ();
-    run_main_loop_for (250);
+    run_main_loop_for (
+        Timeouts.NETWORK_EVENT_REFRESH_DEBOUNCE_MS + TEST_TIMER_MARGIN_MS);
     assert (host.refresh_all_calls == 1);
 
     coordinator.stop ();
     client.emit_network_change ();
-    run_main_loop_for (250);
+    run_main_loop_for (
+        Timeouts.NETWORK_EVENT_REFRESH_DEBOUNCE_MS + TEST_TIMER_MARGIN_MS);
     assert (host.refresh_all_calls == 1);
 }
 
@@ -96,22 +108,64 @@ private static void test_stop_ignores_late_subscription () {
         delay_subscription = true
     };
     var host = new FakeWindowHost ();
-    var coordinator = new MainWindowRefreshCoordinator (client, 3600, host);
+    var coordinator = new MainWindowRefreshCoordinator (
+        client,
+        TEST_LONG_REFRESH_INTERVAL_SECONDS,
+        host);
 
     coordinator.start ();
     coordinator.stop ();
-    run_main_loop_for (10);
+    run_main_loop_for (TEST_ASYNC_SETTLE_MS);
 
     client.emit_network_change ();
-    run_main_loop_for (250);
+    run_main_loop_for (
+        Timeouts.NETWORK_EVENT_REFRESH_DEBOUNCE_MS + TEST_TIMER_MARGIN_MS);
     assert (host.refresh_all_calls == 0);
 
     coordinator.start ();
-    run_main_loop_for (10);
+    run_main_loop_for (TEST_ASYNC_SETTLE_MS);
     client.emit_network_change ();
-    run_main_loop_for (250);
+    run_main_loop_for (
+        Timeouts.NETWORK_EVENT_REFRESH_DEBOUNCE_MS + TEST_TIMER_MARGIN_MS);
     assert (host.refresh_all_calls == 1);
     coordinator.stop ();
+}
+
+private static void test_scan_staleness_policy () {
+    const int64 BASE_TIME = 10 * TimeSpan.SECOND;
+    uint interval = Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS;
+    assert (MainWindowRefreshCoordinator.wifi_scan_is_stale (
+        0,
+        BASE_TIME,
+        interval));
+    assert (!MainWindowRefreshCoordinator.wifi_scan_is_stale (
+        BASE_TIME,
+        BASE_TIME + ((int64) interval - 1) * TimeSpan.SECOND,
+        interval));
+    assert (MainWindowRefreshCoordinator.wifi_scan_is_stale (
+        BASE_TIME,
+        BASE_TIME + (int64) interval * TimeSpan.SECOND,
+        interval));
+    assert (MainWindowRefreshCoordinator.wifi_scan_is_stale (
+        BASE_TIME + (int64) interval * TimeSpan.SECOND,
+        BASE_TIME,
+        interval));
+}
+
+private static void test_presentation_scan_is_throttled () {
+    var client = new FakeNetworkEventClient ();
+    var host = new FakeWindowHost ();
+    var coordinator = new MainWindowRefreshCoordinator (
+        client,
+        TEST_LONG_REFRESH_INTERVAL_SECONDS,
+        host);
+
+    coordinator.request_scan_if_stale ();
+    coordinator.request_scan_if_stale ();
+    run_main_loop_for (TEST_ASYNC_SETTLE_MS);
+
+    assert (client.scan_calls == 1);
+    assert (host.refresh_all_calls == 1);
 }
 
 public static int main (string[] args) {
@@ -120,6 +174,14 @@ public static int main (string[] args) {
     Test.add_func (
         "/refresh-coordinator/late-subscription-after-stop",
         test_stop_ignores_late_subscription
+    );
+    Test.add_func (
+        "/refresh-coordinator/scan-staleness-policy",
+        test_scan_staleness_policy
+    );
+    Test.add_func (
+        "/refresh-coordinator/presentation-scan-throttled",
+        test_presentation_scan_is_throttled
     );
     return Test.run ();
 }

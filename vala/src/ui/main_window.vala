@@ -115,11 +115,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
 
         log_info ("gui", "window_init: starting");
         build_ui ();
-        refresh_all ();
-        refresh_coordinator.start ();
+        refresh_all_sections (true);
 
         this.map.connect (() => {
             refresh_coordinator.start ();
+            refresh_coordinator.request_scan_if_stale ();
         });
 
         this.unmap.connect (() => {
@@ -151,9 +151,12 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         }
     }
 
-    private void refresh_wifi () {
+    private void refresh_wifi (
+        bool show_progress = false,
+        bool request_wifi_scan = false
+    ) {
         if (wifi_section != null) {
-            wifi_section.perform_refresh ();
+            wifi_section.perform_refresh (show_progress, request_wifi_scan);
         }
     }
 
@@ -163,29 +166,32 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         }
     }
 
-    private void refresh_ethernet_section () {
-        ethernet_controller.refresh ();
+    private void refresh_ethernet_section (bool show_progress = false) {
+        ethernet_controller.refresh (show_progress);
     }
 
-    private void refresh_vpn_section () {
-        vpn_controller.refresh ();
+    private void refresh_vpn_section (bool show_progress = false) {
+        vpn_controller.refresh (show_progress);
     }
 
-    public void refresh_all () {
-        refresh_wifi ();
+    private void refresh_all_sections (bool show_progress) {
+        refresh_wifi (show_progress, false);
         if (profiles_section != null) {
             profiles_section.refresh_saved_profiles ();
         }
         refresh_hotspot_section ();
-        refresh_ethernet_section ();
-        refresh_vpn_section ();
+        refresh_ethernet_section (show_progress);
+        refresh_vpn_section (show_progress);
         refresh_switch_states ();
+    }
+
+    public void refresh_all () {
+        refresh_all_sections (false);
     }
 
     public void prepare_for_presentation () {
         reset_ui_state ();
         refresh_all ();
-        refresh_switch_states ();
     }
 
     private void reset_ui_state () {
@@ -391,8 +397,11 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
             status_bar_view.status_label,
             status_bar_view.status_icon
         );
-        wifi_section.refresh_requested.connect (() => {
-            refresh_wifi ();
+        wifi_section.refresh_requested.connect ((request_wifi_scan, show_progress) => {
+            if (request_wifi_scan) {
+                refresh_coordinator.note_external_scan_request ();
+            }
+            refresh_wifi (show_progress, request_wifi_scan);
         });
         wifi_section.go_to_hotspot_requested.connect (() => {
             hotspot_section.perform_refresh ();

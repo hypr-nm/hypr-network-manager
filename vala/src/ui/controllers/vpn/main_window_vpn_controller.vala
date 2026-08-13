@@ -23,6 +23,7 @@ public class MainWindowVpnController : Object {
     private HyprNetworkManager.Models.NetworkStateContext state_context;
     private uint operation_epoch = 1;
     private Cancellable? current_cancellable = null;
+    private bool refresh_shows_progress = false;
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
@@ -64,6 +65,7 @@ public class MainWindowVpnController : Object {
 
     private uint begin_operation (out Cancellable cancellable) {
         advance_operation_epoch ();
+        finish_refresh_progress ();
         if (current_cancellable != null) {
             current_cancellable.cancel ();
         }
@@ -87,10 +89,19 @@ public class MainWindowVpnController : Object {
 
     private void invalidate_current_operation () {
         advance_operation_epoch ();
+        finish_refresh_progress ();
         if (current_cancellable != null) {
             current_cancellable.cancel ();
             current_cancellable = null;
         }
+    }
+
+    private void finish_refresh_progress () {
+        if (!refresh_shows_progress) {
+            return;
+        }
+        refresh_shows_progress = false;
+        refresh_finished ();
     }
 
     private string connection_id (VpnConnection connection) {
@@ -320,10 +331,16 @@ public class MainWindowVpnController : Object {
         invalidate_current_operation ();
     }
 
-    public void refresh () {
+    public void refresh (bool show_progress = true) {
+        if (!show_progress && current_cancellable != null) {
+            return;
+        }
         Cancellable cancellable;
         uint epoch = begin_operation (out cancellable);
-        refresh_started ();
+        refresh_shows_progress = show_progress;
+        if (show_progress) {
+            refresh_started ();
+        }
 
         nm.get_vpn_connections.begin (cancellable, (obj, res) => {
             try {
@@ -339,13 +356,13 @@ public class MainWindowVpnController : Object {
                     result[index++] = connection;
                 }
                 connections_loaded (result);
-                refresh_finished ();
+                finish_refresh_progress ();
             } catch (Error e) {
                 if (!is_operation_current (epoch, cancellable)) {
                     return;
                 }
                 finish_operation (cancellable);
-                refresh_finished ();
+                finish_refresh_progress ();
                 host.show_vpn_error ("all", _("VPN refresh failed: %s").printf (e.message));
             }
         });

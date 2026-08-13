@@ -345,39 +345,45 @@ public class MainWindowWifiConnectionController : Object {
         host.refresh_all ();
 
         uint quick_refresh_id = 0;
-        quick_refresh_id = Timeout.add (650, () => {
-            untrack_timeout_source (quick_refresh_id);
-            if (!is_ui_epoch_valid (epoch)) {
-                return false;
-            }
+        quick_refresh_id = Timeout.add (
+            Timeouts.WIFI_ACTION_QUICK_REFRESH_DELAY_MS,
+            () => {
+                untrack_timeout_source (quick_refresh_id);
+                if (!is_ui_epoch_valid (epoch)) {
+                    return false;
+                }
 
-            if (request_wifi_scan) {
-                nm.scan_wifi.begin (null, (obj, res) => {
-                    try {
-                        nm.scan_wifi.end (res);
-                    } catch (Error e) {
-                        string message = e.message;
-                        if (!is_ui_epoch_valid (epoch)) {
-                            return;
+                if (request_wifi_scan) {
+                    nm.scan_wifi.begin (null, (obj, res) => {
+                        try {
+                            nm.scan_wifi.end (res);
+                        } catch (Error e) {
+                            string message = e.message;
+                            if (!is_ui_epoch_valid (epoch)) {
+                                return;
+                            }
+                            host.debug_log (
+                                "Could not request delayed Wi-Fi scan: " +
+                                message);
                         }
-                        host.debug_log ("Could not request delayed Wi-Fi scan: " + message);
-                    }
-                });
-            }
-            host.refresh_all ();
-            return false;
-        });
+                    });
+                }
+                host.refresh_all ();
+                return false;
+            });
         track_timeout_source (quick_refresh_id);
 
         uint followup_refresh_id = 0;
-        followup_refresh_id = Timeout.add (1800, () => {
-            untrack_timeout_source (followup_refresh_id);
-            if (!is_ui_epoch_valid (epoch)) {
+        followup_refresh_id = Timeout.add (
+            Timeouts.WIFI_ACTION_FOLLOWUP_REFRESH_DELAY_MS,
+            () => {
+                untrack_timeout_source (followup_refresh_id);
+                if (!is_ui_epoch_valid (epoch)) {
+                    return false;
+                }
+                host.refresh_all ();
                 return false;
-            }
-            host.refresh_all ();
-            return false;
-        });
+            });
         track_timeout_source (followup_refresh_id);
     }
 }

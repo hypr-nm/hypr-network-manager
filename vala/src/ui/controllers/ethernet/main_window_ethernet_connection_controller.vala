@@ -123,16 +123,18 @@ public class MainWindowEthernetConnectionController : Object {
 
         string iface_name = dev.name;
         uint timeout_id = 0;
-        timeout_id = Timeout.add (20000, () => {
-            untrack_timeout_source (timeout_id);
-            if (!is_ui_epoch_valid (epoch)) {
+        timeout_id = Timeout.add (
+            Timeouts.ETHERNET_PENDING_ACTION_TIMEOUT_MS,
+            () => {
+                untrack_timeout_source (timeout_id);
+                if (!is_ui_epoch_valid (epoch)) {
+                    return false;
+                }
+                pending_action.remove (iface_name);
+                pending_target_connected.remove (iface_name);
+                refresh_requested ();
                 return false;
-            }
-            pending_action.remove (iface_name);
-            pending_target_connected.remove (iface_name);
-            refresh_requested ();
-            return false;
-        });
+            });
         track_timeout_source (timeout_id);
     }
 

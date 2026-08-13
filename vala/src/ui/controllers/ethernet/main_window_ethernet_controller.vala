@@ -26,6 +26,7 @@ public class MainWindowEthernetController : Object {
     private bool is_disposed = false;
     private uint ui_epoch = 1;
     private Cancellable? refresh_cancellable = null;
+    private bool refresh_shows_progress = false;
     private Cancellable? details_cancellable = null;
     private Cancellable? edit_cancellable = null;
 
@@ -57,7 +58,9 @@ public class MainWindowEthernetController : Object {
         this.host = host;
         this.state_context = state_context;
         connection_controller = new MainWindowEthernetConnectionController (nm, host, state_context);
-        connection_controller.refresh_requested.connect (refresh);
+        connection_controller.refresh_requested.connect (() => {
+            refresh (false);
+        });
     }
 
     public void on_page_leave () {
@@ -87,7 +90,7 @@ public class MainWindowEthernetController : Object {
         if (ui_epoch == 0) {
             ui_epoch = 1;
         }
-        cancel_request (ref refresh_cancellable);
+        cancel_refresh_request ();
         cancel_request (ref details_cancellable);
         cancel_request (ref edit_cancellable);
     }
@@ -96,6 +99,17 @@ public class MainWindowEthernetController : Object {
         if (request != null) {
             request.cancel ();
             request = null;
+        }
+    }
+
+    private void cancel_refresh_request () {
+        if (refresh_cancellable != null) {
+            refresh_cancellable.cancel ();
+            refresh_cancellable = null;
+        }
+        if (refresh_shows_progress) {
+            refresh_shows_progress = false;
+            refresh_finished ();
         }
     }
 
@@ -123,12 +137,18 @@ public class MainWindowEthernetController : Object {
         profile_edit_requested (device);
     }
 
-    public void refresh () {
+    public void refresh (bool show_progress = true) {
+        if (!show_progress && refresh_cancellable != null) {
+            return;
+        }
         uint epoch = capture_ui_epoch ();
-        cancel_request (ref refresh_cancellable);
+        cancel_refresh_request ();
         refresh_cancellable = new Cancellable ();
         var request = refresh_cancellable;
-        refresh_started ();
+        refresh_shows_progress = show_progress;
+        if (show_progress) {
+            refresh_started ();
+        }
 
         nm.get_devices.begin (request, (obj, res) => {
             try {
@@ -161,14 +181,20 @@ public class MainWindowEthernetController : Object {
                     result[index++] = device;
                 }
                 devices_loaded (result);
-                refresh_finished ();
+                if (refresh_shows_progress) {
+                    refresh_shows_progress = false;
+                    refresh_finished ();
+                }
             } catch (Error e) {
                 if (!is_ui_epoch_valid (epoch) || refresh_cancellable != request
                     || e is IOError.CANCELLED) {
                     return;
                 }
                 refresh_cancellable = null;
-                refresh_finished ();
+                if (refresh_shows_progress) {
+                    refresh_shows_progress = false;
+                    refresh_finished ();
+                }
                 host.show_error (_("Ethernet refresh failed: %s").printf (e.message));
             }
         });

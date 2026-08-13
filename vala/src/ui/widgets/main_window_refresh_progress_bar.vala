@@ -26,7 +26,7 @@ namespace HyprNetworkManager.UI.Widgets {
         private uint min_duration_timeout_id = 0;
         private int64 start_time = 0;
         private bool is_refreshing = false;
-        private uint min_duration_ms = 800;
+        private uint min_duration_ms = Timeouts.REFRESH_PROGRESS_MIN_DURATION_MS;
 
         public MainWindowRefreshProgressController (Gtk.ProgressBar progress_bar) {
             this.progress_bar = progress_bar;
@@ -51,10 +51,12 @@ namespace HyprNetworkManager.UI.Widgets {
             start_time = GLib.get_monotonic_time ();
 
             if (pulse_timeout_id == 0) {
-                pulse_timeout_id = Timeout.add (30, () => {
-                    this.progress_bar.pulse ();
-                    return true;
-                });
+                pulse_timeout_id = Timeout.add (
+                    Timeouts.REFRESH_PROGRESS_PULSE_INTERVAL_MS,
+                    () => {
+                        this.progress_bar.pulse ();
+                        return true;
+                    });
             }
         }
 

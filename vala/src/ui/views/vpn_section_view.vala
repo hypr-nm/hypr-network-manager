@@ -67,7 +67,9 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         private void wire_page_builder_signals () {
-            page_builder.refresh_requested.connect (controller.refresh);
+            page_builder.refresh_requested.connect (() => {
+                controller.refresh (true);
+            });
             page_builder.toggle_requested.connect (controller.toggle_list_connection);
             page_builder.open_details.connect (open_vpn_details);
             page_builder.add_clicked.connect (() => {
@@ -105,7 +107,7 @@ namespace HyprNetworkManager.UI.Views {
 
             controller.setup_succeeded.connect (() => {
                 stack.set_visible_child_name ("list");
-                controller.refresh ();
+                controller.refresh (false);
             });
 
             controller.toggle_succeeded.connect ((connection) => {
@@ -119,7 +121,7 @@ namespace HyprNetworkManager.UI.Views {
                     selected_vpn = null;
                 }
                 show_vpn_list_or_empty ();
-                controller.refresh ();
+                controller.refresh (false);
             });
 
             controller.edit_failed.connect (edit_page.show_error);

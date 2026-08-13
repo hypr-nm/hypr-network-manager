@@ -11,6 +11,8 @@ private class FakeWifiClient : Object,
     IForgetNetworkClient,
     IWifiClient {
     public uint hidden_connect_calls = 0;
+    public uint scan_calls = 0;
+    public uint refresh_data_calls = 0;
     public string hidden_connect_ssid = "";
     public string hidden_connect_password = "";
     public string hidden_connect_device_path = "";
@@ -22,6 +24,7 @@ private class FakeWifiClient : Object,
     }
 
     public async bool scan_wifi (Cancellable? cancellable = null) throws Error {
+        scan_calls++;
         return true;
     }
 
@@ -35,6 +38,7 @@ private class FakeWifiClient : Object,
     public async WifiRefreshData get_wifi_refresh_data (
         Cancellable? cancellable = null
     ) throws Error {
+        refresh_data_calls++;
         return new WifiRefreshData ({}, {});
     }
 
@@ -227,6 +231,58 @@ private static void test_hidden_connect_requires_selected_radio () {
     controller.dispose_controller ();
 }
 
+private static void test_refresh_progress_is_explicit () {
+    var client = new FakeWifiClient ();
+    var controller = new MainWindowWifiController (
+        client,
+        new WifiDetailsTestHost (),
+        new NetworkStateContext ()
+    );
+    var loop = new MainLoop ();
+    uint started = 0;
+    uint finished = 0;
+    bool wait_for_finished = false;
+    bool completed = false;
+
+    controller.refresh_started.connect (() => {
+        started++;
+    });
+    controller.refresh_finished.connect (() => {
+        finished++;
+        if (wait_for_finished) {
+            completed = true;
+            loop.quit ();
+        }
+    });
+    controller.networks_loaded.connect (() => {
+        if (!wait_for_finished) {
+            completed = true;
+            loop.quit ();
+        }
+    });
+
+    controller.refresh (false, false);
+    if (!completed) {
+        loop.run ();
+    }
+    assert (started == 0);
+    assert (finished == 0);
+    assert (client.scan_calls == 0);
+    assert (client.refresh_data_calls == 1);
+
+    wait_for_finished = true;
+    completed = false;
+    controller.refresh (true, true);
+    if (!completed) {
+        loop.run ();
+    }
+    assert (started == 1);
+    assert (finished == 1);
+    assert (client.scan_calls == 1);
+    assert (client.refresh_data_calls == 2);
+    controller.dispose_controller ();
+}
+
 public static int main (string[] args) {
     Test.init (ref args);
     Test.add_func (
@@ -240,6 +296,10 @@ public static int main (string[] args) {
     Test.add_func (
         "/wifi-hidden-connect/requires-selected-radio",
         test_hidden_connect_requires_selected_radio
+    );
+    Test.add_func (
+        "/wifi-refresh/progress-is-explicit",
+        test_refresh_progress_is_explicit
     );
     return Test.run ();
 }

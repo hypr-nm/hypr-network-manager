@@ -24,7 +24,10 @@ public class MainWindowWifiController : Object {
     private Cancellable? add_network_cancellable = null;
     private Cancellable? share_cancellable = null;
     private bool refresh_in_flight = false;
+    private bool refresh_shows_progress = false;
     private bool refresh_queued = false;
+    private bool queued_refresh_shows_progress = false;
+    private bool queued_refresh_requests_scan = false;
     private bool updating_wifi_switch = false;
     private uint switch_refresh_epoch = 1;
     private uint share_operation_epoch = 1;
@@ -32,7 +35,6 @@ public class MainWindowWifiController : Object {
 
     public signal void refresh_started ();
     public signal void refresh_finished ();
-    public signal void refresh_requested ();
     public signal void networks_loaded (
         WifiRefreshData data,
         string? primary_connected_ssid
@@ -134,30 +136,65 @@ public class MainWindowWifiController : Object {
 
     private void cancel_refresh () {
         bool was_in_flight = refresh_in_flight;
+        bool was_showing_progress = refresh_shows_progress;
         cancel_request (ref refresh_cancellable);
         refresh_in_flight = false;
+        refresh_shows_progress = false;
         refresh_queued = false;
-        if (was_in_flight) {
+        queued_refresh_shows_progress = false;
+        queued_refresh_requests_scan = false;
+        if (was_in_flight && was_showing_progress) {
             refresh_finished ();
         }
     }
 
-    public void refresh () {
+    private async WifiRefreshData load_refresh_data (
+        bool request_wifi_scan,
+        Cancellable cancellable
+    ) throws Error {
+        if (request_wifi_scan) {
+            try {
+                yield nm.scan_wifi (cancellable);
+            } catch (IOError.CANCELLED e) {
+                throw e;
+            } catch (Error e) {
+                host.debug_log (
+                    "Manual Wi-Fi scan failed; rendering cached results: " +
+                    e.message);
+            }
+        }
+        return yield nm.get_wifi_refresh_data (cancellable);
+    }
+
+    public void refresh (
+        bool show_progress = true,
+        bool request_wifi_scan = false
+    ) {
         if (refresh_in_flight) {
             refresh_queued = true;
+            queued_refresh_shows_progress = queued_refresh_shows_progress
+                || show_progress;
+            queued_refresh_requests_scan = queued_refresh_requests_scan
+                || request_wifi_scan;
             return;
         }
 
         refresh_in_flight = true;
-        refresh_started ();
+        refresh_shows_progress = show_progress;
+        if (show_progress) {
+            refresh_started ();
+        }
         uint epoch = capture_ui_epoch ();
-        host.debug_log ("Refreshing Wi-Fi list");
+        host.debug_log (
+            request_wifi_scan
+                ? "Refreshing Wi-Fi list with a requested scan"
+                : "Refreshing Wi-Fi list from current NetworkManager state");
         refresh_cancellable = new Cancellable ();
         var request = refresh_cancellable;
 
-        nm.get_wifi_refresh_data.begin (request, (obj, res) => {
+        load_refresh_data.begin (request_wifi_scan, request, (obj, res) => {
             try {
-                var data = nm.get_wifi_refresh_data.end (res);
+                var data = load_refresh_data.end (res);
                 if (!is_ui_epoch_valid (epoch) || refresh_cancellable != request) {
                     return;
                 }
@@ -174,12 +211,20 @@ public class MainWindowWifiController : Object {
                 if (refresh_cancellable == request) {
                     refresh_cancellable = null;
                     refresh_in_flight = false;
-                    refresh_finished ();
+                    bool finished_showing_progress = refresh_shows_progress;
+                    refresh_shows_progress = false;
+                    if (finished_showing_progress) {
+                        refresh_finished ();
+                    }
 
                     bool run_queued_refresh = refresh_queued && is_ui_epoch_valid (epoch);
+                    bool next_shows_progress = queued_refresh_shows_progress;
+                    bool next_requests_scan = queued_refresh_requests_scan;
                     refresh_queued = false;
+                    queued_refresh_shows_progress = false;
+                    queued_refresh_requests_scan = false;
                     if (run_queued_refresh) {
-                        refresh_requested ();
+                        refresh (next_shows_progress, next_requests_scan);
                     }
                 }
             }

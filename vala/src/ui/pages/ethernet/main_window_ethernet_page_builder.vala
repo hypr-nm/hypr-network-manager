@@ -72,7 +72,7 @@ namespace MainWindowEthernetPageBuilder {
         refresh_btn.set_valign (Gtk.Align.CENTER);
         refresh_btn.set_tooltip_text (_("Refresh Ethernet devices"));
         refresh_btn.clicked.connect (() => {
-            controller.refresh ();
+            controller.refresh (true);
         });
         toolbar.append (refresh_btn);
         refresh_button = refresh_btn;

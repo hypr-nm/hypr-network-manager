@@ -234,6 +234,12 @@ namespace Constants {
         public const uint ERROR_HIDE_DELAY_MS = 5000;
         public const uint DEFAULT_SCAN_INTERVAL_SECONDS = 30;
         public const uint PENDING_WIFI_CONNECT_TIMEOUT_MS = 45000;
+        public const uint ETHERNET_PENDING_ACTION_TIMEOUT_MS = 20000;
+        public const uint WIFI_ACTION_QUICK_REFRESH_DELAY_MS = 650;
+        public const uint WIFI_ACTION_FOLLOWUP_REFRESH_DELAY_MS = 1800;
+        public const uint REFRESH_PROGRESS_MIN_DURATION_MS = 800;
+        public const uint REFRESH_PROGRESS_PULSE_INTERVAL_MS = 30;
+        public const uint NETWORK_EVENT_REFRESH_DEBOUNCE_MS = 200;
     }
 
     public class Misc {

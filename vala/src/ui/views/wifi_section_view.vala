@@ -61,7 +61,10 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Entry? active_wifi_password_entry { get; private set; }
         public string? active_wifi_password_row_id { get; private set; }
 
-        public signal void refresh_requested ();
+        public signal void refresh_requested (
+            bool request_wifi_scan,
+            bool show_progress
+        );
         public signal void go_to_hotspot_requested ();
 
         private Gtk.Label status_label;
@@ -179,12 +182,8 @@ namespace HyprNetworkManager.UI.Views {
             controller.refresh_finished.connect (() => {
                 local_progress_controller.finish ();
             });
-            controller.refresh_requested.connect (() => {
-                refresh_requested ();
-            });
-
             local_refresh_button.clicked.connect (() => {
-                refresh_requested ();
+                refresh_requested (true, true);
             });
 
             local_add_button.clicked.connect (() => {
@@ -197,7 +196,7 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public void request_refresh (bool request_wifi_scan) {
-            refresh_requested ();
+            refresh_requested (request_wifi_scan, false);
         }
 
         public void go_to_hotspot () {
@@ -508,7 +507,7 @@ namespace HyprNetworkManager.UI.Views {
             // Device registration can change while the application remains open.
             // Re-query on entry instead of relying solely on the most recent list
             // refresh; sync_add_radio_devices() preserves a still-valid choice.
-            refresh_requested ();
+            refresh_requested (false, false);
         }
 
         private string add_radio_label (NetworkDevice device) {
@@ -755,8 +754,11 @@ namespace HyprNetworkManager.UI.Views {
             return net.network_key;
         }
 
-        public void perform_refresh () {
-            controller.refresh ();
+        public void perform_refresh (
+            bool show_progress = false,
+            bool request_wifi_scan = false
+        ) {
+            controller.refresh (show_progress, request_wifi_scan);
         }
 
         private void render_networks (
