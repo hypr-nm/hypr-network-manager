@@ -37,8 +37,9 @@ namespace HyprNetworkManager.UI.Widgets {
             header_box.append (title);
  
             var add_btn = new Gtk.Button.with_label (_("Add IP"));
-            add_btn.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
             add_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            add_btn.add_css_class (MainWindowCssClasses.ACTION);
+            add_btn.add_css_class (MainWindowCssClasses.ROW_ACTION);
             add_btn.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
             add_btn.set_valign (Gtk.Align.CENTER);
             add_btn.clicked.connect (() => {
@@ -65,11 +66,14 @@ namespace HyprNetworkManager.UI.Widgets {
             entry.set_text (text);
             entry.set_placeholder_text (this.placeholder);
             entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            entry.add_css_class (MainWindowCssClasses.INPUT);
             box.append (entry);
  
             var remove_btn = new Gtk.Button.from_icon_name ("user-trash-symbolic");
+            remove_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            remove_btn.add_css_class (MainWindowCssClasses.ACTION);
             remove_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-            remove_btn.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
+            remove_btn.add_css_class (MainWindowCssClasses.ACTION_DESTRUCTIVE);
             remove_btn.set_valign (Gtk.Align.CENTER);
             remove_btn.clicked.connect (() => {
                 this.listbox.remove (box);

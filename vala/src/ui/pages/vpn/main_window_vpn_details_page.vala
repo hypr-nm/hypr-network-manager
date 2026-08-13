@@ -86,6 +86,16 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
             this.primary_button.set_sensitive (true);
         }
 
+        this.primary_button.remove_css_class (MainWindowCssClasses.ACTION_CONNECT);
+        this.primary_button.remove_css_class (MainWindowCssClasses.ACTION_DISCONNECT);
+        if (!pending) {
+            if (conn.is_connected) {
+                this.primary_button.add_css_class (MainWindowCssClasses.ACTION_DISCONNECT);
+            } else {
+                this.primary_button.add_css_class (MainWindowCssClasses.ACTION_CONNECT);
+            }
+        }
+
         bool is_wireguard = conn.vpn_type.down () == "wireguard";
         this.edit_button.set_sensitive (!pending && is_wireguard);
         this.edit_button.set_visible (is_wireguard);
@@ -251,9 +261,9 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.primary_button = new Gtk.Button.with_label (_("Connect"));
         this.primary_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.primary_button.add_css_class (MainWindowCssClasses.PRIMARY_ACTION_BUTTON);
-        this.primary_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
-        this.primary_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.primary_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.primary_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
+        this.primary_button.add_css_class (MainWindowCssClasses.ACTION_PRIMARY);
         this.primary_button.clicked.connect (() => {
             this.primary_action ();
         });
@@ -261,9 +271,8 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.EDIT_BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });
@@ -271,9 +280,9 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
 
         this.delete_button = new Gtk.Button.with_label (_("Delete"));
         this.delete_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.delete_button.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
-        this.delete_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
-        this.delete_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.delete_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.delete_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
+        this.delete_button.add_css_class (MainWindowCssClasses.ACTION_DESTRUCTIVE);
         this.delete_button.clicked.connect (() => {
             this.delete ();
         });

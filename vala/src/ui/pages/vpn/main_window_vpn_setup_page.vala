@@ -161,6 +161,7 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage {
         form.append (name_lbl);
         name_entry = new Gtk.Entry ();
         name_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        name_entry.add_css_class (MainWindowCssClasses.INPUT);
         form.append (name_entry);
 
         type_specific_box = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);

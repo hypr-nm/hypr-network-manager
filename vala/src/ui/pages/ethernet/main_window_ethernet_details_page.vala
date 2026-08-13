@@ -79,6 +79,16 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
             this.primary_button.set_sensitive (false);
         }
 
+        this.primary_button.remove_css_class (MainWindowCssClasses.ACTION_CONNECT);
+        this.primary_button.remove_css_class (MainWindowCssClasses.ACTION_DISCONNECT);
+        if (!pending) {
+            if (dev.is_connected) {
+                this.primary_button.add_css_class (MainWindowCssClasses.ACTION_DISCONNECT);
+            } else if (can_connect) {
+                this.primary_button.add_css_class (MainWindowCssClasses.ACTION_CONNECT);
+            }
+        }
+
         this.edit_button.set_sensitive (has_profile && !pending);
     }
 
@@ -124,9 +134,9 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
 
         this.primary_button = new Gtk.Button.with_label (_("Connect"));
         this.primary_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.primary_button.add_css_class (MainWindowCssClasses.PRIMARY_ACTION_BUTTON);
-        this.primary_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
-        this.primary_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.primary_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.primary_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
+        this.primary_button.add_css_class (MainWindowCssClasses.ACTION_PRIMARY);
         this.primary_button.clicked.connect (() => {
             this.primary_action ();
         });
@@ -134,9 +144,8 @@ public class MainWindowEthernetDetailsPage : Gtk.Box, IMainWindowNetworkDetailsP
 
         this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.EDIT_BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });

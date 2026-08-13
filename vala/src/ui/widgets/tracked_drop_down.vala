@@ -33,6 +33,7 @@ namespace HyprNetworkManager.UI.Widgets {
         public TrackedDropDown (TransientSurfaceTracker tracker, Gtk.StringList model) {
             Object (orientation: Gtk.Orientation.HORIZONTAL, spacing: 0);
             this.model = model;
+            this.add_css_class (MainWindowCssClasses.SELECT);
 
             selected_label = new Gtk.Label ("");
             selected_label.set_halign (Gtk.Align.START);
@@ -87,6 +88,8 @@ namespace HyprNetworkManager.UI.Widgets {
             menu_button.add_css_class (MainWindowCssClasses.EDIT_DROPDOWN_TRIGGER);
 
             popover.map.connect (() => {
+                this.add_css_class (MainWindowCssClasses.DROPDOWN_OPEN);
+
                 int width = menu_button.get_width ();
                 if (width > 0) {
                     scroll.set_size_request (width, -1);
@@ -121,6 +124,10 @@ namespace HyprNetworkManager.UI.Widgets {
                         }
                     }
                 }
+            });
+
+            popover.unmap.connect (() => {
+                this.remove_css_class (MainWindowCssClasses.DROPDOWN_OPEN);
             });
 
             this.append (menu_button);

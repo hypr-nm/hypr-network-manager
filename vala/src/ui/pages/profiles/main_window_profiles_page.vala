@@ -83,6 +83,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         wifi_search_entry.margin_top = MainWindowUiMetrics.SPACING_COMPACT;
         wifi_search_entry.margin_bottom = 6;
         wifi_search_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        wifi_search_entry.add_css_class (MainWindowCssClasses.INPUT);
         wifi_page_box.append (wifi_search_entry);
 
         this.wifi_saved_listbox = new Gtk.ListBox ();
@@ -131,6 +132,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         eth_search_entry.margin_top = MainWindowUiMetrics.SPACING_COMPACT;
         eth_search_entry.margin_bottom = 6;
         eth_search_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        eth_search_entry.add_css_class (MainWindowCssClasses.INPUT);
         eth_page_box.append (eth_search_entry);
 
         this.ethernet_saved_listbox = new Gtk.ListBox ();
@@ -208,6 +210,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         foreach (var profile in profiles) {
             var row_profile = profile;
             var row = new Gtk.ListBoxRow ();
+            row.add_css_class (MainWindowCssClasses.ROW);
             row.add_css_class (MainWindowCssClasses.WIFI_ROW);
 
             var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
@@ -242,9 +245,10 @@ public class MainWindowProfilesPage : Gtk.Box {
             row.set_data<WifiSavedProfile> ("profile", row_profile);
 
             var details_btn = new Gtk.Button ();
-        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-        details_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
+            details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            details_btn.add_css_class (MainWindowCssClasses.ACTION);
+            details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
+            details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
             details_btn.set_valign (Gtk.Align.CENTER);
             details_btn.set_tooltip_text (_("Details"));
             var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");
@@ -256,10 +260,10 @@ public class MainWindowProfilesPage : Gtk.Box {
             });
 
             var delete_btn = new Gtk.Button.with_label (_("Delete"));
-            delete_btn.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
             delete_btn.add_css_class (MainWindowCssClasses.BUTTON);
-            delete_btn.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
-            delete_btn.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
+            delete_btn.add_css_class (MainWindowCssClasses.ACTION);
+            delete_btn.add_css_class (MainWindowCssClasses.ROW_ACTION);
+            delete_btn.add_css_class (MainWindowCssClasses.ACTION_DESTRUCTIVE);
             delete_btn.set_valign (Gtk.Align.CENTER);
             delete_btn.clicked.connect (() => {
                 this.delete_profile (row_profile);
@@ -296,6 +300,7 @@ public class MainWindowProfilesPage : Gtk.Box {
         foreach (var device in devices) {
             var row_device = device;
             var row = new Gtk.ListBoxRow ();
+            row.add_css_class (MainWindowCssClasses.ROW);
             row.add_css_class (MainWindowCssClasses.WIFI_ROW);
 
             var root = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
@@ -330,9 +335,10 @@ public class MainWindowProfilesPage : Gtk.Box {
             row.set_data<NetworkDevice> ("device", row_device);
 
             var details_btn = new Gtk.Button ();
-        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-        details_btn.add_css_class (MainWindowCssClasses.BUTTON);
-        details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
+            details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            details_btn.add_css_class (MainWindowCssClasses.ACTION);
+            details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
+            details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
             details_btn.set_valign (Gtk.Align.CENTER);
             details_btn.set_tooltip_text (_("Details"));
             var details_icon = new Gtk.Image.from_icon_name ("document-properties-symbolic");

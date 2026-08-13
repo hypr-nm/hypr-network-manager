@@ -183,6 +183,7 @@ namespace HyprNetworkManager.UI.Views {
             ssid_entry = new Gtk.Entry ();
             ssid_entry.hexpand = true;
             ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            ssid_entry.add_css_class (MainWindowCssClasses.INPUT);
             ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             ssid_col.append (ssid_label);
             ssid_col.append (ssid_entry);
@@ -191,6 +192,7 @@ namespace HyprNetworkManager.UI.Views {
             var hidden_col = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_COMPACT);
 
             hidden_check = new Gtk.CheckButton.with_label (_("Hidden Network"));
+            hidden_check.add_css_class (MainWindowCssClasses.CHECKBOX);
             hidden_check.add_css_class (MainWindowCssClasses.FORM_LABEL);
             hidden_check.valign = Gtk.Align.CENTER;
             hidden_check.vexpand = false;
@@ -210,6 +212,7 @@ namespace HyprNetworkManager.UI.Views {
             password_entry = new Gtk.Entry ();
             password_entry.hexpand = true;
             password_entry.add_css_class (MainWindowCssClasses.EDIT_PASSWORD_ENTRY);
+            password_entry.add_css_class (MainWindowCssClasses.INPUT);
             password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
             password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);

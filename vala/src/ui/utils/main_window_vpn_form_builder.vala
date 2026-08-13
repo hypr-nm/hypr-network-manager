@@ -33,6 +33,7 @@ public class MainWindowVpnFormBuilder : Object {
         server_content.append (build_form_label (_("Gateway")));
         fields.gateway_entry = new Gtk.Entry ();
         fields.gateway_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.gateway_entry.add_css_class (MainWindowCssClasses.INPUT);
         server_content.append (fields.gateway_entry);
 
         Gtk.Box auth_content;
@@ -42,12 +43,14 @@ public class MainWindowVpnFormBuilder : Object {
         auth_content.append (build_form_label (_("Username (optional)")));
         fields.user_entry = new Gtk.Entry ();
         fields.user_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.user_entry.add_css_class (MainWindowCssClasses.INPUT);
         auth_content.append (fields.user_entry);
 
         auth_content.append (build_form_label (_("Password (optional)")));
         fields.password_entry = new Gtk.Entry ();
         fields.password_entry.set_visibility (false);
         fields.password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.password_entry.add_css_class (MainWindowCssClasses.INPUT);
         auth_content.append (fields.password_entry);
 
         values.generic = fields;
@@ -62,17 +65,20 @@ public class MainWindowVpnFormBuilder : Object {
         target_box.append (build_form_label (_("Name")));
         fields.interface_name_entry = new Gtk.Entry ();
         fields.interface_name_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.interface_name_entry.add_css_class (MainWindowCssClasses.INPUT);
         target_box.append (fields.interface_name_entry);
 
         target_box.append (build_form_label (_("Listen Port (optional)")));
         fields.listen_port_entry = new Gtk.Entry ();
         fields.listen_port_entry.set_input_purpose (Gtk.InputPurpose.DIGITS);
         fields.listen_port_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.listen_port_entry.add_css_class (MainWindowCssClasses.INPUT);
         target_box.append (fields.listen_port_entry);
 
         target_box.append (build_form_label (_("Private Key")));
         fields.private_key_entry = new Gtk.Entry ();
         fields.private_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.private_key_entry.add_css_class (MainWindowCssClasses.INPUT);
         target_box.append (fields.private_key_entry);
 
         fields.peers_list = new HyprNetworkManager.UI.Widgets.DynamicPeerList ();
@@ -82,6 +88,7 @@ public class MainWindowVpnFormBuilder : Object {
         fields.fwmark_entry = new Gtk.Entry ();
         fields.fwmark_entry.set_input_purpose (Gtk.InputPurpose.DIGITS);
         fields.fwmark_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.fwmark_entry.add_css_class (MainWindowCssClasses.INPUT);
         target_box.append (fields.fwmark_entry);
 
         fields.peer_routes_switch = build_labeled_switch_row (
@@ -108,12 +115,14 @@ public class MainWindowVpnFormBuilder : Object {
         server_content.append (build_form_label (_("Remote")));
         fields.remote_entry = new Gtk.Entry ();
         fields.remote_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.remote_entry.add_css_class (MainWindowCssClasses.INPUT);
         server_content.append (fields.remote_entry);
 
         server_content.append (build_form_label (_("Port (optional)")));
         fields.port_entry = new Gtk.Entry ();
         fields.port_entry.set_input_purpose (Gtk.InputPurpose.DIGITS);
         fields.port_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.port_entry.add_css_class (MainWindowCssClasses.INPUT);
         server_content.append (fields.port_entry);
 
         server_content.append (build_form_label (_("Protocol (optional)")));
@@ -133,12 +142,14 @@ public class MainWindowVpnFormBuilder : Object {
         auth_content.append (build_form_label (_("Username (optional)")));
         fields.user_entry = new Gtk.Entry ();
         fields.user_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.user_entry.add_css_class (MainWindowCssClasses.INPUT);
         auth_content.append (fields.user_entry);
 
         auth_content.append (build_form_label (_("Password (optional)")));
         fields.password_entry = new Gtk.Entry ();
         fields.password_entry.set_visibility (false);
         fields.password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.password_entry.add_css_class (MainWindowCssClasses.INPUT);
         auth_content.append (fields.password_entry);
 
         Gtk.Box certs_content;
@@ -148,21 +159,25 @@ public class MainWindowVpnFormBuilder : Object {
         certs_content.append (build_form_label (_("CA Certificate Path (optional)")));
         fields.ca_cert_entry = new Gtk.Entry ();
         fields.ca_cert_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.ca_cert_entry.add_css_class (MainWindowCssClasses.INPUT);
         certs_content.append (fields.ca_cert_entry);
 
         certs_content.append (build_form_label (_("Client Certificate Path (optional)")));
         fields.client_cert_entry = new Gtk.Entry ();
         fields.client_cert_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.client_cert_entry.add_css_class (MainWindowCssClasses.INPUT);
         certs_content.append (fields.client_cert_entry);
 
         certs_content.append (build_form_label (_("Private Key Path (optional)")));
         fields.private_key_entry = new Gtk.Entry ();
         fields.private_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.private_key_entry.add_css_class (MainWindowCssClasses.INPUT);
         certs_content.append (fields.private_key_entry);
 
         certs_content.append (build_form_label (_("TLS Auth Key Path (optional)")));
         fields.tls_auth_key_entry = new Gtk.Entry ();
         fields.tls_auth_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.tls_auth_key_entry.add_css_class (MainWindowCssClasses.INPUT);
         certs_content.append (fields.tls_auth_key_entry);
 
         Gtk.Box advanced_content;
@@ -172,11 +187,13 @@ public class MainWindowVpnFormBuilder : Object {
         advanced_content.append (build_form_label (_("Cipher (optional)")));
         fields.cipher_entry = new Gtk.Entry ();
         fields.cipher_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.cipher_entry.add_css_class (MainWindowCssClasses.INPUT);
         advanced_content.append (fields.cipher_entry);
 
         advanced_content.append (build_form_label (_("Auth (optional)")));
         fields.auth_entry = new Gtk.Entry ();
         fields.auth_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        fields.auth_entry.add_css_class (MainWindowCssClasses.INPUT);
         advanced_content.append (fields.auth_entry);
 
         values.ovpn = fields;

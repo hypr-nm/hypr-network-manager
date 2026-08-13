@@ -1,14 +1,213 @@
 /* hypr-network-manager: Shared component style layer for token-based themes */
 
+/*
+ * Public action tokens.
+ *
+ * These --nm-* variables are the supported theming surface for action
+ * components. External themes should override these rather than writing
+ * button/label/image selectors. Defaults reference the legacy palette so
+ * existing bundled and third-party themes keep working.
+ */
+:root {
+  /* General action palette */
+  --nm-action-color: var(--action);
+  --nm-action-hover-color: var(--primary_hover);
+  --nm-action-border-color: alpha(var(--action), .6);
+  --nm-action-hover-background: alpha(var(--action), .16);
+
+  /* Connect intent */
+  --nm-connect-action-color: var(--success);
+  --nm-connect-action-hover-color: mix(var(--success), var(--text), .24);
+  --nm-connect-action-border-color: alpha(var(--success), .55);
+  --nm-connect-action-hover-background: alpha(var(--success), .16);
+
+  /* Danger intent (disconnect/destructive) */
+  --nm-danger-action-color: var(--urgent);
+  --nm-danger-action-hover-color: mix(var(--urgent), var(--text), .24);
+  --nm-danger-action-border-color: alpha(var(--urgent), .55);
+  --nm-danger-action-hover-background: alpha(var(--urgent), .16);
+
+  /* Row text actions (link-like) */
+  --nm-row-action-color: var(--selected);
+  --nm-row-action-hover-color: var(--primary_hover);
+  --nm-row-action-background: transparent;
+  --nm-row-action-hover-background: transparent;
+
+  /* Details-page actions */
+  --nm-details-action-color: var(--nm-action-color);
+  --nm-details-action-hover-color: var(--nm-action-hover-color);
+  --nm-details-action-border-color: var(--nm-action-border-color);
+  --nm-details-action-hover-background: var(--nm-action-hover-background);
+
+  --nm-details-danger-hover-color: var(--nm-danger-action-hover-color);
+  --nm-details-danger-hover-border-color: var(--nm-danger-action-border-color);
+  --nm-details-danger-hover-background: var(--nm-danger-action-hover-background);
+
+  /* Row icon actions */
+  --nm-row-icon-action-color: var(--on_surface_variant);
+  --nm-row-icon-action-hover-color: var(--text);
+  --nm-row-icon-action-hover-background: var(--hover_soft);
+  --nm-row-icon-action-hover-border-color: alpha(var(--on_surface), .2);
+
+  /* Generic button surface */
+  --nm-button-color: var(--text);
+  --nm-button-background:
+    linear-gradient(to bottom, alpha(#ffffff, .07), alpha(#ffffff, .01)),
+    var(--surface_soft);
+  --nm-button-border-color: var(--line_strong);
+  --nm-button-hover-color: var(--nm-button-color);
+  --nm-button-hover-background: var(--hover_soft);
+  --nm-button-hover-border-color: alpha(var(--selected), .6);
+  --nm-button-disabled-color: alpha(var(--on_surface), .56);
+  --nm-button-disabled-background: alpha(var(--on_surface), .05);
+  --nm-button-disabled-border-color: alpha(var(--line_strong), .5);
+  --nm-button-disabled-opacity: .58;
+  --nm-button-radius: 999px;
+  --nm-button-border-width: 1px;
+  --nm-button-min-height: 28px;
+  --nm-button-padding: 5px 14px;
+  --nm-button-shadow: none;
+  --nm-button-font-size: 11px;
+  --nm-button-font-weight: 700;
+  --nm-button-letter-spacing: .25px;
+
+  /* Compact actions embedded in page toolbars */
+  --nm-toolbar-action-color: var(--nm-button-color);
+  --nm-toolbar-action-background: transparent;
+  --nm-toolbar-action-border-color: transparent;
+  --nm-toolbar-action-hover-color: var(--nm-button-hover-color);
+  --nm-toolbar-action-hover-background: var(--nm-button-hover-background);
+  --nm-toolbar-action-hover-border-color: transparent;
+  --nm-toolbar-action-disabled-color: var(--nm-button-disabled-color);
+  --nm-toolbar-action-disabled-background: transparent;
+  --nm-toolbar-action-disabled-border-color: transparent;
+  --nm-toolbar-action-radius: 6px;
+  --nm-toolbar-action-min-height: 28px;
+  --nm-toolbar-action-padding: 4px 10px;
+
+  /* Shared field surface (nm-input and nm-select) */
+  --nm-field-color: var(--text);
+  --nm-field-background: alpha(#000000, .16);
+  --nm-field-border-color: var(--line);
+  --nm-field-focus-border-color: var(--selected);
+  --nm-field-focus-background: var(--nm-field-background);
+  --nm-field-disabled-color: alpha(var(--on_surface), .56);
+  --nm-field-disabled-opacity: .58;
+  --nm-field-radius: 8px;
+  --nm-field-border-width: 1px;
+  --nm-field-min-height: 30px;
+  --nm-field-shadow: none;
+  --nm-field-focus-shadow: none;
+
+  /* Switches */
+  --nm-switch-background: transparent;
+  --nm-switch-border-color: var(--line);
+  --nm-switch-hover-background: var(--nm-switch-background);
+  --nm-switch-hover-border-color: var(--nm-switch-border-color);
+  --nm-switch-active-background: alpha(var(--secondary), .38);
+  --nm-switch-active-border-color: alpha(var(--selected), .82);
+  --nm-switch-active-hover-background: var(--nm-switch-active-background);
+  --nm-switch-active-hover-border-color: var(--nm-switch-active-border-color);
+  --nm-switch-thumb-color: #f3f5f8;
+  --nm-switch-active-thumb-color: var(--nm-switch-thumb-color);
+  --nm-switch-disabled-background: var(--nm-switch-background);
+  --nm-switch-disabled-border-color: var(--nm-switch-border-color);
+  --nm-switch-disabled-thumb-color: alpha(var(--on_surface), .4);
+  --nm-switch-active-disabled-background: alpha(var(--on_surface), .15);
+  --nm-switch-active-disabled-border-color: alpha(var(--on_surface), .25);
+  --nm-switch-active-disabled-thumb-color: var(--nm-switch-disabled-thumb-color);
+  --nm-switch-disabled-opacity: .5;
+  --nm-switch-radius: 20px;
+  --nm-switch-border-width: 1px;
+  --nm-switch-min-width: 34px;
+  --nm-switch-min-height: 18px;
+  --nm-switch-padding: 0;
+  --nm-switch-shadow: none;
+  --nm-switch-hover-shadow: var(--nm-switch-shadow);
+  --nm-switch-focus-shadow: var(--nm-switch-shadow);
+  --nm-switch-thumb-size: 14px;
+  --nm-switch-thumb-radius: 50%;
+  --nm-switch-thumb-shadow: none;
+
+  /* Checkboxes */
+  --nm-checkbox-color: var(--on_surface_variant);
+  --nm-checkbox-hover-color: var(--text);
+  --nm-checkbox-checked-color: var(--text);
+  --nm-checkbox-checked-hover-color: var(--nm-checkbox-checked-color);
+  --nm-checkbox-background: alpha(#000000, .2);
+  --nm-checkbox-border-color: var(--line_strong);
+  --nm-checkbox-hover-background: var(--nm-checkbox-background);
+  --nm-checkbox-hover-border-color: var(--nm-checkbox-border-color);
+  --nm-checkbox-checked-background: var(--selected);
+  --nm-checkbox-checked-border-color: var(--selected);
+  --nm-checkbox-checkmark-color: #22262b;
+  --nm-checkbox-checked-hover-background: var(--nm-checkbox-checked-background);
+  --nm-checkbox-checked-hover-border-color: var(--nm-checkbox-checked-border-color);
+  --nm-checkbox-checked-hover-checkmark-color: var(--nm-checkbox-checkmark-color);
+  --nm-checkbox-disabled-color: alpha(var(--on_surface), .56);
+  --nm-checkbox-disabled-background: var(--nm-checkbox-background);
+  --nm-checkbox-disabled-border-color: var(--nm-checkbox-border-color);
+  --nm-checkbox-disabled-checkmark-color: var(--nm-checkbox-checkmark-color);
+  --nm-checkbox-checked-disabled-background: var(--nm-checkbox-checked-background);
+  --nm-checkbox-checked-disabled-border-color: var(--nm-checkbox-checked-border-color);
+  --nm-checkbox-checked-disabled-checkmark-color: var(--nm-checkbox-checkmark-color);
+  --nm-checkbox-disabled-opacity: .58;
+  --nm-checkbox-radius: 4px;
+  --nm-checkbox-border-width: 1px;
+  --nm-checkbox-box-size: 16px;
+  --nm-checkbox-min-height: 24px;
+  --nm-checkbox-padding: 2px 0;
+  --nm-checkbox-label-gap: 8px;
+  --nm-checkbox-shadow: none;
+  --nm-checkbox-hover-shadow: var(--nm-checkbox-shadow);
+  --nm-checkbox-focus-shadow: var(--nm-checkbox-shadow);
+  --nm-checkbox-font-size: inherit;
+  --nm-checkbox-font-weight: inherit;
+  --nm-checkbox-letter-spacing: inherit;
+
+  /* Primary rows */
+  --nm-row-background: alpha(var(--on_surface), .035);
+  --nm-row-hover-background: alpha(var(--secondary), .03);
+  --nm-row-connected-background: var(--selected_soft);
+  --nm-row-border-color: alpha(var(--on_surface), .16);
+  --nm-row-hover-border-color: alpha(var(--selected), .22);
+  --nm-row-connected-border-color: alpha(var(--selected), .56);
+  --nm-row-radius: 12px;
+  --nm-row-border-width: 1px;
+  --nm-row-shadow: none;
+  --nm-row-outer-margin: 3px var(--component-margin);
+  --nm-row-content-padding: 10px 10px 10px 12px;
+  --nm-row-actions-padding: 0 10px 10px 12px;
+
+  /* Grouped data lists and rows */
+  --nm-data-list-background: alpha(var(--on_surface), .025);
+  --nm-data-list-border-color: alpha(var(--on_surface), .08);
+  --nm-data-list-radius: 12px;
+  --nm-data-list-shadow: none;
+  --nm-data-row-background: transparent;
+  --nm-data-row-hover-background: alpha(var(--secondary), .04);
+  --nm-data-row-divider-color: alpha(var(--on_surface), .08);
+  --nm-data-row-padding: 10px 14px;
+
+  /* Content sections */
+  --nm-section-background: transparent;
+  --nm-section-border-color: transparent;
+  --nm-section-border-width: 0;
+  --nm-section-radius: 0;
+  --nm-section-shadow: none;
+}
+
 .nm-icon-button,
+.nm-switch,
+.nm-checkbox,
 .nm-list row.nm-wifi-row,
 .nm-list row.nm-device-row,
 .nm-wifi-row,
 .nm-device-row,
 button.nm-button,
 .nm-button,
-.row-link-action,
-.row-icon-action,
+.nm-row-action,
+.nm-row-icon-action,
 .nm-tabs-menu-button,
 menubutton.nm-tabs-menu-button > button,
 .nm-edit-section-toggle,
@@ -161,42 +360,71 @@ notebook.nm-notebook > header,
 
 switch.nm-switch,
 .nm-switch {
-  border-radius: 20px;
-  background: transparent;
-  border: 1px solid var(--line);
-  padding: 0;
-  box-shadow: none;
+  background: var(--nm-switch-background);
+  border-style: solid;
+  border-color: var(--nm-switch-border-color);
+  box-shadow: var(--nm-switch-shadow);
   background-image: none;
+}
+
+switch.nm-switch:hover:not(:disabled),
+.nm-switch:hover:not(:disabled) {
+  background: var(--nm-switch-hover-background);
+  border-color: var(--nm-switch-hover-border-color);
+  box-shadow: var(--nm-switch-hover-shadow);
+}
+
+switch.nm-switch:focus-visible,
+.nm-switch:focus-visible {
+  box-shadow: var(--nm-switch-focus-shadow);
 }
 
 switch.nm-switch:checked,
 .nm-switch:checked {
-  background: alpha(var(--secondary), .38);
-  border-color: alpha(var(--selected), .82);
+  background: var(--nm-switch-active-background);
+  border-color: var(--nm-switch-active-border-color);
+}
+
+switch.nm-switch:checked:hover:not(:disabled),
+.nm-switch:checked:hover:not(:disabled) {
+  background: var(--nm-switch-active-hover-background);
+  border-color: var(--nm-switch-active-hover-border-color);
 }
 
 switch.nm-switch:disabled,
 .nm-switch:disabled {
-  opacity: 0.5;
+  background: var(--nm-switch-disabled-background);
+  border-color: var(--nm-switch-disabled-border-color);
+  opacity: var(--nm-switch-disabled-opacity);
 }
 
 switch.nm-switch:checked:disabled,
 .nm-switch:checked:disabled {
-  background: alpha(var(--on_surface), 0.15);
-  border-color: alpha(var(--on_surface), 0.25);
-}
-
-switch.nm-switch:disabled slider,
-.nm-switch:disabled slider {
-  background: alpha(var(--on_surface), 0.4);
+  background: var(--nm-switch-active-disabled-background);
+  border-color: var(--nm-switch-active-disabled-border-color);
 }
 
 switch.nm-switch slider,
 .nm-switch slider {
-  background: #f3f5f8;
+  background: var(--nm-switch-thumb-color);
   border: none;
-  box-shadow: none;
+  box-shadow: var(--nm-switch-thumb-shadow);
   background-image: none;
+}
+
+switch.nm-switch:checked slider,
+.nm-switch:checked slider {
+  background: var(--nm-switch-active-thumb-color);
+}
+
+switch.nm-switch:disabled slider,
+.nm-switch:disabled slider {
+  background: var(--nm-switch-disabled-thumb-color);
+}
+
+switch.nm-switch:checked:disabled slider,
+.nm-switch:checked:disabled slider {
+  background: var(--nm-switch-active-disabled-thumb-color);
 }
 
 /* Unify notebook tabs header and page content area backgrounds */
@@ -206,12 +434,12 @@ notebook.nm-notebook > stack,
 notebook.nm-notebook > stack > viewport,
 notebook.nm-notebook frame,
 notebook.nm-notebook border {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  border: none !important;
-  border-width: 0 !important;
-  box-shadow: none !important;
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  border: none;
+  border-width: 0;
+  box-shadow: none;
 }
 
 .nm-notebook > header,
@@ -255,7 +483,6 @@ notebook.nm-notebook > header > tabs > tab:checked {
 }
 
 .nm-toolbar .nm-icon-button,
-.nm-toolbar .nm-toolbar-action,
 menubutton.nm-tabs-menu-button > button,
 menubutton.nm-tabs-menu-button > button.toggle,
 menubutton.nm-tabs-menu-button > button:checked {
@@ -270,16 +497,7 @@ menubutton.nm-tabs-menu-button > button:checked {
   color: var(--on_surface_variant);
 }
 
-.nm-toolbar .nm-toolbar-action {
-  min-width: 0;
-  min-height: 28px;
-  padding: 4px 10px;
-  background: transparent;
-  border-color: transparent;
-}
-
 .nm-toolbar .nm-icon-button:hover,
-.nm-toolbar .nm-toolbar-action:hover,
 menubutton.nm-tabs-menu-button > button:hover,
 menubutton.nm-tabs-menu-button > button.toggle:hover,
 menubutton.nm-tabs-menu-button > button:checked:hover {
@@ -295,7 +513,6 @@ menubutton.nm-tabs-menu-button > button:checked {
 }
 
 .nm-toolbar .nm-icon-button:active,
-.nm-toolbar .nm-toolbar-action:active,
 menubutton.nm-tabs-menu-button > button:active,
 menubutton.nm-tabs-menu-button > button.toggle:active,
 menubutton.nm-tabs-menu-button > button:checked:active {
@@ -315,8 +532,6 @@ menubutton.nm-tabs-menu-button:not(.nm-tabs-menu-button-open) > button:checked:n
 
 .nm-toolbar .nm-icon-button:focus:not(:hover),
 .nm-toolbar .nm-icon-button:focus-visible:not(:hover),
-.nm-toolbar .nm-toolbar-action:focus:not(:hover),
-.nm-toolbar .nm-toolbar-action:focus-visible:not(:hover),
 menubutton.nm-tabs-menu-button > button:focus:not(:hover),
 menubutton.nm-tabs-menu-button > button:focus-visible:not(:hover),
 menubutton.nm-tabs-menu-button > button.toggle:focus:not(:hover),
@@ -339,28 +554,6 @@ menubutton.nm-tabs-menu-button.nm-tabs-menu-button-open > button:focus-visible:n
   background: alpha(var(--primary), .15);
 }
 
-button.nm-refresh-button:disabled,
-.nm-refresh-button:disabled,
-.nm-toolbar .nm-refresh-button:disabled,
-button.nm-refresh-button:disabled:hover,
-.nm-refresh-button:disabled:hover,
-.nm-toolbar .nm-refresh-button:disabled:hover,
-.nm-toolbar button.nm-add-button:disabled,
-.nm-toolbar .nm-add-button:disabled {
-  color: alpha(var(--on_surface_variant), .48);
-  border-color: transparent;
-  background: transparent;
-}
-
-button.nm-refresh-button:disabled label,
-.nm-refresh-button:disabled label,
-.nm-toolbar .nm-refresh-button:disabled label,
-.nm-toolbar button.nm-add-button:disabled label,
-.nm-toolbar .nm-add-button:disabled label {
-  color: alpha(var(--on_surface_variant), .48);
-  opacity: 0.62;
-}
-
 /* Keep outer GtkMenuButton surface transparent so only one hover bubble is shown. */
 menubutton.nm-tabs-menu-button,
 menubutton.nm-tabs-menu-button:hover,
@@ -379,22 +572,25 @@ menubutton.nm-tabs-menu-button:active {
 .nm-list row.nm-wifi-row,
 .nm-list row.nm-device-row,
 .nm-wifi-row,
-.nm-device-row {
-  border-radius: 12px;
-  background: alpha(var(--on_surface), .035);
-  border: 1px solid alpha(var(--on_surface), .16);
+.nm-device-row,
+.nm-row {
+  background: var(--nm-row-background);
+  border-color: var(--nm-row-border-color);
+  box-shadow: var(--nm-row-shadow);
 }
 
 .nm-list row.nm-wifi-row:hover,
-.nm-list row.nm-device-row:hover {
-  background: alpha(var(--secondary), .03);
-  border-color: alpha(var(--selected), .22);
+.nm-list row.nm-device-row:hover,
+.nm-row:hover {
+  background: var(--nm-row-hover-background);
+  border-color: var(--nm-row-hover-border-color);
 }
 
 .nm-wifi-row.connected,
-.nm-device-row.connected {
-  background: var(--selected_soft);
-  border-color: alpha(var(--selected), .56);
+.nm-device-row.connected,
+.nm-row.connected {
+  background: var(--nm-row-connected-background);
+  border-color: var(--nm-row-connected-border-color);
 }
 
 .nm-signal-icon {
@@ -431,199 +627,106 @@ menubutton.nm-tabs-menu-button:active {
   padding: 2px 0;
 }
 
-button.nm-row-link-action {
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  min-height: 24px;
-}
-
 .nm-row-expand-icon {
   -gtk-icon-size: 14px;
   color: var(--on_surface_variant);
 }
 
+.nm-details-open-button {
+  font-weight: 700;
+}
+
 button.nm-button,
 .nm-button {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.25px;
-  border: 1px solid var(--line_strong);
-  border-radius: 999px;
-  background:
-    linear-gradient(to bottom, alpha(#ffffff, .07), alpha(#ffffff, .01)),
-    var(--surface_soft);
-  color: var(--text);
-  box-shadow: none;
+  font-size: var(--nm-button-font-size);
+  font-weight: var(--nm-button-font-weight);
+  letter-spacing: var(--nm-button-letter-spacing);
+  border-color: var(--nm-button-border-color);
+  background: var(--nm-button-background);
+  color: var(--nm-button-color);
+  box-shadow: var(--nm-button-shadow);
   background-image: none;
+}
+
+button.nm-button label,
+button.nm-button image {
+  color: var(--nm-button-color);
 }
 
 button.nm-button:hover,
 .nm-button:hover {
-  background: var(--hover_soft);
-  border-color: alpha(var(--selected), .6);
+  background: var(--nm-button-hover-background);
+  border-color: var(--nm-button-hover-border-color);
+  color: var(--nm-button-hover-color);
+}
+
+button.nm-button:hover label,
+button.nm-button:hover image {
+  color: var(--nm-button-hover-color);
 }
 
 button.nm-button:disabled,
 .nm-button:disabled,
 button.suggested-action:disabled,
 .suggested-action:disabled {
-  opacity: 0.58;
-  color: alpha(var(--on_surface), .56);
-  background: alpha(var(--on_surface), .05);
-  border-color: alpha(var(--line_strong), .5);
+  opacity: var(--nm-button-disabled-opacity);
+  color: var(--nm-button-disabled-color);
+  background: var(--nm-button-disabled-background);
+  border-color: var(--nm-button-disabled-border-color);
 }
 
-.nm-connect-button {
-  color: var(--success);
-  border-color: alpha(var(--success), .55);
+button.nm-button:disabled label,
+button.nm-button:disabled image {
+  color: var(--nm-button-disabled-color);
 }
 
-.nm-connect-button:hover {
-  background: alpha(var(--success), .16);
+/* Toolbar actions are a compact, flat button context. Public toolbar tokens
+ * override the generic button surface without exposing GTK child nodes. */
+.nm-toolbar button.nm-button.nm-toolbar-action,
+.nm-toolbar button.nm-button.nm-toolbar-action label,
+.nm-toolbar button.nm-button.nm-toolbar-action image {
+  color: var(--nm-toolbar-action-color);
 }
 
-.nm-disconnect-button,
-.nm-delete-button,
-.nm-forget-button {
-  color: var(--urgent);
-  border-color: alpha(var(--urgent), .55);
-}
-
-.nm-disconnect-button:hover,
-.nm-delete-button:hover,
-.nm-forget-button:hover {
-  background: alpha(var(--urgent), .16);
-}
-
-.nm-action-button,
-.nm-edit-button,
-.nm-details-button,
-.nm-primary-action-button {
-  color: var(--action);
-  border-color: alpha(var(--action), .6);
-}
-
-.nm-action-button:hover,
-.nm-edit-button:hover,
-.nm-details-button:hover,
-.nm-primary-action-button:hover {
-  background: alpha(var(--action), .16);
-}
-
-.row-link-action {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  text-shadow: none;
-  -gtk-icon-shadow: none;
-  border-radius: 0;
-  padding: 0 2px;
-  color: var(--selected);
-}
-
-.row-link-action:hover {
-  color: var(--primary_hover);
-  background: transparent;
-  border: none;
-  text-shadow: none;
-  -gtk-icon-shadow: none;
-}
-
-.row-link-action > label {
-  color: var(--selected);
-}
-
-.row-link-action:hover > label {
-  color: var(--primary_hover);
-}
-
-.row-link-action.nm-connect-button,
-.row-link-action.nm-disconnect-button,
-.row-link-action.nm-action-button,
-.row-link-action.nm-delete-button,
-.row-link-action.nm-forget-button,
-.row-link-action.nm-edit-button,
-.row-link-action.nm-details-button,
-.row-link-action.nm-primary-action-button {
-  background: transparent;
-  border: none;
-  color: var(--selected);
-}
-
-.row-link-action.nm-connect-button:hover,
-.row-link-action.nm-disconnect-button:hover,
-.row-link-action.nm-action-button:hover,
-.row-link-action.nm-delete-button:hover,
-.row-link-action.nm-forget-button:hover,
-.row-link-action.nm-edit-button:hover,
-.row-link-action.nm-details-button:hover,
-.row-link-action.nm-primary-action-button:hover {
-  background: transparent;
-  border: none;
-  color: var(--primary_hover);
-}
-
-button.nm-button.row-link-action {
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.25;
-  min-height: 26px;
-  min-width: 0;
-  background: transparent;
+.nm-toolbar button.nm-button.nm-toolbar-action {
+  background: var(--nm-toolbar-action-background);
   background-image: none;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0 2px;
+  border-color: var(--nm-toolbar-action-border-color);
 }
 
-button.nm-button.row-link-action:hover {
-  background: transparent;
-  border: none;
+.nm-toolbar button.nm-button.nm-toolbar-action:hover,
+.nm-toolbar button.nm-button.nm-toolbar-action:hover label,
+.nm-toolbar button.nm-button.nm-toolbar-action:hover image {
+  color: var(--nm-toolbar-action-hover-color);
 }
 
-button.nm-button.row-link-action:disabled {
-  background: transparent;
-  border: none;
-  opacity: 0.5;
+.nm-toolbar button.nm-button.nm-toolbar-action:hover {
+  background: var(--nm-toolbar-action-hover-background);
+  border-color: var(--nm-toolbar-action-hover-border-color);
 }
 
-/* Universal list details action: icon only by default, chip on interaction only. */
-.nm-page button.row-icon-action,
-.nm-page .row-icon-action {
-  background: transparent;
-  border: 1px solid transparent;
-  box-shadow: none;
-  background-image: none;
-  text-shadow: none;
-  -gtk-icon-shadow: none;
-  color: var(--on_surface_variant);
-  border-radius: 999px;
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled,
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled:hover,
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled label,
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled:hover label,
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled image,
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled:hover image {
+  color: var(--nm-toolbar-action-disabled-color);
 }
 
-.nm-page button.row-icon-action:active,
-.nm-page button.row-icon-action:checked,
-.nm-page button.row-icon-action:focus,
-.nm-page button.row-icon-action:focus-visible,
-.nm-page .row-icon-action:active,
-.nm-page .row-icon-action:checked,
-.nm-page .row-icon-action:focus,
-.nm-page .row-icon-action:focus-visible {
-  color: var(--on_surface_variant);
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled,
+.nm-toolbar button.nm-button.nm-toolbar-action:disabled:hover {
+  background: var(--nm-toolbar-action-disabled-background);
+  border-color: var(--nm-toolbar-action-disabled-border-color);
+  opacity: var(--nm-button-disabled-opacity);
 }
 
-.nm-page button.row-icon-action:hover,
-.nm-page .row-icon-action:hover {
-  color: var(--text);
-  background: var(--hover_soft);
-  border-color: alpha(var(--on_surface), .2);
-  text-shadow: none;
-  -gtk-icon-shadow: none;
-}
+/*
+ * Row text and row icon actions are styled entirely through the semantic
+ * action adapter near the end of this file. Their sizing, padding, and shape
+ * live in structure.css under the .nm-row-action and .nm-row-icon-action
+ * classes; surface and state resets remain in this component layer.
+ */
 
 .nm-tabs-menu-popover {
   border: 1px solid var(--line);
@@ -646,14 +749,24 @@ button.nm-button.row-link-action:disabled {
   background: var(--hover_soft);
 }
 
-.nm-password-entry,
-entry.nm-edit-field-entry,
-.nm-edit-field-entry {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: alpha(#000000, .16);
-  color: var(--text);
-  padding: 6px 10px;
+/* Shared field adapter: nm-input (entries) and nm-select (dropdowns) share one
+ * public --nm-field-* contract while keeping their GTK adapters internal. */
+.nm-input,
+.nm-select {
+  --_nm-field-color: var(--nm-field-color);
+  --_nm-field-background: var(--nm-field-background);
+  --_nm-field-border-color: var(--nm-field-border-color);
+  --_nm-field-focus-border-color: var(--nm-field-focus-border-color);
+  --_nm-field-focus-background: var(--nm-field-focus-background);
+  --_nm-field-shadow: var(--nm-field-shadow);
+  --_nm-field-focus-shadow: var(--nm-field-focus-shadow);
+}
+
+entry.nm-input {
+  color: var(--_nm-field-color);
+  background: var(--_nm-field-background);
+  border-color: var(--_nm-field-border-color);
+  box-shadow: var(--_nm-field-shadow);
   transition: none;
 }
 
@@ -661,33 +774,16 @@ entry {
   outline-color: var(--selected);
 }
 
-entry.nm-inline-password-entry,
-.nm-inline-password-entry,
-entry.nm-inline-ssid-entry,
-.nm-inline-ssid-entry {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: alpha(#000000, .16);
-  color: var(--text);
-  padding: 6px 10px;
-  transition: none;
+entry.nm-input:focus {
+  background: var(--_nm-field-focus-background);
+  border-color: var(--_nm-field-focus-border-color);
+  outline: none;
+  box-shadow: var(--_nm-field-focus-shadow);
 }
 
-.nm-password-entry:focus,
-entry.nm-edit-field-entry:focus,
-.nm-edit-field-entry:focus {
-  border-color: var(--selected);
-  outline: none;
-  box-shadow: none;
-}
-
-entry.nm-inline-password-entry:focus,
-.nm-inline-password-entry:focus,
-entry.nm-inline-ssid-entry:focus,
-.nm-inline-ssid-entry:focus {
-  border-color: var(--selected);
-  outline: none;
-  box-shadow: none;
+entry.nm-input:disabled {
+  opacity: var(--nm-field-disabled-opacity);
+  color: var(--nm-field-disabled-color);
 }
 
 popover entry:focus,
@@ -696,24 +792,42 @@ popover.background entry:focus {
   outline: none;
 }
 
-.nm-edit-dropdown {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: alpha(#000000, .16);
-  color: var(--text);
+/* Select bridge: the outer nm-select surface plus its internal trigger node.
+ * The trigger is an internal adapter hook; themes set --nm-field-* tokens. */
+.nm-select {
+  color: var(--_nm-field-color);
+  background: var(--_nm-field-background);
+  border-color: var(--_nm-field-border-color);
+  box-shadow: var(--_nm-field-shadow);
 }
 
-menubutton.nm-edit-dropdown-trigger > button {
-  border: none;
-  box-shadow: none;
+.nm-select:focus-within,
+.nm-select.nm-dropdown-open {
+  background: var(--_nm-field-focus-background);
+  border-color: var(--_nm-field-focus-border-color);
+  box-shadow: var(--_nm-field-focus-shadow);
+}
+
+.nm-select:disabled {
+  opacity: var(--nm-field-disabled-opacity);
+  color: var(--nm-field-disabled-color);
+}
+
+/* The outer select owns disabled opacity. Keep GTK's internal trigger from
+ * applying a second dimming pass while allowing the disabled color to inherit. */
+.nm-select:disabled menubutton.nm-edit-dropdown-trigger,
+.nm-select:disabled menubutton.nm-edit-dropdown-trigger > button,
+.nm-select:disabled button.nm-edit-dropdown-trigger,
+.nm-select:disabled togglebutton.nm-edit-dropdown-trigger {
+  opacity: 1;
+  color: inherit;
   background: transparent;
   background-image: none;
-  color: inherit;
-  min-height: 30px;
-  border-radius: 8px;
-  padding: 0 10px;
+  border: none;
+  box-shadow: none;
 }
 
+menubutton.nm-edit-dropdown-trigger > button,
 button.nm-edit-dropdown-trigger,
 togglebutton.nm-edit-dropdown-trigger {
   border: none;
@@ -721,9 +835,6 @@ togglebutton.nm-edit-dropdown-trigger {
   background: transparent;
   background-image: none;
   color: inherit;
-  min-height: 30px;
-  border-radius: 8px;
-  padding: 0 10px;
 }
 
 /* Custom edit dropdowns use a dedicated trigger button, so style it explicitly
@@ -774,14 +885,6 @@ togglebutton.nm-edit-dropdown-trigger:active {
   box-shadow: none;
 }
 
-.nm-edit-dropdown:focus-within {
-  border-color: var(--selected);
-}
-
-.nm-edit-dropdown.nm-dropdown-open {
-  border-color: var(--selected);
-}
-
 /* Compact popover menu geometry. */
 .nm-dropdown-panel,
 popover,
@@ -789,10 +892,10 @@ popover.menu,
 popover.background,
 popover.background.menu,
 popover.menu.background {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: transparent;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .nm-dropdown-panel > contents,
@@ -1079,51 +1182,116 @@ popover.background list row:checked:hover {
   box-shadow: none;
 }
 
-.nm-edit-field-entry:disabled,
-.nm-edit-dropdown:disabled,
-menubutton.nm-edit-dropdown-trigger:disabled > button,
-button.nm-edit-dropdown-trigger:disabled,
-entry.nm-edit-field-entry:disabled {
-  opacity: 0.58;
-  color: alpha(var(--on_surface), .56);
+/* Compatibility bridge for an older specialized entry that has not yet been
+ * migrated to nm-input. Public components use the adapters above. */
+entry.nm-edit-field-entry:not(.nm-input):disabled {
+  opacity: var(--nm-field-disabled-opacity);
+  color: var(--nm-field-disabled-color);
 }
 
-checkbutton.nm-row-autoconnect-check,
-.nm-row-autoconnect-check {
-  color: var(--on_surface_variant);
+checkbutton.nm-checkbox,
+.nm-checkbox {
+  color: var(--nm-checkbox-color);
+  font-size: var(--nm-checkbox-font-size);
+  font-weight: var(--nm-checkbox-font-weight);
+  letter-spacing: var(--nm-checkbox-letter-spacing);
 }
 
-checkbutton.nm-row-autoconnect-check:hover,
-.nm-row-autoconnect-check:hover {
-  color: var(--text);
+checkbutton.nm-checkbox > label,
+.nm-checkbox > label {
+  color: var(--nm-checkbox-color);
+  font-size: var(--nm-checkbox-font-size);
+  font-weight: var(--nm-checkbox-font-weight);
+  letter-spacing: var(--nm-checkbox-letter-spacing);
 }
 
-checkbutton.nm-row-autoconnect-check > check,
-.nm-row-autoconnect-check > check,
-checkbutton > check {
-  background: alpha(#000000, .2);
-  border: 1px solid var(--line_strong);
+checkbutton.nm-checkbox:hover:not(:disabled),
+.nm-checkbox:hover:not(:disabled) {
+  color: var(--nm-checkbox-hover-color);
 }
 
-checkbutton.nm-row-autoconnect-check:checked > check,
-.nm-row-autoconnect-check:checked > check,
-checkbutton:checked > check {
-  background: var(--selected);
-  border-color: var(--selected);
-  color: #22262b;
+checkbutton.nm-checkbox:hover:not(:disabled) > label,
+.nm-checkbox:hover:not(:disabled) > label {
+  color: var(--nm-checkbox-hover-color);
 }
 
-checkbutton.nm-row-autoconnect-check:checked > label,
-.nm-row-autoconnect-check:checked > label,
-checkbutton:checked > label {
-  color: var(--text);
+checkbutton.nm-checkbox > check,
+.nm-checkbox > check {
+  background: var(--nm-checkbox-background);
+  border-style: solid;
+  border-color: var(--nm-checkbox-border-color);
+  box-shadow: var(--nm-checkbox-shadow);
 }
 
-checkbutton:disabled,
-checkbutton:disabled > label,
-checkbutton:disabled > check {
-  opacity: 0.58;
-  color: alpha(var(--on_surface), .56);
+checkbutton.nm-checkbox:hover:not(:disabled) > check,
+.nm-checkbox:hover:not(:disabled) > check {
+  background: var(--nm-checkbox-hover-background);
+  border-color: var(--nm-checkbox-hover-border-color);
+  box-shadow: var(--nm-checkbox-hover-shadow);
+}
+
+checkbutton.nm-checkbox:focus-visible > check,
+.nm-checkbox:focus-visible > check {
+  box-shadow: var(--nm-checkbox-focus-shadow);
+}
+
+checkbutton.nm-checkbox:checked,
+.nm-checkbox:checked {
+  color: var(--nm-checkbox-checked-color);
+}
+
+checkbutton.nm-checkbox:checked > label,
+.nm-checkbox:checked > label {
+  color: var(--nm-checkbox-checked-color);
+}
+
+checkbutton.nm-checkbox:checked > check,
+.nm-checkbox:checked > check {
+  background: var(--nm-checkbox-checked-background);
+  border-color: var(--nm-checkbox-checked-border-color);
+  color: var(--nm-checkbox-checkmark-color);
+}
+
+checkbutton.nm-checkbox:checked:hover:not(:disabled),
+.nm-checkbox:checked:hover:not(:disabled) {
+  color: var(--nm-checkbox-checked-hover-color);
+}
+
+checkbutton.nm-checkbox:checked:hover:not(:disabled) > label,
+.nm-checkbox:checked:hover:not(:disabled) > label {
+  color: var(--nm-checkbox-checked-hover-color);
+}
+
+checkbutton.nm-checkbox:checked:hover:not(:disabled) > check,
+.nm-checkbox:checked:hover:not(:disabled) > check {
+  background: var(--nm-checkbox-checked-hover-background);
+  border-color: var(--nm-checkbox-checked-hover-border-color);
+  color: var(--nm-checkbox-checked-hover-checkmark-color);
+}
+
+checkbutton.nm-checkbox:disabled,
+.nm-checkbox:disabled {
+  color: var(--nm-checkbox-disabled-color);
+  opacity: var(--nm-checkbox-disabled-opacity);
+}
+
+checkbutton.nm-checkbox:disabled > label,
+.nm-checkbox:disabled > label {
+  color: var(--nm-checkbox-disabled-color);
+}
+
+checkbutton.nm-checkbox:disabled > check,
+.nm-checkbox:disabled > check {
+  background: var(--nm-checkbox-disabled-background);
+  border-color: var(--nm-checkbox-disabled-border-color);
+  color: var(--nm-checkbox-disabled-checkmark-color);
+}
+
+checkbutton.nm-checkbox:checked:disabled > check,
+.nm-checkbox:checked:disabled > check {
+  background: var(--nm-checkbox-checked-disabled-background);
+  border-color: var(--nm-checkbox-checked-disabled-border-color);
+  color: var(--nm-checkbox-checked-disabled-checkmark-color);
 }
 
 .nm-placeholder-label {
@@ -1179,29 +1347,32 @@ dialog .suggested-action:hover {
   background: var(--primary_hover);
 }
 
-list.boxed-list.nm-details-rows {
-  background: alpha(var(--on_surface), .025);
-  border: 1px solid alpha(var(--on_surface), .08);
-  border-radius: 12px;
-  box-shadow: none;
+list.nm-data-list {
+  background: var(--nm-data-list-background);
+  border-color: var(--nm-data-list-border-color);
+  box-shadow: var(--nm-data-list-shadow);
 }
 
-list.boxed-list.nm-details-rows > row {
-  background: transparent;
-  border-bottom: 1px solid alpha(var(--on_surface), .08);
-  margin: 0;
-  border-radius: 0;
-  border-top: none;
-  border-left: none;
-  border-right: none;
+/*
+ * Grouped data rows. The divider and first/last edges belong on the ListBoxRow
+ * (where GTK renders the boxed-list separators), so target the list children
+ * directly instead of the inner .nm-data-row content box.
+ */
+list.boxed-list.nm-data-list > row.nm-data-row {
+  background: var(--nm-data-row-background);
+  border-bottom-color: var(--nm-data-row-divider-color);
 }
 
-list.boxed-list.nm-details-rows > row:last-child {
-  border-bottom: none;
+list.boxed-list.nm-data-list > row.nm-data-row:hover {
+  background: var(--nm-data-row-hover-background);
 }
 
-list.boxed-list.nm-details-rows > row:hover {
-  background: alpha(var(--secondary), .04);
+/* Content sections. Default is transparent/flat; a theme can render them as a
+ * bordered card through the --nm-section-* tokens without GTK structure hacks. */
+.nm-section {
+  background: var(--nm-section-background);
+  border-color: var(--nm-section-border-color);
+  box-shadow: var(--nm-section-shadow);
 }
 
 @keyframes nm-wifi-row-enter {
@@ -1301,12 +1472,181 @@ list.boxed-list.nm-details-rows > row:hover {
 .nm-page-saved-profiles notebook > stack > viewport,
 .nm-page-saved-profiles notebook frame,
 .nm-page-saved-profiles notebook border {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  border: none !important;
-  border-width: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  border: none;
+  border-width: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+/*
+ * Semantic action adapter.
+ *
+ * Public --nm-* tokens (defined at the top of this file) are translated into
+ * private --_nm-action-* variables. The GTK bridge near the end of this block
+ * consumes only those private variables to color the button and its label/image
+ * descendants, so theme authors never need to target child nodes themselves.
+ *
+ * Cascade order is deliberate: base defaults, then intent, then context (which
+ * may intentionally normalize intent), then context+intent exceptions.
+ */
+
+/* Base defaults: every action gets the ordinary action palette. */
+.nm-action {
+  --_nm-action-color: var(--nm-action-color);
+  --_nm-action-hover-color: var(--nm-action-hover-color);
+  --_nm-action-border-color: var(--nm-action-border-color);
+  --_nm-action-hover-border-color: var(--nm-action-border-color);
+  --_nm-action-hover-background: var(--nm-action-hover-background);
+}
+
+/* Intents override the base palette. */
+.nm-action.nm-action-connect {
+  --_nm-action-color: var(--nm-connect-action-color);
+  --_nm-action-hover-color: var(--nm-connect-action-hover-color);
+  --_nm-action-border-color: var(--nm-connect-action-border-color);
+  --_nm-action-hover-border-color: var(--nm-connect-action-border-color);
+  --_nm-action-hover-background: var(--nm-connect-action-hover-background);
+}
+
+.nm-action.nm-action-disconnect,
+.nm-action.nm-action-destructive {
+  --_nm-action-color: var(--nm-danger-action-color);
+  --_nm-action-hover-color: var(--nm-danger-action-hover-color);
+  --_nm-action-border-color: var(--nm-danger-action-border-color);
+  --_nm-action-hover-border-color: var(--nm-danger-action-border-color);
+  --_nm-action-hover-background: var(--nm-danger-action-hover-background);
+}
+
+/* Contexts appear after intents and win at equal specificity by source order. */
+
+/* Row text actions normalize every intent to one link-like palette. */
+.nm-action.nm-row-action {
+  --_nm-action-color: var(--nm-row-action-color);
+  --_nm-action-hover-color: var(--nm-row-action-hover-color);
+  --_nm-action-border-color: transparent;
+  --_nm-action-hover-border-color: transparent;
+  --_nm-action-background: var(--nm-row-action-background);
+  --_nm-action-hover-background: var(--nm-row-action-hover-background);
+}
+
+/* Details actions share one resting palette; destructive reveals on hover. */
+.nm-action.nm-details-action {
+  --_nm-action-color: var(--nm-details-action-color);
+  --_nm-action-hover-color: var(--nm-details-action-hover-color);
+  --_nm-action-border-color: var(--nm-details-action-border-color);
+  --_nm-action-hover-border-color: var(--nm-details-action-border-color);
+  --_nm-action-hover-background: var(--nm-details-action-hover-background);
+}
+
+.nm-action.nm-details-action.nm-action-destructive,
+.nm-action.nm-details-action.nm-action-disconnect {
+  /* Resting values stay inherited from nm-details-action. */
+  --_nm-action-hover-color: var(--nm-details-danger-hover-color);
+  --_nm-action-hover-border-color: var(--nm-details-danger-hover-border-color);
+  --_nm-action-hover-background: var(--nm-details-danger-hover-background);
+}
+
+/* Row icon actions use a neutral palette by default. */
+.nm-action.nm-row-icon-action {
+  --_nm-action-color: var(--nm-row-icon-action-color);
+  --_nm-action-hover-color: var(--nm-row-icon-action-hover-color);
+  --_nm-action-border-color: transparent;
+  --_nm-action-hover-border-color: var(--nm-row-icon-action-hover-border-color);
+  --_nm-action-background: transparent;
+  --_nm-action-hover-background: var(--nm-row-icon-action-hover-background);
+}
+
+/* Destructive row icons keep the danger palette (current visible behavior). */
+.nm-action.nm-row-icon-action.nm-action-destructive {
+  --_nm-action-color: var(--nm-danger-action-color);
+  --_nm-action-hover-color: var(--nm-danger-action-hover-color);
+  --_nm-action-border-color: var(--nm-danger-action-border-color);
+  --_nm-action-hover-border-color: var(--nm-danger-action-border-color);
+  --_nm-action-hover-background: var(--nm-danger-action-hover-background);
+}
+
+/*
+ * Context surface resets. Geometry remains in structure.css; these rules own
+ * only component visuals and intentionally outrank the generic button surface.
+ */
+button.nm-button.nm-action.nm-row-action {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  background: var(--_nm-action-background);
+  background-image: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+button.nm-button.nm-action.nm-row-action label {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-color: currentColor;
+}
+
+button.nm-button.nm-action.nm-row-icon-action {
+  background: var(--_nm-action-background);
+  background-image: none;
+  border-color: var(--_nm-action-border-color);
+  box-shadow: none;
+}
+
+/*
+ * GTK bridge: apply the private variables to the button and to its label/image
+ * descendants so a child label never falls back to white. Descendant (not child)
+ * selectors keep this resilient if a button later wraps its label/icon in a box.
+ */
+button.nm-button.nm-action,
+button.nm-button.nm-action label,
+button.nm-button.nm-action image {
+  color: var(--_nm-action-color);
+}
+
+button.nm-button.nm-action {
+  border-color: var(--_nm-action-border-color);
+}
+
+button.nm-button.nm-action:hover,
+button.nm-button.nm-action:hover label,
+button.nm-button.nm-action:hover image {
+  color: var(--_nm-action-hover-color);
+}
+
+button.nm-button.nm-action:hover {
+  border-color: var(--_nm-action-hover-border-color);
+  background: var(--_nm-action-hover-background);
+}
+
+/*
+ * Disabled actions must remain visibly disabled and must not regain a vivid
+ * semantic foreground from the rules above. These selectors carry higher
+ * specificity than the bridge so they win regardless of intent/context.
+ */
+button.nm-button.nm-action:disabled,
+button.nm-button.nm-action:disabled:hover,
+button.nm-button.nm-action:disabled label,
+button.nm-button.nm-action:disabled:hover label,
+button.nm-button.nm-action:disabled image,
+button.nm-button.nm-action:disabled:hover image {
+  color: var(--nm-button-disabled-color);
+}
+
+button.nm-button.nm-action:disabled,
+button.nm-button.nm-action:disabled:hover {
+  background: var(--nm-button-disabled-background);
+  border-color: var(--nm-button-disabled-border-color);
+  opacity: var(--nm-button-disabled-opacity);
+}
+
+button.nm-button.nm-action.nm-row-action:disabled,
+button.nm-button.nm-action.nm-row-action:disabled:hover,
+button.nm-button.nm-action.nm-row-icon-action:disabled,
+button.nm-button.nm-action.nm-row-icon-action:disabled:hover {
+  background: transparent;
+  opacity: var(--nm-button-disabled-opacity);
 }

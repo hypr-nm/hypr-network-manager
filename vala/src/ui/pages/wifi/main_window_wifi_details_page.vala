@@ -143,9 +143,9 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
 
         this.forget_button = new Gtk.Button.with_label (_("Forget"));
         this.forget_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.forget_button.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
-        this.forget_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
-        this.forget_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.forget_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.forget_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
+        this.forget_button.add_css_class (MainWindowCssClasses.ACTION_DESTRUCTIVE);
         this.forget_button.clicked.connect (() => {
             this.forget ();
         });
@@ -153,9 +153,8 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
 
         this.edit_button = new Gtk.Button.with_label (_("Edit"));
         this.edit_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.EDIT_BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION_BUTTON);
-        this.edit_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.edit_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.edit_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
         this.edit_button.clicked.connect (() => {
             this.edit ();
         });
@@ -163,7 +162,8 @@ public class MainWindowWifiDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage 
 
         this.share_button = new Gtk.Button.with_label (_("Share"));
         this.share_button.add_css_class (MainWindowCssClasses.BUTTON);
-        this.share_button.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
+        this.share_button.add_css_class (MainWindowCssClasses.ACTION);
+        this.share_button.add_css_class (MainWindowCssClasses.DETAILS_ACTION);
         this.share_button.clicked.connect (() => {
             this.share ();
         });

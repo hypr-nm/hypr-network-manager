@@ -110,11 +110,10 @@ window.nm-window,
 .nm-page:not(.nm-page-network-edit) .nm-list row.nm-wifi-row,
 .nm-page:not(.nm-page-network-edit) .nm-list row.nm-device-row,
 .nm-page:not(.nm-page-network-edit) .nm-wifi-row,
-.nm-page:not(.nm-page-network-edit) .nm-device-row {
-  margin-left: var(--component-margin);
-  margin-right: var(--component-margin);
-  margin-top: 3px;
-  margin-bottom: 3px;
+.nm-page:not(.nm-page-network-edit) .nm-device-row,
+.nm-page:not(.nm-page-network-edit) .nm-list row.nm-row,
+.nm-page:not(.nm-page-network-edit) .nm-row {
+  margin: var(--nm-row-outer-margin, 3px var(--component-margin));
 }
 
 .nm-title,
@@ -131,76 +130,72 @@ window.nm-window,
 
 switch.nm-switch,
 .nm-switch {
-  min-width: 34px;
-  min-height: 18px;
+  min-width: var(--nm-switch-min-width);
+  min-height: var(--nm-switch-min-height);
+  padding: var(--nm-switch-padding);
+  border-width: var(--nm-switch-border-width);
+  border-radius: var(--nm-switch-radius);
 }
 
 switch.nm-switch slider,
 .nm-switch slider {
-  min-width: 14px;
-  min-height: 14px;
-  border-radius: 50%;
+  min-width: var(--nm-switch-thumb-size);
+  min-height: var(--nm-switch-thumb-size);
+  border-radius: var(--nm-switch-thumb-radius);
 }
 
 .nm-row-content {
-  padding: 10px 10px 10px 12px;
+  padding: var(--nm-row-content-padding, 10px 10px 10px 12px);
 }
 
 .nm-row-actions {
   min-height: 0;
-  padding: 0 10px 10px 12px;
+  padding: var(--nm-row-actions-padding, 0 10px 10px 12px);
+}
+
+.nm-list row.nm-wifi-row,
+.nm-list row.nm-device-row,
+.nm-wifi-row,
+.nm-device-row,
+.nm-row {
+  border-width: var(--nm-row-border-width);
+  border-style: solid;
+  border-radius: var(--nm-row-radius);
 }
 
 button.nm-button,
 .nm-button {
-  min-height: 28px;
+  min-height: var(--nm-button-min-height);
   min-width: 0;
-  border-radius: 8px;
+  border-width: var(--nm-button-border-width);
+  border-style: solid;
+  border-radius: var(--nm-button-radius);
+  padding: var(--nm-button-padding);
 }
 
-.nm-connect-button,
-.nm-disconnect-button,
-.nm-action-button,
-.nm-forget-button,
-.nm-delete-button,
-.nm-edit-button,
-.nm-details-button,
-.nm-primary-action-button,
-.row-link-action {
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.25;
+.nm-toolbar .nm-toolbar-action {
+  min-height: var(--nm-toolbar-action-min-height);
+  min-width: 0;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  border-radius: var(--nm-toolbar-action-radius);
+  padding: var(--nm-toolbar-action-padding);
 }
 
-.row-link-action {
+.nm-button.nm-row-action {
   min-height: 26px;
   min-width: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  border-width: 0;
   border-radius: 0;
   padding: 0 2px;
 }
 
-.row-link-action:hover {
-  background: transparent;
-  border: none;
-}
-
-.row-link-action > label {
-  text-decoration-line: underline;
-  text-decoration-style: solid;
-  text-decoration-color: currentColor;
-}
-
-.row-icon-action {
+.nm-button.nm-row-icon-action {
   min-width: 24px;
   min-height: 24px;
+  border-width: 1px;
   padding: 0;
   border-radius: 999px;
-  background: transparent;
-  border: 1px solid transparent;
-  box-shadow: none;
 }
 
 .nm-tabs-menu-button {
@@ -257,10 +252,6 @@ menubutton.nm-tabs-menu-button > button:checked {
   -gtk-icon-size: 14px;
 }
 
-.nm-details-open-button {
-  font-weight: 700;
-}
-
 .nm-inline-password {
   padding: 0 10px 10px 12px;
 }
@@ -309,12 +300,12 @@ button.nm-nav-back label,
   padding-top: 2px;
 }
 
-.nm-details-action-button {
+.nm-details-action {
   min-height: 30px;
 }
 
 .nm-edit-collapsible {
-  padding: 4px 0;
+  padding: var(--nm-section-padding, 4px 0);
 }
 
 .nm-edit-collapsible.is-collapsed {
@@ -344,7 +335,7 @@ button.nm-nav-back label,
 }
 
 .nm-details-section {
-  padding: 2px 0 8px;
+  padding: var(--nm-section-padding, 2px 0 8px);
 }
 
 /* Avoid compounding nested left/right margins in details layouts. */
@@ -370,9 +361,41 @@ button.nm-nav-back label,
   padding: 4px 0;
 }
 
-.nm-details-row,
-.nm-details-item {
-  padding: 10px 14px;
+.nm-data-row {
+  padding: var(--nm-data-row-padding, 10px 14px);
+}
+
+list.nm-data-list {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--nm-data-list-radius);
+}
+
+list.boxed-list.nm-data-list > row.nm-data-row {
+  margin: 0;
+  border-top-width: 0;
+  border-right-width: 0;
+  border-bottom-width: 1px;
+  border-left-width: 0;
+  border-bottom-style: solid;
+  border-radius: 0;
+}
+
+list.boxed-list.nm-data-list > row.nm-data-row:first-child {
+  border-top-left-radius: var(--nm-data-list-radius);
+  border-top-right-radius: var(--nm-data-list-radius);
+}
+
+list.boxed-list.nm-data-list > row.nm-data-row:last-child {
+  border-bottom-width: 0;
+  border-bottom-left-radius: var(--nm-data-list-radius);
+  border-bottom-right-radius: var(--nm-data-list-radius);
+}
+
+.nm-section {
+  border-width: var(--nm-section-border-width);
+  border-style: solid;
+  border-radius: var(--nm-section-radius);
 }
 
 .nm-details-key,
@@ -421,10 +444,32 @@ button.nm-nav-back label,
   line-height: 1.35;
 }
 
+entry.nm-input {
+  min-height: var(--nm-field-min-height);
+  border-width: var(--nm-field-border-width);
+  border-style: solid;
+  border-radius: var(--nm-field-radius);
+  padding: var(--nm-field-padding, 6px 10px);
+}
+
 .nm-edit-field-control,
-.nm-edit-dropdown,
-.nm-edit-field-entry {
-  min-height: 30px;
+.nm-select,
+.nm-edit-dropdown {
+  min-height: var(--nm-field-min-height);
+}
+
+.nm-select {
+  border-width: var(--nm-field-border-width);
+  border-style: solid;
+  border-radius: var(--nm-field-radius);
+}
+
+menubutton.nm-edit-dropdown-trigger > button,
+button.nm-edit-dropdown-trigger,
+togglebutton.nm-edit-dropdown-trigger {
+  min-height: var(--nm-field-min-height);
+  border-radius: var(--nm-field-radius);
+  padding: var(--nm-field-padding, 0 10px);
 }
 
 .nm-tabs-menu-list {
@@ -476,19 +521,20 @@ button.nm-nav-back label,
   margin-right: 12px;
 }
 
-/* Checkbutton geometry used in Wi-Fi and profile forms */
-checkbutton.nm-row-autoconnect-check,
-.nm-row-autoconnect-check {
-  min-height: 24px;
-  padding: 2px 0;
+/* Public checkbox geometry; GTK child-node details remain internal. */
+checkbutton.nm-checkbox,
+.nm-checkbox {
+  min-height: var(--nm-checkbox-min-height);
+  padding: var(--nm-checkbox-padding);
 }
 
-checkbutton.nm-row-autoconnect-check > check,
-.nm-row-autoconnect-check > check {
-  min-width: 16px;
-  min-height: 16px;
-  border-radius: 4px;
-  margin-right: 8px;
+checkbutton.nm-checkbox > check,
+.nm-checkbox > check {
+  min-width: var(--nm-checkbox-box-size);
+  min-height: var(--nm-checkbox-box-size);
+  border-width: var(--nm-checkbox-border-width);
+  border-radius: var(--nm-checkbox-radius);
+  margin-right: var(--nm-checkbox-label-gap);
 }
 
 .nm-scroll scrollbar {

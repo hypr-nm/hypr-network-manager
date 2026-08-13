@@ -70,6 +70,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
         var listbox = new Gtk.ListBox ();
         listbox.set_selection_mode (Gtk.SelectionMode.NONE);
         listbox.add_css_class ("boxed-list");
+        listbox.add_css_class (MainWindowCssClasses.DATA_LIST);
         listbox.add_css_class (MainWindowCssClasses.DETAILS_ROWS);
 
         listbox.row_activated.connect ((row) => {
@@ -109,6 +110,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
         row.append (arrow);
 
         var list_row = new Gtk.ListBoxRow ();
+        list_row.add_css_class (MainWindowCssClasses.DATA_ROW);
         list_row.set_child (row);
         list_row.set_data ("vpn-type-id", id);
 

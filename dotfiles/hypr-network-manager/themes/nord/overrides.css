@@ -12,51 +12,6 @@ window.nm-window,
   opacity: 1.0;
 }
 
-/* Slim switch look with bright slider. */
-switch.nm-switch,
-.nm-switch {
-  border: none;
-  background: alpha(var(--on_surface), .16);
-}
-
-switch.nm-switch:checked,
-.nm-switch:checked {
-  border-color: transparent;
-  background: var(--active);
-}
-
-switch.nm-switch slider,
-.nm-switch slider {
-  background: var(--switch_thumb);
-}
-
-.nm-list row.nm-wifi-row,
-.nm-list row.nm-device-row,
-.nm-wifi-row,
-.nm-device-row {
-  border: 1px solid alpha(var(--on_surface), 0.05);
-  border-radius: 10px;
-  background: alpha(var(--on_surface), 0.07);
-}
-
-.nm-list row.nm-wifi-row:hover,
-.nm-list row.nm-device-row:hover {
-  border-color: alpha(var(--primary), 0.16);
-  background: var(--hover_row);
-}
-
-.nm-wifi-row.connected,
-.nm-device-row.connected {
-  border: 1px solid alpha(var(--primary), 0.24);
-  background: alpha(var(--primary), 0.14);
-}
-
-.nm-list row.nm-wifi-row:last-child,
-.nm-list row.nm-device-row:last-child,
-.nm-list row:last-child {
-  border-bottom-color: transparent;
-}
-
 .nm-sub-label {
   color: alpha(var(--on_surface), .78);
 }
@@ -121,37 +76,62 @@ switch.nm-switch slider,
   opacity: 1.0;
 }
 
-/* Keep action buttons flatter than the shared pill default. */
-button.nm-button,
-.nm-button {
-  font-weight: 600;
-  border-radius: 8px;
-  border-color: var(--line);
-  background: var(--active);
+/*
+ * Nord personality is expressed through public component tokens so the bundled
+ * adapters keep ownership of GTK node selectors.
+ */
+:root {
+  /* Switches: slim track with the selected Nord thumb color. */
+  --nm-switch-border-width: 0;
+  --nm-switch-background: alpha(var(--on_surface), .16);
+  --nm-switch-active-background: var(--active);
+  --nm-switch-active-border-color: transparent;
+  --nm-switch-thumb-color: var(--switch_thumb);
+  --nm-switch-active-thumb-color: var(--switch_thumb);
+
+  /* Checkboxes: slightly raised box with a bright checkmark. */
+  --nm-checkbox-background: alpha(var(--on_surface), .10);
+  --nm-checkbox-border-color: alpha(var(--on_surface), .28);
+  --nm-checkbox-checked-background: var(--selected);
+  --nm-checkbox-checked-border-color: var(--selected);
+  --nm-checkbox-checkmark-color: #eceff4;
+
+  /* Buttons: flatter than the shared pill default. */
+  --nm-button-font-weight: 600;
+  --nm-button-radius: 8px;
+  --nm-button-border-color: var(--line);
+  --nm-button-background: var(--active);
+  --nm-button-hover-border-color: alpha(var(--on_surface), .20);
+  --nm-button-hover-background: var(--hover_soft);
+
+  /* Primary rows: raised surface on dark Nord backgrounds. */
+  --nm-row-radius: 10px;
+  --nm-row-background: alpha(var(--on_surface), 0.07);
+  --nm-row-border-color: alpha(var(--on_surface), 0.05);
+  --nm-row-hover-background: var(--hover_row);
+  --nm-row-hover-border-color: alpha(var(--primary), 0.16);
+  --nm-row-connected-background: alpha(var(--primary), 0.14);
+  --nm-row-connected-border-color: alpha(var(--primary), 0.24);
+
+  /* Fields: crisper focus ring, softer disabled state. */
+  --nm-field-focus-border-color: alpha(var(--primary), .70);
+  --nm-field-disabled-opacity: .55;
+  --nm-field-disabled-color: alpha(var(--on_surface), .58);
+
+  /* Grouped data lists: raised surface. */
+  --nm-data-list-background: var(--surface_soft);
+  --nm-data-list-border-color: var(--surface_raised);
+  --nm-data-row-divider-color: var(--surface_raised);
+  --nm-data-row-hover-background: var(--surface_raised);
+
+  /* Row text actions: action accent and a soft hover bubble. */
+  --nm-row-action-color: var(--action);
+  --nm-row-action-hover-color: var(--text);
+  --nm-row-action-hover-background: alpha(var(--secondary), .12);
 }
 
-button.nm-button:hover,
-.nm-button:hover {
-  border-color: alpha(var(--on_surface), .20);
-  background: var(--hover_soft);
-}
-
-.row-link-action {
+.nm-button.nm-action.nm-row-action {
   border-radius: 6px;
-  color: var(--action);
-}
-
-.row-link-action:hover {
-  background: alpha(var(--secondary), .12);
-  color: var(--text);
-}
-
-.row-link-action > label {
-  text-underline-offset: 2px;
-}
-
-.row-link-action:hover > label {
-  text-decoration-thickness: 2px;
 }
 
 .nm-edit-section-toggle-icon {
@@ -166,41 +146,6 @@ button.nm-button:hover,
   padding: 0;
   border-radius: 0;
   background: transparent;
-}
-
-.nm-edit-field-entry:disabled,
-.nm-edit-dropdown:disabled,
-entry.nm-edit-field-entry:disabled {
-  opacity: 0.55;
-  color: alpha(var(--on_surface), .58);
-}
-
-checkbutton.nm-row-autoconnect-check > check,
-.nm-row-autoconnect-check > check,
-checkbutton > check {
-  background: alpha(var(--on_surface), .10);
-  border: 1px solid alpha(var(--on_surface), .28);
-}
-
-checkbutton.nm-row-autoconnect-check:checked > check,
-.nm-row-autoconnect-check:checked > check,
-checkbutton:checked > check {
-  background: var(--selected);
-  border-color: var(--selected);
-  color: #eceff4;
-}
-
-/* Crisper focus ring in forms/entries. */
-.nm-password-entry:focus,
-entry.nm-edit-field-entry:focus,
-.nm-edit-field-entry:focus,
-entry.nm-inline-password-entry:focus,
-.nm-inline-password-entry:focus,
-entry.nm-inline-ssid-entry:focus,
-.nm-inline-ssid-entry:focus,
-dropdown.nm-edit-dropdown:focus-within,
-.nm-edit-dropdown:focus-within {
-  border-color: alpha(var(--primary), .70);
 }
 
 /* Compact popover menu geometry. */
@@ -237,21 +182,4 @@ popover.background listview row.activatable {
 
 .nm-scroll scrollbar slider:hover {
   background: alpha(var(--on_surface), .4);
-}
-
-list.boxed-list.nm-details-rows {
-  border: 1px solid var(--surface_raised);
-  background: var(--surface_soft);
-}
-
-list.boxed-list.nm-details-rows > row {
-  border-bottom: 1px solid var(--surface_raised);
-}
-
-list.boxed-list.nm-details-rows > row:last-child {
-  border-bottom: none;
-}
-
-list.boxed-list.nm-details-rows > row:hover {
-  background: var(--surface_raised);
 }

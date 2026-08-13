@@ -90,6 +90,7 @@ namespace HyprNetworkManager.UI.Views {
             form.append (name_label);
             name_entry = new Gtk.Entry ();
             name_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            name_entry.add_css_class (MainWindowCssClasses.INPUT);
             form.append (name_entry);
 
             var pub_key_label = new Gtk.Label (_("Public Key"));
@@ -98,6 +99,7 @@ namespace HyprNetworkManager.UI.Views {
             form.append (pub_key_label);
             public_key_entry = new Gtk.Entry ();
             public_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            public_key_entry.add_css_class (MainWindowCssClasses.INPUT);
             form.append (public_key_entry);
 
             var endpoint_label = new Gtk.Label (_("Endpoint"));
@@ -108,11 +110,13 @@ namespace HyprNetworkManager.UI.Views {
             var endpoint_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
             endpoint_host_entry = new Gtk.Entry ();
             endpoint_host_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            endpoint_host_entry.add_css_class (MainWindowCssClasses.INPUT);
             endpoint_host_entry.set_hexpand (true);
             endpoint_host_entry.set_placeholder_text (_("Host / IP"));
             var colon = new Gtk.Label (":");
             endpoint_port_entry = new Gtk.Entry ();
             endpoint_port_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            endpoint_port_entry.add_css_class (MainWindowCssClasses.INPUT);
             endpoint_port_entry.set_placeholder_text (_("Port"));
             endpoint_port_entry.set_input_purpose (Gtk.InputPurpose.DIGITS);
             endpoint_port_entry.set_width_chars (6);
@@ -130,6 +134,7 @@ namespace HyprNetworkManager.UI.Views {
             form.append (psk_label);
             preshared_key_entry = new Gtk.Entry ();
             preshared_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            preshared_key_entry.add_css_class (MainWindowCssClasses.INPUT);
             form.append (preshared_key_entry);
 
             var actions = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
@@ -138,8 +143,9 @@ namespace HyprNetworkManager.UI.Views {
 
             var save_btn = new Gtk.Button.with_label (_("Save Peer"));
             save_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            save_btn.add_css_class (MainWindowCssClasses.ACTION);
+            save_btn.add_css_class (MainWindowCssClasses.ACTION_PRIMARY);
             save_btn.add_css_class (MainWindowCssClasses.SUGGESTED_ACTION);
-            save_btn.add_css_class (MainWindowCssClasses.PRIMARY_ACTION_BUTTON);
             save_btn.clicked.connect (() => {
                 string pub_key = public_key_entry.get_text ().strip ();
                 if (pub_key == "") {

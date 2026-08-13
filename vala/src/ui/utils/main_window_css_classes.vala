@@ -62,8 +62,6 @@ namespace MainWindowCssClasses {
     public const string ROW_CONTENT_INSET = "nm-row-content-inset";
     public const string CONNECTED = "connected";
     public const string CONNECTED_INDICATOR = "nm-connected-indicator";
-    public const string ROW_LINK_ACTION = "row-link-action";
-    public const string ROW_ICON_ACTION = "row-icon-action";
     public const string ROW_BUTTON_BOX = "nm-row-button-box";
     public const string WIFI_ROW_BUTTON_BOX = "nm-wifi-row-button-box";
     public const string ROW_RIGHT_BOX = "nm-row-right-box";
@@ -108,7 +106,6 @@ namespace MainWindowCssClasses {
     public const string DROPDOWN_LIST = "nm-dropdown-list";
     public const string DROPDOWN_ROW = "nm-dropdown-row";
     public const string PASSWORD_BOX = "nm-password-box";
-    public const string ROW_AUTOCONNECT_CHECK = "nm-row-autoconnect-check";
 
     // Inline Password Form
     public const string INLINE_PASSWORD = "nm-inline-password";
@@ -123,16 +120,7 @@ namespace MainWindowCssClasses {
     // Buttons
     public const string BUTTON = "nm-button";
     public const string ICON_BUTTON = "nm-icon-button";
-    public const string ACTION_BUTTON = "nm-action-button";
-    public const string PRIMARY_ACTION_BUTTON = "nm-primary-action-button";
-    public const string CONNECT_BUTTON = "nm-connect-button";
-    public const string DISCONNECT_BUTTON = "nm-disconnect-button";
-    public const string DETAILS_BUTTON = "nm-details-button";
     public const string DETAILS_OPEN_BUTTON = "nm-details-open-button";
-    public const string DETAILS_ACTION_BUTTON = "nm-details-action-button";
-    public const string EDIT_BUTTON = "nm-edit-button";
-    public const string DELETE_BUTTON = "nm-delete-button";
-    public const string FORGET_BUTTON = "nm-forget-button";
     public const string REFRESH_BUTTON = "nm-refresh-button";
     public const string REFRESHING = "nm-refreshing";
     public const string ADD_NETWORK_BUTTON = "nm-add-network-button";
@@ -142,6 +130,29 @@ namespace MainWindowCssClasses {
     public const string EDIT_APPLY_BUTTON = "nm-edit-apply-button";
     public const string SUGGESTED_ACTION = "suggested-action";
     public const string NAV_BACK = "nm-nav-back";
+
+    // Generic appearance component bases (public API).
+    // Added alongside existing specialized classes; specialized names remain
+    // emitted as context/modifier hooks during the additive compatibility period.
+    public const string INPUT = "nm-input";
+    public const string SELECT = "nm-select";
+    public const string ROW = "nm-row";
+    public const string DATA_LIST = "nm-data-list";
+    public const string DATA_ROW = "nm-data-row";
+    public const string SECTION = "nm-section";
+    public const string SWITCH = "nm-switch";
+    public const string CHECKBOX = "nm-checkbox";
+
+    // Semantic actions
+    // Base + context (where the action is shown) + intent (what it does).
+    public const string ACTION = "nm-action";
+    public const string ROW_ACTION = "nm-row-action";
+    public const string ROW_ICON_ACTION = "nm-row-icon-action";
+    public const string DETAILS_ACTION = "nm-details-action";
+    public const string ACTION_PRIMARY = "nm-action-primary";
+    public const string ACTION_CONNECT = "nm-action-connect";
+    public const string ACTION_DISCONNECT = "nm-action-disconnect";
+    public const string ACTION_DESTRUCTIVE = "nm-action-destructive";
 
     // Details Pages
     public const string DETAILS_NAV_ROW = "nm-details-nav-row";
@@ -220,7 +231,6 @@ namespace MainWindowCssClasses {
 
     // Custom controls
     public const string WIFI_SWITCH = "nm-wifi-switch";
-    public const string SWITCH = "nm-switch";
     public const string VPN_TYPE_ARROW = "nm-vpn-type-arrow";
 }
 

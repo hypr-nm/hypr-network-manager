@@ -318,8 +318,9 @@ namespace MainWindowWifiRowBuilder {
         action_buttons.set_valign (Gtk.Align.CENTER);
 
         var details_btn = new Gtk.Button ();
-        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
         details_btn.add_css_class (MainWindowCssClasses.BUTTON);
+        details_btn.add_css_class (MainWindowCssClasses.ACTION);
+        details_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
         details_btn.add_css_class (MainWindowCssClasses.DETAILS_OPEN_BUTTON);
         details_btn.set_valign (Gtk.Align.CENTER);
         details_btn.set_tooltip_text (_("Details"));
@@ -336,10 +337,10 @@ namespace MainWindowWifiRowBuilder {
         });
 
         var forget = new Gtk.Button.with_label (_("Forget"));
-        forget.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
         forget.add_css_class (MainWindowCssClasses.BUTTON);
-        forget.add_css_class (MainWindowCssClasses.ACTION_BUTTON);
-        forget.add_css_class (MainWindowCssClasses.FORGET_BUTTON);
+        forget.add_css_class (MainWindowCssClasses.ACTION);
+        forget.add_css_class (MainWindowCssClasses.ROW_ACTION);
+        forget.add_css_class (MainWindowCssClasses.ACTION_DESTRUCTIVE);
         forget.set_valign (Gtk.Align.CENTER);
         forget.clicked.connect (() => {
             // Read the latest network from the row so a Forget issued after a
@@ -368,8 +369,9 @@ namespace MainWindowWifiRowBuilder {
         row.set_data<Gtk.StringList> (RADIO_DROPDOWN_MODEL, retained_radio_model);
 
         var action = new Gtk.Button ();
-        action.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
         action.add_css_class (MainWindowCssClasses.BUTTON);
+        action.add_css_class (MainWindowCssClasses.ACTION);
+        action.add_css_class (MainWindowCssClasses.ROW_ACTION);
         action.set_valign (Gtk.Align.CENTER);
         var initial_target = selected_candidate (row, net);
         update_action_button (action, initial_target, is_connecting);
@@ -480,12 +482,12 @@ namespace MainWindowWifiRowBuilder {
             action.set_tooltip_text (null);
         }
 
-        if (state == WifiActionState.DISCONNECT) {
-            action.add_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
-            action.remove_css_class (MainWindowCssClasses.CONNECT_BUTTON);
-        } else {
-            action.add_css_class (MainWindowCssClasses.CONNECT_BUTTON);
-            action.remove_css_class (MainWindowCssClasses.DISCONNECT_BUTTON);
+        action.remove_css_class (MainWindowCssClasses.ACTION_CONNECT);
+        action.remove_css_class (MainWindowCssClasses.ACTION_DISCONNECT);
+        if (state == WifiActionState.CONNECT) {
+            action.add_css_class (MainWindowCssClasses.ACTION_CONNECT);
+        } else if (state == WifiActionState.DISCONNECT) {
+            action.add_css_class (MainWindowCssClasses.ACTION_DISCONNECT);
         }
     }
 
@@ -535,6 +537,7 @@ namespace MainWindowWifiRowBuilder {
         hidden_ssid_entry.set_hexpand (true);
         hidden_ssid_entry.set_placeholder_text (_("Hidden network name"));
         hidden_ssid_entry.add_css_class (MainWindowCssClasses.INLINE_SSID_ENTRY);
+        hidden_ssid_entry.add_css_class (MainWindowCssClasses.INPUT);
         hidden_ssid_entry.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_ENTRY);
         hidden_ssid_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         hidden_ssid_label.set_visible (requires_hidden_ssid);
@@ -551,6 +554,7 @@ namespace MainWindowWifiRowBuilder {
         identity_entry.set_hexpand (true);
         identity_entry.set_placeholder_text (_("Username / Email"));
         identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        identity_entry.add_css_class (MainWindowCssClasses.INPUT);
         identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         identity_entry.set_visible (is_enterprise);
 
@@ -562,6 +566,7 @@ namespace MainWindowWifiRowBuilder {
             _("Wi-Fi password (min %d chars)").printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
         );
         prompt_entry.add_css_class (MainWindowCssClasses.INLINE_PASSWORD_ENTRY);
+        prompt_entry.add_css_class (MainWindowCssClasses.INPUT);
         prompt_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         prompt_entry.set_visible (net.is_secured);
 
@@ -852,6 +857,7 @@ namespace MainWindowWifiRowBuilder {
         var row = new Gtk.ListBoxRow ();
         row.set_data<WifiNetwork> ("wifi-network", net);
         row.set_data<bool> (WIFI_IS_CONNECTING, is_connecting);
+        row.add_css_class (MainWindowCssClasses.ROW);
         row.add_css_class (MainWindowCssClasses.WIFI_ROW);
         if (is_connected_now) {
             row.add_css_class (MainWindowCssClasses.CONNECTED);
@@ -897,7 +903,7 @@ namespace MainWindowWifiRowBuilder {
         actions_panel.add_css_class (MainWindowCssClasses.ROW_ACTIONS);
 
         var auto_connect = new Gtk.CheckButton.with_label (_("Connect automatically"));
-        auto_connect.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
+        auto_connect.add_css_class (MainWindowCssClasses.CHECKBOX);
         auto_connect.set_active (net.autoconnect);
         auto_connect.set_sensitive (!is_connecting);
         auto_connect.set_hexpand (true);

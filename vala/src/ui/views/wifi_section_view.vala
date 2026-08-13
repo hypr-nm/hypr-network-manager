@@ -344,6 +344,7 @@ namespace HyprNetworkManager.UI.Views {
             add_ssid_entry = new Gtk.Entry ();
             add_ssid_entry.set_placeholder_text (_("Network name"));
             add_ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            add_ssid_entry.add_css_class (MainWindowCssClasses.INPUT);
             add_ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             form.append (add_ssid_entry);
 
@@ -386,6 +387,7 @@ namespace HyprNetworkManager.UI.Views {
                 _("Network password (min %d chars)").printf (HiddenWifiSecurityModeUtils.MIN_PASSWORD_LENGTH)
             );
             add_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            add_password_entry.add_css_class (MainWindowCssClasses.INPUT);
             add_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             add_password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
 

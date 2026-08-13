@@ -173,6 +173,7 @@ namespace MainWindowIpEditFormBuilder {
         );
         if (with_extra_classes) {
             widgets.address_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.address_entry.add_css_class (MainWindowCssClasses.INPUT);
             widgets.address_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         manual_fields.append (widgets.address_entry);
@@ -192,6 +193,7 @@ namespace MainWindowIpEditFormBuilder {
         );
         if (with_extra_classes) {
             widgets.prefix_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.prefix_entry.add_css_class (MainWindowCssClasses.INPUT);
             widgets.prefix_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         manual_fields.append (widgets.prefix_entry);
@@ -211,6 +213,7 @@ namespace MainWindowIpEditFormBuilder {
         );
         if (with_extra_classes) {
             widgets.gateway_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.gateway_entry.add_css_class (MainWindowCssClasses.INPUT);
             widgets.gateway_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         manual_fields.append (widgets.gateway_entry);
@@ -259,8 +262,8 @@ namespace MainWindowIpEditFormBuilder {
         widgets.dns_auto_switch = new Gtk.Switch ();
         widgets.dns_auto_switch.set_valign (Gtk.Align.CENTER);
         widgets.dns_auto_switch.set_active (true);
+        widgets.dns_auto_switch.add_css_class (MainWindowCssClasses.SWITCH);
         if (with_extra_classes) {
-            widgets.dns_auto_switch.add_css_class (MainWindowCssClasses.SWITCH);
             widgets.dns_auto_switch.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
             widgets.dns_auto_switch.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
             widgets.dns_auto_switch.add_css_class (ip_class (is_ipv6, "dns-mode-switch"));
@@ -277,6 +280,7 @@ namespace MainWindowIpEditFormBuilder {
         );
         if (with_extra_classes) {
             widgets.dns_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+            widgets.dns_entry.add_css_class (MainWindowCssClasses.INPUT);
             widgets.dns_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         }
         override_fields.append (widgets.dns_entry);

@@ -38,8 +38,9 @@ namespace HyprNetworkManager.UI.Widgets {
             header_box.append (title);
 
             var add_btn = new Gtk.Button.with_label (_("Add Peer"));
-            add_btn.add_css_class (MainWindowCssClasses.ROW_LINK_ACTION);
             add_btn.add_css_class (MainWindowCssClasses.BUTTON);
+            add_btn.add_css_class (MainWindowCssClasses.ACTION);
+            add_btn.add_css_class (MainWindowCssClasses.ROW_ACTION);
             add_btn.add_css_class (MainWindowCssClasses.EDIT_MODE_SWITCH);
             add_btn.set_valign (Gtk.Align.CENTER);
             add_btn.clicked.connect (() => {
@@ -51,6 +52,7 @@ namespace HyprNetworkManager.UI.Widgets {
             listbox = new Gtk.ListBox ();
             listbox.set_selection_mode (Gtk.SelectionMode.NONE);
             listbox.add_css_class ("boxed-list");
+            listbox.add_css_class (MainWindowCssClasses.DATA_LIST);
             listbox.add_css_class (MainWindowCssClasses.DETAILS_ROWS);
             listbox.set_vexpand (false);
             listbox.set_valign (Gtk.Align.START);
@@ -96,6 +98,7 @@ namespace HyprNetworkManager.UI.Widgets {
                 
                 var row = new Gtk.ListBoxRow ();
                 row.set_selectable (false);
+                row.add_css_class (MainWindowCssClasses.DATA_ROW);
                 
                 var card = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
                 card.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
@@ -144,6 +147,8 @@ namespace HyprNetworkManager.UI.Widgets {
                 actions_box.set_valign (Gtk.Align.CENTER);
                 
                 var edit_btn = new Gtk.Button.from_icon_name ("document-edit-symbolic");
+                edit_btn.add_css_class (MainWindowCssClasses.BUTTON);
+                edit_btn.add_css_class (MainWindowCssClasses.ACTION);
                 edit_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
                 edit_btn.clicked.connect (() => {
                     edit_peer_requested (index, p);
@@ -151,8 +156,10 @@ namespace HyprNetworkManager.UI.Widgets {
                 actions_box.append (edit_btn);
 
                 var del_btn = new Gtk.Button.from_icon_name ("user-trash-symbolic");
+                del_btn.add_css_class (MainWindowCssClasses.BUTTON);
+                del_btn.add_css_class (MainWindowCssClasses.ACTION);
                 del_btn.add_css_class (MainWindowCssClasses.ROW_ICON_ACTION);
-                del_btn.add_css_class (MainWindowCssClasses.DELETE_BUTTON);
+                del_btn.add_css_class (MainWindowCssClasses.ACTION_DESTRUCTIVE);
                 del_btn.clicked.connect (() => {
                     delete_peer (index);
                 });

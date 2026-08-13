@@ -76,9 +76,9 @@ namespace MainWindowHelpers {
     }
 
     public static Gtk.Widget build_details_row (string? key, string? value) {
-        var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
-        row.add_css_class (MainWindowCssClasses.DETAILS_ITEM);
-        row.add_css_class (MainWindowCssClasses.DETAILS_ROW);
+        var content = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
+        content.add_css_class (MainWindowCssClasses.DETAILS_ITEM);
+        content.add_css_class (MainWindowCssClasses.DETAILS_ROW);
 
         string key_text = display_text_or_na (key);
         string value_text = display_text_or_na (value);
@@ -100,12 +100,22 @@ namespace MainWindowHelpers {
         value_label.add_css_class (MainWindowCssClasses.DETAILS_ITEM_VALUE);
         value_label.add_css_class (MainWindowCssClasses.DETAILS_VALUE);
 
-        row.append (key_label);
-        row.append (value_label);
+        content.append (key_label);
+        content.append (value_label);
+
+        // Keep the public component base on the node that owns the visible row
+        // surface. This lets `.nm-data-row { --nm-data-row-*: ...; }` scope the
+        // internal ListBoxRow adapter without relying on tokens flowing upward
+        // from a child content box.
+        var row = new Gtk.ListBoxRow ();
+        row.set_selectable (false);
+        row.add_css_class (MainWindowCssClasses.DATA_ROW);
+        row.set_child (content);
         return row;
     }
 public Gtk.Widget build_details_section (string title, out Gtk.ListBox rows_container) {
     var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+    section.add_css_class (MainWindowCssClasses.SECTION);
     section.add_css_class (MainWindowCssClasses.DETAILS_SECTION);
 
     var heading = new Gtk.Label (title);
@@ -117,6 +127,7 @@ public Gtk.Widget build_details_section (string title, out Gtk.ListBox rows_cont
     rows_container = new Gtk.ListBox ();
     rows_container.set_selection_mode (Gtk.SelectionMode.NONE);
     rows_container.add_css_class ("boxed-list");
+    rows_container.add_css_class (MainWindowCssClasses.DATA_LIST);
     rows_container.add_css_class (MainWindowCssClasses.DETAILS_ROWS);
     section.append (rows_container);
 
@@ -133,6 +144,7 @@ public Gtk.Box build_collapsible_section (
     bool has_extra = extra_class != null && extra_class != "";
 
     var container = new Gtk.Box (Gtk.Orientation.VERTICAL, spacing);
+    container.add_css_class (MainWindowCssClasses.SECTION);
     container.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
     if (has_extra) {
         container.add_css_class (extra_class);

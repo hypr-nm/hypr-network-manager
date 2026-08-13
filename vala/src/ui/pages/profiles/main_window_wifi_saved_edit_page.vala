@@ -406,6 +406,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
     private Gtk.Box build_section (string title, out Gtk.Box section_content) {
         var section = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_HEADER);
+        section.add_css_class (MainWindowCssClasses.SECTION);
         section.add_css_class (MainWindowCssClasses.EDIT_COLLAPSIBLE);
 
         var heading = new Gtk.Label (title);
@@ -474,6 +475,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.profile_name_entry = new Gtk.Entry ();
         this.profile_name_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.profile_name_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.profile_name_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         profile_content.append (this.profile_name_entry);
 
@@ -484,6 +486,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.ssid_entry = new Gtk.Entry ();
         this.ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.ssid_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.ssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         profile_content.append (this.ssid_entry);
 
@@ -494,6 +497,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.bssid_entry = new Gtk.Entry ();
         this.bssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.bssid_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.bssid_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         profile_content.append (this.bssid_entry);
 
@@ -521,6 +525,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.identity_entry = new Gtk.Entry ();
         this.identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.identity_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.identity_entry.set_visible (false);
 
@@ -531,6 +536,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.anonymous_identity_entry = new Gtk.Entry ();
         this.anonymous_identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.anonymous_identity_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.anonymous_identity_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.anonymous_identity_entry.set_visible (false);
 
@@ -541,6 +547,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.domain_entry = new Gtk.Entry ();
         this.domain_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.domain_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.domain_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.domain_entry.set_visible (false);
 
@@ -551,6 +558,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.ca_cert_entry = new Gtk.Entry ();
         this.ca_cert_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.ca_cert_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.ca_cert_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.ca_cert_entry.set_visible (false);
 
@@ -563,6 +571,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.ca_cert_password_entry.set_visibility (false);
         this.ca_cert_password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         this.ca_cert_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.ca_cert_password_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.ca_cert_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.ca_cert_password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         this.ca_cert_password_entry.set_visible (false);
@@ -574,6 +583,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.user_cert_entry = new Gtk.Entry ();
         this.user_cert_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.user_cert_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.user_cert_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.user_cert_entry.set_visible (false);
 
@@ -586,6 +596,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.user_cert_password_entry.set_visibility (false);
         this.user_cert_password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         this.user_cert_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.user_cert_password_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.user_cert_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.user_cert_password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         this.user_cert_password_entry.set_visible (false);
@@ -597,6 +608,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
 
         this.user_private_key_entry = new Gtk.Entry ();
         this.user_private_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.user_private_key_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.user_private_key_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.user_private_key_entry.set_visible (false);
 
@@ -609,6 +621,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.user_private_key_password_entry.set_visibility (false);
         this.user_private_key_password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         this.user_private_key_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.user_private_key_password_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.user_private_key_password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.user_private_key_password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         this.user_private_key_password_entry.set_visible (false);
@@ -658,11 +671,11 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         var access_section = build_section (_("Access"), out access_content);
 
         this.autoconnect_check = new Gtk.CheckButton.with_label (_("Connect automatically"));
-        this.autoconnect_check.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
+        this.autoconnect_check.add_css_class (MainWindowCssClasses.CHECKBOX);
         access_content.append (this.autoconnect_check);
 
         this.all_users_check = new Gtk.CheckButton.with_label (_("Available to all users"));
-        this.all_users_check.add_css_class (MainWindowCssClasses.ROW_AUTOCONNECT_CHECK);
+        this.all_users_check.add_css_class (MainWindowCssClasses.CHECKBOX);
         access_content.append (this.all_users_check);
 
         form.append (access_section);
@@ -702,6 +715,7 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.password_entry.set_visibility (false);
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         this.password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
+        this.password_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
         this.password_entry.set_icon_activatable (Gtk.EntryIconPosition.SECONDARY, true);

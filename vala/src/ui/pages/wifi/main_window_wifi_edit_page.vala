@@ -134,6 +134,7 @@ public class MainWindowWifiEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.password_entry.set_input_purpose (Gtk.InputPurpose.PASSWORD);
         this.password_entry.set_placeholder_text (_("Password"));
         this.password_entry.add_css_class (MainWindowCssClasses.EDIT_PASSWORD_ENTRY);
+        this.password_entry.add_css_class (MainWindowCssClasses.INPUT);
         this.password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
         this.password_entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_CONTROL);
         this.password_entry.add_css_class (MainWindowCssClasses.PASSWORD_ENTRY);
