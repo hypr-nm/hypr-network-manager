@@ -21,6 +21,19 @@ using GLib;
 namespace NmHotspotUtils {
     public const string CONNECTION_ID_PREFIX = "hypr-network-manager hotspot: ";
 
+    public bool access_point_matches_hotspot (
+        string access_point_ssid,
+        string access_point_bssid,
+        string hotspot_ssid,
+        string hotspot_bssid
+    ) {
+        string normalized_hotspot_bssid = hotspot_bssid.strip ().ascii_down ();
+        if (normalized_hotspot_bssid != "") {
+            return access_point_bssid.strip ().ascii_down () == normalized_hotspot_bssid;
+        }
+        return hotspot_ssid != "" && access_point_ssid == hotspot_ssid;
+    }
+
     private struct NetworkMask {
         public uint32 network;
         public uint32 mask;

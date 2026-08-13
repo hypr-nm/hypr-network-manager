@@ -236,8 +236,8 @@ public class NetworkManagerClient : GLib.Object,
     }
 
     public async WifiRefreshData get_wifi_refresh_data (Cancellable? cancellable = null) throws Error {
-        var scan = yield wifi_scanner.scan_networks (cancellable);
         var hotspot_config = yield hotspot.get_hotspot_status (cancellable);
+        var scan = yield wifi_scanner.scan_networks (cancellable, hotspot_config);
         return new WifiRefreshData (
             scan.networks,
             scan.devices,

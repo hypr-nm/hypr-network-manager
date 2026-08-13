@@ -17,9 +17,20 @@
 
 using Constants;
 using GLib;
+using HyprNetworkManager.Models;
 
 private class WifiNetworkCandidateGroup : GLib.Object {
     public List<WifiNetwork> candidates = new List<WifiNetwork> ();
+}
+
+private class OwnedHotspotScanIdentity : GLib.Object {
+    public string ssid;
+    public string bssid;
+
+    public OwnedHotspotScanIdentity (string ssid, string bssid) {
+        this.ssid = ssid;
+        this.bssid = bssid;
+    }
 }
 
 public class WifiScannerService : GLib.Object {
@@ -27,6 +38,93 @@ public class WifiScannerService : GLib.Object {
 
     public WifiScannerService (NM.Client client) {
         this.client = client;
+    }
+
+    private List<OwnedHotspotScanIdentity> active_hotspot_identities (
+        HotspotConfig? configured_hotspot
+    ) {
+        var identities = new List<OwnedHotspotScanIdentity> ();
+
+        foreach (var active in client.get_active_connections ()) {
+            if (active.get_state () != NM.ActiveConnectionState.ACTIVATED
+                && active.get_state () != NM.ActiveConnectionState.ACTIVATING) {
+                continue;
+            }
+
+            var connection = active.get_connection ();
+            string configured_ssid = configured_hotspot != null
+                ? configured_hotspot.ssid
+                : "";
+            if (connection == null
+                || !NmHotspotUtils.is_owned_connection (connection, configured_ssid)) {
+                continue;
+            }
+
+            var wireless = connection.get_setting_wireless ();
+            if (wireless == null || wireless.mode != "ap") {
+                continue;
+            }
+            string ssid = NmWifiUtils.bytes_to_ssid (wireless.ssid);
+
+            bool found_wifi_device = false;
+            foreach (var device in active.get_devices ()) {
+                if (device is NM.DeviceWifi == false) {
+                    continue;
+                }
+                found_wifi_device = true;
+                var wifi_device = (NM.DeviceWifi) device;
+                var active_ap = wifi_device.get_active_access_point ();
+                string bssid = active_ap != null && active_ap.get_bssid () != null
+                    ? active_ap.get_bssid ()
+                    : (wifi_device.get_hw_address () != null
+                        ? wifi_device.get_hw_address ()
+                        : "");
+                identities.append (new OwnedHotspotScanIdentity (ssid, bssid));
+            }
+
+            if (!found_wifi_device) {
+                identities.append (new OwnedHotspotScanIdentity (ssid, ""));
+            }
+        }
+
+        if (configured_hotspot != null
+            && configured_hotspot.is_active
+            && configured_hotspot.ssid != "") {
+            bool already_identified = false;
+            foreach (var identity in identities) {
+                if (identity.ssid == configured_hotspot.ssid) {
+                    already_identified = true;
+                    break;
+                }
+            }
+            if (!already_identified) {
+                // create_ap does not expose an NM.ActiveConnection. Its persisted,
+                // verified active SSID is the strongest identity available.
+                identities.append (new OwnedHotspotScanIdentity (
+                    configured_hotspot.ssid,
+                    ""
+                ));
+            }
+        }
+
+        return identities;
+    }
+
+    private bool is_owned_hotspot_access_point (
+        string ssid,
+        string bssid,
+        List<OwnedHotspotScanIdentity> identities
+    ) {
+        foreach (var identity in identities) {
+            if (NmHotspotUtils.access_point_matches_hotspot (
+                    ssid,
+                    bssid,
+                    identity.ssid,
+                    identity.bssid)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static int candidate_preference_rank (WifiNetwork candidate) {
@@ -104,9 +202,13 @@ public class WifiScannerService : GLib.Object {
         };
     }
 
-    public async WifiScanData scan_networks (Cancellable? cancellable = null) throws Error {
+    public async WifiScanData scan_networks (
+        Cancellable? cancellable = null,
+        HotspotConfig? configured_hotspot = null
+    ) throws Error {
         var devices = client.get_devices ();
         var connections = client.get_connections ();
+        var hotspot_identities = active_hotspot_identities (configured_hotspot);
 
         var per_device_networks = new HashTable<string, WifiNetwork> (str_hash, str_equal);
         var devices_out = new List<NetworkDevice> ();
@@ -132,6 +234,14 @@ public class WifiScannerService : GLib.Object {
             uint hidden_total = 0;
             foreach (var ap in aps) {
                 var ssid_bytes = ap.get_ssid ();
+                string ssid = NmWifiUtils.bytes_to_ssid (ssid_bytes);
+                string bssid = ap.get_bssid () != null ? ap.get_bssid () : "";
+                if (is_owned_hotspot_access_point (
+                        ssid,
+                        bssid,
+                        hotspot_identities)) {
+                    continue;
+                }
                 if (ssid_bytes == null || NM.Utils.is_empty_ssid (ssid_bytes.get_data ())) {
                     hidden_total++;
                 }
@@ -141,6 +251,14 @@ public class WifiScannerService : GLib.Object {
             foreach (var ap in aps) {
                 var ssid_bytes = ap.get_ssid ();
                 string ssid = NmWifiUtils.bytes_to_ssid (ssid_bytes);
+                string ap_bssid = ap.get_bssid () != null ? ap.get_bssid () : "";
+
+                if (is_owned_hotspot_access_point (
+                        ssid,
+                        ap_bssid,
+                        hotspot_identities)) {
+                    continue;
+                }
 
                 bool is_hidden = ssid_bytes == null || NM.Utils.is_empty_ssid (ssid_bytes.get_data ());
 
@@ -157,8 +275,6 @@ public class WifiScannerService : GLib.Object {
                 string saved_uuid = "";
                 bool autoconnect = true;
                 NM.Connection? preferred_profile = null;
-                string ap_bssid = ap.get_bssid () != null ? ap.get_bssid () : "";
-
                 var caps = HyprNetworkManager.Backend.Mappers.WifiSecurityMapper.map_capabilities (
                     ap.get_flags (),
                     ap.get_wpa_flags (),

@@ -82,6 +82,39 @@ private static void test_open_auto_profile () {
     assert (conn.get_setting_wireless_security () == null);
 }
 
+private static void test_hotspot_access_point_matching () {
+    assert (NmHotspotUtils.access_point_matches_hotspot (
+        "Managed AP",
+        "AA:BB:CC:DD:EE:FF",
+        "Managed AP",
+        "aa:bb:cc:dd:ee:ff"
+    ));
+    assert (NmHotspotUtils.access_point_matches_hotspot (
+        "",
+        "AA:BB:CC:DD:EE:FF",
+        "Hidden managed AP",
+        "aa:bb:cc:dd:ee:ff"
+    ));
+    assert (!NmHotspotUtils.access_point_matches_hotspot (
+        "Managed AP",
+        "11:22:33:44:55:66",
+        "Managed AP",
+        "aa:bb:cc:dd:ee:ff"
+    ));
+    assert (NmHotspotUtils.access_point_matches_hotspot (
+        "Managed AP",
+        "",
+        "Managed AP",
+        ""
+    ));
+    assert (!NmHotspotUtils.access_point_matches_hotspot (
+        "Other AP",
+        "",
+        "Managed AP",
+        ""
+    ));
+}
+
 private static void test_legacy_profile_recognition () {
     var conn = (NM.SimpleConnection) NM.SimpleConnection.@new ();
     var s_con = new NM.SettingConnection ();
@@ -197,6 +230,9 @@ private static int main (string[] args) {
     Test.init (ref args);
     Test.add_func ("/nm-hotspot/profile/wpa", test_wpa_profile);
     Test.add_func ("/nm-hotspot/profile/open-auto", test_open_auto_profile);
+    Test.add_func (
+        "/nm-hotspot/access-point-matching",
+        test_hotspot_access_point_matching);
     Test.add_func (
         "/nm-hotspot/profile/legacy-recognition",
         test_legacy_profile_recognition);
