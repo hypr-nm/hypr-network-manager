@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hypr-network-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 20:36+0300\n"
+"POT-Creation-Date: 2026-08-13 20:47+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -387,7 +387,7 @@ msgid "SSID is required."
 msgstr ""
 
 #: vala/src/ui/controllers/wifi/main_window_wifi_controller.vala:378
-#: vala/src/ui/views/wifi_section_view.vala:467
+#: vala/src/ui/views/wifi_section_view.vala:468
 msgid "Select a Wi-Fi radio."
 msgstr ""
 
@@ -524,7 +524,7 @@ msgstr ""
 #: vala/src/ui/pages/vpn/main_window_vpn_page_builder.vala:194
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:466
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:592
-#: vala/src/ui/views/wifi_section_view.vala:401
+#: vala/src/ui/views/wifi_section_view.vala:402
 msgid "Connect"
 msgstr ""
 
@@ -622,7 +622,7 @@ msgstr ""
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:127
 #: vala/src/ui/pages/profiles/main_window_wifi_saved_edit_page.vala:482
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:530
-#: vala/src/ui/views/wifi_section_view.vala:371
+#: vala/src/ui/views/wifi_section_view.vala:372
 msgid "SSID"
 msgstr ""
 
@@ -641,7 +641,7 @@ msgstr ""
 #: vala/src/ui/pages/profiles/main_window_profiles_details_page.vala:169
 #: vala/src/ui/pages/wifi/main_window_wifi_details_page.vala:64
 #: vala/src/ui/views/hotspot_section_view.vala:249
-#: vala/src/ui/views/wifi_section_view.vala:384
+#: vala/src/ui/views/wifi_section_view.vala:385
 msgid "Security"
 msgstr ""
 
@@ -895,7 +895,7 @@ msgstr ""
 #: vala/src/ui/pages/wifi/main_window_wifi_edit_page.vala:135
 #: vala/src/ui/views/hotspot_section_view.vala:209
 #: vala/src/ui/views/hotspot_section_view.vala:387
-#: vala/src/ui/views/wifi_section_view.vala:410
+#: vala/src/ui/views/wifi_section_view.vala:411
 msgid "Password"
 msgstr ""
 
@@ -1171,7 +1171,7 @@ msgid "Add Network"
 msgstr ""
 
 #: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:77
-#: vala/src/ui/views/wifi_section_view.vala:314
+#: vala/src/ui/views/wifi_section_view.vala:315
 msgid "Add Hidden Network"
 msgstr ""
 
@@ -1180,7 +1180,7 @@ msgid "Other Networks"
 msgstr ""
 
 #: vala/src/ui/pages/wifi/main_window_wifi_page_builder.vala:170
-#: vala/src/ui/views/wifi_section_view.vala:792
+#: vala/src/ui/views/wifi_section_view.vala:796
 msgid "No Wi-Fi networks found"
 msgstr ""
 
@@ -1199,7 +1199,7 @@ msgid "Manage Hotspot"
 msgstr ""
 
 #: vala/src/ui/pages/wifi/main_window_wifi_row_builder.vala:93
-#: vala/src/ui/views/wifi_section_view.vala:516
+#: vala/src/ui/views/wifi_section_view.vala:517
 msgid "Wi-Fi device"
 msgstr ""
 
@@ -1643,44 +1643,44 @@ msgstr ""
 msgid "Loading networks…"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:337
+#: vala/src/ui/views/wifi_section_view.vala:338
 msgid "Manually add a hidden Wi-Fi network."
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:344
+#: vala/src/ui/views/wifi_section_view.vala:345
 msgid "Wi-Fi radio"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:351
-#: vala/src/ui/views/wifi_section_view.vala:557
+#: vala/src/ui/views/wifi_section_view.vala:352
+#: vala/src/ui/views/wifi_section_view.vala:558
 msgid "No Wi-Fi radios available"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:378
+#: vala/src/ui/views/wifi_section_view.vala:379
 msgid "Network name"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:420
+#: vala/src/ui/views/wifi_section_view.vala:421
 #, c-format
 msgid "Network password (min %d chars)"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:523
+#: vala/src/ui/views/wifi_section_view.vala:524
 #, c-format
 msgid "%s · %s"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:809
+#: vala/src/ui/views/wifi_section_view.vala:813
 #, c-format
 msgid "Wi-Fi · %s (%u%%)"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:815
+#: vala/src/ui/views/wifi_section_view.vala:819
 #, c-format
 msgid "Wi-Fi · %s"
 msgstr ""
 
-#: vala/src/ui/views/wifi_section_view.vala:819
+#: vala/src/ui/views/wifi_section_view.vala:823
 #, c-format
 msgid "Wi-Fi available (%u networks)"
 msgstr ""
