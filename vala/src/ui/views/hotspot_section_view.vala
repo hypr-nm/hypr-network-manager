@@ -54,6 +54,7 @@ namespace HyprNetworkManager.UI.Views {
         private uint scroll_tick_id = 0;
         private uint poll_source_id = 0;
         private uint band_query_generation = 0;
+        private bool updating_interface_models = false;
 
         private uint ui_epoch = 1;
         private bool fetch_status_in_flight = false;
@@ -495,6 +496,9 @@ namespace HyprNetworkManager.UI.Views {
             if (ap_interface_dropdown != null) {
                 ap_interface_dropdown.notify_selected.connect (validate_inputs);
                 ap_interface_dropdown.notify_selected.connect (() => {
+                    if (updating_interface_models) {
+                        return;
+                    }
                     string tok = get_ap_interface_token ();
                     log_debug ("hotspot-ui",
                         "ap_interface notify_selected: token='%s' -> rebuilding band".printf (tok));
@@ -512,10 +516,25 @@ namespace HyprNetworkManager.UI.Views {
                 return "";
             }
             uint idx = ap_interface_dropdown.get_selected ();
+            if (idx >= this.ap_model.get_n_items ()) {
+                return NetworkInterface.AUTO;
+            }
             if (idx == Constants.DropdownIndex.AUTO) {
                 return NetworkInterface.AUTO;
             }
             return this.ap_model.get_string (idx);
+        }
+
+        private uint ap_interface_index_for_token (string token) {
+            if (token == "" || token == NetworkInterface.AUTO) {
+                return Constants.DropdownIndex.AUTO;
+            }
+            for (uint i = 1; i < this.ap_model.get_n_items (); i++) {
+                if (this.ap_model.get_string (i) == token) {
+                    return i;
+                }
+            }
+            return Constants.DropdownIndex.AUTO;
         }
 
         private void rebuild_band_options (string ap_iface) {
@@ -609,6 +628,9 @@ namespace HyprNetworkManager.UI.Views {
                 return "";
             }
             uint idx = uplink_interface_dropdown.get_selected ();
+            if (idx >= this.uplink_model.get_n_items ()) {
+                return NetworkInterface.AUTO;
+            }
             if (idx == Constants.DropdownIndex.AUTO) {
                 return NetworkInterface.AUTO;
             }
@@ -616,6 +638,87 @@ namespace HyprNetworkManager.UI.Views {
                 return NetworkInterface.NONE;
             }
             return this.uplink_model.get_string (idx);
+        }
+
+        private uint uplink_index_for_token (string token) {
+            if (token == "" || token == NetworkInterface.AUTO) {
+                return Constants.DropdownIndex.AUTO;
+            }
+            if (token == NetworkInterface.NONE) {
+                return Constants.DropdownIndex.NONE;
+            }
+            for (uint i = 2; i < this.uplink_model.get_n_items (); i++) {
+                if (this.uplink_model.get_string (i) == token) {
+                    return i;
+                }
+            }
+            return Constants.DropdownIndex.AUTO;
+        }
+
+        private bool string_model_matches (Gtk.StringList model, string[] expected) {
+            if (model.get_n_items () != expected.length) {
+                return false;
+            }
+            for (uint i = 0; i < expected.length; i++) {
+                if (model.get_string (i) != expected[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void refresh_interface_models () {
+            string previous_ap_token = get_ap_interface_token ();
+            string previous_uplink_token = get_uplink_token ();
+
+            string[] ap_items = { _("Auto") };
+            foreach (string iface in controller.get_wifi_interfaces ()) {
+                ap_items += iface;
+            }
+
+            string[] uplink_items = { _("Auto"), _("None") };
+            if (this.uplink_model != null) {
+                foreach (string iface in controller.get_all_interfaces ()) {
+                    uplink_items += iface;
+                }
+            }
+
+            bool ap_changed = !string_model_matches (this.ap_model, ap_items);
+            bool uplink_changed = this.uplink_model != null
+                && !string_model_matches (this.uplink_model, uplink_items);
+            if (!ap_changed && !uplink_changed) {
+                return;
+            }
+
+            bool was_updating = is_updating;
+            bool was_dirty = is_dirty;
+            is_updating = true;
+            updating_interface_models = true;
+
+            if (ap_changed) {
+                this.ap_model.splice (0, this.ap_model.get_n_items (), ap_items);
+                ap_interface_dropdown.set_selected (
+                    ap_interface_index_for_token (previous_ap_token)
+                );
+            }
+            if (uplink_changed) {
+                this.uplink_model.splice (0, this.uplink_model.get_n_items (), uplink_items);
+                uplink_interface_dropdown.set_selected (
+                    uplink_index_for_token (previous_uplink_token)
+                );
+            }
+
+            updating_interface_models = false;
+            is_updating = was_updating;
+            is_dirty = was_dirty;
+
+            if (ap_changed) {
+                rebuild_band_options (get_ap_interface_token ());
+            }
+            if (!was_updating) {
+                validate_inputs ();
+                is_dirty = was_dirty;
+            }
         }
 
         private HotspotRequest build_current_request () {
@@ -746,6 +849,11 @@ namespace HyprNetworkManager.UI.Views {
         }
 
         public void perform_refresh () {
+            // NM.Client's device collection is live. Synchronize these models on
+            // every visible-page/status refresh so hot-plugged interfaces appear
+            // without restarting, while avoiding model churn when unchanged.
+            refresh_interface_models ();
+
             if (fetch_status_in_flight) {
                 fetch_status_queued = true;
                 return;
@@ -813,44 +921,16 @@ namespace HyprNetworkManager.UI.Views {
                     if (ap_interface_dropdown != null && this.ap_model != null) {
                         // "Auto" / "" maps to the synthetic first row; any other
                         // stored value is a raw interface name matched from 1+.
-                        if (config.ap_interface == ""
-                            || config.ap_interface == NetworkInterface.AUTO) {
-                            ap_interface_dropdown.set_selected (0);
-                        } else {
-                            bool found = false;
-                            for (uint i = 1; i < this.ap_model.get_n_items (); i++) {
-                                if (this.ap_model.get_string (i) == config.ap_interface) {
-                                    ap_interface_dropdown.set_selected (i);
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!found) {
-                                ap_interface_dropdown.set_selected (0);
-                            }
-                        }
+                        ap_interface_dropdown.set_selected (
+                            ap_interface_index_for_token (config.ap_interface)
+                        );
                     }
 
                     if (uplink_interface_dropdown != null && this.uplink_model != null) {
                         // Fixed semantics: 0 = Auto, 1 = None, 2+ = interfaces.
-                        if (config.uplink_interface == ""
-                            || config.uplink_interface == NetworkInterface.AUTO) {
-                            uplink_interface_dropdown.set_selected (0);
-                        } else if (config.uplink_interface == NetworkInterface.NONE) {
-                            uplink_interface_dropdown.set_selected (1);
-                        } else {
-                            bool found = false;
-                            for (uint i = 2; i < this.uplink_model.get_n_items (); i++) {
-                                if (this.uplink_model.get_string (i) == config.uplink_interface) {
-                                    uplink_interface_dropdown.set_selected (i);
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!found) {
-                                uplink_interface_dropdown.set_selected (0);
-                            }
-                        }
+                        uplink_interface_dropdown.set_selected (
+                            uplink_index_for_token (config.uplink_interface)
+                        );
                     }
                 }
 

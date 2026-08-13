@@ -7,6 +7,8 @@ using HyprNetworkManager.Models;
 
 private class FakeHotspotClient : Object, IHotspotClient {
     public bool create_ap_available = false;
+    public string[] all_interfaces = { "wlan0", "eth0" };
+    public string[] wifi_interfaces = { "wlan0" };
 
     public async HotspotConfig get_hotspot_status (
         Cancellable? cancellable = null
@@ -42,11 +44,11 @@ private class FakeHotspotClient : Object, IHotspotClient {
     }
 
     public string[] get_all_interfaces () {
-        return { "wlan0", "eth0" };
+        return all_interfaces;
     }
 
     public string[] get_wifi_interfaces () {
-        return { "wlan0" };
+        return wifi_interfaces;
     }
 
     public async WifiBandSupport get_wifi_band_support_async (
@@ -115,6 +117,24 @@ private static void test_timeout_shutdown_retry_policy () {
     assert (HotspotTimeoutPolicy.idle_minutes_after_shutdown (false, 5) == 5);
 }
 
+private static void test_interface_discovery_is_live () {
+    var fake = new FakeHotspotClient ();
+    var controller = new MainWindowHotspotController (fake);
+
+    assert (controller.get_wifi_interfaces ().length == 1);
+    assert (controller.get_all_interfaces ().length == 2);
+
+    fake.wifi_interfaces = { "wlan0", "wlan1" };
+    fake.all_interfaces = { "wlan0", "wlan1", "eth0", "usb0" };
+
+    string[] wifi = controller.get_wifi_interfaces ();
+    string[] all = controller.get_all_interfaces ();
+    assert (wifi.length == 2);
+    assert (wifi[1] == "wlan1");
+    assert (all.length == 4);
+    assert (all[3] == "usb0");
+}
+
 public static int main (string[] args) {
     Test.init (ref args);
     Test.add_func ("/hotspot-controller/request-mapping", test_request_mapping);
@@ -125,6 +145,10 @@ public static int main (string[] args) {
     Test.add_func (
         "/hotspot-controller/timeout-shutdown-retry-policy",
         test_timeout_shutdown_retry_policy
+    );
+    Test.add_func (
+        "/hotspot-controller/interface-discovery-is-live",
+        test_interface_discovery_is_live
     );
     return Test.run ();
 }
