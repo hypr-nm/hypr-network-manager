@@ -87,9 +87,11 @@ public class SavedProfileService : GLib.Object {
             }
             settings.phase2_auth = s_8021x.phase2_auth != null ? s_8021x.phase2_auth : "";
             settings.user_cert = s_8021x.get_client_cert_path () != null ? s_8021x.get_client_cert_path () : "";
-            settings.user_cert_password = s_8021x.get_client_cert_password () != null ? s_8021x.get_client_cert_password () : "";
+            settings.user_cert_password = s_8021x.get_client_cert_password () != null ?
+              s_8021x.get_client_cert_password () : "";
             settings.user_private_key = s_8021x.get_private_key_path () != null ? s_8021x.get_private_key_path () : "";
-            settings.user_private_key_password = s_8021x.get_private_key_password () != null ? s_8021x.get_private_key_password () : "";
+            settings.user_private_key_password = s_8021x.get_private_key_password () != null ?
+              s_8021x.get_private_key_password () : "";
         }
 
         var ip_settings = yield get_configured_ip_settings_by_connection_uuid (
@@ -127,9 +129,11 @@ public class SavedProfileService : GLib.Object {
             s.set_client_cert ((string?) null, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
         }
         if (eap.user_private_key != null && eap.user_private_key.strip () != "") {
-            s.set_private_key (eap.user_private_key.strip (), eap.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+            s.set_private_key (eap.user_private_key.strip (), eap.user_private_key_password,
+                NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
         } else {
-            s.set_private_key ((string?) null, eap.user_private_key_password, NM.Setting8021xCKScheme.PATH, NM.Setting8021xCKFormat.UNKNOWN);
+            s.set_private_key ((string?) null, eap.user_private_key_password, NM.Setting8021xCKScheme.PATH,
+                NM.Setting8021xCKFormat.UNKNOWN);
         }
     }
 

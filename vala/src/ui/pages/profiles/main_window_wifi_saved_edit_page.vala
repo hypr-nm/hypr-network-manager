@@ -355,8 +355,9 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         }
 
         string eap_method = this.get_selected_eap_method_key ();
-        
-        bool show_identity = eap_method == EapMethod.PEAP || eap_method == EapMethod.TLS || eap_method == EapMethod.TTLS || eap_method == EapMethod.PWD;
+
+        bool show_identity = eap_method == EapMethod.PEAP || eap_method == EapMethod.TLS |
+            eap_method == EapMethod.TTLS || eap_method == EapMethod.PWD;
         bool show_anonymous_identity = eap_method == EapMethod.PEAP || eap_method == EapMethod.TTLS;
         bool show_domain = eap_method == EapMethod.PEAP || eap_method == EapMethod.TLS;
         bool show_ca_cert = eap_method == EapMethod.PEAP || eap_method == EapMethod.TLS || eap_method == EapMethod.TTLS;
@@ -364,42 +365,45 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         bool show_user_private_key = eap_method == EapMethod.TLS;
         bool show_user_private_key_password = eap_method == EapMethod.TLS;
         bool show_phase2_auth = eap_method == EapMethod.PEAP || eap_method == EapMethod.TTLS;
-        bool show_password = eap_method == EapMethod.PEAP || eap_method == EapMethod.TTLS || eap_method == EapMethod.PWD;
+        bool show_password = eap_method == EapMethod.PEAP || eap_method == EapMethod.TTLS |
+            eap_method == EapMethod.PWD;
 
         if (this.identity_label != null) {
             this.identity_label.set_text (eap_method == EapMethod.TLS ? _("Identity") : _("Username"));
             this.identity_label.set_visible (show_identity);
         }
         if (this.identity_entry != null) this.identity_entry.set_visible (show_identity);
-        
+
         if (this.anonymous_identity_label != null) this.anonymous_identity_label.set_visible (show_anonymous_identity);
         if (this.anonymous_identity_entry != null) this.anonymous_identity_entry.set_visible (show_anonymous_identity);
-        
+
         if (this.domain_label != null) this.domain_label.set_visible (show_domain);
         if (this.domain_entry != null) this.domain_entry.set_visible (show_domain);
-        
+
         if (this.ca_cert_label != null) this.ca_cert_label.set_visible (show_ca_cert);
         if (this.ca_cert_entry != null) this.ca_cert_entry.set_visible (show_ca_cert);
         if (this.ca_cert_password_label != null) this.ca_cert_password_label.set_visible (show_ca_cert);
         if (this.ca_cert_password_entry != null) this.ca_cert_password_entry.set_visible (show_ca_cert);
-        
+
         if (this.user_cert_label != null) this.user_cert_label.set_visible (show_user_cert);
         if (this.user_cert_entry != null) this.user_cert_entry.set_visible (show_user_cert);
         if (this.user_cert_password_label != null) this.user_cert_password_label.set_visible (show_user_cert);
         if (this.user_cert_password_entry != null) this.user_cert_password_entry.set_visible (show_user_cert);
-        
+
         if (this.user_private_key_label != null) this.user_private_key_label.set_visible (show_user_private_key);
         if (this.user_private_key_entry != null) this.user_private_key_entry.set_visible (show_user_private_key);
-        
-        if (this.user_private_key_password_label != null) this.user_private_key_password_label.set_visible (show_user_private_key_password);
-        if (this.user_private_key_password_entry != null) this.user_private_key_password_entry.set_visible (show_user_private_key_password);
-        
+
+        if (this.user_private_key_password_label != null)
+          this.user_private_key_password_label.set_visible (show_user_private_key_password);
+        if (this.user_private_key_password_entry != null)
+          this.user_private_key_password_entry.set_visible (show_user_private_key_password);
+
         if (this.eap_method_label != null) this.eap_method_label.set_visible (true);
         if (this.eap_method_dropdown != null) this.eap_method_dropdown.set_visible (true);
-        
+
         if (this.phase2_auth_label != null) this.phase2_auth_label.set_visible (show_phase2_auth);
         if (this.phase2_auth_dropdown != null) this.phase2_auth_dropdown.set_visible (show_phase2_auth);
-        
+
         if (this.password_label != null) this.password_label.set_visible (show_password);
         if (this.password_entry != null) this.password_entry.set_visible (show_password);
     }
@@ -681,7 +685,8 @@ public class MainWindowWifiSavedEditPage : Gtk.Box, IMainWindowIpEditPage {
         form.append (access_section);
 
         Gtk.Box auth_content;
-        var auth_section = MainWindowHelpers.build_collapsible_section (_("Authentication"), out auth_content, 0, null, false);
+        var auth_section = MainWindowHelpers.build_collapsible_section (_("Authentication"), out auth_content, 0, null,
+            false);
 
         auth_content.append (this.eap_method_label);
         auth_content.append (this.eap_method_dropdown);

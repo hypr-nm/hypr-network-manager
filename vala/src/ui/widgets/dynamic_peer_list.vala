@@ -95,11 +95,11 @@ namespace HyprNetworkManager.UI.Widgets {
             for (int i = 0; i < peers.length; i++) {
                 var p = peers[i];
                 int index = i;
-                
+
                 var row = new Gtk.ListBoxRow ();
                 row.set_selectable (false);
                 row.add_css_class (MainWindowCssClasses.DATA_ROW);
-                
+
                 var card = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
                 card.add_css_class (MainWindowCssClasses.ROW_CONTENT_INSET);
 
@@ -112,12 +112,12 @@ namespace HyprNetworkManager.UI.Widgets {
                 var name_lbl = new Gtk.Label (title_text);
                 name_lbl.set_xalign (0.0f);
                 name_lbl.add_css_class (MainWindowCssClasses.SSID_LABEL);
-                
+
                 // Truncate public key if used as title
                 if (p.name == "" && title_text.length > 16) {
                     name_lbl.set_text (title_text.substring (0, 16) + "…");
                 }
-                
+
                 info_box.append (name_lbl);
 
                 if (p.endpoint_host != "") {
@@ -145,7 +145,7 @@ namespace HyprNetworkManager.UI.Widgets {
                 var actions_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
                 actions_box.add_css_class (MainWindowCssClasses.ROW_ACTION_BUTTONS);
                 actions_box.set_valign (Gtk.Align.CENTER);
-                
+
                 var edit_btn = new Gtk.Button.from_icon_name ("document-edit-symbolic");
                 edit_btn.add_css_class (MainWindowCssClasses.BUTTON);
                 edit_btn.add_css_class (MainWindowCssClasses.ACTION);
@@ -181,7 +181,7 @@ namespace HyprNetworkManager.UI.Widgets {
             peers = p_peers;
             refresh_list ();
         }
-        
+
         public void add_peer (WireGuardPeerModel peer) {
             peers += peer;
             refresh_list ();

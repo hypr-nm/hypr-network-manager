@@ -66,9 +66,11 @@ namespace HyprNetworkManager.Models {
             string parsed_layer = config.layer_shell_layer.strip ();
             shell_layer = parsed_layer != "" ? parsed_layer : LayerShellLayer.OVERLAY;
 
-            refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval : Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS);
+            refresh_interval_seconds = (uint) (config.scan_interval > 0 ? config.scan_interval :
+              Timeouts.DEFAULT_SCAN_INTERVAL_SECONDS);
             pending_wifi_connect_timeout_ms = (uint) (
-                config.pending_wifi_connect_timeout_ms > 0 ? config.pending_wifi_connect_timeout_ms : Timeouts.PENDING_WIFI_CONNECT_TIMEOUT_MS
+                config.pending_wifi_connect_timeout_ms > 0 ? config.pending_wifi_connect_timeout_ms :
+                  Timeouts.PENDING_WIFI_CONNECT_TIMEOUT_MS
             );
             close_on_connect = config.close_on_connect;
 

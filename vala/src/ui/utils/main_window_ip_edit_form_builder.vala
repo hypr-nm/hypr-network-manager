@@ -272,7 +272,8 @@ namespace MainWindowIpEditFormBuilder {
         override_fields.append (dns_mode_row);
 
         widgets.dns_entry = new Gtk.Entry ();
-        widgets.dns_entry.set_placeholder_text (is_ipv6 ? "2606:4700:4700::1111, 2001:4860:4860::8888" : "1.1.1.1, 8.8.8.8");
+        widgets.dns_entry.set_placeholder_text (is_ipv6 ? "2606:4700:4700::1111, 2001:4860:4860::8888" : "1.1.1.1,
+            8.8.8.8");
         apply_control_classes (
             widgets.dns_entry,
             with_extra_classes,

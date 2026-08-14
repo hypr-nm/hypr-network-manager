@@ -267,7 +267,7 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
             wifi_section.set_refresh_button_enabled (wifi_refresh_enabled, wifi_tooltip);
             wifi_section.add_button.set_sensitive (wifi_refresh_enabled);
             wifi_section.set_availability_placeholder (wifi_enabled, flight_mode_active);
-            
+
             if (tabs_menu != null) {
                 tabs_menu.set_hotspot_sensitive (wifi_refresh_enabled);
             }
@@ -522,7 +522,8 @@ public class MainWindow : Gtk.ApplicationWindow, IWindowHost, IWidgetFactory, IU
         flight_mode_controller.flight_mode_state_changed.connect ((is_flight_mode) => {
             flight_mode_active = is_flight_mode;
             if (tabs_menu != null) {
-                tabs_menu.set_flight_mode_label (is_flight_mode ? (_("Turn off flight mode")) : (_("Turn on flight mode")));
+                tabs_menu.set_flight_mode_label (is_flight_mode ? (_("Turn off flight mode")) : (_("Turn on flight" +
+                    "mode")));
             }
             update_refresh_button_availability ();
         });

@@ -27,7 +27,8 @@ public class MainWindowVpnFormBuilder : Object {
         var fields = new GenericFormFields ();
 
         Gtk.Box server_content;
-        var server_section = MainWindowHelpers.build_collapsible_section (_("Server"), out server_content, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var server_section = MainWindowHelpers.build_collapsible_section (_("Server"), out server_content,
+            MainWindowUiMetrics.SPACING_TOOLBAR);
         target_box.append (server_section);
 
         server_content.append (build_form_label (_("Gateway")));
@@ -37,7 +38,8 @@ public class MainWindowVpnFormBuilder : Object {
         server_content.append (fields.gateway_entry);
 
         Gtk.Box auth_content;
-        var auth_section = MainWindowHelpers.build_collapsible_section (_("Authentication"), out auth_content, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var auth_section = MainWindowHelpers.build_collapsible_section (_("Authentication"), out auth_content,
+            MainWindowUiMetrics.SPACING_TOOLBAR);
         target_box.append (auth_section);
 
         auth_content.append (build_form_label (_("Username (optional)")));
@@ -109,7 +111,8 @@ public class MainWindowVpnFormBuilder : Object {
         var fields = new OpenVpnFormFields ();
 
         Gtk.Box server_content;
-        var server_section = MainWindowHelpers.build_collapsible_section (_("Server"), out server_content, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var server_section = MainWindowHelpers.build_collapsible_section (_("Server"), out server_content,
+            MainWindowUiMetrics.SPACING_TOOLBAR);
         target_box.append (server_section);
 
         server_content.append (build_form_label (_("Remote")));
@@ -136,7 +139,8 @@ public class MainWindowVpnFormBuilder : Object {
         server_content.append (fields.proto_dropdown);
 
         Gtk.Box auth_content;
-        var auth_section = MainWindowHelpers.build_collapsible_section (_("Authentication"), out auth_content, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var auth_section = MainWindowHelpers.build_collapsible_section (_("Authentication"), out auth_content,
+            MainWindowUiMetrics.SPACING_TOOLBAR);
         target_box.append (auth_section);
 
         auth_content.append (build_form_label (_("Username (optional)")));
@@ -153,7 +157,8 @@ public class MainWindowVpnFormBuilder : Object {
         auth_content.append (fields.password_entry);
 
         Gtk.Box certs_content;
-        var certs_section = MainWindowHelpers.build_collapsible_section (_("Certificates and Keys"), out certs_content, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var certs_section = MainWindowHelpers.build_collapsible_section (_("Certificates and Keys"), out certs_content,
+            MainWindowUiMetrics.SPACING_TOOLBAR);
         target_box.append (certs_section);
 
         certs_content.append (build_form_label (_("CA Certificate Path (optional)")));
@@ -181,7 +186,8 @@ public class MainWindowVpnFormBuilder : Object {
         certs_content.append (fields.tls_auth_key_entry);
 
         Gtk.Box advanced_content;
-        var advanced_section = MainWindowHelpers.build_collapsible_section (_("Advanced"), out advanced_content, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var advanced_section = MainWindowHelpers.build_collapsible_section (_("Advanced"), out advanced_content,
+            MainWindowUiMetrics.SPACING_TOOLBAR);
         target_box.append (advanced_section);
 
         advanced_content.append (build_form_label (_("Cipher (optional)")));

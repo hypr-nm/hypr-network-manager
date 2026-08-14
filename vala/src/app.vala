@@ -159,7 +159,8 @@ public class NetworkManager : Gtk.Application {
                     || import_target.has_suffix ("/core-components.css");
 
                 if (is_core) {
-                    debug_log ("inline_css_imports: ignoring core import %s because core styles are loaded by the application".printf (
+                    debug_log (
+                    "inline_css_imports: ignoring core import %s because core styles are loaded.".printf (
                         import_target));
                     return false;
                 }

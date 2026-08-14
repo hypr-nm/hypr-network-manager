@@ -158,7 +158,7 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
                 this.advanced_rows.append (
                     MainWindowHelpers.build_details_row (peer_prefix + " " + _("Public Key"), p.public_key)
                 );
-                
+
                 string endpoint = p.endpoint_host;
                 if (p.endpoint_port > 0) {
                     endpoint += ":%u".printf (p.endpoint_port);
@@ -166,13 +166,14 @@ public class MainWindowVpnDetailsPage : Gtk.Box, IMainWindowNetworkDetailsPage {
                 this.advanced_rows.append (
                     MainWindowHelpers.build_details_row (peer_prefix + " " + _("Endpoint"), endpoint)
                 );
-                
+
                 string allowed_ips = string.joinv (", ", p.allowed_ips);
                 this.advanced_rows.append (
                     MainWindowHelpers.build_details_row (peer_prefix + " " + _("Allowed IPs"), allowed_ips)
                 );
                 this.advanced_rows.append (
-                    MainWindowHelpers.build_details_row (peer_prefix + " " + _("Preshared Key"), display_secret (p.preshared_key))
+                    MainWindowHelpers.build_details_row (peer_prefix + " " + _("Preshared Key"),
+                        display_secret (p.preshared_key))
                 );
                 peer_idx++;
             }

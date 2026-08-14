@@ -107,7 +107,8 @@ namespace HyprNetworkManager.UI.Widgets {
                         int nat_height = 0;
                         int min_baseline = 0;
                         int nat_baseline = 0;
-                        popover.measure (Gtk.Orientation.VERTICAL, -1, out min_height, out nat_height, out min_baseline, out nat_baseline);
+                        popover.measure (Gtk.Orientation.VERTICAL, -1, out min_height, out nat_height,
+                            out min_baseline, out nat_baseline);
 
                         int button_height = menu_button.get_height ();
                         int window_height = root_widget.get_height ();

@@ -666,7 +666,9 @@ public class HotspotService : GLib.Object {
         return config;
     }
 
-    public async void create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
+    public async void create_or_update_hotspot (string ssid, string password, string security, string band,
+        bool is_hidden, int timeout, string ap_interface, string uplink_interface,
+            Cancellable? cancellable = null) throws Error {
         var config = new HotspotConfig ();
         config.ssid = ssid;
         config.password = password;
@@ -680,7 +682,8 @@ public class HotspotService : GLib.Object {
         yield HotspotConfigStorage.save (config, cancellable);
     }
 
-    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
+    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden,
+        int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
         var client = nm_client;
 
         NM.DeviceWifi? dev = null;
@@ -699,7 +702,8 @@ public class HotspotService : GLib.Object {
             throw new IOError.NOT_FOUND ("Wi-Fi device not found");
         }
 
-        yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
+        yield create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface,
+            uplink_interface, cancellable);
 
         string resolved_ap_iface = (ap_interface != ""
             && ap_interface != NetworkInterface.AUTO)
@@ -727,7 +731,8 @@ public class HotspotService : GLib.Object {
             log_info (
                 "hotspot-service",
                 resolved_uplink_iface == NetworkInterface.NONE
-                    ? "Automatic hotspot uplink found no active interface; creating the hotspot without an Internet uplink."
+                    ? "Automatic hotspot uplink found no active interface; creating the hotspot without an Internet" +
+                        "uplink."
                     : "Automatic hotspot uplink selected active interface '%s'.".printf (
                         resolved_uplink_iface));
         }
@@ -955,7 +960,7 @@ public class HotspotService : GLib.Object {
                 throw new IOError.NOT_SUPPORTED (
                     "Selected Wi-Fi device does not support NetworkManager AP mode");
             }
-            debug_log ("Starting native NM hotspot creation...");
+            debug_log ("Starting native NM hotspot creation…");
 
             string resolved_nm_band = band;
             uint32 active_frequency_mhz = 0;
@@ -1032,12 +1037,12 @@ public class HotspotService : GLib.Object {
 
             NM.RemoteConnection? remote_conn = null;
             try {
-                debug_log ("Adding connection...");
+                debug_log ("Adding connection…");
                 remote_conn = yield client.add_connection_async (
                     new_conn,
                     false,
                     cancellable);
-                debug_log ("Connection added successfully. Activating...");
+                debug_log ("Connection added successfully. Activating…");
                 try {
                     yield client.activate_connection_async (remote_conn, dev, null, cancellable);
                     debug_log ("Connection activated successfully.");
@@ -1187,9 +1192,9 @@ public class HotspotService : GLib.Object {
                     if (stdout_content != null && stdout_content.strip () != "") {
                         is_hotspot_stopping = true;
 
-                        string[] pids = stdout_content.strip().split("\n");
+                        string[] pids = stdout_content.strip ().split ("\n");
                         foreach (string pid in pids) {
-                            if (pid.strip() == "") continue;
+                            if (pid.strip () == "") continue;
                             yield stop_create_ap_pid (
                                 create_ap_bin,
                                 pid.strip (),
@@ -1281,7 +1286,8 @@ public class HotspotService : GLib.Object {
                     };
                     int exit_status;
                     string stdout_content;
-                    if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null, out exit_status)) {
+                    if (Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH, null, out stdout_content, null,
+                        out exit_status)) {
                         if (exit_status == 0 && stdout_content.strip () != "") {
                             is_running = true;
                         }
@@ -1404,7 +1410,8 @@ public class HotspotService : GLib.Object {
         }
         for (int i = 0; i < name.length; i++) {
             char c = name[i];
-            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '.' || c == '-')) {
+            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '.' |
+                c == '-')) {
                 return false;
             }
         }

@@ -83,7 +83,7 @@ namespace HyprNetworkManager.UI.Widgets {
             is_refreshing = false;
             this.progress_bar.set_opacity (0.0);
             this.progress_bar.set_visible (false);
-            
+
             if (pulse_timeout_id != 0) {
                 Source.remove (pulse_timeout_id);
                 pulse_timeout_id = 0;

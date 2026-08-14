@@ -17,16 +17,16 @@
 
 using Constants;
 using Gtk;
- 
+
 namespace HyprNetworkManager.UI.Widgets {
     public class DynamicStringList : Gtk.Box {
         private Gtk.Box listbox;
         private string placeholder;
- 
+
         public DynamicStringList (string title_text, string placeholder) {
             Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_HEADER);
             this.placeholder = placeholder;
- 
+
             var header_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
             header_box.add_css_class (MainWindowCssClasses.EDIT_MODE_ROW);
             header_box.add_css_class (MainWindowCssClasses.NM_FLAT);
@@ -35,7 +35,7 @@ namespace HyprNetworkManager.UI.Widgets {
             title.set_xalign (0.0f);
             title.add_css_class (MainWindowCssClasses.EDIT_MODE_LABEL);
             header_box.append (title);
- 
+
             var add_btn = new Gtk.Button.with_label (_("Add IP"));
             add_btn.add_css_class (MainWindowCssClasses.BUTTON);
             add_btn.add_css_class (MainWindowCssClasses.ACTION);
@@ -47,20 +47,20 @@ namespace HyprNetworkManager.UI.Widgets {
             });
             header_box.append (add_btn);
             this.append (header_box);
- 
+
             listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_ROW);
             listbox.set_visible (false);
             this.append (listbox);
         }
-        
+
         private void update_listbox_visibility () {
             listbox.set_visible (listbox.get_first_child () != null);
         }
- 
+
         public void add_row (string text) {
             var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_ROW);
             box.set_margin_end (12);
-            
+
             var entry = new Gtk.Entry ();
             entry.set_hexpand (true);
             entry.set_text (text);
@@ -68,7 +68,7 @@ namespace HyprNetworkManager.UI.Widgets {
             entry.add_css_class (MainWindowCssClasses.EDIT_FIELD_ENTRY);
             entry.add_css_class (MainWindowCssClasses.INPUT);
             box.append (entry);
- 
+
             var remove_btn = new Gtk.Button.from_icon_name ("user-trash-symbolic");
             remove_btn.add_css_class (MainWindowCssClasses.BUTTON);
             remove_btn.add_css_class (MainWindowCssClasses.ACTION);
@@ -80,11 +80,11 @@ namespace HyprNetworkManager.UI.Widgets {
                 update_listbox_visibility ();
             });
             box.append (remove_btn);
- 
+
             listbox.append (box);
             update_listbox_visibility ();
         }
- 
+
         public string[] get_values () {
             string[] values = {};
             var child = listbox.get_first_child ();
@@ -100,7 +100,7 @@ namespace HyprNetworkManager.UI.Widgets {
             }
             return values;
         }
- 
+
         public void set_values (string[] values) {
             var child = listbox.get_first_child ();
             while (child != null) {
@@ -108,7 +108,7 @@ namespace HyprNetworkManager.UI.Widgets {
                 listbox.remove (child);
                 child = next;
             }
- 
+
             foreach (var val in values) {
                 if (val.strip () != "") {
                     add_row (val.strip ());

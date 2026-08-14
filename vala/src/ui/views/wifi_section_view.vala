@@ -210,7 +210,8 @@ namespace HyprNetworkManager.UI.Views {
 
         public void set_availability_placeholder (bool wifi_enabled, bool flight_mode_active) {
             string current_page = stack.get_visible_child_name ();
-            if (current_page == "details" || current_page == "edit" || current_page == "add" || current_page == "share") {
+            if (current_page == "details" || current_page == "edit" || current_page == "add" |
+                current_page == "share") {
                 return;
             }
 

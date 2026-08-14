@@ -189,17 +189,18 @@ namespace MainWindowWifiPageBuilder {
         hotspot_placeholder.set_halign (Gtk.Align.CENTER);
         hotspot_placeholder.set_valign (Gtk.Align.CENTER);
         hotspot_placeholder.add_css_class (MainWindowCssClasses.EMPTY_STATE);
-        
-        var hs_icon = MainWindowIconResources.create_network_placeholder_icon (MainWindowIconResources.NetworkPlaceholderIcon.HOTSPOT_ACTIVE);
+
+        var hs_icon = MainWindowIconResources.create_network_placeholder_icon (
+          MainWindowIconResources.NetworkPlaceholderIcon.HOTSPOT_ACTIVE);
         hs_icon.add_css_class (MainWindowCssClasses.ICON_SIZE_24);
         hs_icon.add_css_class (MainWindowCssClasses.ICON_SIZE);
         hs_icon.add_css_class (MainWindowCssClasses.WIFI_PLACEHOLDER_ICON);
         hs_icon.add_css_class (MainWindowCssClasses.PLACEHOLDER_ICON);
-        
+
         var hs_label = new Gtk.Label (_("Hotspot is currently active.\nWi-Fi scanning is paused on this interface."));
         hs_label.add_css_class (MainWindowCssClasses.PLACEHOLDER_LABEL);
         hs_label.justify = Gtk.Justification.CENTER;
-        
+
         var hs_button = new Gtk.Button.with_label (_("Manage Hotspot"));
         hs_button.margin_top = MainWindowUiMetrics.SPACING_SECTION;
         hs_button.halign = Gtk.Align.CENTER;
@@ -209,7 +210,7 @@ namespace MainWindowWifiPageBuilder {
         hs_button.clicked.connect (() => {
             action_handler.go_to_hotspot ();
         });
-        
+
         hotspot_placeholder.append (hs_icon);
         hotspot_placeholder.append (hs_label);
         hotspot_placeholder.append (hs_button);

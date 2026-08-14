@@ -369,7 +369,8 @@ public class AppConfig : Object {
 
         if (cfg_layer != null) {
             string l = cfg_layer.strip ().down ();
-            if (l == LayerShellLayer.BACKGROUND || l == LayerShellLayer.BOTTOM || l == LayerShellLayer.TOP || l == LayerShellLayer.OVERLAY) {
+            if (l == LayerShellLayer.BACKGROUND || l == LayerShellLayer.BOTTOM || l == LayerShellLayer.TOP |
+                l == LayerShellLayer.OVERLAY) {
                 this.layer_shell_layer = l;
             } else {
                 warn_invalid_config_value (

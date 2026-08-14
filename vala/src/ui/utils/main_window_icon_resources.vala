@@ -154,7 +154,8 @@ namespace MainWindowIconResources {
         string[] wifi_disabled = {ICON_WIFI_DISABLED, FALLBACK_WIFI_DISABLED};
         string[] ethernet_empty = {ICON_ETHERNET_EMPTY, FALLBACK_ETHERNET_EMPTY};
         string[] flight_mode = { ICON_AIRPLANE, FALLBACK_AIRPLANE };
-        string[] hotspot_active = { ICON_HOTSPOT_ACTIVE, "network-wireless-hotspot-symbolic", "network-wireless-symbolic" };
+        string[] hotspot_active = { ICON_HOTSPOT_ACTIVE, "network-wireless-hotspot-symbolic",
+            "network-wireless-symbolic" };
 
         switch (icon_type) {
         case NetworkPlaceholderIcon.WIFI_EMPTY:

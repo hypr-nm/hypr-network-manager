@@ -49,7 +49,7 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
             unowned NM.WireGuardPeer nm_peer = setting_wg.get_peer (i);
             var p = new WireGuardPeerModel ();
             p.public_key = (nm_peer.get_public_key () ?? "").strip ();
-            
+
             string endpoint = (nm_peer.get_endpoint () ?? "").strip ();
             string host = endpoint;
             uint32 port = 0;
@@ -67,7 +67,7 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
 
             p.endpoint_host = host;
             p.endpoint_port = port;
-            
+
             p.preshared_key = (nm_peer.get_preshared_key () ?? "").strip ();
 
             string[] allowed_ips = {};
@@ -132,7 +132,7 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
             if (!peer.set_public_key (p.public_key.strip (), false)) {
                 throw new IOError.FAILED ("Invalid WireGuard public key: '%s'".printf (p.public_key.strip ()));
             }
-            
+
             string endpoint = p.endpoint_host.strip ();
             if (endpoint != "") {
                 if (endpoint.contains (":") && !endpoint.has_prefix ("[")) {
@@ -145,7 +145,7 @@ public class WireGuardMapper : GLib.Object, VpnMapper {
                     throw new IOError.FAILED ("Invalid WireGuard endpoint: '%s'".printf (endpoint));
                 }
             }
-            
+
             if (p.preshared_key.strip () != "") {
                 if (!peer.set_preshared_key (p.preshared_key.strip (), false)) {
                     throw new IOError.FAILED ("Invalid WireGuard preshared key");
@@ -207,13 +207,16 @@ public class OpenVpnMapper : GLib.Object, VpnMapper {
             s_vpn = new NM.SettingVpn ();
             conn.add_setting (s_vpn);
         }
-        
+
         s_vpn.service_type = "org.freedesktop.NetworkManager.openvpn";
-        
-        if (ovpn_request.ovpn_remote.strip () != "") s_vpn.add_data_item ("remote", ovpn_request.ovpn_remote.strip ()); else s_vpn.remove_data_item ("remote");
-        if (ovpn_request.ovpn_port > 0) s_vpn.add_data_item ("port", "%u".printf (ovpn_request.ovpn_port)); else s_vpn.remove_data_item ("port");
-        if (ovpn_request.ovpn_proto.strip () != "") s_vpn.add_data_item ("proto", ovpn_request.ovpn_proto.strip ()); else s_vpn.remove_data_item ("proto");
-        
+
+        if (ovpn_request.ovpn_remote.strip () != "") s_vpn.add_data_item ("remote",
+            ovpn_request.ovpn_remote.strip ()); else s_vpn.remove_data_item ("remote");
+        if (ovpn_request.ovpn_port > 0) s_vpn.add_data_item ("port",
+            "%u".printf (ovpn_request.ovpn_port)); else s_vpn.remove_data_item ("port");
+        if (ovpn_request.ovpn_proto.strip () != "") s_vpn.add_data_item ("proto",
+            ovpn_request.ovpn_proto.strip ()); else s_vpn.remove_data_item ("proto");
+
         if (ovpn_request.ovpn_username.strip () != "") {
             s_vpn.user_name = ovpn_request.ovpn_username.strip ();
             s_vpn.add_data_item ("username", ovpn_request.ovpn_username.strip ());
@@ -221,14 +224,21 @@ public class OpenVpnMapper : GLib.Object, VpnMapper {
             s_vpn.user_name = null;
             s_vpn.remove_data_item ("username");
         }
-        
-        if (ovpn_request.ovpn_password != "") s_vpn.add_secret ("password", ovpn_request.ovpn_password); else s_vpn.remove_secret ("password");
-        if (ovpn_request.ovpn_ca_cert.strip () != "") s_vpn.add_data_item ("ca", ovpn_request.ovpn_ca_cert.strip ()); else s_vpn.remove_data_item ("ca");
-        if (ovpn_request.ovpn_client_cert.strip () != "") s_vpn.add_data_item ("cert", ovpn_request.ovpn_client_cert.strip ()); else s_vpn.remove_data_item ("cert");
-        if (ovpn_request.ovpn_private_key.strip () != "") s_vpn.add_data_item ("key", ovpn_request.ovpn_private_key.strip ()); else s_vpn.remove_data_item ("key");
-        if (ovpn_request.ovpn_tls_auth_key.strip () != "") s_vpn.add_data_item ("ta", ovpn_request.ovpn_tls_auth_key.strip ()); else s_vpn.remove_data_item ("ta");
-        if (ovpn_request.ovpn_cipher.strip () != "") s_vpn.add_data_item ("cipher", ovpn_request.ovpn_cipher.strip ()); else s_vpn.remove_data_item ("cipher");
-        if (ovpn_request.ovpn_auth.strip () != "") s_vpn.add_data_item ("auth", ovpn_request.ovpn_auth.strip ()); else s_vpn.remove_data_item ("auth");
+
+        if (ovpn_request.ovpn_password != "") s_vpn.add_secret ("password",
+            ovpn_request.ovpn_password); else s_vpn.remove_secret ("password");
+        if (ovpn_request.ovpn_ca_cert.strip () != "") s_vpn.add_data_item ("ca",
+            ovpn_request.ovpn_ca_cert.strip ()); else s_vpn.remove_data_item ("ca");
+        if (ovpn_request.ovpn_client_cert.strip () != "") s_vpn.add_data_item ("cert",
+            ovpn_request.ovpn_client_cert.strip ()); else s_vpn.remove_data_item ("cert");
+        if (ovpn_request.ovpn_private_key.strip () != "") s_vpn.add_data_item ("key",
+            ovpn_request.ovpn_private_key.strip ()); else s_vpn.remove_data_item ("key");
+        if (ovpn_request.ovpn_tls_auth_key.strip () != "") s_vpn.add_data_item ("ta",
+            ovpn_request.ovpn_tls_auth_key.strip ()); else s_vpn.remove_data_item ("ta");
+        if (ovpn_request.ovpn_cipher.strip () != "") s_vpn.add_data_item ("cipher",
+            ovpn_request.ovpn_cipher.strip ()); else s_vpn.remove_data_item ("cipher");
+        if (ovpn_request.ovpn_auth.strip () != "") s_vpn.add_data_item ("auth",
+            ovpn_request.ovpn_auth.strip ()); else s_vpn.remove_data_item ("auth");
     }
 
     public string get_vpn_type_key () {
@@ -285,9 +295,12 @@ public class GenericVpnMapper : GLib.Object, VpnMapper {
 
         var generic_request = request as GenericVpnUpdateRequest;
         if (generic_request != null) {
-            if (generic_request.gateway.strip () != "") s_vpn.add_data_item ("gateway", generic_request.gateway.strip ()); else s_vpn.remove_data_item ("gateway");
-            if (generic_request.user.strip () != "") s_vpn.add_data_item ("username", generic_request.user.strip ()); else s_vpn.remove_data_item ("username");
-            if (generic_request.password != "") s_vpn.add_secret ("password", generic_request.password); else s_vpn.remove_secret ("password");
+            if (generic_request.gateway.strip () != "") s_vpn.add_data_item ("gateway",
+                generic_request.gateway.strip ()); else s_vpn.remove_data_item ("gateway");
+            if (generic_request.user.strip () != "") s_vpn.add_data_item ("username",
+                generic_request.user.strip ()); else s_vpn.remove_data_item ("username");
+            if (generic_request.password != "") s_vpn.add_secret ("password",
+                generic_request.password); else s_vpn.remove_secret ("password");
         }
     }
 
@@ -320,7 +333,7 @@ public class VpnMapperFactory : GLib.Object {
             if (service_type.has_suffix (".openvpn")) {
                 return new OpenVpnMapper ();
             }
-            
+
             string[] parts = service_type.split (".");
             string plugin_name = parts.length > 0 ? parts[parts.length - 1] : "vpn";
             return new GenericVpnMapper (plugin_name.ascii_down ());

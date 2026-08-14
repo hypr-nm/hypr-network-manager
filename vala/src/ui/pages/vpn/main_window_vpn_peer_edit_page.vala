@@ -26,7 +26,7 @@ namespace HyprNetworkManager.UI.Views {
         public Gtk.Entry endpoint_port_entry { get; private set; }
         public HyprNetworkManager.UI.Widgets.DynamicStringList allowed_ips_list { get; private set; }
         public Gtk.Entry preshared_key_entry { get; private set; }
-        
+
         public signal void save_clicked (int index, WireGuardPeerModel peer);
         public signal void back_clicked ();
 
@@ -51,17 +51,17 @@ namespace HyprNetworkManager.UI.Views {
             this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_EDIT);
 
             var header = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_HEADER);
-            
+
             var back_btn = MainWindowHelpers.build_back_button ();
             back_btn.clicked.connect (() => { back_clicked (); });
             header.append (back_btn);
-            
+
             var title = new Gtk.Label (_("Edit WireGuard Peer"));
             title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
             title.set_xalign (0.0f);
             title.set_hexpand (true);
             header.append (title);
-            
+
             this.append (header);
 
             this.error_label = new Gtk.Label ("");
@@ -164,14 +164,14 @@ namespace HyprNetworkManager.UI.Views {
 
                 save_clicked (editing_index, get_peer ());
             });
-            
+
             actions.append (save_btn);
             form.append (actions);
 
             scroll.set_child (form);
             this.append (scroll);
         }
-        
+
         public void set_peer (int index, WireGuardPeerModel peer) {
             show_error ("");
             editing_index = index;
@@ -186,13 +186,13 @@ namespace HyprNetworkManager.UI.Views {
             allowed_ips_list.set_values (peer.allowed_ips);
             preshared_key_entry.set_text (peer.preshared_key);
         }
-        
+
         public WireGuardPeerModel get_peer () {
             var p = new WireGuardPeerModel ();
             p.name = name_entry.get_text ().strip ();
             p.public_key = public_key_entry.get_text ().strip ();
             p.endpoint_host = endpoint_host_entry.get_text ().strip ();
-            
+
             string port_str = endpoint_port_entry.get_text ().strip ();
             uint parsed_port;
             if (uint.try_parse (port_str, out parsed_port) && parsed_port <= 65535) {

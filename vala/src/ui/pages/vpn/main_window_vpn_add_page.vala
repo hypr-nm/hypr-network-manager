@@ -21,7 +21,7 @@ using Gtk;
 public class MainWindowVpnAddPage : Gtk.Box {
     public signal void back ();
     public signal void type_selected (string type);
-    
+
     public MainWindowVpnAddPage () {
         Object (orientation: Gtk.Orientation.VERTICAL, spacing: MainWindowUiMetrics.SPACING_ROW);
 
@@ -32,7 +32,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
         this.add_css_class (MainWindowCssClasses.PAGE_VPN_ADD);
         this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_ADD);
         this.add_css_class (MainWindowCssClasses.PAGE_NETWORK_EDIT);
-        
+
         var header = new Gtk.CenterBox ();
         header.set_margin_bottom (MainWindowUiMetrics.SPACING_HEADER);
 
@@ -40,7 +40,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
         back_btn.clicked.connect (() => {
             this.back ();
         });
-        
+
         var start_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
         start_box.append (back_btn);
         header.set_start_widget (start_box);
@@ -48,7 +48,7 @@ public class MainWindowVpnAddPage : Gtk.Box {
         var title = new Gtk.Label (_("Add VPN"));
         title.add_css_class (MainWindowCssClasses.SECTION_TITLE);
         header.set_center_widget (title);
-        
+
         this.append (header);
 
         var scroll = new Gtk.ScrolledWindow ();

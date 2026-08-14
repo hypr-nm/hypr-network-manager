@@ -36,7 +36,7 @@ namespace HyprNetworkManager.UI.Widgets {
             Object (orientation: Gtk.Orientation.HORIZONTAL, spacing: 0);
             this.tracker = tracker;
             this.set_valign (Gtk.Align.CENTER);
- 
+
             menu_button = new Gtk.MenuButton ();
             menu_button.set_valign (Gtk.Align.CENTER);
             menu_button.add_css_class (MainWindowCssClasses.TABS_MENU_BUTTON);

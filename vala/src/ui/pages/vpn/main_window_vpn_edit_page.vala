@@ -78,7 +78,8 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
                 });
             }
         } else if (this.vpn_type == "openvpn") {
-            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this.form_values, this.create_dropdown_func);
+            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this.form_values,
+                this.create_dropdown_func);
         } else {
             MainWindowVpnFormBuilder.append_generic_vpn_fields (type_specific_box, this.form_values);
         }
@@ -90,7 +91,8 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
         this.dns_auto_switch.set_active (details.dns_auto);
         this.ipv4_dns_entry.set_text (details.configured_dns);
 
-        this.ipv6_method_dropdown.set_selected (MainWindowIpConfigHelper.method_to_index (details.ipv6_method, false));
+        this.ipv6_method_dropdown.set_selected (
+          MainWindowIpConfigHelper.method_to_index (details.ipv6_method, false));
         this.ipv6_address_entry.set_text (details.configured_ipv6_address);
         this.ipv6_prefix_entry.set_text ("%u".printf (details.configured_ipv6_prefix));
         this.ipv6_gateway_entry.set_text (details.configured_ipv6_gateway);
@@ -108,7 +110,8 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
                 wg.interface_name_entry.set_text (wg_details.interface_name);
                 wg.private_key_entry.set_text (wg_details.wg_private_key);
                 wg.peers_list.set_peers (wg_details.peers);
-                wg.listen_port_entry.set_text (wg_details.wg_listen_port > 0 ? "%u".printf (wg_details.wg_listen_port) : "");
+                wg.listen_port_entry.set_text (wg_details.wg_listen_port > 0 ?
+                  "%u".printf (wg_details.wg_listen_port) : "");
                 wg.fwmark_entry.set_text (wg_details.wg_fwmark > 0 ? "%u".printf (wg_details.wg_fwmark) : "");
                 wg.peer_routes_switch.set_active (wg_details.wg_peer_routes);
             }
@@ -118,7 +121,7 @@ public class MainWindowVpnEditPage : Gtk.Box, IMainWindowIpEditPage {
                 var ovpn = this.form_values.ovpn;
                 ovpn.remote_entry.set_text (ovpn_details.ovpn_remote);
                 ovpn.port_entry.set_text (ovpn_details.ovpn_port > 0 ? "%u".printf (ovpn_details.ovpn_port) : "");
-                if (ovpn_details.ovpn_proto.down() == "tcp") {
+                if (ovpn_details.ovpn_proto.down () == "tcp") {
                     ovpn.proto_dropdown.set_selected (1);
                 } else {
                     ovpn.proto_dropdown.set_selected (0);

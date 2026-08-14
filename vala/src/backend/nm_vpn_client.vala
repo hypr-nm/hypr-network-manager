@@ -376,15 +376,17 @@ public class NmVpnClient : GLib.Object {
 
         if (vpn_conn is NM.RemoteConnection) {
             try {
-                var s_name = (vpn_conn.get_setting_by_name (NM.SettingWireGuard.SETTING_NAME) != null || vpn_conn.is_type ("wireguard")) 
-                    ? NM.SettingWireGuard.SETTING_NAME 
+                var s_name = (vpn_conn.get_setting_by_name (NM.SettingWireGuard.SETTING_NAME) != null |
+                    vpn_conn.is_type ("wireguard"))
+                    ? NM.SettingWireGuard.SETTING_NAME
                     : NM.SettingVpn.SETTING_NAME;
                 var secrets = yield ((NM.RemoteConnection)vpn_conn).get_secrets_async (s_name, cancellable);
                 if (secrets != null) {
                     vpn_conn.update_secrets (s_name, secrets);
                 }
             } catch (Error e) {
-                log_warn ("NmVpnClient", "Failed to fetch secrets for connection '%s': %s".printf (vpn_conn.get_id (), e.message));
+                log_warn ("NmVpnClient", "Failed to fetch secrets for connection '%s': %s".printf (vpn_conn.get_id (),
+                    e.message));
             }
         }
 
@@ -405,7 +407,7 @@ public class NmVpnClient : GLib.Object {
         details.profile_uuid = normalize_string (vpn_conn.get_uuid ());
         details.vpn_type_key = vpn_type_key;
         details.vpn_type_display = describe_vpn_profile (vpn_conn);
-        
+
         var s_conn = vpn_conn.get_setting_connection ();
         if (s_conn != null) {
             details.autoconnect = s_conn.autoconnect;
@@ -422,7 +424,7 @@ public class NmVpnClient : GLib.Object {
         foreach (var ac in client.get_active_connections ()) {
             if (is_supported_vpn_active_connection (ac)
                 && matches_connection_identity (ac.get_uuid (), ac.get_id (), id)) {
-                
+
                 var ip4 = ac.get_ip4_config ();
                 if (ip4 != null) {
                     if (ip4.get_addresses ().length > 0) {

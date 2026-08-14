@@ -53,7 +53,8 @@ public class MainWindowVpnPageBuilder : Object {
         page.add_css_class (MainWindowCssClasses.PAGE);
         page.add_css_class (MainWindowCssClasses.PAGE_VPN);
 
-        var toolbar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
+        var toolbar = new Gtk.Box (
+          Gtk.Orientation.HORIZONTAL, MainWindowUiMetrics.SPACING_TOOLBAR);
         toolbar.add_css_class (MainWindowCssClasses.TOOLBAR_INSET);
         toolbar.add_css_class (MainWindowCssClasses.PAGE_SHELL_INSET);
         toolbar.add_css_class (MainWindowCssClasses.TOOLBAR);
@@ -95,7 +96,8 @@ public class MainWindowVpnPageBuilder : Object {
 
         var prog = new Gtk.ProgressBar ();
         page.append (prog);
-        var progress_controller = new HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController (prog);
+        var progress_controller = new HyprNetworkManager.UI.Widgets.MainWindowRefreshProgressController (
+        prog);
 
         refresh_started.connect (() => {
             progress_controller.start ();

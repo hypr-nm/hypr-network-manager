@@ -384,7 +384,8 @@ namespace HyprNetworkManager.UI.Views {
                 var pass_text = config.password != "" ? config.password : _("None");
 
                 var info_label = new Gtk.Label ("");
-                info_label.set_markup ("<b>" + GLib.Markup.escape_text(config.ssid) + "</b> • " + _("Password") + ": " + GLib.Markup.escape_text(pass_text));
+                info_label.set_markup ("<b>" + GLib.Markup.escape_text (config.ssid) + "</b> • " + _ ("Password") +
+                    ": " + GLib.Markup.escape_text (pass_text));
                 info_label.selectable = true;
                 info_label.wrap = true;
                 info_label.wrap_mode = Pango.WrapMode.CHAR;

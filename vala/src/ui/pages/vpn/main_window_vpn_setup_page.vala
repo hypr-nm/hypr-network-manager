@@ -77,7 +77,8 @@ public class MainWindowVpnSetupPage : Gtk.Box, IMainWindowIpEditPage {
                 });
             }
         } else if (this.vpn_type == "openvpn") {
-            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this.form_values, this.create_dropdown_func, true);
+            MainWindowVpnFormBuilder.append_openvpn_fields (type_specific_box, this.form_values,
+                this.create_dropdown_func, true);
         } else {
             MainWindowVpnFormBuilder.append_generic_vpn_fields (type_specific_box, this.form_values);
         }

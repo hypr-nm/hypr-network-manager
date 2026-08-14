@@ -77,15 +77,17 @@ public class MainWindowWifiSharePage : Gtk.Box {
     public void set_share_data (string ssid, string qr_text) {
         this.ssid_label.set_text (ssid);
         this.current_qr_text = qr_text;
-        
+
         MainWindowHelpers.clear_box (this.qr_container);
 
         var qr_widget = new HyprNetworkManager.UI.Widgets.QrCodeWidget (this.current_qr_text);
         qr_widget.set_size_request (180, 180);
         this.qr_container.append (qr_widget);
 
-        string text1 = _("Scan this QR code on another device to connect to %s without entering the password.").printf(ssid);
-        string text2 = _("This QR code includes the network password and it isn't encrypted. Anyone with access to this QR code can find out this network's password.");
+        string text1 = _ ("Scan this QR code on another device to connect to %s without entering the" +
+            "password.").printf (ssid);
+        string text2 = _("This QR code includes the network password and it isn't encrypted. Anyone with access to" +
+            "this QR code can find out this network's password.");
         this.description_label.set_text (text1 + "\n" + text2);
     }
 }

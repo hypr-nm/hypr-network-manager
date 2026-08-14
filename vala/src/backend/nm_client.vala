@@ -467,16 +467,22 @@ public class NetworkManagerClient : GLib.Object,
         return yield wifi_scanner.scan (cancellable);
     }
 
-    public async HyprNetworkManager.Models.HotspotConfig get_hotspot_status (Cancellable? cancellable = null) throws Error {
+    public async HyprNetworkManager.Models.HotspotConfig get_hotspot_status (
+      Cancellable? cancellable = null) throws Error {
         return yield hotspot.get_hotspot_status (cancellable);
     }
 
-    public async void create_or_update_hotspot (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
-        yield hotspot.create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
+    public async void create_or_update_hotspot (string ssid, string password, string security, string band,
+        bool is_hidden, int timeout, string ap_interface, string uplink_interface,
+            Cancellable? cancellable = null) throws Error {
+        yield hotspot.create_or_update_hotspot (ssid, password, security, band, is_hidden, timeout, ap_interface,
+            uplink_interface, cancellable);
     }
 
-    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden, int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
-        return yield hotspot.enable_hotspot_async (ssid, password, security, band, is_hidden, timeout, ap_interface, uplink_interface, cancellable);
+    public async bool enable_hotspot_async (string ssid, string password, string security, string band, bool is_hidden,
+        int timeout, string ap_interface, string uplink_interface, Cancellable? cancellable = null) throws Error {
+        return yield hotspot.enable_hotspot_async (ssid, password, security, band, is_hidden, timeout, ap_interface,
+            uplink_interface, cancellable);
     }
 
     public string[] get_all_interfaces () {
@@ -498,7 +504,8 @@ public class NetworkManagerClient : GLib.Object,
         return list;
     }
 
-    public async WifiBandSupport get_wifi_band_support_async (string iface, Cancellable? cancellable = null) throws Error {
+    public async WifiBandSupport get_wifi_band_support_async (string iface,
+        Cancellable? cancellable = null) throws Error {
         var resolved_iface = (iface != ""
             && iface != NetworkInterface.AUTO)
             ? iface
@@ -547,8 +554,8 @@ public class NetworkManagerClient : GLib.Object,
         }
 
         log_debug ("nm-client",
-            "get_wifi_band_support_async: nl80211 failed for '%s' -> falling back to NM.DeviceWifi capabilities".printf (
-                resolved_iface));
+            "get_wifi_band_support_async: nl80211 failed for '%s', ".printf (resolved_iface) +
+              "falling back to NM.DeviceWifi capabilities");
         return fallback;
     }
 

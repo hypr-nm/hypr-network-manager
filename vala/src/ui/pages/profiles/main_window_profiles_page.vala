@@ -309,7 +309,7 @@ public class MainWindowProfilesPage : Gtk.Box {
             var info = new Gtk.Box (Gtk.Orientation.VERTICAL, MainWindowUiMetrics.SPACING_INFO_GROUP);
             info.set_hexpand (true);
             info.set_valign (Gtk.Align.CENTER);
- 
+
             string iface = MainWindowHelpers.safe_text (row_device.name).strip ();
             string profile_name = MainWindowHelpers.safe_text (row_device.connection).strip ();
             string primary = iface != "" ? iface : _("Ethernet device");
