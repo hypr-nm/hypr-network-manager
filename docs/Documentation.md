@@ -10,29 +10,21 @@ Comprehensive guide to using, configuring, and extending hypr-network-manager.
 2. [Installation](#installation)
 3. [Configuration](#configuration)
 4. [Theming](#theming)
-
 5. [Usage](#usage)
 
    * [Launching the GUI](#launching-the-gui)
    * [CLI Options](#cli-options)
+
 6. [Integration](#integration)
 
-* [Palette Engine Integration](#palette-engine-integration)
+   * [Palette Engine Integration](#palette-engine-integration)
+   * [Waybar Integration](#waybar-integration)
+   * [Hyprland Integration](#hyprland-integration)
 
-* [Waybar Integration](#waybar-integration)
-* [Hyprland Integration](#hyprland-integration)
-
-1. [Development](#development)
-2. [Component Details](#component-details)
-
-   * [Wi-Fi Tab](#wi-fi-tab)
-   * [Ethernet Tab](#ethernet-tab)
-   * [VPN Tab](#vpn-tab)
-   * [NetworkManager D-Bus Client](#networkmanager-d-bus-client)
-   * [GUI & Layer-Shell](#gui--layer-shell)
-3. [Security](#security)
-4. [Troubleshooting](#troubleshooting)
-5. [Release and Support Policies](#release-and-support-policies)
+7. [Development](#development)
+8. [Security](#security)
+9. [Troubleshooting](#troubleshooting)
+10. [Release and Support Policies](#release-and-support-policies)
 
 ---
 

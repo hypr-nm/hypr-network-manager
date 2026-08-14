@@ -36,6 +36,17 @@ install_data(
   install_mode: 'rwxr-xr-x',
 )
 
+project_license_dir = get_option('datadir') / 'licenses' / meson.project_name()
+install_data(
+  'LICENSE',
+  install_dir: project_license_dir,
+)
+install_data(
+  'scripts/hypr-create-ap/LICENSE',
+  install_dir: project_license_dir,
+  rename: 'LICENSE.create_ap',
+)
+
 polkit_actions_dir = get_option('datadir') / 'polkit-1' / 'actions'
 polkit_rules_dir = get_option('datadir') / 'polkit-1' / 'rules.d'
 

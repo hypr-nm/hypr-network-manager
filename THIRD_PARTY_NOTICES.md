@@ -1,6 +1,7 @@
 # Third-Party Notices
 
-This project incorporates third-party software components. The licenses and copyright notices for these components are provided below.
+This project incorporates third-party software components. Their attribution,
+provenance, and canonical license-text locations are provided below.
 
 ## QR Code generator library (C)
 
@@ -31,39 +32,13 @@ SOFTWARE.
 
 ## create_ap script
 
-- **Source Files:** `scripts/hypr-create-ap/hypr-create-ap`, `scripts/hypr-create-ap/LICENSE`
+- **Source File:** [`scripts/hypr-create-ap/hypr-create-ap`](scripts/hypr-create-ap/hypr-create-ap)
 - **Copyright:** Copyright (c) 2013, oblique; Copyright (c) 2023, lakinduaksh
 - **Upstream Project:** linux-wifi-hotspot
 - **Website:** <https://github.com/lakinduakh/linux-wifi-hotspot>
 - **Communities:** original author `@oblique` (<https://github.com/oblique>); maintained by lakinduakash
-- **License:** BSD-2-Clause
+- **License:** BSD-2-Clause — [full license text](scripts/hypr-create-ap/LICENSE)
 
 The upstream `create_ap` script is included with modification and shipped under the
-name `hypr-create-ap`. The full license text is preserved in
-`scripts/hypr-create-ap/LICENSE`.
-
-### License Text
-
-Copyright (c) 2023, lakinduaksh
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-- Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+name `hypr-create-ap`. Its original copyright notice and complete license terms
+are preserved in the canonical license file linked above.

@@ -46,20 +46,20 @@ The best way to get started is to check out the [Documentation](./docs/Documenta
 
 ## Features
 
-* **Wi-Fi Support**: Management of basic and advanced wireless connection settings.
-* **Wired Connections**: Monitor ethernet status and manage wired devices.
-* **VPN Management**: Basic operations like list, connect, and disconnect existing VPN profiles.
-* **Saved Networks**: View and manage previously connected networks.
-* **Full Theming**: Fully customizable CSS-based themes.
+* **Wi-Fi Management**: Scan, connect, and configure wireless connections.
+* **Network Hotspots**: Create and configure Wi-Fi access points easily.
+* **Wi-Fi Sharing**: Generate QR codes to quickly share credentials for networks.
+* **Wired Connections**: Manage and configure ethernet/wired devices.
+* VPN: View, connect, disconnect, and remove existing NetworkManager VPN profiles, with full support for WireGuard configurations.
+* **Saved Networks**: View, edit, and manage saved connection profiles.
+* **Full Theming**: Fully customizable CSS based theming.
 * **Highly Configurable**: Control layout, behavior, and appearance via a simple JSON config.
 
 ### Planned Features
 
 Upcoming features include:
 
-* **Advanced VPN Capabilities**: Creation, editing, and detailed configuration of VPN protocols.
-* **Network Hotspots**: Creation and configuration of Wi-Fi hotspots.
-* **Wireless Network Sharing**: QR code based Wi-Fi credential sharing.
+* **Expanded VPN Management**: Edit additional VPN protocols and import or export VPN profiles.
 
 ---
 
@@ -67,7 +67,7 @@ Upcoming features include:
 
 This project is licensed under GPL-3.0.
 
-Some UI behavior is adapted from SwayNotificationCenter. See `THIRD_PARTY_NOTICES.md` for details.
+This project incorporates third-party software and components. See [THIRD_PARTY_NOTICES](./THIRD_PARTY_NOTICES.md) for attribution, provenance, and license locations.
 
 ---
 
