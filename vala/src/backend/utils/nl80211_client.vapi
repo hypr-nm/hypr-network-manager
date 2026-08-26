@@ -32,6 +32,9 @@ namespace Nl80211 {
     [CCode (cname = "nm_nl80211_frequency_band")]
     public Band frequency_band (uint32 frequency_mhz);
 
+    [CCode (cname = "nm_nl80211_frequency_channel")]
+    public uint32 frequency_channel (uint32 frequency_mhz);
+
     /*
      * Queries the wireless band (2.4 GHz / 5 GHz) AP-capable support for the
      * given interface name via the stable kernel nl80211 netlink ABI.

@@ -75,7 +75,7 @@ public class HotspotService : GLib.Object {
     private async uint32 select_regulatory_channel (
         string iface,
         string band,
-        uint32 preferred_frequency_mhz,
+        uint32 active_station_frequency_mhz,
         Cancellable? cancellable
     ) throws Error {
         Nl80211.Band requested_band;
@@ -87,6 +87,23 @@ public class HotspotService : GLib.Object {
             throw new IOError.INVALID_ARGUMENT (
                 "A concrete Wi-Fi band is required for channel selection");
         }
+
+        uint32 active_station_channel = Nl80211.frequency_channel (
+            active_station_frequency_mhz);
+        string active_station_details = "unavailable";
+        if (active_station_frequency_mhz != 0) {
+            active_station_details = active_station_channel != 0
+                ? "channel %u (%u MHz)".printf (
+                    active_station_channel,
+                    active_station_frequency_mhz)
+                : "unknown channel (%u MHz)".printf (
+                    active_station_frequency_mhz);
+        }
+        uint32 preferred_frequency_mhz =
+            Nl80211.frequency_band (active_station_frequency_mhz)
+                == requested_band
+            ? active_station_frequency_mhz
+            : 0;
 
         int result = -1;
         uint32 selected_frequency_mhz = 0;
@@ -117,23 +134,29 @@ public class HotspotService : GLib.Object {
         if (result != 0 || selected_channel == 0) {
             throw new IOError.NOT_SUPPORTED (
                 ("No non-DFS %s hotspot channel is available on '%s' " +
-                 "under the current wireless regulatory settings.").printf (
+                 "under the current wireless regulatory settings; active " +
+                 "station=%s.").printf (
                     band == WifiBand.BAND_5GHZ ? "5 GHz" : "2.4 GHz",
-                    iface));
+                    iface,
+                    active_station_details));
         }
 
+        bool reused_active_station_channel = preferred_frequency_mhz != 0
+            && selected_frequency_mhz == preferred_frequency_mhz;
+        string reuse_status = active_station_frequency_mhz == 0
+            ? "not available"
+            : reused_active_station_channel ? "yes" : "no";
         log_info (
             "hotspot-service",
-            ("Regulatory channel selection for '%s': band=%s, " +
-             "channel=%u, frequency=%u MHz%s.").printf (
+            ("Regulatory channel selection for '%s': band=%s, active " +
+             "station=%s, AP=channel %u (%u MHz), station channel " +
+             "reused=%s.").printf (
                 iface,
                 band == WifiBand.BAND_5GHZ ? "5 GHz" : "2.4 GHz",
+                active_station_details,
                 selected_channel,
                 selected_frequency_mhz,
-                preferred_frequency_mhz != 0
-                    && selected_frequency_mhz == preferred_frequency_mhz
-                    ? ", reusing active station channel"
-                    : ""));
+                reuse_status));
         return selected_channel;
     }
 
@@ -794,14 +817,6 @@ public class HotspotService : GLib.Object {
                 }
             }
 
-            bool active_band_matches =
-                (resolved_band == WifiBand.BAND_2GHZ
-                    && active_band == Nl80211.Band.GHZ_2)
-                || (resolved_band == WifiBand.BAND_5GHZ
-                    && active_band == Nl80211.Band.GHZ_5);
-            uint32 preferred_frequency_mhz = active_band_matches
-                ? active_frequency_mhz
-                : 0;
             uint32 channel;
             if (resolved_band == "") {
                 // Auto favors 2.4 GHz for reach and compatibility, then uses
@@ -812,21 +827,21 @@ public class HotspotService : GLib.Object {
                     channel = yield select_regulatory_channel (
                         resolved_ap_iface,
                         resolved_band,
-                        0,
+                        active_frequency_mhz,
                         cancellable);
                 } catch (IOError.NOT_SUPPORTED e) {
                     resolved_band = WifiBand.BAND_5GHZ;
                     channel = yield select_regulatory_channel (
                         resolved_ap_iface,
                         resolved_band,
-                        0,
+                        active_frequency_mhz,
                         cancellable);
                 }
             } else {
                 channel = yield select_regulatory_channel (
                     resolved_ap_iface,
                     resolved_band,
-                    preferred_frequency_mhz,
+                    active_frequency_mhz,
                     cancellable);
             }
             // Stop a previous app-owned instance on this radio before
@@ -981,16 +996,11 @@ public class HotspotService : GLib.Object {
 
             uint32 channel = 0;
             if (resolved_nm_band != "") {
-                bool active_band_matches =
-                    (resolved_nm_band == WifiBand.BAND_2GHZ
-                        && active_band == Nl80211.Band.GHZ_2)
-                    || (resolved_nm_band == WifiBand.BAND_5GHZ
-                        && active_band == Nl80211.Band.GHZ_5);
                 try {
                     channel = yield select_regulatory_channel (
                         resolved_ap_iface,
                         resolved_nm_band,
-                        active_band_matches ? active_frequency_mhz : 0,
+                        active_frequency_mhz,
                         cancellable);
                 } catch (IOError.CANCELLED e) {
                     throw e;
